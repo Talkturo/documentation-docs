@@ -1,86 +1,79 @@
 ---
 title: Changelog
-description: Version history highlighting recent updates, new features, and important changes to the Talkturo platform.
+description: >-
+  Version history highlighting recent updates, new features, and important
+  changes to the Talkturo platform.
 ---
-
 ## Recent Updates
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
-<Update label="2026-08-11" description="v2.2.0" tags={["feature", "improvement", "bugfix"]}>
+<Update label="2026-08-11" description="v2.2.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
 
-## New Features
+  - **Transcription Settings panel** — Configure how your AI assistant processes caller speech directly in the assistant editor. Add up to 100 custom keyterms (names, product names, spellings), enable smart formatting, profanity filtering, sensitive-data redaction, GDPR training opt-out, speaker diarization, and provider-specific options for Deepgram and AssemblyAI. See [Features](/features).
+  - **German localization for transcription settings** — All transcription setting labels, help texts, and descriptions are now fully translated into German.
+  - **Dual-carrier phone number purchasing** — Workspaces can now buy and use phone numbers from two Talkturo carriers at the same time, plus their own connected Twilio account. See [Quickstart](/quickstart).
 
-- **Transcription Settings panel** — Configure how your AI assistant processes caller speech directly in the assistant editor. Add up to 100 custom keyterms (names, product names, spellings), enable smart formatting, profanity filtering, sensitive-data redaction, GDPR training opt-out, speaker diarization, and provider-specific options for Deepgram and AssemblyAI. See [Features](/features).
-- **German localization for transcription settings** — All transcription setting labels, help texts, and descriptions are now fully translated into German.
-- **Dual-carrier phone number purchasing** — Workspaces can now buy and use phone numbers from two Talkturo carriers at the same time, plus their own connected Twilio account. See [Quickstart](/quickstart).
+  ## Improvements
 
-## Improvements
+  - **Workflow publish validation** — Publishing a workflow now checks for missing required fields before saving, with clear error messages instead of silent failures during live calls. See [Integrations](/integrations).
+  - **Admin verification list shows city** — The admin Verifications page now displays the city alongside the country, making it easier to match submitted documents to the correct dialing area.
 
-- **Workflow publish validation** — Publishing a workflow now checks for missing required fields before saving, with clear error messages instead of silent failures during live calls. See [Integrations](/integrations).
-- **Admin verification list shows city** — The admin Verifications page now displays the city alongside the country, making it easier to match submitted documents to the correct dialing area.
+  ## Bug Fixes
 
-## Bug Fixes
-
-- **Outbound answering-machine detection** — Fixed an issue where detection ran on ringback audio instead of the actual answered call, causing incorrect voicemail vs. live-answer classification on all outbound calls. See [Call Quality Troubleshooting](/help-center/troubleshooting/call-quality).
-- **Workflow tool definitions now match the editor** — The tool name and parameters the voice agent registers now exactly match what you see in the editor, so prompt-authored tool calls work reliably. See [Integrations](/integrations).
-- **Failed workflow triggers now visible** — Rejected workflow triggers now create a failed run record with the reason, so they appear in the Runs view instead of silently disappearing.
-- **Transcription settings preserved across actions** — Settings are no longer lost when switching models within the same provider, when using the default provider, or when cloning an assistant.
-- **City-level verification enforcement** — Phone number purchases in compliance-gated countries now enforce city-level verification with a clear error message, preventing silent purchase failures.
-- **Expired carrier verifications detected** — Expired carrier approvals are now detected and re-evaluated automatically, preventing silent purchase rejections.
-- **Workflow function cards show current name** — Function cards in the assistant editor now display the current workflow name instead of a stale snapshot from when it was first attached.
-
+  - **Outbound answering-machine detection** — Fixed an issue where detection ran on ringback audio instead of the actual answered call, causing incorrect voicemail vs. live-answer classification on all outbound calls. See [Call Quality Troubleshooting](/help-center/troubleshooting/call-quality).
+  - **Workflow tool definitions now match the editor** — The tool name and parameters the voice agent registers now exactly match what you see in the editor, so prompt-authored tool calls work reliably. See [Integrations](/integrations).
+  - **Failed workflow triggers now visible** — Rejected workflow triggers now create a failed run record with the reason, so they appear in the Runs view instead of silently disappearing.
+  - **Transcription settings preserved across actions** — Settings are no longer lost when switching models within the same provider, when using the default provider, or when cloning an assistant.
+  - **City-level verification enforcement** — Phone number purchases in compliance-gated countries now enforce city-level verification with a clear error message, preventing silent purchase failures.
+  - **Expired carrier verifications detected** — Expired carrier approvals are now detected and re-evaluated automatically, preventing silent purchase rejections.
+  - **Workflow function cards show current name** — Function cards in the assistant editor now display the current workflow name instead of a stale snapshot from when it was first attached.
 </Update>
 
-<Update label="2024-11-15" description="v2.1.0" tags={["feature", "improvement", "bugfix"]}>
+<Update label="2024-11-15" description="v2.1.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
 
-## New Features
+  - Added support for custom voice models in AI assistants, enabling branded voice experiences for campaigns.
+  - Introduced real-time analytics dashboard for monitoring live phone call metrics like duration and sentiment.
 
-- Added support for custom voice models in AI assistants, enabling branded voice experiences for campaigns.
-- Introduced real-time analytics dashboard for monitoring live phone call metrics like duration and sentiment.
+  ## Improvements
 
-## Improvements
+  - Enhanced CRM integration with bulk contact import from CSV files.
+  - Optimized campaign scheduling with timezone-aware timing options.
 
-- Enhanced CRM integration with bulk contact import from CSV files.
-- Optimized campaign scheduling with timezone-aware timing options.
+  ## Bug Fixes
 
-## Bug Fixes
-
-- Fixed intermittent audio latency issues during high-volume outbound calls.
-- Resolved prompt template rendering errors in the assistant configuration UI.
-
+  - Fixed intermittent audio latency issues during high-volume outbound calls.
+  - Resolved prompt template rendering errors in the assistant configuration UI.
 </Update>
 
-<Update label="2024-10-20" description="v2.0.0" tags={["feature", "breaking"]}>
+<Update label="2024-10-20" description="v2.0.0" tags={["feature","breaking"]}>
+  ## New Features
 
-## New Features
+  - Launched outbound campaign builder with A/B testing for voice scripts.
+  - Added function calling support in assistants for dynamic CRM lookups during calls.
 
-- Launched outbound campaign builder with A/B testing for voice scripts.
-- Added function calling support in assistants for dynamic CRM lookups during calls.
+  ## Breaking Changes
 
-## Breaking Changes
+  - Updated API authentication to require JWT tokens instead of API keys. Migrate using the guide below.
+  - Deprecated legacy voice endpoints; use `/v2/voice` paths.
 
-- Updated API authentication to require JWT tokens instead of API keys. Migrate using the guide below.
-- Deprecated legacy voice endpoints; use `/v2/voice` paths.
+  ## Improvements
 
-## Improvements
-
-- Improved call transcription accuracy by 15% with new speech-to-text models.
-
+  - Improved call transcription accuracy by 15% with new speech-to-text models.
 </Update>
 
-<Update label="2024-09-10" description="v1.5.0" tags={["feature", "bugfix"]}>
+<Update label="2024-09-10" description="v1.5.0" tags={["feature","bugfix"]}>
+  ## New Features
 
-## New Features
+  - Integrated company records in CRM for better contact organization.
+  - Enabled webhook notifications for call completion events.
 
-- Integrated company records in CRM for better contact organization.
-- Enabled webhook notifications for call completion events.
+  ## Bug Fixes
 
-## Bug Fixes
-
-- Patched scheduling overlaps in campaigns.
-- Fixed desktop app crashes on macOS during long sessions.
-
+  - Patched scheduling overlaps in campaigns.
+  - Fixed desktop app crashes on macOS during long sessions.
 </Update>
 
 ## Migration Guide
@@ -88,25 +81,25 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
 For upgrades involving breaking changes, follow these steps to update your Talkturo integration seamlessly.
 
 <Steps>
-  <Step title="Update SDK Version" icon="package">
-
+  <Step title="Update SDK Version" icon="package" title-type="p">
     Install the latest SDK across platforms.
 
-    <CodeGroup tabs="npm,yarn,pip">
+    <CodeGroup show-lines="true">
       ```bash
       npm install @talkturo/sdk@2.1.0
       ```
+
       ```bash
       yarn add @talkturo/sdk@2.1.0
       ```
+
       ```bash
       pip install talkturo-sdk==2.1.0
       ```
     </CodeGroup>
-
   </Step>
-  <Step title="Replace API Keys with JWT" icon="key">
 
+  <Step title="Replace API Keys with JWT" icon="key" title-type="p">
     Generate JWT tokens via the new auth endpoint.
 
     ```bash
@@ -117,19 +110,17 @@ For upgrades involving breaking changes, follow these steps to update your Talkt
 
     Update your requests:
 
-    <ParamField header="Authorization" param-type="string" required="true">
+    <ParamField header="Authorization" param-type="string" required="true" deprecated="false" show-location="true">
       Bearer `{YOUR_JWT_TOKEN}`
     </ParamField>
-
   </Step>
-  <Step title="Test Updated Endpoints" icon="play">
 
+  <Step title="Test Updated Endpoints" icon="play" title-type="p">
     Verify voice configurations with the new paths.
 
-    <Callout kind="tip">
+    <Callout kind="tip" collapsed="false">
       Run end-to-end tests on staging before production deployment.
     </Callout>
-
   </Step>
 </Steps>
 
@@ -137,48 +128,35 @@ For upgrades involving breaking changes, follow these steps to update your Talkt
 
 Track upcoming priorities for Talkturo's voice AI features.
 
-<Board title="Q4 2024 Roadmap">
-  <BoardColumn title="Planned" color="0" icon="calendar">
-    <BoardCard
-      title="Multilingual Voice Support"
-      description="Add 5+ languages for global campaigns"
-      icon="globe"
-      dueDate="2024-12-15"
-    />
-    <BoardCard
-      title="Advanced Analytics"
-      description="Predictive insights from call data"
-      icon="bar-chart-3"
-    />
+<Board uid="76ab45fc-0379-4eed-b6b0-357eb70e8c0e" title="Q4 2024 Roadmap">
+  <BoardColumn title="Planned" uid="2ecd5da3-b597-4c61-b90c-11febaf598d2" color="0" icon="calendar">
+    <BoardCard title="Multilingual Voice Support" uid="848cefb5-ed3b-4582-9b31-4d76a62e5482" description="Add 5+ languages for global campaigns" icon="globe" due-date="2024-12-15" />
+
+    <BoardCard title="Advanced Analytics" uid="23501c7e-2978-44f9-86be-af89c74e6ab1" description="Predictive insights from call data" icon="bar-chart-3" />
   </BoardColumn>
-  <BoardColumn title="In Progress" color="1" icon="loader-2">
-    <BoardCard
-      title="Inbound Call Routing"
-      description="AI-powered call distribution"
-      icon="phone"
-      author="Engineering Team"
-    />
+
+  <BoardColumn title="In Progress" uid="a47152e7-08fa-457a-bd99-747c55837463" color="1" icon="loader-2">
+    <BoardCard title="Inbound Call Routing" uid="3dc0b3a5-8433-4022-8943-2d68d8b02b74" description="AI-powered call distribution" icon="phone" author="Engineering Team" />
   </BoardColumn>
-  <BoardColumn title="Completed" color="2" icon="check-circle">
-    <BoardCard
-      title="Webhook v2"
-      description="Enhanced event payloads"
-      createdAt="2024-11-01"
-    />
+
+  <BoardColumn title="Completed" uid="0c56ac3f-70b9-4101-885a-ac661efc507a" color="2" icon="check-circle">
+    <BoardCard title="Webhook v2" uid="480b02cc-9deb-4601-aa3a-8d89a21bd6f7" description="Enhanced event payloads" created-at="2024-11-01" />
   </BoardColumn>
 </Board>
 
 ## Explore Further
 
-<Columns cols={2}>
-  <Card title="API Reference" icon="code" href="/api-reference/overview">
+<Columns cols="2">
+  <Card title="API Reference" href="/api-reference/overview" icon="code" horizontal="false">
     Detailed endpoints for voice agents and campaigns.
   </Card>
-  <Card title="Key Concepts" icon="book-open" href="/key-concepts" horizontal>
+
+  <Card title="Key Concepts" href="/key-concepts" icon="book-open" horizontal="false">
     Understand core Talkturo terminology and architecture.
   </Card>
 </Columns>
 
-<Callout kind="info">
-  Subscribe to our changelog RSS feed or join the support mailing list at info@talkturo.ai for instant notifications.
+<Callout kind="info" collapsed="false">
+  Subscribe to our changelog RSS feed or join the support mailing list at [info@talkturo.ai](mailto:info@talkturo.ai) for instant notifications.
 </Callout>
+
