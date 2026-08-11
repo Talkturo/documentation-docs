@@ -23,12 +23,12 @@
                 "pages": [
                   {
                     "title": "Introduction",
-                    "path": "introduction",
+                    "path": "en/introduction",
                     "icon": "home"
                   },
                   {
                     "title": "Quick Start",
-                    "path": "quickstart",
+                    "path": "en/quickstart",
                     "icon": "zap"
                   }
                 ]
@@ -39,7 +39,7 @@
                 "pages": [
                   {
                     "title": "Features",
-                    "path": "features",
+                    "path": "en/features",
                     "icon": "star"
                   }
                 ]
@@ -50,7 +50,7 @@
                 "pages": [
                   {
                     "title": "Integrations",
-                    "path": "integrations",
+                    "path": "en/integrations",
                     "icon": "plug"
                   }
                 ]
@@ -64,7 +64,7 @@
               {
                 "group": "Endpoints",
                 "icon": "terminal",
-                "openapi": "api-reference/openapi.yaml",
+                "openapi": "en/api-reference/openapi.yaml",
                 "pages": []
               }
             ]
@@ -75,7 +75,7 @@
             "pages": [
               {
                 "title": "Help Center",
-                "path": "help-center",
+                "path": "en/help-center",
                 "icon": "home"
               },
               {
@@ -85,7 +85,7 @@
                 "pages": [
                   {
                     "title": "Getting Started",
-                    "path": "help-center/faq/getting-started"
+                    "path": "en/help-center/faq/getting-started"
                   }
                 ]
               },
@@ -96,7 +96,7 @@
                 "pages": [
                   {
                     "title": "Call Quality",
-                    "path": "help-center/troubleshooting/call-quality"
+                    "path": "en/help-center/troubleshooting/call-quality"
                   }
                 ]
               },
@@ -107,7 +107,7 @@
                 "pages": [
                   {
                     "title": "Launch Voice Agent",
-                    "path": "help-center/guides/launch-voice-agent"
+                    "path": "en/help-center/guides/launch-voice-agent"
                   }
                 ]
               }
@@ -119,7 +119,7 @@
             "pages": [
               {
                 "title": "Release History",
-                "path": "changelog",
+                "path": "en/changelog",
                 "icon": "history"
               }
             ]
@@ -128,8 +128,7 @@
       },
       {
         "language": "German",
-        "pages": [],
-        "path": "german"
+        "pages": []
       }
     ]
   }
