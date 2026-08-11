@@ -1,0 +1,226 @@
+---
+title: Abrechnung und Credits
+description: Verwalten Sie Talkturo-Credits, Abonnement-Pläne, Auto-Reload, Zahlungsmethoden und Anrufkosten in Ihrem Workspace.
+---
+
+## Ihr Abrechnungsmodell verstehen
+
+Talkturo rechnet die Nutzung mit **Credits** ab, nicht mit direkten Rechnungen pro Anruf. Das Guthaben Ihres Workspaces sinkt, während Anrufe laufen, und Sie können Credits getrennt von Ihrem Abonnement-Plan hinzufügen.
+
+Abonnement-Pläne und Credits erfüllen unterschiedliche Zwecke. Ein Plan steuert den Produktzugang und die enthaltenen monatlichen Credits, während Aufladungen zusätzliche nutzbare Credits für die Sprachverwendung hinzufügen, wenn Sie mehr Kapazität benötigen.
+
+<Callout kind="info" collapsed="false">
+
+Credits werden in Echtzeit verbraucht, sobald Anrufe stattfinden. Wenn Ihre Workflows von Telefonanrufen abhängen, halten Sie genügend Credits verfügbar oder aktivieren Sie Auto-Reload, um Unterbrechungen zu vermeiden.
+
+</Callout>
+
+## Wie Credits funktionieren
+
+Jeder Workspace hat ein Credit-Guthaben, das auch Bruchteile unterstützt. Talkturo kann kleine Beträge wie `0.025` Credits für kurze Anrufe oder teilweise Nutzung abbuchen, sodass Ihr Guthaben den tatsächlichen Verbrauch widerspiegelt, anstatt jedes Ereignis auf ganze Zahlen aufzurunden.
+
+Neue Workspaces starten mit **10 kostenlosen Credits**. Talkturo fügt Credits über eine kleine Anzahl von Transaktionstypen hinzu und entfernt sie darüber, die in Ihrem Abrechnungsverlauf erscheinen.
+
+### Credit-Umtauschrate
+
+Talkturo verwendet eine grundlegende Umtauschrate von **1 USD = 2 Credits**. Diese Umtauschrate gilt auch für Standard-Aufladungen und Auto-Reload-Berechnungen, sofern keine Bonus-Credit-Aktion angewendet wird.
+
+### Transaktionstypen
+
+| Transaktionstyp | Bedeutung |
+| --------------- | --------- |
+| `purchase` | Nach einer bezahlten Aufladung hinzugefügte Credits |
+| `usage` | Durch Anrufe und zugehörige Nutzung verbrauchte Credits |
+| `bonus` | Werbe- oder zusätzliche Credits, die dem Workspace hinzugefügt wurden |
+| `refund` | Nach einer Anpassung zurückgegebene Credits |
+| `signup_bonus` | Anfängliche kostenlose Credits bei Erstellung eines Workspaces |
+| `reset` | Administrativer Credit-Guthaben-Reset oder -Korrektur |
+
+<Callout kind="tip" collapsed="false">
+
+Da Credits Bruchteile unterstützen, führen kurze Anrufe und Teilminuten nicht zu einer Überberechnung Ihres Workspaces. Sie bezahlen für das zugrunde liegende Nutzungsmuster, nicht für ein aufgerundetes Paket.
+
+</Callout>
+
+## Abonnement-Pläne vergleichen
+
+Pläne definieren Ihr monatliches Basispaket. Die in einem Plan enthaltenen Credits werden monatlich erneuert, während gekaufte Auflade-Credits getrennt von der Planpreisgestaltung behandelt werden.
+
+| Plan | Monatlicher Preis | Enthaltene monatliche Credits | Enthält |
+| ---- | ----------------- | ----------------------------- | ------- |
+| Free | $0/Monat | 10 | Öffentliche Projekte, unbegrenzte Mitarbeiter |
+| Pro | Standardmäßig $100/Monat | 400 | Alle Free-Funktionen |
+| Business | Standardmäßig $200/Monat | 400 | Alle Pro-Funktionen, SSO, interne Veröffentlichung |
+| Enterprise | Individuelle Preisgestaltung | Individuell | Dedizierter Support, benutzerdefinierte Verbindungen |
+
+<Callout kind="info" collapsed="false">
+
+Die Preise für Pro und Business werden dynamisch festgelegt und können von den hier gezeigten Standardbeträgen abweichen.
+
+</Callout>
+
+## Credit-Aufladungen hinzufügen
+
+Aufladungen erhöhen Ihr verfügbares Nutzungsguthaben über die in Ihrem Abonnement enthaltenen Credits hinaus. Dies ist der Betrag, den Sie während der Sprachaktivität verbrauchen.
+
+| Paket | Preis | Hinzugefügte Credits |
+| ----- | ----- | -------------------- |
+| Starter Pack | $99 | 198 |
+| Pro Pack | $349 | 698 |
+| Business Pack | $499 | 998 |
+| Individuelle Aufladung | Mindestens $99 | Jeder Betrag über dem Mindestwert, umgerechnet zum aktuellen Kurs |
+
+Bonus-Credits können gelten, wenn Sie über Agent-Zahlungslinks kaufen. In diesen Fällen kann Talkturo zusätzlich zur Standardumrechnung bis zu **20 % extra Credits** hinzufügen.
+
+## So verbrauchen Anrufe Credits
+
+Die Kosten eines Anrufs hängen von den Komponenten ab, die Ihr Assistent verwendet. Standard-Sprachpipelines können jeden Dienst separat abrechnen, während der Echtzeit-Modus einen einzigen gebündelten Minutenpreis verwendet.
+
+### Standard-Nutzungskomponenten
+
+| Komponente | Abrechnungseinheit | Hinweise |
+| ---------- | ------------------ | -------- |
+| Speech-to-Text | Pro Minute | Abgerechnet für die Transkription von Live-Anrufaudio |
+| LLM prompt tokens | Pro 1.000 Tokens | Abgerechnet für Modelleingaben |
+| LLM completion tokens | Pro 1.000 Tokens | Abgerechnet für Modellausgaben |
+| Text-to-Speech | Pro 1.000 Zeichen | Abgerechnet für erzeugte gesprochene Ausgabe |
+| Telephony | Pro Minute | Abgerechnet für Telefonverbindung und Anrufdauer |
+
+### Echtzeit-Modus
+
+Der Echtzeit-Modus verwendet einen **einzigen Preis pro Minute** anstelle separater Positionen für Speech-to-Text, LLM und Text-to-Speech. Das vereinfacht die Abrechnung, wenn Ihr Assistent auf einem Echtzeit-Stack läuft.
+
+### Beispielhafte Kostenberechnung
+
+Eine typische Schätzung verwendet diese Annahmen pro Gesprächsminute:
+
+- **TTS-Ausgabe:** 750 Zeichen pro Minute
+- **LLM-Eingabe:** 600 Prompt-Tokens pro Minute
+- **LLM-Ausgabe:** 400 Completion-Tokens pro Minute
+
+Mit einem Standard-Stack wie **Deepgram STT + OpenAI LLM + Cartesia TTS + Telnyx telephony** liegen die gemischten Kosten bei ungefähr **0.21 Credits pro Minute**.
+
+Das bedeutet:
+
+| Anruflänge | Ungefähre Kosten |
+| ---------- | ---------------- |
+| 1 Minute | 0.21 Credits |
+| 5 Minuten | 1.05 Credits |
+| 10 Minuten | 2.1 Credits |
+| 30 Minuten | 6.3 Credits |
+
+Diese Werte sind Schätzungen und keine feste Garantie. Die tatsächlichen Kosten ändern sich je nach Anrufdauer, Sprechgeschwindigkeit, Token-Nutzung, Umfang der erzeugten Sprache, Telephony-Routing und danach, ob Sie den Standard- oder Echtzeit-Modus verwenden.
+
+<Callout kind="info" collapsed="false">
+
+Ein Anruf mit stärkerer Modellausgabe oder längeren Assistentenantworten verbraucht mehr LLM-Tokens und TTS-Zeichen, daher können zwei Anrufe mit derselben Dauer unterschiedliche Kosten verursachen.
+
+</Callout>
+
+## Auto-Reload konfigurieren
+
+Auto-Reload hält Ihren Workspace finanziert, indem die gespeicherte Zahlungsmethode belastet wird, wenn das Credit-Guthaben unter einen Schwellenwert fällt. Dies ist die sicherste Option, wenn Sie produktive Rufnummern oder geplante ausgehende Aktivitäten betreiben.
+
+### Auto-Reload-Einstellungen
+
+<ParamField body="enabled" param-type="boolean" required="true" deprecated="false" show-location="false">
+  Aktiviert oder deaktiviert Auto-Reload für den Workspace.
+</ParamField>
+
+<ParamField body="amount" param-type="number" required="true" deprecated="false" show-location="false">
+  Dollarbetrag, der bei jedem Reload berechnet wird. Der Standardwert ist `$10`.
+</ParamField>
+
+<ParamField body="threshold" param-type="number" required="true" deprecated="false" show-location="false">
+  Credit-Guthaben, das einen Reload auslöst. Der Standardschwellenwert beträgt `10` Credits.
+</ParamField>
+
+### Wie Reload-Credits berechnet werden
+
+Talkturo rechnet eine Reload-Belastung mit folgender Formel in Credits um:
+
+`max(1, round(amount_usd × 2))`
+
+Zum Beispiel fügt ein Auto-Reload von **$10** **20 Credits** hinzu.
+
+### Auto-Reload-Voraussetzungen und Verhalten
+
+- Auto-Reload erfordert eine gespeicherte **Standard-Zahlungsmethode**
+- Belastungen laufen über **Stripe-Rechnungsstellung**
+- Ein erfolgreicher Reload kann **gesperrte Rufnummern** wieder aktivieren
+- Der Reload erfolgt automatisch, wenn das Guthaben unter den konfigurierten Schwellenwert fällt
+
+<Callout kind="alert" collapsed="false">
+
+Wenn keine Standard-Zahlungsmethode verfügbar ist, kann Talkturo keinen Auto-Reload durchführen. Niedrige Guthaben können telefonbasierte Workflows unterbrechen, bis Sie eine Zahlungsmethode hinzufügen oder manuell aufladen.
+
+</Callout>
+
+## Desktop-App-Pläne verstehen
+
+Der Zugriff auf die Close AI Desktop-App wird getrennt von den Workspace-Sprachcredits abgerechnet. Diese Pläne steuern Desktop-Sitze, nicht die Credit-Guthaben für Voice Agents.
+
+| Desktop-Plan | Monatlicher Preis | Sitze | Hinweise |
+| ------------ | ----------------- | ----- | -------- |
+| Desktop Starter | $186/Monat | 1 | Einzelplatz-Plan |
+| Desktop Pro | $373/Monat | 3 | Mit zusätzlichen Plätzen erweiterbar |
+| Desktop Enterprise | Individuell | Individuell | Verhandelbare Preise und Konditionen |
+| Zusätzlicher Platz | $99/Monat oder $1,188/Jahr | Jeweils 1 | Zusatzplatz-Preisgestaltung |
+
+Wenn Ihr Team sowohl Desktop-Coaching als auch Voice Agents nutzt, verwalten Sie diese als getrennte Budgetposten: Desktop-Sitze für Benutzer, Credits für die Ausführung von Anrufen.
+
+## Zahlungsmethoden und Rechnungen verwalten
+
+Stripe ist der primäre Abrechnungsanbieter für Talkturo. Gespeicherte Karten werden für Käufe und Auto-Reload verwendet, und Rechnungen sind als herunterladbare PDFs verfügbar.
+
+Talkturo unterstützt in einigen Abrechnungsabläufen auch Lemon Squeezy als ältere Alternative. Wenn Ihr Workspace diesen älteren Pfad verwendet, kann die Kaufabwicklung anders aussehen als bei Stripe-basierten Abläufen.
+
+### Was Sie erwarten können
+
+- **Gespeicherte Karten** unterstützen automatische Reloads
+- **Stripe-Rechnungen** liefern einen Abrechnungsnachweis für Käufe
+- **PDF-Rechnungen** stehen zum Download bereit
+- **Ältere Lemon Squeezy-Abläufe** können in älteren Setups weiterhin erscheinen
+
+## Credit-Zuschüsse einlösen
+
+Talkturo kann Credits an Käufe anhängen, die über **Agent-Zahlungslinks** erfolgen. Diese Credits werden als Zuschüsse ausgegeben und durchlaufen einen einfachen Lebenszyklus, bevor sie sich auf das Guthaben eines Workspaces auswirken.
+
+### Zuschuss-Lebenszyklus
+
+| Status | Bedeutung |
+| ------ | --------- |
+| `unclaimed` | Der Credit-Zuschuss existiert, ist aber keinem Workspace zugewiesen |
+| `claimed` | Der Zuschuss wurde auf einen Workspace angewendet |
+
+### Wie Zuschüsse verwendet werden
+
+Workspace-Eigentümer oder Administratoren können einen Zuschuss im Dashboard für einen Workspace einlösen. Wenn der Zahlungslink Buy-and-Clone unterstützt, kann Talkturo während des Einlösevorgangs auch den Quell-Assistenten in den Ziel-Workspace klonen.
+
+<Callout kind="tip" collapsed="false">
+
+Wenn Sie Assistenten über Zahlungslinks verkaufen, können Zuschüsse die Nutzung direkt nach dem Kauf finanzieren und den Einrichtungsaufwand verringern, indem der ursprüngliche Assistent in den Workspace des Käufers geklont wird.
+
+</Callout>
+
+## Abrechnung planbar halten
+
+Einige Gewohnheiten machen den Credit-Verbrauch leichter planbar:
+
+- Aktivieren Sie **Auto-Reload**, bevor Sie produktive Anrufe starten
+- Prüfen Sie **Kostenaufschlüsselungen pro Anruf**, um zu verstehen, welche Komponenten die Ausgaben treiben
+- Trennen Sie die **Plan-Budgetierung** von der **Credit-Budgetierung**
+- Achten Sie auf **Bonus-Credits**, wenn Sie Agent-Zahlungslinks verteilen
+- Halten Sie eine gültige **Standard-Zahlungsmethode** hinterlegt
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+  <Card title="Workspaces" href="/workspaces" icon="users" cta="Workspaces verwalten" horizontal="false">
+
+  </Card>
+
+  <Card title="Authentifizierung" href="/authentication" icon="lock" cta="Authentifizierungsoptionen prüfen" horizontal="false">
+
+  </Card>
+</Columns>

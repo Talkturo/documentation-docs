@@ -1,0 +1,158 @@
+---
+title: Unternehmen
+description: Verwalte Unternehmensdatensätze im CRM, verknüpfe sie mit Kontakten und nutze Unternehmensdaten in Anrufen, Filtern und API-Workflows.
+---
+
+## Unternehmen im CRM verwalten
+
+Unternehmen speichern die Firmendaten, die zu deinen Kontakten gehören. Nutze Unternehmen, um Accounts zu organisieren, Kontakte einem gemeinsamen Datensatz zuzuordnen und Unternehmensinformationen in Suchen, Filtern und Anrufen verfügbar zu machen.
+
+Du kannst Unternehmen im Dashboard erstellen und verwalten oder dieselben Daten über die API synchronisieren. Sobald ein Unternehmen mit Kontakten verknüpft ist, steht dir ein vollständigerer Kontext für Kommunikation, Segmentierung und Reporting zur Verfügung.
+
+### Unterstützte Unternehmensfelder
+
+Verwende diese Standardfelder, um ein Unternehmen zu beschreiben.
+
+<ParamField body="name" param-type="string" required="true" show-location="false">
+
+Der Name des Unternehmens.
+
+</ParamField>
+
+<ParamField body="website" param-type="string" show-location="false">
+
+Die Website des Unternehmens.
+
+</ParamField>
+
+<ParamField body="industry" param-type="string" show-location="false">
+
+Die Branche des Unternehmens.
+
+</ParamField>
+
+<ParamField body="phone" param-type="string" show-location="false">
+
+Die primäre Telefonnummer des Unternehmens.
+
+</ParamField>
+
+<ParamField body="city" param-type="string" show-location="false">
+
+Die Stadt des Unternehmens.
+
+</ParamField>
+
+<ParamField body="state" param-type="string" show-location="false">
+
+Das Bundesland, die Region oder der Kanton des Unternehmens.
+
+</ParamField>
+
+<ParamField body="country" param-type="string" show-location="false">
+
+Das Land des Unternehmens.
+
+</ParamField>
+
+<ParamField body="customFields" param-type="object" show-location="false">
+
+Zusätzliche benutzerdefinierte Felder für unternehmensspezifische Daten.
+
+</ParamField>
+
+<Callout kind="info">
+
+Nutze `customFields`, wenn die Standardfelder deine Daten nicht vollständig abbilden. So kannst du interne Attribute speichern, ohne deinen bestehenden Workflow zu ändern.
+
+</Callout>
+
+### Unternehmen im Dashboard erstellen und bearbeiten
+
+Erstelle ein Unternehmen im Dashboard, wenn du Datensätze manuell hinzufügen oder überprüfen möchtest. Das ist besonders nützlich für kleinere Teams, Imports mit Nachbearbeitung oder Datensätze, die vor der Nutzung geprüft werden müssen.
+
+<Steps>
+  <Step title="Zum CRM wechseln" icon="building">
+
+Öffne den CRM-Bereich in deinem Dashboard und gehe zur Ansicht für Unternehmen.
+
+  </Step>
+  <Step title="Ein Unternehmen anlegen" icon="plus">
+
+Erstelle einen neuen Unternehmensdatensatz und fülle die verfügbaren Felder wie `name`, `website`, `industry` und Standortdaten aus.
+
+  </Step>
+  <Step title="Den Datensatz speichern" icon="check-circle">
+
+Speichere das Unternehmen, damit es in deiner Unternehmensliste erscheint.
+
+Ein erfolgreicher Speichervorgang zeigt den neuen Unternehmensdatensatz in der Übersicht an, wo du ihn später suchen, filtern oder erneut öffnen kannst.
+
+  </Step>
+  <Step title="Das Unternehmen aktualisieren oder löschen" icon="edit">
+
+Öffne einen vorhandenen Unternehmensdatensatz, um Felder zu bearbeiten oder das Unternehmen zu löschen, wenn es nicht mehr benötigt wird.
+
+  </Step>
+</Steps>
+
+### Unternehmen über die API verwalten
+
+Synchronisiere Unternehmen programmgesteuert, wenn deine Daten aus einem internen System, einer Anreicherungspipeline oder einer externen CRM-Quelle kommen. Die API unterstützt dieselben grundlegenden CRUD-Abläufe wie das Dashboard.
+
+<Callout kind="tip">
+
+Verwende die API, wenn du Unternehmen in größerem Umfang importierst oder Unternehmensdaten automatisch aktuell halten musst.
+
+</Callout>
+
+#### Typische API-Aktionen
+
+Die Unternehmens-API unterstützt diese Kernoperationen:
+
+- **Erstellen** neuer Unternehmensdatensätze
+- **Lesen** einzelner oder mehrerer Unternehmen
+- **Aktualisieren** bestehender Unternehmensinformationen
+- **Löschen** nicht mehr benötigter Unternehmen
+
+### Unternehmen suchen und filtern
+
+Finde Unternehmen schneller, indem du Suche und Filter kombinierst. Das ist hilfreich, wenn du mit großen CRM-Datensätzen arbeitest oder Listen für bestimmte Teams und Workflows eingrenzen musst.
+
+Du kannst Unternehmensdatensätze nach relevanten Attributen wie Name, Branche oder Standort durchsuchen und filtern. Mit diesem Ansatz isolierst du schneller die Datensätze, die du für Outreach, Routing oder Datenpflege brauchst.
+
+### Unternehmen mit Kontakten verknüpfen
+
+Verknüpfe Unternehmen mit Kontakten, um gemeinsame Beziehungen zwischen Personen und Accounts abzubilden. So bleibt ersichtlich, welche Kontakte zu derselben Organisation gehören.
+
+Sobald ein Unternehmen mit mehreren Kontakten verbunden ist, erhältst du mehr Kontext für Vertrieb, Support und Gesprächsvorbereitung. Änderungen am Unternehmenskontext können dann in allen zugehörigen Kontakten einheitlich nachvollzogen werden.
+
+```mermaid
+graph TD
+  C[Unternehmen] --> D[Kontakt A]
+  C --> E[Kontakt B]
+  C --> F[Kontakt C]
+```
+
+### Unternehmensdaten in Anrufen verwenden
+
+Nutze Unternehmensdaten in Anrufen mit CRM-Variablen, um deinen Teammitgliedern während einer Unterhaltung mehr Kontext zu geben. Das ist besonders nützlich, wenn Gesprächsabläufe Standort-, Branchen- oder Account-Informationen berücksichtigen.
+
+Wenn ein Kontakt mit einem Unternehmen verknüpft ist, können Anrufe Unternehmenskontext aus dem CRM einbeziehen. Dadurch lassen sich dynamischere und besser informierte Gesprächserlebnisse aufbauen, ohne Unternehmensdetails manuell nachschlagen zu müssen.
+
+### Wann du Unternehmen statt Kontakte verwenden solltest
+
+Speichere Daten auf Unternehmensebene im Unternehmensdatensatz, wenn die Information für mehrere Personen in derselben Organisation gilt. Dazu gehören in der Regel Firmennamen, Website, Branche oder Hauptstandort.
+
+Speichere personenspezifische Informationen weiter im Kontaktdatensatz. Diese Trennung hält dein CRM sauber und verhindert Duplikate über mehrere Kontakte desselben Accounts hinweg.
+
+### Nächste Schritte
+
+<Columns cols={2}>
+  <Card title="Kontakte verwalten" href="/de/crm/contacts" icon="users">
+    Kontakte mit Unternehmen verknüpfen und personenbasierte CRM-Daten organisieren.
+  </Card>
+  <Card title="CRM-Variablen verwenden" href="/de/crm/variables" icon="code">
+    Unternehmens- und Kontaktdaten in Anrufen und dynamischen Workflows referenzieren.
+  </Card>
+</Columns>

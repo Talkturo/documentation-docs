@@ -1,0 +1,194 @@
+---
+title: Kontakte
+description: Verwalten Sie Kontakte mit vollständigen CRM-Feldern, CRUD-Aktionen, CSV-Import, Suche, DNC-Status, Kampagnenzuordnung und KI-Extraktion.
+---
+
+## Kontakte verwalten
+
+Kontakte speichern die Personen- und Unternehmensdaten, die Ihr CRM für Ansprache, Segmentierung und Automatisierung verwendet. Auf dieser Seite finden Sie die wichtigsten Felder, typische Aktionen und Arbeitsabläufe rund um Kontakte.
+
+<Callout kind="info">
+
+Kontakte unterstützen vollständige CRUD-Vorgänge, CSV-Import, Suche, DNC-Verwaltung, Kampagneneinschreibung und KI-gestützte Extraktion.
+
+</Callout>
+
+## Kontaktfelder
+
+Verwenden Sie diese Felder, um Identität, Erreichbarkeit und CRM-relevanten Status eines Kontakts zu speichern. Welche Felder Sie tatsächlich pflegen, hängt davon ab, wie Ihr Team Kontakte importiert, qualifiziert und in Kampagnen verwendet.
+
+<ParamField body="firstName" param-type="string" show-location="false">
+Der Vorname des Kontakts.
+</ParamField>
+
+<ParamField body="lastName" param-type="string" show-location="false">
+Der Nachname des Kontakts.
+</ParamField>
+
+<ParamField body="email" param-type="string" show-location="false">
+Die primäre E-Mail-Adresse des Kontakts.
+</ParamField>
+
+<ParamField body="phone" param-type="string" show-location="false">
+Die primäre Telefonnummer des Kontakts.
+</ParamField>
+
+<ParamField body="company" param-type="string" show-location="false">
+Der Unternehmensname, der dem Kontakt zugeordnet ist.
+</ParamField>
+
+<ParamField body="title" param-type="string" show-location="false">
+Die Berufsbezeichnung oder Rolle des Kontakts.
+</ParamField>
+
+<ParamField body="dnc" param-type="boolean" show-location="false">
+Gibt an, ob der Kontakt als nicht zu kontaktieren markiert ist.
+</ParamField>
+
+<ParamField body="campaigns" param-type="array" show-location="false">
+Die Kampagnen, in die der Kontakt eingeschrieben ist.
+</ParamField>
+
+<ParamField body="source" param-type="string" show-location="false">
+Die Herkunft des Kontakts, zum Beispiel manueller Eintrag, Import oder Extraktion.
+</ParamField>
+
+## Kontakte erstellen, lesen, aktualisieren und löschen
+
+Erstellen, aktualisieren und entfernen Sie Kontakte, wenn sich Ihr CRM ändert. Der häufigste Ablauf ist das Anlegen eines Kontakts, das Anreichern seiner Daten und das anschließende Verwenden in Suche oder Kampagnen.
+
+### Einen Kontakt erstellen
+
+Legen Sie einen neuen Kontakt an, sobald Sie genug Informationen haben, um ihn eindeutig zu identifizieren. Beginnen Sie mit Name und mindestens einem Kontaktkanal.
+
+```json
+{
+  "firstName": "Anna",
+  "lastName": "Schneider",
+  "email": "anna.schneider@acme-industries.de",
+  "phone": "+49 30 12345678",
+  "company": "Acme Industries",
+  "title": "Leiterin Einkauf"
+}
+```
+
+### Einen Kontakt abrufen
+
+Rufen Sie einen Kontakt ab, wenn Sie aktuelle Daten für Profilansichten, Workflows oder Segmentierungslogik benötigen. So vermeiden Sie, mit veralteten lokalen Kopien zu arbeiten.
+
+### Einen Kontakt aktualisieren
+
+Aktualisieren Sie einen Kontakt, wenn sich Profildaten, Status oder Kampagnenzuordnungen ändern. Typische Änderungen sind neue Telefonnummern, DNC-Markierungen oder ergänzte Firmendaten.
+
+### Einen Kontakt löschen
+
+Löschen Sie einen Kontakt, wenn er nicht mehr in Ihrem CRM verbleiben soll. Prüfen Sie vor dem Löschen, ob abhängige Prozesse wie Kampagnen oder Berichte davon betroffen sind.
+
+<Callout kind="alert">
+
+Das Löschen eines Kontakts kann zugehörige Arbeitsabläufe oder Berichtsdaten beeinflussen. Prüfen Sie vor dem Entfernen, ob der Kontakt noch aktiv in Kampagnen verwendet wird.
+
+</Callout>
+
+## Kontakte per CSV importieren
+
+Importieren Sie Kontakte per CSV, wenn Sie bestehende Daten aus einem anderen System übernehmen oder größere Listen gesammelt hinzufügen möchten. Bereinigen Sie die Datei vor dem Import, damit Feldzuordnung und Deduplizierung zuverlässig funktionieren.
+
+<Steps>
+<Step title="CSV-Datei vorbereiten" icon="file-text">
+
+Ordnen Sie jede Spalte einem klaren Kontaktattribut zu, zum Beispiel `firstName`, `lastName`, `email` oder `phone`. Verwenden Sie in jeder Zeile dasselbe Format, besonders bei Telefonnummern und Ländern.
+
+Ein erfolgreicher Import beginnt meist mit einer Datei, in der die Kopfzeilen bereits Ihren CRM-Feldern entsprechen.
+
+</Step>
+<Step title="Datei hochladen und Felder zuordnen" icon="upload">
+
+Laden Sie die CSV-Datei in den Importablauf hoch und ordnen Sie jede Spalte dem richtigen Kontaktfeld zu. Prüfen Sie optionale Felder besonders sorgfältig, damit Unternehmensname, Titel und Quelle nicht im falschen Feld landen.
+
+Wenn die Zuordnung korrekt ist, zeigt die Vorschau pro Spalte das erwartete Kontaktattribut.
+
+</Step>
+<Step title="Import ausführen und Ergebnisse prüfen" icon="check-circle">
+
+Starten Sie den Import und prüfen Sie danach, wie viele Kontakte erstellt, aktualisiert oder übersprungen wurden. Untersuchen Sie fehlerhafte Zeilen direkt, bevor Sie mit Suche oder Kampagnen weiterarbeiten.
+
+Nach einem erfolgreichen Lauf sehen Sie die importierten Kontakte in Ihrer Kontaktliste und können sie sofort durchsuchen oder Kampagnen zuweisen.
+
+</Step>
+</Steps>
+
+## Kontakte suchen
+
+Suchen Sie Kontakte, um Datensätze schnell nach Namen, E-Mail, Telefonnummer oder Unternehmen zu finden. Die Suche ist besonders nützlich, bevor Sie neue Kontakte anlegen oder Kampagnen aktualisieren.
+
+### Wann Sie die Suche verwenden sollten
+
+- Vor dem Erstellen eines neuen Kontakts, um Duplikate zu vermeiden
+- Beim Prüfen, ob ein importierter Kontakt korrekt angelegt wurde
+- Beim Filtern einer Zielgruppe für Ansprache oder Nachverfolgung
+- Beim Auffinden eines Kontakts, bevor Sie DNC oder Kampagnenstatus ändern
+
+## DNC-Status verwalten
+
+Markieren Sie einen Kontakt als DNC, wenn Ihr Team ihn nicht kontaktieren soll. So verhindern Sie, dass Kontakte versehentlich in Outreach- oder Folgekampagnen aufgenommen werden.
+
+### Was DNC steuert
+
+- Ausgehende Kontaktaufnahme für diesen Kontakt blockieren
+- Teams beim Prüfen der Kontaktierbarkeit unterstützen
+- Segmentierung und Kampagnenregeln verbessern
+- Compliance-Risiken in Outreach-Workflows verringern
+
+<Callout kind="tip">
+
+Prüfen Sie den DNC-Status, bevor Sie einen Kontakt manuell in eine Kampagne einschreiben oder neu aktivieren.
+
+</Callout>
+
+## Kontakte in Kampagnen einschreiben
+
+Schreiben Sie Kontakte in Kampagnen ein, wenn sie die richtigen Zielgruppen- oder Qualifikationskriterien erfüllen. Kampagnenzuordnungen funktionieren am besten, wenn Kontaktfelder sauber, vollständig und aktuell sind.
+
+### Vor dem Einschreiben prüfen
+
+- Der Kontakt ist nicht als DNC markiert
+- E-Mail-Adresse oder Telefonnummer ist gültig
+- Unternehmens- und Rollendaten sind vollständig genug für Segmentierung
+- Der Kontakt wurde nicht bereits in eine widersprüchliche Kampagne aufgenommen
+
+## Kontakte mit KI extrahieren
+
+Extrahieren Sie Kontaktdaten mit KI, wenn Informationen aus unstrukturierten Quellen in verwendbare CRM-Felder umgewandelt werden sollen. Das ist nützlich für Notizen, Nachrichten oder Dokumente, die Namen, Unternehmen und Kontaktdaten enthalten.
+
+### Typische Anwendungsfälle
+
+- Kontaktangaben aus Freitextnotizen erfassen
+- Namen und Unternehmen aus eingehenden Nachrichten extrahieren
+- Rohdaten vor dem Erstellen von Kontakten strukturieren
+- Fehlende Felder vor Import oder Kampagneneinschreibung anreichern
+
+<ExpandableGroup>
+<Expandable title="Was Sie nach der KI-Extraktion prüfen sollten" default-open="false">
+
+- Stimmen Name und Unternehmen mit der Quelle überein
+- Wurde die E-Mail-Adresse in das richtige Feld übernommen
+- Ist die Telefonnummer im erwarteten Format gespeichert
+- Wurde kein bestehender Kontakt doppelt angelegt
+- Muss der Kontakt vor weiterer Nutzung als DNC markiert werden
+
+</Expandable>
+</ExpandableGroup>
+
+## Nächste Schritte
+
+Sobald Ihre Kontakte sauber strukturiert sind, können Sie sie sicher durchsuchen, segmentieren und in Kampagnen verwenden.
+
+<Columns cols={2}>
+<Card title="Kampagnen verwalten" href="/de/crm/campaigns" icon="rocket" cta="Zur Seite">
+Erfahren Sie, wie Sie Kontakte organisieren und in aktive Outreach-Abläufe aufnehmen.
+</Card>
+<Card title="CRM erkunden" href="/de/crm" icon="users" cta="Zur Übersicht">
+Wechseln Sie zurück zum CRM-Bereich, um verwandte Datensätze und Arbeitsabläufe zu prüfen.
+</Card>
+</Columns>

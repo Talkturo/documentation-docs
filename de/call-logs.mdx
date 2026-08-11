@@ -1,0 +1,139 @@
+---
+title: Anrufprotokolle und Transkripte
+description: Prüfen Sie Anrufverlauf, Aufzeichnungen, Transkripte, Analysis und die Kosten pro Anruf für jede von Ihren Assistenten geführte Unterhaltung.
+---
+
+## Anrufe prüfen und Ergebnisse nachvollziehen
+
+Anrufprotokolle zeigen Ihnen, was in jedem Gespräch passiert ist, wie der Assistent reagiert hat und welche Kosten dabei entstanden sind. Nutzen Sie sie, um Ergebnisse zu prüfen, Probleme nachzuvollziehen und die Qualität Ihrer Assistenten im Zeitverlauf zu verbessern.
+
+<Callout kind="info">
+
+Sie finden Anrufprotokolle im Dashboard für jede Unterhaltung, die von Ihren Assistenten bearbeitet wurde.
+
+</Callout>
+
+## Was Sie in den Anrufprotokollen sehen
+
+Die Anrufliste gibt Ihnen einen schnellen Überblick über vergangene Gespräche. Filtern Sie die Liste, um bestimmte Anrufe zu finden, und öffnen Sie dann einen einzelnen Eintrag, um die vollständigen Details zu prüfen.
+
+In der Detailansicht eines Anrufs stehen Ihnen fünf Tabs zur Verfügung:
+
+- **Logs** — technische Ablaufdetails des Anrufs
+- **Transcripts** — das Gespräch als Transkript
+- **Analysis** — KI-basierte Auswertung des Anrufergebnisses
+- **Messages** — einzelne Nachrichten und Antworten während des Anrufs
+- **Cost** — Aufschlüsselung der Credits pro Anruf
+
+## Anrufliste verwenden
+
+Die Anrufliste hilft Ihnen, schnell den richtigen Anruf zu finden. Je nach Workflow können Sie nach Zeiträumen, Assistenten oder anderen verfügbaren Filtern eingrenzen.
+
+Wenn Sie einen Anruf öffnen, gelangen Sie zur Detailansicht mit Aufzeichnung, Transkript, Analysis und Kosten.
+
+## Was die Anrufdetailansicht enthält
+
+Die Detailansicht bündelt alle Informationen zu einem einzelnen Gespräch an einem Ort. So können Sie ohne Wechsel zwischen mehreren Seiten nachvollziehen, was gesagt wurde, wie der Assistent entschieden hat und welche Ressourcen verbraucht wurden.
+
+### Logs
+
+Der Tab **Logs** zeigt technische Ereignisse und den Ablauf des Anrufs. Nutzen Sie ihn, wenn Sie verstehen möchten, wie der Anruf verarbeitet wurde oder warum ein bestimmtes Verhalten aufgetreten ist.
+
+### Transcripts
+
+Der Tab **Transcripts** zeigt das vollständige Gespräch zwischen Anrufer und Assistent. Prüfen Sie hier Formulierungen, Antworten und Stellen, an denen der Gesprächsverlauf unerwartet war.
+
+Wenn für den Anruf eine Aufzeichnung verfügbar ist, können Sie sie zusammen mit dem Transkript prüfen. Aufzeichnungen werden in Stereo wiedergegeben und mit WaveSurfer visualisiert, damit Sie Sprecher leichter unterscheiden und bestimmte Stellen schneller finden können.
+
+### Analysis
+
+Der Tab **Analysis** fasst das Ergebnis des Gesprächs mit KI-basierter Auswertung zusammen. Nutzen Sie ihn, um schneller zu erkennen, ob ein Anruf erfolgreich war, ob ein Ziel erreicht wurde oder ob ein Transfer stattgefunden hat.
+
+Wenn der Anruf weitergeleitet wurde, enthält Analysis auch Transfer-Details. Das ist besonders hilfreich, wenn Sie Kampagnen, Terminvereinbarungen oder Support-Weiterleitungen auswerten.
+
+### Messages
+
+Der Tab **Messages** zeigt die einzelnen Nachrichten, die während des Anrufs ausgetauscht wurden. Nutzen Sie ihn, wenn Sie die Unterhaltung auf Nachrichtenebene prüfen möchten, statt nur das zusammenhängende Transkript zu lesen.
+
+### Cost
+
+Der Tab **Cost** zeigt die Credit-Kosten pro Anruf als Aufschlüsselung nach Komponente. So sehen Sie genau, wie viel für **STT**, **LLM**, **TTS** und die Plattform angefallen ist.
+
+## Aufzeichnungen und Begrüßungen verstehen
+
+Anrufaufzeichnungen helfen Ihnen, Tonqualität, Timing und Gesprächsfluss zu prüfen. Wenn ein Gespräch nicht zustande kam und stattdessen eine Mailbox erreicht wurde, können Sie auch nachvollziehen, welche Voicemail-Begrüßung abgespielt wurde.
+
+Diese Details sind nützlich, wenn Sie Zustellprobleme untersuchen, Kampagnenleistung bewerten oder prüfen möchten, wie Ihr Assistent in echten Gesprächen klingt.
+
+## Latenzmetriken für Administratoren
+
+Administratoren können zusätzliche Leistungsmetriken pro Anruf sehen. Dazu gehören **P95**, **P50**, **EOU**, **LLM** und **TTS**-Latenzwerte.
+
+Diese Metriken helfen Ihnen, Antwortzeiten zu bewerten und Engpässe im Sprach-Workflow zu erkennen. Für die meisten täglichen Prüfungen reichen Transkript, Analysis und Cost aus, aber bei Performance-Untersuchungen liefern diese Werte den nötigen Kontext.
+
+<Callout kind="tip">
+
+Wenn Sie Gesprächsqualität prüfen, beginnen Sie mit **Transcripts** und **Analysis**. Öffnen Sie **Logs**, **Messages** und Latenzmetriken nur dann, wenn Sie tiefer in ein bestimmtes Problem einsteigen müssen.
+
+</Callout>
+
+## Empfohlener Workflow zur Anrufprüfung
+
+Mit diesem Ablauf prüfen Sie einen Anruf schnell und konsistent. Beginnen Sie mit dem Ergebnis und gehen Sie nur dann tiefer, wenn etwas unklar ist.
+
+<Steps>
+  <Step title="Anruf finden">
+
+Suchen Sie den relevanten Eintrag in der Anrufliste und verwenden Sie verfügbare Filter, um die Ergebnisse einzugrenzen.
+
+Ein erfolgreicher erster Check ist erreicht, wenn Sie den passenden Anruf geöffnet haben und die Detailansicht sehen.
+
+  </Step>
+  <Step title="Aufzeichnung und Transkript prüfen">
+
+Hören Sie die Aufzeichnung an, falls verfügbar, und lesen Sie das Transkript parallel dazu. Achten Sie auf falsche Erkennung, unklare Antworten oder Stellen, an denen der Gesprächsfluss abbricht.
+
+Sie sind mit diesem Schritt fertig, wenn Sie verstehen, was im Gespräch tatsächlich gesagt wurde.
+
+  </Step>
+  <Step title="Analysis für das Ergebnis verwenden">
+
+Öffnen Sie **Analysis**, um das Gesprächsergebnis schnell zusammenzufassen. Prüfen Sie hier besonders, ob das Ziel erreicht wurde und ob ein Transfer stattgefunden hat.
+
+Sie sind mit diesem Schritt fertig, wenn Sie das Ergebnis des Anrufs in einem Satz erklären können.
+
+  </Step>
+  <Step title="Logs, Messages und Cost bei Bedarf prüfen">
+
+Wechseln Sie zu **Logs**, **Messages** oder **Cost**, wenn Sie technische Details, den genauen Nachrichtenverlauf oder die Kostenaufteilung prüfen müssen.
+
+Dieser Schritt ist abgeschlossen, wenn Sie die Ursache eines Problems gefunden oder die Kosten des Anrufs nachvollzogen haben.
+
+  </Step>
+</Steps>
+
+## Wofür jeder Tab am besten geeignet ist
+
+| Tab | Wann Sie ihn verwenden | Was Sie dort finden |
+| --- | --- | --- |
+| Logs | Wenn Sie technische Abläufe prüfen | Ereignisse, Verarbeitungsschritte und Diagnoseinformationen |
+| Transcripts | Wenn Sie das Gespräch nachvollziehen | Vollständiges Gespräch und zugehörige Aufzeichnung |
+| Analysis | Wenn Sie das Ergebnis schnell verstehen möchten | KI-Zusammenfassung, Ergebnis und Transfer-Details |
+| Messages | Wenn Sie Antworten einzeln prüfen möchten | Nachricht-für-Nachricht-Verlauf |
+| Cost | Wenn Sie Credits pro Anruf nachvollziehen | Aufschlüsselung für STT, LLM, TTS und Plattform |
+
+## Was Sie als Nächstes prüfen sollten
+
+Wenn Sie aus den Anrufprotokollen konkrete Verbesserungen ableiten möchten, prüfen Sie als Nächstes Ihre Assistenten oder die Kampagnen, die diese Gespräche ausgelöst haben.
+
+<Columns cols={3}>
+  <Card title="Dashboard" href="/dashboard" icon="home" cta="Dashboard ansehen">
+  Gesamttrends, Aktivität und Leistung auf einen Blick prüfen.
+  </Card>
+  <Card title="Assistenten" href="/assistants" icon="users" cta="Assistenten ansehen">
+  Prompts, Verhalten und Konfiguration des Assistenten anpassen.
+  </Card>
+  <Card title="Kampagnen" href="/campaigns" icon="bar-chart" cta="Kampagnen ansehen">
+  Ausgehende Aktivität und anrufbezogene Ergebnisse im Kontext analysieren.
+  </Card>
+</Columns>

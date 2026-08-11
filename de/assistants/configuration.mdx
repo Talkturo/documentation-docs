@@ -1,0 +1,608 @@
+---
+title: Assistentenkonfiguration
+description: Konfigurieren Sie Prompts, Modelle, Stimme, Telephony, Tools, Analysis, Webhooks und E-Mail-Zusammenfassungen für Talkturo KI-Sprachagenten.
+---
+
+## Jede Assistenten-Registerkarte konfigurieren
+
+Die Assistentenkonfiguration steuert, wie Ihr Sprachagent spricht, zuhört, Anrufe durchführt, Tools verwendet und Ergebnisse meldet. Verwenden Sie diese Seite als Referenz auf Feldebene für alle 10 Konfigurationsregisterkarten im Assistenten-Editor.
+
+<Callout kind="info">
+
+Einige Felder ändern sich abhängig vom ausgewählten Modus, Anbieter oder aktivierten Feature. Wenn ein Feld nur im Standard-Modus oder für einen bestimmten Anbieter erscheint, wird diese Abhängigkeit in der Feldbeschreibung genannt.
+
+</Callout>
+
+## Prompt-Registerkarte
+
+Die Prompt-Registerkarte definiert, was der Assistent zuerst sagt und wie er sich im restlichen Verlauf des Anrufs verhalten soll. Beide Prompt-Felder unterstützen CRM-Variablen, sodass Sie Anrufe mit Kampagnen-, Kontakt- und Unternehmensdaten personalisieren können.
+
+### Prompt-Felder
+
+<ParamField body="first_message" param-type="string" show-location="false">
+Der erste gesprochene Satz, wenn ein Anruf verbunden wird. Dieses Feld unterstützt CRM-Variablen wie `{{contact.first_name}}` und `{{company.name}}`.
+</ParamField>
+
+<ParamField body="system_prompt" param-type="string" show-location="false">
+Der vollständige Anweisungs-Prompt für den Assistenten. Dieses Feld wird als erweiterbares Textfeld in Monospace-Schrift angezeigt und unterstützt CRM-Variablen.
+</ParamField>
+
+<ParamField body="prompt_template" param-type="string" show-location="false" enum="B2B SaaS Sales Qualify (Outbound),No Template">
+Optionale Ausgangsvorlage für den System-Prompt.
+</ParamField>
+
+### CRM-Variablen-Auswahl
+
+Drücken Sie in einem unterstützten Prompt-Feld <kbd>Ctrl</kbd> + <kbd>Space</kbd>, um die Variablenauswahl zu öffnen und eine Variable an der Cursorposition einzufügen.
+
+#### Kampagnen-Variablen
+
+- `{{campaign.name}}`
+- `{{campaign.description}}`
+- `{{campaign.from_number}}`
+
+#### Kontakt-Variablen
+
+- `{{contact.first_name}}`
+- `{{contact.last_name}}`
+- `{{contact.full_name}}`
+- `{{contact.email}}`
+- `{{contact.phone}}`
+- `{{contact.job_title}}`
+- `{{contact.lead_status}}`
+
+#### Unternehmens-Variablen
+
+- `{{company.name}}`
+- `{{company.website}}`
+- `{{company.industry}}`
+- `{{company.phone}}`
+- `{{company.city}}`
+- `{{company.state}}`
+- `{{company.country}}`
+
+#### Benutzerdefinierte Feld-Variablen
+
+- `{{contact.custom.<key>}}`
+- `{{company.custom.<key>}}`
+
+<Callout kind="tip">
+
+Verwenden Sie benutzerdefinierte Feld-Variablen, wenn Ihr CRM kontospezifische Daten wie Verlängerungsdatum, Plan-Stufe, Gebiet oder Namen von Verantwortlichen speichert. Ersetzen Sie `<key>` durch den benutzerdefinierten Feldschlüssel aus Ihrem CRM-Schema.
+
+</Callout>
+
+### Prompt-Aktionen
+
+| Aktion | Was sie tut |
+| --- | --- |
+| **AI Improve** | Sendet den aktuellen Prompt an `/api/improve-prompt` und gibt eine verbesserte Version zurück |
+| **AI Translate** | Übersetzt den Prompt in eine unterstützte Sprache |
+| **Template selector** | Ersetzt die aktuelle Vorlagenauswahl durch `B2B SaaS Sales Qualify (Outbound)` oder `No Template` |
+
+### Unterstützte Übersetzungssprachen
+
+AI Translate unterstützt diese 15 Sprachen:
+
+- Deutsch
+- Englisch
+- Spanisch
+- Französisch
+- Italienisch
+- Portugiesisch
+- Niederländisch
+- Polnisch
+- Russisch
+- Türkisch
+- Arabisch
+- Hindi
+- Japanisch
+- Chinesisch
+- Koreanisch
+
+## Model-Registerkarte
+
+Die Model-Registerkarte steuert den LLM-Anbieter, das Modell und die Generierungseinstellungen. Die verfügbaren Felder ändern sich je nachdem, ob der Assistent im Standard-Modus oder im Echtzeit-Modus läuft.
+
+<Tabs>
+  <Tab title="Standard-Modus" icon="settings">
+
+  Der Standard-Modus trennt Sprachmodell, Transkription und Text-to-Speech-Pipeline. Er bietet die größte Auswahl an Anbietern und die meisten Optionen zur Feinabstimmung.
+
+  <ParamField body="mode" param-type="string" show-location="false" enum="standard,realtime">
+  Auf `standard` setzen, um die Nicht-Echtzeit-Modellpipeline zu verwenden.
+  </ParamField>
+
+  <ParamField body="provider" param-type="string" show-location="false" enum="talkturo,openai,google,deepseek-ai,qwen,moonshotai,anthropic,cerebras">
+  LLM-Anbieter für den Standard-Modus.
+  </ParamField>
+
+  <ParamField body="model" param-type="string" show-location="false">
+  Modellname, der aus dem anbieterspezifischen Dropdown ausgewählt wird. Verfügbare Werte hängen vom ausgewählten Anbieter ab.
+  </ParamField>
+
+  <ParamField body="temperature" param-type="number" show-location="false">
+  Sampling-Temperatur. Bereich `0` bis `2`, Schrittweite `0.1`, Standard `0`.
+  </ParamField>
+
+  <ParamField body="max_tokens" param-type="integer" show-location="false">
+  Maximale Anzahl von Tokens, die das Modell generieren kann.
+  </ParamField>
+
+  <ParamField body="top_p" param-type="number" show-location="false">
+  Einstellung für Nucleus Sampling nur für Cerebras. Bereich `0` bis `1`, Schrittweite `0.05`, Standard `1`.
+  </ParamField>
+
+  <ParamField body="reasoning_effort" param-type="string" show-location="false" enum="default,low,medium,high">
+  Reasoning-Stufe nur für Cerebras-Thinking- und `gpt-oss`-Modelle.
+  </ParamField>
+
+  ### Standard-Modus-Anbieter
+
+  | Anbieterwert | Anzeigename |
+  | --- | --- |
+  | `talkturo` | Talkturo Fast |
+  | `openai` | OpenAI |
+  | `google` | Google |
+  | `deepseek-ai` | DeepSeek AI |
+  | `qwen` | Qwen |
+  | `moonshotai` | Moonshot AI |
+  | `anthropic` | Anthropic |
+  | `cerebras` | Cerebras |
+
+  </Tab>
+  <Tab title="Echtzeit-Modus" icon="zap">
+
+  Der Echtzeit-Modus kombiniert Sprechen und Modellantwort in einem Streaming-Ablauf mit geringer Latenz. Er unterstützt weniger Anbieter, ist aber für Live-Gespräche optimiert.
+
+  <ParamField body="mode" param-type="string" show-location="false" enum="standard,realtime">
+  Auf `realtime` setzen, um ein streamingfähiges Echtzeitmodell zu verwenden.
+  </ParamField>
+
+  <ParamField body="provider" param-type="string" show-location="false" enum="openai,google">
+  Anbieter des Echtzeitmodells.
+  </ParamField>
+
+  <ParamField body="model" param-type="string" show-location="false">
+  Name des Echtzeitmodells. OpenAI verwendet `gpt-realtime` oder `gpt-realtime-mini`. Google verwendet Gemini-Live-Modelle.
+  </ParamField>
+
+  <ParamField body="voice" param-type="string" show-location="false">
+  Integrierte Echtzeitstimme, die vom Anbieter verwendet wird.
+  </ParamField>
+
+  <ParamField body="temperature" param-type="number" show-location="false">
+  Sampling-Temperatur. OpenAI unterstützt `0.6` bis `1.2`. Google unterstützt `0` bis `2`.
+  </ParamField>
+
+  ### Echtzeit-Anbieter und Stimmenoptionen
+
+  | Anbieterwert | Anzeigename | Beispielmodelle | Stimmenoptionen |
+  | --- | --- | --- | --- |
+  | `openai` | OpenAI Realtime | `gpt-realtime`, `gpt-realtime-mini` | `marin`, `cedar`, `alloy`, `ash`, `ballad`, `coral`, `echo`, `sage`, `shimmer`, `verse` |
+  | `google` | Gemini Live | Gemini-Echtzeitmodelle | `Puck`, `Charon`, `Kore` und andere Google-Stimmenoptionen |
+
+  </Tab>
+</Tabs>
+
+<Callout kind="info">
+
+Die Voice-Konfiguration verhält sich je nach Modus unterschiedlich. Im Echtzeit-Modus erfolgt die Stimmwahl innerhalb der Model-Registerkarte. Im Standard-Modus verwenden Sie die separate Voice-Registerkarte.
+
+</Callout>
+
+## Voice-Registerkarte
+
+Die Voice-Registerkarte ist nur im Standard-Modus verfügbar. Sie steuert die Auswahl des TTS-Anbieters, die Stimmidentität, den Sprechstil, die Wiedergabegeschwindigkeit und synthetisierte Hintergrundgeräusche.
+
+<Callout kind="info">
+
+Diese Registerkarte gilt nicht für den Echtzeit-Modus. Echtzeitstimmen werden in der Model-Registerkarte konfiguriert, weil der Anbieter Generierung und Sprache gemeinsam verarbeitet.
+
+</Callout>
+
+### Voice-Felder
+
+<ParamField body="voice_provider" param-type="string" show-location="false" enum="cartesia,elevenlabs,inworld,openai,dashscope,kugel">
+Text-to-Speech-Anbieter.
+</ParamField>
+
+<ParamField body="voice_model" param-type="string" show-location="false">
+Anbieterspezifisches Stimmenmodell. Die Liste wird dynamisch aus `/api/voice-providers/models` geladen.
+</ParamField>
+
+<ParamField body="voice_id" param-type="string" show-location="false">
+Spezifische Stimmenauswahl für den gewählten Anbieter und das Modell. Die Liste wird dynamisch aus `/api/tts-voices` geladen.
+</ParamField>
+
+<ParamField body="emotion" param-type="string" show-location="false" enum="neutral,excited,sad,angry">
+Sprech-Emotion nur für Cartesia.
+</ParamField>
+
+<ParamField body="background_ambience" param-type="string" show-location="false" enum="none,office_ambience,keyboard_typing,keyboard_typing2,hold_music">
+Hintergrundatmosphäre, die in die synthetisierte Sprache eingemischt wird.
+</ParamField>
+
+<ParamField body="ambience_volume" param-type="number" show-location="false">
+Lautstärke der Hintergrundatmosphäre. Bereich `0` bis `1`, Schrittweite `0.05`, Standard `0.8`.
+</ParamField>
+
+<ParamField body="thinking_sound" param-type="string" show-location="false" enum="none,keyboard_typing,keyboard_typing2,keyboard_typing_mix">
+Soundeffekt, der abgespielt wird, während der Assistent nachdenkt.
+</ParamField>
+
+<ParamField body="noise_cancellation" param-type="string" show-location="false" enum="off,nc,bvc">
+Rauschunterdrückungsmodus. `bvc` ist der Standard.
+</ParamField>
+
+<ParamField body="speed" param-type="number" show-location="false">
+Geschwindigkeitsmultiplikator für die Sprache. Bereich `0.5` bis `2.0`, Schrittweite `0.1`, Standard `1`.
+</ParamField>
+
+### Rauschunterdrückungs-Modi
+
+| Wert | Bedeutung | Standard |
+| --- | --- | --- |
+| `off` | Keine Rauschunterdrückung | Nein |
+| `nc` | Standard-Rauschunterdrückung | Nein |
+| `bvc` | Background Voice Cancellation | Ja |
+
+## Transcriptor-Registerkarte
+
+Die Transcriptor-Registerkarte ist nur im Standard-Modus verfügbar. Sie steuert den Speech-to-Text-Anbieter, das Erkennungsmodell, die Sprache und anbieterspezifische Streaming-Einstellungen.
+
+### Transcriptor-Felder
+
+<ParamField body="provider" param-type="string" show-location="false" enum="deepgram,assemblyai,cartesia,elevenlabs,inworld">
+Speech-to-Text-Anbieter.
+</ParamField>
+
+<ParamField body="model" param-type="string" show-location="false">
+Anbieterspezifisches Transkriptionsmodell, zum Beispiel `deepgram/nova-3`, `deepgram/nova-2` oder `assemblyai/universal-streaming`.
+</ParamField>
+
+<ParamField body="language" param-type="string" show-location="false">
+Sprachcode, der für die Erkennung verwendet wird. Unterstützte Werte hängen vom ausgewählten Modell ab und können Codes wie `en`, `en-US`, `de`, `es`, `fr`, `it`, `pt` und `multi` enthalten.
+</ParamField>
+
+<ParamField body="keyterms" param-type="array[string]" show-location="false">
+Benutzerdefinierte Begriffe zur Verbesserung der Erkennungsgenauigkeit. Sie können bis zu `100` Schlüsselbegriffe hinzufügen.
+</ParamField>
+
+### Erweiterte Transkriptionseinstellungen
+
+<Expandable title="Anbieterspezifische erweiterte Optionen" default-open="false">
+
+Erweiterte Optionen variieren je nach Anbieter und Modell. Diese Einstellungen dienen dazu, Sprecherwechsel-Erkennung, Bereinigung des Transkripts und das Erkennungsverhalten abzustimmen.
+
+<ParamField body="endpointing" param-type="number | boolean" show-location="false">
+Anbieterspezifische Endpointing-Steuerung, um zu bestimmen, wann eine Äußerung beendet ist.
+</ParamField>
+
+<ParamField body="vad_sensitivity" param-type="string | number" show-location="false">
+Empfindlichkeit der Sprachaktivitätserkennung für unterstützte Anbieter.
+</ParamField>
+
+<ParamField body="punctuation" param-type="boolean" show-location="false">
+Aktiviert oder deaktiviert automatische Zeichensetzung, sofern unterstützt.
+</ParamField>
+
+<ParamField body="filler_word_filter" param-type="boolean" show-location="false">
+Filtert Füllwörter, sofern vom Anbieter unterstützt.
+</ParamField>
+
+</Expandable>
+
+<Callout kind="tip">
+
+Fügen Sie vor dem Testen einer neuen Kampagne Unternehmensnamen, Produktnamen, Wettbewerbernamen und Branchenbegriffe zu `keyterms` hinzu. Das verbessert die Transkriptqualität meist stärker, als nur das Basismodell zu ändern.
+
+</Callout>
+
+## Telephony-Registerkarte
+
+Die Telephony-Registerkarte steuert die Zuweisung von Telefonnummern, Anrufberechtigungen, Testanrufe, Compliance-Wiedergabe und das Verhalten bei Voicemail.
+
+### Telephony-Felder
+
+<ParamField body="assigned_phone_numbers" param-type="array[string]" show-location="false">
+Dem Assistenten zugewiesene Telefonnummern. Dies ist eine Mehrfachauswahl aus dem Telefonnummerninventar des Workspace.
+</ParamField>
+
+<ParamField body="region_or_sip_trunk" param-type="string" show-location="false">
+Regions- oder SIP-Trunk-Auswahl für Telnyx-Konten.
+</ParamField>
+
+<ParamField body="inbound_calling_enabled" param-type="boolean" show-location="false">
+Aktiviert eingehende Anrufe für diesen Assistenten.
+</ParamField>
+
+<ParamField body="inbound_company" param-type="string" show-location="false">
+Für eingehende Anrufe ausgewähltes Unternehmen, wenn eingehende Anrufe aktiviert sind.
+</ParamField>
+
+<ParamField body="outbound_calling_enabled" param-type="boolean" show-location="false">
+Aktiviert ausgehende Anrufe für diesen Assistenten.
+</ParamField>
+
+<ParamField body="destination_countries" param-type="array[string]" show-location="false">
+Erlaubte Zielländer für ausgehende Anrufe.
+</ParamField>
+
+<ParamField body="test_call_from_number" param-type="string" show-location="false">
+Quellnummer, die für Testanrufe verwendet wird.
+</ParamField>
+
+<ParamField body="test_call_to_number" param-type="string" show-location="false">
+Zielnummer, die für Testanrufe verwendet wird.
+</ParamField>
+
+### Compliance-Briefing
+
+<ParamField body="compliance_briefing_enabled" param-type="boolean" show-location="false">
+Aktiviert ein Compliance-Briefing am Anfang des Anrufs.
+</ParamField>
+
+<ParamField body="compliance_template" param-type="string" show-location="false">
+Vordefinierte Vorlage für das Compliance-Briefing.
+</ParamField>
+
+<ParamField body="compliance_custom_text" param-type="string" show-location="false">
+Benutzerdefinierter Text für das Compliance-Briefing. Maximal `2000` Zeichen.
+</ParamField>
+
+<ParamField body="require_acknowledgement" param-type="boolean" show-location="false">
+Verlangt, dass der Angerufene das Compliance-Briefing bestätigt, bevor der Assistent fortfährt.
+</ParamField>
+
+<ParamField body="fallback_policy" param-type="string" show-location="false" enum="continue,retry,block">
+Fallback-Verhalten, wenn die Bestätigung fehlschlägt oder der Ablauf nicht wie erwartet fortgesetzt werden kann.
+</ParamField>
+
+### Voicemail-Erkennung
+
+<ParamField body="voicemail_detection_enabled" param-type="boolean" show-location="false">
+Aktiviert die Voicemail-Erkennung. Standard `true`.
+</ParamField>
+
+<ParamField body="voicemail_action" param-type="string" show-location="false" enum="leave_message,hangup">
+Aktion, die ausgeführt wird, wenn eine Voicemail erkannt wird.
+</ParamField>
+
+<ParamField body="voicemail_message" param-type="string" show-location="false">
+Voicemail-Nachricht, die hinterlassen wird, wenn `voicemail_action` auf `leave_message` gesetzt ist. Maximal `2000` Zeichen.
+</ParamField>
+
+<Callout kind="alert">
+
+Prüfen Sie Compliance- und Voicemail-Texte, bevor Sie ausgehende Kampagnen aktivieren. Diese Felder beeinflussen das Verhalten in Live-Anrufen und können je nach Anwendungsfall und Region rechtliche oder richtlinienbezogene Auswirkungen haben.
+
+</Callout>
+
+## Functions-Registerkarte
+
+Die Functions-Registerkarte fügt dem Assistenten aufrufbare Tools hinzu. Mit diesen Tools kann der Assistent Anrufe beenden, Anrufer weiterleiten, Meetings planen, Automatisierungen auslösen oder externe Systeme aufrufen.
+
+### Eingebaute Anruffunktionen
+
+<ParamField body="end_call.enabled" param-type="boolean" show-location="false">
+Aktiviert die End-Call-Funktion.
+</ParamField>
+
+<ParamField body="end_call.trigger_phrases" param-type="array[string]" show-location="false">
+Formulierungen, die es dem Assistenten erlauben oder nahelegen, den Anruf zu beenden.
+</ParamField>
+
+<ParamField body="end_call.closing_phrase_mode" param-type="string" show-location="false" enum="fixed,none,ai">
+Wie der Assistent seine Abschlussformulierung auswählt, bevor die Verbindung getrennt wird.
+</ParamField>
+
+<ParamField body="end_call.closing_phrase" param-type="string" show-location="false">
+Abschlussformulierung, die verwendet wird, wenn `closing_phrase_mode` auf `fixed` gesetzt ist.
+</ParamField>
+
+<ParamField body="call_transfer.enabled" param-type="boolean" show-location="false">
+Aktiviert die Anrufweiterleitung.
+</ParamField>
+
+<ParamField body="call_transfer.play_dialtone" param-type="boolean" show-location="false">
+Spielt während der Weiterleitung einen Wählton ab.
+</ParamField>
+
+### Weiterleitungs-Abteilungsfelder
+
+Jede Weiterleitungsabteilung definiert ein Ziel, an das der Assistent weiterleiten kann.
+
+<ParamField body="departments[].name" param-type="string" show-location="false">
+Anzeigename für die Abteilung.
+</ParamField>
+
+<ParamField body="departments[].transfer_mode" param-type="string" show-location="false" enum="warm,cold">
+Weiterleitungsmodus für die Abteilung.
+</ParamField>
+
+<ParamField body="departments[].phone_number" param-type="string" show-location="false">
+Telefonnummer, die für das Weiterleitungsziel verwendet wird.
+</ParamField>
+
+### Verbundene Tool-Integrationen
+
+<ParamField body="cal.com" param-type="object" show-location="false">
+Cal.com-Integration. Unterstützte Funktionen sind `schedule`, `get_bookings`, `cancel` und `check_availability`.
+</ParamField>
+
+<ParamField body="zapier" param-type="object" show-location="false">
+Zapier-Integration. Jeder Assistent unterstützt eine einzelne Zapier-Instanz.
+</ParamField>
+
+<ParamField body="custom_webhooks" param-type="array[object]" show-location="false">
+Benutzerdefinierte Webhook-Tools. Ein Assistent kann mehrere Webhook-Tool-Konfigurationen haben.
+</ParamField>
+
+<ParamField body="turboflow_workflows" param-type="array[object]" show-location="false">
+Veröffentlichte TurboFlow-Workflows, die als aufrufbare Tools angehängt sind.
+</ParamField>
+
+### Zusammenfassung der Funktionsverfügbarkeit
+
+| Funktion | Anzahl | Hinweise |
+| --- | --- | --- |
+| End Call | Eine Konfiguration | Eingebaut |
+| Call Transfer | Eine Konfiguration mit mehreren Abteilungen | Eingebaut |
+| Cal.com | Eine Integration | Stellt Planungsaktionen bereit |
+| Zapier | Eine Integration pro Assistent | Nur eine Instanz |
+| Custom Webhook | Mehrere | Jeder Webhook hat eine eigene Konfiguration |
+| TurboFlow Workflows | Mehrere | Veröffentliche Flows anhängen |
+
+## Knowledge-Base-Registerkarte
+
+Die Knowledge-Base-Registerkarte verbindet verarbeitete Dokumente aus der Knowledge Base Ihres Workspace mit dem Assistenten. Angehängte Dateien stehen während Anrufen für Retrieval zur Verfügung.
+
+### Knowledge-Base-Felder
+
+<ParamField body="attached_documents" param-type="array[string]" show-location="false">
+Dokumente aus der Workspace-Knowledge-Base, die an den Assistenten angehängt sind.
+</ParamField>
+
+<ParamField body="file_status" param-type="string" show-location="false">
+Verarbeitungsstatus jeder Datei. Dateien müssen verarbeitet sein, bevor der Assistent sie verwenden kann.
+</ParamField>
+
+<ParamField body="chunk_count" param-type="integer" show-location="false">
+Anzahl der aus der Datei erzeugten Chunks.
+</ParamField>
+
+<ParamField body="character_count" param-type="integer" show-location="false">
+Anzahl der Zeichen in der Datei.
+</ParamField>
+
+<Callout kind="info">
+
+Eine Datei ist erst verwendbar, nachdem sie in Chunks und Embeddings verarbeitet wurde. Wenn eine Datei angehängt ist, aber noch verarbeitet wird, ruft der Assistent noch nichts daraus ab.
+
+</Callout>
+
+### Liste angehängter Dateien
+
+| Im UI angezeigtes Feld | Bedeutung |
+| --- | --- |
+| Status | Ob die Datei zur Verwendung bereit ist |
+| Chunk count | Anzahl indexierter Chunks |
+| Character count | Größe des Quelltexts |
+| Attachment state | Ob das Dokument aktuell an den Assistenten angehängt ist |
+
+## Analysis-Registerkarte
+
+Die Analysis-Registerkarte definiert, was Talkturo nach jedem Anruf extrahieren und auswerten soll. Verwenden Sie sie, um strukturierte Felder zu erfassen, Ergebnisse zu klassifizieren, Leads zu bewerten und festzulegen, ob der Anruf erfolgreich war.
+
+### Analysis-Felder
+
+<ParamField body="custom_extraction_prompts" param-type="array[string]" show-location="false">
+Benutzerdefinierte Prompts zum Extrahieren strukturierter Daten nach dem Anruf.
+</ParamField>
+
+<ParamField body="outcome_classification" param-type="object" show-location="false">
+Konfiguration für die Klassifizierung des Ergebnisses nach dem Anruf.
+</ParamField>
+
+<ParamField body="lead_scoring" param-type="object" show-location="false">
+Konfiguration für die Logik der Lead-Bewertung.
+</ParamField>
+
+<ParamField body="success_evaluation" param-type="object" show-location="false">
+Konfiguration zur Bestimmung, ob ein Anruf als erfolgreich zählt.
+</ParamField>
+
+<Expandable title="Was in einen benutzerdefinierten Extraktions-Prompt gehört" default-open="false">
+
+Verwenden Sie Extraktions-Prompts für Felder, die geschäftsspezifisch sind und sich nicht leicht aus einer generischen Zusammenfassung ableiten lassen. Geeignete Kandidaten sind Budgetspanne, Verlängerungsfenster, Implementierungszeitplan, bestehender Anbieter, Produktinteresse oder verantwortliche Person für das Follow-up.
+
+Halten Sie jeden Extraktions-Prompt auf genau eine Ausgabe fokussiert. Kleinere Prompts lassen sich leichter validieren und pflegen als ein großer Prompt, der alles gleichzeitig erfassen soll.
+
+</Expandable>
+
+## Webhooks-Registerkarte
+
+Die Webhooks-Registerkarte sendet Ereignisse aus dem Anruflebenszyklus an Ihre Systeme. Konfigurieren Sie die Ziel-URL, wählen Sie aus, welche Ereignisse gesendet werden sollen, und verwenden Sie den integrierten Testablauf, bevor Sie einen Webhook für Produktions-Traffic aktivieren.
+
+### Webhook-Felder
+
+<ParamField body="webhook_url" param-type="string" show-location="false">
+Ziel-URL, die Webhook-Ereignisse empfängt.
+</ParamField>
+
+<ParamField body="secret" param-type="string" show-location="false">
+Geheimnis, das zum Signieren oder Validieren der Webhook-Zustellung verwendet wird.
+</ParamField>
+
+<ParamField body="events" param-type="array[string]" show-location="false" enum="call.started,call.ended,call.transcribed">
+Ausgewählte Ereignistypen für diese Webhook-Konfiguration.
+</ParamField>
+
+<ParamField body="test_webhook" param-type="action" show-location="false">
+Sendet einen Test-Webhook mit der aktuellen Konfiguration.
+</ParamField>
+
+### Unterstützte Ereignisse
+
+| Ereignis | Auslöser |
+| --- | --- |
+| `call.started` | Ein Anruf beginnt |
+| `call.ended` | Ein Anruf endet |
+| `call.transcribed` | Transkriptionsdaten werden verfügbar |
+
+<Callout kind="tip">
+
+Führen Sie nach Änderungen an URL, Secret oder Ereignisauswahl einen Test-Webhook aus. So erkennen Sie Signaturfehler und falsche Endpunkte, bevor Live-Anrufe Traffic senden.
+
+</Callout>
+
+## Email-Summary-Registerkarte
+
+Die Email-Summary-Registerkarte sendet automatisch eine Anrufzusammenfassung, nachdem ein Anruf abgeschlossen wurde. Verwenden Sie sie, wenn ein menschlicher Operator, ein Manager oder ein gemeinsames Postfach eine Kopie jeder abgeschlossenen Anrufzusammenfassung erhalten soll.
+
+### Email-Summary-Felder
+
+<ParamField body="enabled" param-type="boolean" show-location="false">
+Aktiviert oder deaktiviert automatische E-Mail-Zusammenfassungen.
+</ParamField>
+
+<ParamField body="recipient_email" param-type="string" show-location="false">
+E-Mail-Adresse des Empfängers für die Zusammenfassung.
+</ParamField>
+
+<ParamField body="language" param-type="string" show-location="false">
+Sprache, die für die E-Mail-Zusammenfassung verwendet wird.
+</ParamField>
+
+<ParamField body="auto_send" param-type="boolean" show-location="false">
+Wenn aktiviert, werden Zusammenfassungen nach Abschluss des Anrufs automatisch gesendet.
+</ParamField>
+
+## Modusabhängige Registerkarten
+
+Nicht jede Registerkarte ist in jedem Assistentenmodus verfügbar. Verwenden Sie diese Matrix, wenn Sie wissen müssen, wo sich eine Einstellung befindet.
+
+| Registerkarte | Standard-Modus | Echtzeit-Modus |
+| --- | --- | --- |
+| Prompt | Ja | Ja |
+| Model | Ja | Ja |
+| Voice | Ja | Nein |
+| Transcriptor | Ja | Nein |
+| Telephony | Ja | Ja |
+| Functions | Ja | Ja |
+| Knowledge Base | Ja | Ja |
+| Analysis | Ja | Ja |
+| Webhooks | Ja | Ja |
+| Email Summary | Ja | Ja |
+
+## Was zuerst konfigurieren
+
+<Columns cols={2}>
+  <Card title="Den richtigen Modellmodus wählen" href="/assistants/configuration" icon="zap" cta="Modelleinstellungen prüfen">
+  Der Standard-Modus gibt Ihnen separate Kontrolle über Modell, Stimme und Transkription. Der Echtzeit-Modus reduziert die Latenz und verlagert die Stimmwahl in die Model-Registerkarte.
+  </Card>
+  <Card title="Telephony vor dem Testen einrichten" href="/assistants/configuration" icon="phone" cta="Telephony-Felder prüfen">
+  Weisen Sie Nummern zu, aktivieren Sie eingehende oder ausgehende Anrufe und bestätigen Sie Voicemail- und Compliance-Verhalten, bevor Sie Live-Anrufe durchführen.
+  </Card>
+</Columns>

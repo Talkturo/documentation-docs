@@ -1,0 +1,163 @@
+---
+title: Workspaces und Teams
+description: Organisieren Sie Ihr Team in gemeinsamen Workspaces, verwalten Sie Rollen und Einladungen und steuern Sie den Zugriff auf Abrechnung, Einstellungen und Ressourcen.
+---
+
+## Wie Talkturo Ihr Konto organisiert
+
+Talkturo trennt Ihr persönliches Konto von den Workspaces, in denen Ihr Team arbeitet. Ein Workspace ist eine gemeinsame Umgebung für ein Team, ein Unternehmen oder ein Kundenkonto und enthält die Ressourcen, die alle in diesem Team zusammen nutzen.
+
+Innerhalb eines Workspaces verwalten Sie Assistenten, Kampagnen, CRM-Daten, Telefonnummern, Abrechnung, API-Schlüssel, Telefonieeinstellungen und andere gemeinsame Konfigurationen. Wenn Sie mit mehr als einem Team arbeiten, können Sie mehreren Workspaces angehören und bei Bedarf zwischen ihnen wechseln.
+
+<Callout kind="info">
+
+Alle operativen Aufgaben finden innerhalb eines Workspaces statt. Ihr persönliches Konto speichert Ihre Identität und Sicherheitseinstellungen, während Ihr Workspace die gemeinsam genutzten Team-Ressourcen und Zugriffsregeln speichert.
+
+</Callout>
+
+## Persönliche Konten und Team-Workspaces
+
+Ein persönliches Konto gehört Ihnen als Einzelperson. Es umfasst Ihre Profildaten, Anmeldemethoden und persönlichen Sicherheitseinstellungen.
+
+Ein Team-Workspace gehört der Organisation oder dem Team, mit dem Sie arbeiten. Er gibt mehreren Personen Zugriff auf dieselben gemeinsamen Assistenten, Kampagnen, CRM-Datensätze, Telefonnummern und Konfigurationen.
+
+### Was zu Ihrem persönlichen Konto gehört
+
+Ihr persönliches Konto umfasst:
+
+- Ihren Namen
+- Ihren Avatar
+- Ihre E-Mail-Adresse
+- Ihr Passwort
+- Multi-Faktor-Authentifizierungseinstellungen
+- Persönliche Abrechnung für individuelle Abonnements
+
+### Was zu einem Team-Workspace gehört
+
+Ein Workspace umfasst die gemeinsamen Tools und Daten, die Ihr Team zusammen nutzt:
+
+- Assistenten
+- Kampagnen
+- CRM-Daten
+- Telefonnummern
+- Abrechnung für den Workspace
+- API-Schlüssel
+- Telefonieeinstellungen
+- Compliance- und Verifizierungseinstellungen
+- Teammitglieder und ihre Rollen
+
+<Callout kind="tip">
+
+Jeder neue Workspace startet mit 10 kostenlosen Credits. So hat Ihr Team ein kleines Guthaben, um die Einrichtung und grundlegende Abläufe zu testen, bevor mehr Nutzung hinzugefügt wird.
+
+</Callout>
+
+## Rollen und Berechtigungen
+
+Rollen steuern, was jedes Mitglied innerhalb eines Workspaces verwalten kann. Verwenden Sie die am stärksten eingeschränkte Rolle, die einer Person trotzdem ermöglicht, ihre Aufgaben zu erledigen.
+
+| Rolle | Zugriffsstufe | Abrechnung verwalten | API-Schlüssel verwalten | Mitglieder verwalten | Workspace-Einstellungen verwalten | Operative Funktionen nutzen |
+| --- | --- | --- | --- | --- | --- | --- |
+| Owner | Volle Kontrolle | Ja | Ja | Ja | Ja | Ja |
+| Admin | Umfassender Workspace-Zugriff | Nein | Ja | Ja | Ja | Ja |
+| Member | Standard-Workspace-Zugriff | Nein | Nein | Nein | Nein | Ja |
+
+### Zweck der einzelnen Rollen
+
+**Owner** ist die höchste Workspace-Rolle. Owner können die Abrechnung, API-Schlüssel, Mitglieder, Compliance-Einstellungen und alle anderen Workspace-Konfigurationen verwalten.
+
+**Admin** ist für vertrauenswürdige Teammitglieder gedacht, die die meisten Workspace-Ressourcen verwalten müssen, ohne das Konto finanziell zu besitzen. Admins können operative Ressourcen und API-Schlüssel verwalten und bei der Verwaltung von Mitgliedern und Einstellungen helfen.
+
+**Member** ist für tägliche Nutzer gedacht. Members können mit Assistenten, Kampagnen, CRM und anderen operativen Funktionen arbeiten, steuern jedoch nicht die Workspace-Administration.
+
+<Callout kind="alert">
+
+Geben Sie Owner- oder Admin-Zugriff nur an Personen, die gemeinsame Einstellungen, Zugriffe oder Zugangsdaten verwalten müssen. Diese Rollen wirken sich auf den gesamten Workspace aus, nicht nur auf das eigene Konto.
+
+</Callout>
+
+## Teammitglieder verwalten
+
+Laden Sie Teammitglieder per E-Mail ein, wenn sie Ihrem Workspace beitreten sollen. Nachdem Sie eine Einladung gesendet haben, tritt die Person über die Seite `/join` bei und erhält Zugriff entsprechend der Rolle, die Sie zugewiesen haben.
+
+Owner und Admins können Mitglieder entfernen, wenn jemand keinen Zugriff mehr benötigt. Sie können auch Rollen zuweisen oder aktualisieren, damit die Berechtigungen eines Mitglieds zu dessen Verantwortlichkeiten passen.
+
+### Häufige Mitgliederverwaltungsaufgaben
+
+- **Mitglied einladen**, indem Sie seine E-Mail-Adresse eingeben
+- **Rolle zuweisen** als Owner, Admin oder Member
+- **Rolle aktualisieren**, wenn sich Verantwortlichkeiten ändern
+- **Mitglied entfernen**, um den Workspace-Zugriff zu entziehen
+- **Einladung annehmen** über die Seite `/join`
+
+## Workspace-Einstellungen
+
+Workspace-Einstellungen steuern, wie sich die gemeinsame Umgebung für alle im Team verhält. Diese Einstellungen gehören zum Workspace, nicht zu einem einzelnen Mitglied.
+
+### Zentrale Workspace-Details
+
+Verwenden Sie die Workspace-Einstellungen, um die Grundlagen Ihres gemeinsamen Kontos festzulegen:
+
+- **Workspace-Name** zur Identifikation des Teams
+- **Sprache** für die unterstützte Lokalisierung der Benutzeroberfläche
+- **Zeitzone** für konsistente Planung und Berichterstattung
+
+Talkturo unterstützt Workspace-Spracheinstellungen für **Englisch** und **Deutsch**.
+
+### Geteilte Konfigurationsbereiche
+
+Die meisten Teams verwalten außerdem diese Einstellungen auf Workspace-Ebene:
+
+- **Definitionen benutzerdefinierter CRM-Felder**, um gemeinsame CRM-Daten zu strukturieren
+- **API-Schlüssel** für Workspace-Integrationen und programmatischen Zugriff
+- **Telefonieeinstellungen** für Anrufinfrastruktur und Nummernkonfiguration
+- **Compliance- und KYC-Verifizierung** für regulierte Einrichtung und Kontoverifizierung
+
+<Callout kind="info">
+
+Workspace-Einstellungen wirken sich auf alle im Workspace aus. Bevor Sie Sprache, Zeitzone, Telefonie oder CRM-Definitionen ändern, stimmen Sie die Änderung mit den Personen ab, die täglich auf diese Einstellungen angewiesen sind.
+
+</Callout>
+
+## Persönliche Einstellungen
+
+Persönliche Einstellungen betreffen nur Ihr eigenes Konto. Sie gelten in jedem Workspace, dem Sie angehören.
+
+### Profileinstellungen
+
+Verwenden Sie Ihre persönlichen Profileinstellungen, um Folgendes zu verwalten:
+
+- Ihren Namen
+- Ihren Avatar
+- Ihre E-Mail-Adresse
+
+### Sicherheitseinstellungen
+
+Verwenden Sie persönliche Sicherheitseinstellungen, um Ihr Konto zu schützen:
+
+- Passwortänderungen
+- Multi-Faktor-Authentifizierung mit TOTP
+
+### Gefahrenbereich
+
+Löschen Sie Ihr Konto in Ihren persönlichen Einstellungen, wenn Sie Talkturo nicht mehr nutzen möchten. Das Löschen eines Kontos ist eine persönliche Aktion und getrennt davon, einen Workspace zu verlassen oder aus einem Workspace entfernt zu werden.
+
+<Callout kind="danger">
+
+Das Löschen Ihres persönlichen Kontos unterscheidet sich davon, ein Mitglied aus einem Workspace zu entfernen. Wenn Sie nur ein Team verlassen müssen, bitten Sie stattdessen einen Owner oder Admin, Ihren Workspace-Zugriff zu entfernen.
+
+</Callout>
+
+## Das richtige Konto für jede Aufgabe wählen
+
+Verwenden Sie Ihr **persönliches Konto**, wenn Sie Ihre Identität, Anmeldung oder persönliche Sicherheit aktualisieren müssen. Verwenden Sie einen **Workspace**, wenn Sie gemeinsame Team-Ressourcen, Mitglieder, Abrechnung oder Konfiguration verwalten müssen.
+
+Diese Unterscheidung trennt die persönliche Identität von Team-Abläufen und erleichtert die Arbeit über mehrere Organisationen hinweg, ohne Daten oder Berechtigungen zu vermischen.
+
+## Verwandte Seiten
+
+<Columns cols={3}>
+  <Card title="Abrechnung" href="/billing" icon="bar-chart" cta="Abrechnung öffnen" />
+  <Card title="Authentifizierung" href="/authentication" icon="lock" cta="Anmeldung und Sicherheit verwalten" />
+  <Card title="Telefonie" href="/telephony" icon="phone" cta="Telefonie einrichten" />
+</Columns>

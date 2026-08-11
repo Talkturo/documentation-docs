@@ -1,0 +1,311 @@
+---
+title: Kampagnen
+description: Führen Sie ausgehende Anrufkampagnen mit AI-Assistenten, Kontaktwarteschlangen, Planung und Wiederholungslogik innerhalb Ihrer Regeln aus.
+---
+
+## Ausgehende Kampagnen im großen Maßstab ausführen
+
+Kampagnen sind Talkturos System für ausgehende Anrufe. Eine Kampagne kombiniert einen AI-Assistenten mit einer Kontaktliste, einem Satz von Telefonnummern und Anrufregeln und wählt Kontakte dann automatisch entsprechend dem von Ihnen definierten Zeitplan und Wiederholungsverhalten an.
+
+Die Kampagnen-Engine prüft alle 30 Sekunden, ob Arbeit anliegt. Wenn eine Kampagne aktiv ist und sich innerhalb ihres Anruffensters befindet, zieht die Engine berechtigte Kontakte aus der Warteschlange und startet Anrufe basierend auf Ihren Kampagneneinstellungen.
+
+<Callout kind="info">
+
+Kampagnen sind nur für ausgehende Anrufe gedacht. Der Assistent, den Sie mit einer Kampagne verknüpfen, muss ausgehende Anrufe unterstützen.
+
+</Callout>
+
+## Wie Kampagnen funktionieren
+
+Eine Kampagne durchläuft einen vorhersehbaren Lebenszyklus. Sie richten sie einmal ein, schreiben Kontakte ein, definieren die Regeln und lassen dann die Wähl-Engine die Warteschlange abarbeiten.
+
+<Steps>
+  <Step title="Kampagne erstellen" icon="plus">
+
+  Erstellen Sie eine Kampagne und verbinden Sie sie mit einem Assistenten, einem Unternehmen und einer oder mehreren ausgehenden Telefonnummern.
+
+  In dieser Phase befindet sich die Kampagne normalerweise noch im Status `draft`, bis Sie eine Planung hinzufügen oder sie manuell starten.
+
+  </Step>
+  <Step title="Kontakte einschreiben" icon="users">
+
+  Fügen Sie Kontakte aus Ihrem CRM hinzu, importieren Sie sie gesammelt oder wählen Sie die Datensätze, die Sie anrufen möchten, manuell aus.
+
+  Kontakte werden zu Kampagnenkontakten und gelangen mit ihrem eigenen Zustellstatus in die Warteschlange.
+
+  </Step>
+  <Step title="Wählregeln definieren" icon="settings">
+
+  Konfigurieren Sie, wann Anrufe erlaubt sind, wie viele Versuche jeder Kontakt erhalten soll, wie lange vor Wiederholungen gewartet werden soll und wie viele Anrufe gleichzeitig laufen können.
+
+  Diese Regeln steuern, wer angerufen wird, wann angerufen wird und wie die Warteschlange fortschreitet.
+
+  </Step>
+  <Step title="Kampagne starten oder planen" icon="play-circle">
+
+  Starten Sie die Kampagne sofort oder legen Sie einen zukünftigen Startzeitpunkt fest.
+
+  Wenn Sie sie planen, startet die cron-gesteuerte Engine sie automatisch, sobald die Startzeit erreicht ist, solange das Konto über genügend Credits verfügt.
+
+  </Step>
+  <Step title="Überwachen und anpassen" icon="bar-chart">
+
+  Beobachten Sie die Kampagnenaktivität in Echtzeit und pausieren Sie die Kampagne, wenn Sie die Konfiguration ändern müssen.
+
+  Laufende Kampagnen verarbeiten weiterhin alle 30 Sekunden Kontakte, bis alle berechtigten Kontakte bearbeitet wurden oder die Kampagne pausiert, abgeschlossen oder abgebrochen wird.
+
+  </Step>
+</Steps>
+
+## Kampagnenstatus
+
+Kampagnen verwenden eine kleine Menge von Statuswerten, die zeigen, ob sie bereit, wartend, am Wählen oder abgeschlossen sind.
+
+| Status | Bedeutung |
+|---|---|
+| `draft` | Erstellt, aber noch nicht geplant oder gestartet. |
+| `scheduled` | Eine zukünftige Startzeit ist festgelegt. Die Engine startet die Kampagne automatisch, wenn dieser Zeitpunkt erreicht ist. |
+| `running` | Die Kampagne wählt aktiv Kontakte an. |
+| `paused` | Das Wählen ist angehalten, aber eingeschriebene Kontakte bleiben in der Warteschlange. |
+| `completed` | Alle Kontakte wurden verarbeitet. |
+| `cancelled` | Die Kampagne wurde manuell gestoppt und wird nicht fortgesetzt. |
+
+## Statusübergänge verstehen
+
+Das meiste Kampagnenverhalten läuft auf einige wichtige Statuswechsel hinaus. Wenn Sie diese Übergänge kennen, können Sie vorhersagen, wann eine Kampagne startet, pausiert oder stoppt.
+
+### Häufige Übergänge
+
+| Übergang | Was ihn auslöst |
+|---|---|
+| `draft` → `scheduled` | Setzen Sie `scheduledStartAt` auf einen zukünftigen Startzeitpunkt. |
+| `scheduled` → `running` | Die Startzeit wird erreicht und das Konto verfügt über ausreichende Credits. |
+| `scheduled` → `paused` | Die Startzeit wird erreicht, aber das Konto hat nicht genügend Credits für den Start. |
+| `running` → `paused` | Sie pausieren die Kampagne manuell, oder die Credits gehen während einer aktiven Kampagne aus. |
+| `running` → `completed` | Alle Kontakte sind verarbeitet, sofern der automatische Abschluss nicht deaktiviert ist. |
+| `completed` / `cancelled` | Dies sind Endzustände und sie können nicht in aktive Zustände zurückkehren. |
+
+<Callout kind="alert">
+
+Sie können die zentrale Kampagnenkonfiguration nicht ändern, während eine Kampagne den Status `running` hat. Pausieren Sie die Kampagne zuerst, nehmen Sie Ihre Änderungen vor und setzen Sie sie dann fort.
+
+</Callout>
+
+### Was Abschluss bedeutet
+
+Eine Kampagne erreicht den Status `completed`, wenn sie keine Arbeit mehr zu verarbeiten hat. In der Praxis bedeutet das, dass jeder eingeschriebene Kontakt angerufen, übersprungen, fehlgeschlagen oder auf andere Weise aus der aktiven Warteschlange entfernt wurde.
+
+Wenn Ihr Workflow den automatischen Abschluss deaktiviert, bleibt die Kampagne möglicherweise außerhalb des normalen Abschlusswegs, selbst wenn die Warteschlange leer ist. Verwenden Sie Echtzeit-Kampagnenstatistiken, um zu bestätigen, ob noch Arbeit aussteht.
+
+## Kampagne erstellen
+
+Sie benötigen vier Pflichtfelder, um eine gültige Kampagne zu erstellen. Alles andere steuert Planung, Gleichzeitigkeit, Wiederholungen und Integrationen.
+
+### Pflichtfelder
+
+<ParamField body="assistantId" param-type="string" required="true" show-location="false">
+
+Der der Kampagne zugewiesene Assistent. Der Assistent muss für ausgehende Anrufe aktiviert sein.
+
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="true" show-location="false">
+
+Das Unternehmen, zu dem die Kampagne gehört. Das Unternehmen muss zu Ihrem Workspace gehören.
+
+</ParamField>
+
+<ParamField body="fromNumberIds" param-type="string[]" required="true" show-location="false">
+
+Eine oder mehrere UUIDs ausgehender Telefonnummern, von denen aus die Kampagne wählen kann.
+
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true" show-location="false">
+
+Ein nicht leerer Kampagnenname.
+
+</ParamField>
+
+### Optionale Felder
+
+<ParamField body="description" param-type="string" required="false" show-location="false">
+
+Kurzer interner Kontext für die Kampagne.
+
+</ParamField>
+
+<ParamField body="scheduledStartAt" param-type="string" required="false" show-location="false">
+
+Zukünftiger Startzeitstempel. Das Setzen dieses Felds verschiebt eine Kampagne von `draft` zu `scheduled`.
+
+</ParamField>
+
+<ParamField body="callWindowStart" param-type="string" required="false" show-location="false">
+
+Die tägliche Uhrzeit, zu der das Anrufen beginnen darf.
+
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false" show-location="false">
+
+Die tägliche Uhrzeit, zu der das Anrufen enden muss.
+
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false" show-location="false">
+
+Die Zeitzone, die zur Interpretation des Anruffensters verwendet wird.
+
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false" show-location="false">
+
+Die maximale Anzahl von Anrufen, die die Kampagne gleichzeitig ausführen kann.
+
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false" show-location="false">
+
+Die maximale Anzahl von Anrufversuchen, die pro Kontakt erlaubt ist.
+
+</ParamField>
+
+<ParamField body="retryDelayMinutes" param-type="integer" required="false" show-location="false">
+
+Die Verzögerung zwischen Wiederholungsversuchen für denselben Kontakt.
+
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false" show-location="false">
+
+Zusätzliche Einstellungen für das Kampagnenverhalten.
+
+</ParamField>
+
+<ParamField body="webhook configuration" param-type="object" required="false" show-location="false">
+
+Webhook-Ziel und zugehörige Zustelleinstellungen für Kampagnenereignisse.
+
+</ParamField>
+
+### Beispiel-Erstellungsanfrage
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/campaigns" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Q4 reactivation campaign",
+    "assistantId": "asst_7d92f4a1",
+    "companyId": "cmp_31ab82d9",
+    "fromNumberIds": [
+      "9f8d1c5f-3c31-45b7-8ef1-72e4b53e6b11"
+    ],
+    "scheduledStartAt": "2026-09-15T14:00:00Z",
+    "callWindowStart": "09:00",
+    "callWindowEnd": "17:00",
+    "callWindowTimezone": "America/New_York",
+    "maxConcurrentCalls": 4,
+    "maxAttemptsPerContact": 3,
+    "retryDelayMinutes": 120
+  }'
+```
+</Request>
+
+<Response tabs="201">
+```json
+{
+  "id": "camp_4bc91e27",
+  "name": "Q4 reactivation campaign",
+  "status": "scheduled",
+  "assistantId": "asst_7d92f4a1",
+  "companyId": "cmp_31ab82d9",
+  "fromNumberIds": [
+    "9f8d1c5f-3c31-45b7-8ef1-72e4b53e6b11"
+  ],
+  "scheduledStartAt": "2026-09-15T14:00:00Z",
+  "callWindowStart": "09:00",
+  "callWindowEnd": "17:00",
+  "callWindowTimezone": "America/New_York",
+  "maxConcurrentCalls": 4,
+  "maxAttemptsPerContact": 3,
+  "retryDelayMinutes": 120
+}
+```
+</Response>
+
+## Kampagnen-API
+
+Verwenden Sie diese Endpunkte, um Kampagnen zu erstellen, Kontakte zu verwalten, die Ausführung zu steuern und Live-Statistiken abzurufen.
+
+| Endpunkt | Methode | Zweck |
+|---|---|---|
+| `/api/crm/campaigns` | `GET` | Kampagnen mit Filtern auflisten. |
+| `/api/crm/campaigns` | `POST` | Eine Kampagne erstellen. |
+| `/api/crm/campaigns/[id]` | `GET` | Kampagnendetails einschließlich Kontakte abrufen. |
+| `/api/crm/campaigns/[id]` | `PUT` | Kampagnenfelder aktualisieren und Statusübergänge anwenden. |
+| `/api/crm/campaigns/[id]` | `DELETE` | Eine Kampagne per Soft Delete löschen. Nur Kampagnen mit `draft` oder `cancelled` können gelöscht werden. |
+| `/api/crm/campaigns/[id]/run` | `POST` | Eine Kampagne starten oder stoppen. |
+| `/api/crm/campaigns/[id]/contacts` | `POST` | Kontakte in eine Kampagne einschreiben. |
+| `/api/crm/campaigns/[id]/dashboard` | `GET` | Echtzeit-Kampagnenstatistiken abrufen. |
+
+## Mit Kampagnenkontakten arbeiten
+
+Kampagnen wählen CRM-Kontakte nicht direkt an. Sie wählen Kampagnenkontakte an, also eingeschriebene Datensätze, die innerhalb einer bestimmten Kampagne verfolgt werden.
+
+### Einschreibemethoden
+
+Sie können Kontakte auf drei Arten zu einer Kampagne hinzufügen:
+
+- **Alle berechtigten Kontakte** über den Zielgruppenmodus
+- **Manuelle Auswahl** nach Kontakt-IDs
+- **Inline erstellen und einschreiben**, wenn Sie einen neuen Kontakt direkt zur Kampagne hinzufügen müssen
+
+Wenn ein Kontakt als DNC markiert ist, erfasst Talkturo die Einschreibung trotzdem, markiert diesen Kontakt aber automatisch als `skipped`.
+
+### Kontaktstatus
+
+Jeder eingeschriebene Kontakt durchläuft seinen eigenen Zustellstatus, während die Kampagne fortschreitet.
+
+| Kontaktstatus | Bedeutung |
+|---|---|
+| `pending` | Eingeschrieben, aber noch nicht für das Wählen vorbereitet. |
+| `queued` | Bereit, von der Wähl-Engine übernommen zu werden. |
+| `calling` | Ein Anrufversuch läuft gerade. |
+| `completed` | Der Kontakt hat den Kampagnenablauf erfolgreich abgeschlossen. |
+| `skipped` | Der Kontakt wurde nicht angerufen, einschließlich DNC-Kontakten. |
+| `failed` | Die Kampagne konnte den Kontakt nach der Verarbeitung nicht abschließen. |
+
+### Warteschlangen-Reihenfolge
+
+Wenn mehrere Kontakte gleichzeitig bereit sind, verarbeitet Talkturo sie in dieser Reihenfolge:
+
+1. Höhere `priority` zuerst
+2. Früheres `created_at` zuerst, wenn die Priorität gleich ist
+
+Diese Reihenfolge entspricht `priority DESC, created_at ASC`. Wenn Sie auf eine genaue Sequenzierung angewiesen sind, setzen Sie die Kontaktpriorität, bevor die Kampagne beginnt.
+
+## Credits und Kampagnenausführung
+
+Kampagnen benötigen verfügbare Credits zum Startzeitpunkt und während sie laufen. Credits beeinflussen sowohl, ob eine Kampagne starten kann, als auch, ob sie weiter wählen kann.
+
+<Callout kind="alert">
+
+Eine Kampagne benötigt mindestens `1.0` Credits, um zu laufen. Wenn die Credits unter den erforderlichen Schwellenwert fallen, pausiert Talkturo die Kampagne automatisch.
+
+</Callout>
+
+Wenn eine geplante Kampagne ihren Startzeitpunkt erreicht, prüft Talkturo die Konto-Credits, bevor sie in den Status `running` wechselt. Wenn das Konto nicht über genügend Credits verfügt, wechselt die Kampagne zu `paused`, anstatt Kontakte anzurufen.
+
+Nachdem Sie Credits hinzugefügt haben, werden gesperrte Telefonnummern wieder aktiviert. Sie können die pausierte Kampagne dann fortsetzen und die vorhandene Warteschlange weiter verarbeiten.
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+  <Card title="Kampagnen konfigurieren" href="/campaigns/configuration" icon="settings" cta="Anleitung öffnen" />
+  <Card title="Kampagnen in Echtzeit überwachen" href="/campaigns/realtime" icon="bar-chart" cta="Dashboard ansehen" />
+  <Card title="CRM-Kontakte verwalten" href="/crm/contacts" icon="users" cta="Kontakte öffnen" />
+  <Card title="Assistenten auswählen" href="/assistants/overview" icon="bot" cta="Assistenten ansehen" />
+</Columns>

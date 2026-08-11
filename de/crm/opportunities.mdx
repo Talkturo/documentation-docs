@@ -1,0 +1,185 @@
+---
+title: Opportunities
+description: Verwalten Sie Verkaufschancen in Ihrer Pipeline mit Phasen, Feldern, Kanban-Ansicht, KI-gestützten Updates und API-Endpunkten.
+---
+
+## Verkaufschancen in Ihrer Pipeline verwalten
+
+Opportunities helfen Ihnen, Deals von der ersten Erfassung bis zum Abschluss zu verfolgen. Sie organisieren Ihre Pipeline in Phasen, speichern wichtige Deal-Daten und geben Ihrem Team eine gemeinsame Ansicht auf den aktuellen Vertriebsstatus.
+
+<Callout kind="info">
+
+Opportunities unterstützen die Standardphasen `new`, `contacted`, `proposal`, `closed-won` und `closed-lost`. Sie können außerdem benutzerdefinierte Phasen für Ihren Prozess verwenden.
+
+</Callout>
+
+### Unterstützte Pipeline-Phasen
+
+Verwenden Sie Phasen, um den Fortschritt jeder Opportunity in Ihrer Pipeline abzubilden. Die Standardphasen decken typische Vertriebsabläufe ab, während benutzerdefinierte Phasen spezielle interne Prozesse unterstützen.
+
+<ParamField body="stage" param-type="string" required="true" show-location="false">
+Der aktuelle Pipeline-Status der Opportunity. Unterstützte Standardwerte sind `new`, `contacted`, `proposal`, `closed-won` und `closed-lost`. Sie können auch benutzerdefinierte Phasen verwenden.
+</ParamField>
+
+### Verfügbare Felder
+
+Diese Felder definieren die Kerndaten einer Opportunity. Verwenden Sie sie in der Oberfläche, in Automatisierungen und in API-Anfragen.
+
+<ParamField body="name" param-type="string" required="true" show-location="false">
+Der Name der Opportunity.
+</ParamField>
+
+<ParamField body="stage" param-type="string" required="true" show-location="false">
+Die aktuelle Pipeline-Phase der Opportunity.
+</ParamField>
+
+<ParamField body="amount" param-type="number" show-location="false">
+Der erwartete Umsatzwert der Opportunity.
+</ParamField>
+
+<ParamField body="probability" param-type="number" show-location="false">
+Die geschätzte Abschlusswahrscheinlichkeit der Opportunity, normalerweise als Prozentwert verwendet.
+</ParamField>
+
+<ParamField body="expectedCloseDate" param-type="string" show-location="false">
+Das erwartete Abschlussdatum der Opportunity.
+</ParamField>
+
+<ParamField body="contactId" param-type="string" show-location="false">
+Die ID des zugehörigen Kontakts.
+</ParamField>
+
+<ParamField body="companyId" param-type="string" show-location="false">
+Die ID des zugehörigen Unternehmens.
+</ParamField>
+
+### Opportunitys in der Kanban-Ansicht verfolgen
+
+Die Kanban-Ansicht zeigt Opportunities als Karten, gruppiert nach Pipeline-Phase. So erkennen Sie schnell, wo Deals stehen, welche Opportunities Aufmerksamkeit brauchen und wo sich Ihre Pipeline staut.
+
+Wenn Sie Opportunities zwischen Spalten verschieben, aktualisieren Sie direkt ihre Phase. Das ist besonders nützlich für Teams, die ihre Pipeline in Meetings oder bei der täglichen Vertriebsarbeit visuell verwalten.
+
+### KI-gestützte Updates
+
+KI-gestützte Updates helfen Ihnen, Opportunity-Daten aktuell zu halten. Dazu können automatische Änderungen an Phasen oder Feldern gehören, wenn neue Aktivität, Kontext oder Signale in Ihrem CRM erkannt werden.
+
+<Callout kind="tip">
+
+Verwenden Sie KI-gestützte Updates, um manuelle Pflege zu reduzieren. Prüfen Sie trotzdem wichtige Änderungen an Betrag, Wahrscheinlichkeit und Abschlussstatus, bevor Sie Forecasts darauf stützen.
+
+</Callout>
+
+### Opportunities über die API verwalten
+
+Verwenden Sie die API, um Opportunities programmatisch zu erstellen, abzurufen, zu aktualisieren und zu löschen. Das ist nützlich, wenn Sie Ihre Pipeline mit externen Systemen synchronisieren oder Opportunity-Daten aus anderen Tools anreichern.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.acme.com/crm/opportunities" \
+  -H "Authorization: Bearer dkai_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Enterprise Renewal - Northwind",
+    "stage": "proposal",
+    "amount": 48000,
+    "probability": 70,
+    "expectedCloseDate": "2026-09-30",
+    "contactId": "cnt_9a8b7c6d",
+    "companyId": "cmp_4f3e2d1c"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.acme.com/crm/opportunities", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer dkai_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    name: "Enterprise Renewal - Northwind",
+    stage: "proposal",
+    amount: 48000,
+    probability: 70,
+    expectedCloseDate: "2026-09-30",
+    contactId: "cnt_9a8b7c6d",
+    companyId: "cmp_4f3e2d1c"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="201" default-tab="1">
+```json
+{
+  "id": "opp_7h6g5f4e",
+  "name": "Enterprise Renewal - Northwind",
+  "stage": "proposal",
+  "amount": 48000,
+  "probability": 70,
+  "expectedCloseDate": "2026-09-30",
+  "contactId": "cnt_9a8b7c6d",
+  "companyId": "cmp_4f3e2d1c"
+}
+```
+</Response>
+
+Nach einer erfolgreichen Erstellung gibt die API eine neue Opportunity mit ihrer eindeutigen ID zurück. Verwenden Sie diese ID für spätere Updates, Verknüpfungen und Berichte.
+
+### Typische API-Endpunkte
+
+Diese Endpunkte decken die häufigsten Opportunity-Aktionen ab:
+
+- `GET /crm/opportunities`
+- `POST /crm/opportunities`
+- `GET /crm/opportunities/:id`
+- `PATCH /crm/opportunities/:id`
+- `DELETE /crm/opportunities/:id`
+
+### Antwortfelder
+
+Die API-Antwort enthält die zentralen Opportunity-Felder im strukturierten Format.
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige ID der Opportunity.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Der Name der Opportunity.
+</ResponseField>
+
+<ResponseField name="stage" field-type="string" required="true">
+Die aktuelle Pipeline-Phase der Opportunity.
+</ResponseField>
+
+<ResponseField name="amount" field-type="number">
+Der erwartete Umsatzwert der Opportunity.
+</ResponseField>
+
+<ResponseField name="probability" field-type="number">
+Die geschätzte Abschlusswahrscheinlichkeit der Opportunity.
+</ResponseField>
+
+<ResponseField name="expectedCloseDate" field-type="string">
+Das erwartete Abschlussdatum der Opportunity.
+</ResponseField>
+
+<ResponseField name="contactId" field-type="string">
+Die ID des verknüpften Kontakts.
+</ResponseField>
+
+<ResponseField name="companyId" field-type="string">
+Die ID des verknüpften Unternehmens.
+</ResponseField>
+
+### Nächste Schritte
+
+Sobald Ihre Opportunities strukturiert sind, können Sie Ihre Pipeline konsistent pflegen, Forecasts verbessern und Änderungen über die API automatisieren.
+
+<Columns cols={2}>
+  <Card title="Kontakte verwalten" href="/de/crm/contacts" icon="users" cta="Zur Seite wechseln" />
+  <Card title="Unternehmen verwalten" href="/de/crm/companies" icon="database" cta="Zur Seite wechseln" />
+</Columns>

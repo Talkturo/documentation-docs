@@ -1,0 +1,224 @@
+---
+title: KI-Sprachagenten
+description: Erstellen und bereitstellen Sie konfigurierbare KI-Telefonagenten mit flexiblen Modellen, Telefonie, Tools, Wissensabruf und Automatisierung nach Anrufen.
+---
+
+## KI-Telefonagenten aus einem einzelnen Assistenten bereitstellen
+
+Assistenten sind der zentrale Baustein von Talkturo KI-Sprachagenten. Jeder Assistent bündelt Gesprächsverhalten, Modelle, Stimme, Transkription, Telefonie, Tools und Workflows nach dem Anruf in einem bereitstellbaren Telefonagenten für echte eingehende und ausgehende Anrufe.
+
+Sie können einen Assistenten verwenden, um Leads zu qualifizieren, Support-Anrufe zu beantworten, Meetings zu buchen, Anrufer weiterzuleiten, strukturierte Daten zu erfassen und nach dem Gespräch nachgelagerte Systeme auszulösen. Derselbe Assistent lässt sich sowohl für latenzarme Live-Gespräche als auch für eine tiefere Konfiguration über jede Stufe der Sprachpipeline hinweg anpassen.
+
+<Callout kind="info">
+
+Talkturo verwendet den Begriff **Assistent** für einen KI-Sprachagenten. Im gesamten Produkt steuern die Assistenten-Einstellungen, wie der Agent während eines Telefonanrufs spricht, zuhört, schlussfolgert und handelt.
+
+</Callout>
+
+## Was Assistenten können
+
+Assistenten vereinen den Sprach-Stack und Ihre Geschäftslogik an einem Ort. Standardmäßig können Sie Folgendes konfigurieren:
+
+- **Benutzerdefinierte System-Prompts** mit CRM-Variableninterpolation wie `{{contact.first_name}}` und `{{company.name}}`
+- **Mehrere LLM-Anbieter** einschließlich OpenAI, Google Gemini, DeepSeek, Qwen, Kimi, Anthropic, Cerebras und Talkturo Fast
+- **Mehrere STT-Anbieter** einschließlich Deepgram, AssemblyAI, Cartesia, ElevenLabs und Inworld
+- **Mehrere TTS-Anbieter** einschließlich Cartesia, ElevenLabs, Inworld, OpenAI, DashScope und Kugel
+- **Standard- und Echtzeit-Modi** für unterschiedliche Latenz- und Konfigurationsanforderungen
+- **Telefonie-Zuweisung** für eingehende und ausgehende Anrufe
+- **Tool-Funktionen** wie Anrufweiterleitung, Kalenderbuchung, benutzerdefinierte Webhooks, Zapier und TurboFlow-Workflows
+- **Knowledge-Base-Anbindung** für abrufbasierte Antworten während Anrufen
+- **KI-Analyse nach dem Anruf** mit benutzerdefinierten Extraktions-Prompts
+- **Event-Webhooks** für Ereignisse im Anruflebenszyklus
+- **E-Mail-Zusammenfassungen** nach Anrufen
+- **Voicemail-Erkennung und -Verarbeitung**
+- **Unterstützung für Compliance-Briefings**
+- **Klonen von Assistenten**, um funktionierende Konfigurationen zu duplizieren
+
+## Mit einer Vorlage starten oder selbst aufbauen
+
+Vorlagen geben Ihnen einen schnelleren Einstieg, wenn Sie bereits wissen, welchen Anruftyp Sie automatisieren möchten. Eine benutzerdefinierte Einrichtung gibt Ihnen vom ersten Bildschirm an die volle Kontrolle über den Assistenten.
+
+| Vorlage | Am besten für | Startet mit |
+|---|---|---|
+| Outbound Setter | Ausgehende Verkaufsqualifizierungs-Anrufe | Auf Prospecting fokussierter Anrufablauf und Outreach-Standardeinstellungen |
+| Inbound Support | Beantworten eingehender Kundensupport-Anrufe | Support-orientierte Prompt-Struktur und eingehende Anrufverarbeitung |
+| Follow-up | Erneute Ansprache bestehender Kontakte | Follow-up-Nachrichten und Kontakt-Reaktivierungsmuster |
+| Custom | Von Grund auf mit voller Kontrolle | Minimale Standardeinstellungen, damit Sie jeden Teil selbst konfigurieren |
+
+## Assistent erstellen
+
+Talkturo unterstützt drei gängige Wege zur Erstellung. Die meisten Teams beginnen mit dem geführten Assistenten und klonen dann Assistenten, während sie erfolgreiche Setups weiter verfeinern.
+
+<Steps>
+  <Step title="Setup-Assistenten verwenden" icon="rocket">
+
+  Der geführte Ablauf führt in sieben Schritten durch die wichtigsten Anforderungen an den Assistenten:
+
+  1. Assistent konfigurieren
+  2. Unternehmensinformationen
+  3. Telefonnummer
+  4. Unternehmen
+  5. Kontakte
+  6. Kampagne
+  7. Abschließen
+
+  Dieser Weg ist die schnellste Möglichkeit, einen funktionierenden Assistenten mit bereits verbundener Telefonie und Geschäftskontext zu starten.
+
+  </Step>
+
+  <Step title="Assistent über die API erstellen" icon="code">
+
+  Wenn Sie Assistenten programmgesteuert bereitstellen, erstellen Sie sie mit `POST /api/assistants` und übergeben den Account-Slug, den Assistentennamen und die Vorlagen-ID.
+
+  <Request>
+  ```bash
+  curl -X POST "https://api.talkturo.com/api/assistants" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer tkt_example_9xmk7q2r" \
+    -d '{
+      "accountSlug": "acme-sales",
+      "name": "Acme inbound support",
+      "templateId": "inbound-support"
+    }'
+  ```
+  </Request>
+
+  <Response>
+  ```json
+  {
+    "id": "ast_7f4c2d91",
+    "name": "Acme inbound support",
+    "templateId": "inbound-support",
+    "status": "draft"
+  }
+  ```
+  </Response>
+
+  Eine erfolgreiche Anfrage gibt einen neuen Assistenten-Datensatz zurück, den Sie in der App weiter konfigurieren können.
+
+  </Step>
+
+  <Step title="Bestehenden Assistenten klonen" icon="copy">
+
+  Duplizieren Sie einen vorhandenen Assistenten, wenn Sie denselben Prompt, dieselben Modelle, Tools und dasselbe Telefonieverhalten mit kleinen Änderungen verwenden möchten. Klonen ist der schnellste Weg, um Varianten für neue Kampagnen, Regionen, Produkte oder Teams zu erstellen.
+
+  </Step>
+</Steps>
+
+<Callout kind="tip">
+
+Klonen Sie einen bereits bewährten Assistenten, bevor Sie größere Änderungen an Prompt oder Anbieter vornehmen. So haben Sie einen sicheren Rollback-Pfad und halten das Verhalten in der Produktion stabil, während Sie testen.
+
+</Callout>
+
+## Zwischen Standard- und Echtzeit-Modus wählen
+
+Der Assistentenmodus bestimmt, wie Talkturo die Sprachverarbeitung während des Anrufs handhabt. Der Standard-Modus stellt jede Stufe der Pipeline separat bereit, während der Echtzeit-Modus ein Speech-to-Speech-Modell mit weniger beweglichen Teilen verwendet.
+
+<Tabs>
+  <Tab title="Standard-Modus" icon="settings">
+
+  Der Standard-Modus verwendet separate STT-, LLM- und TTS-Komponenten. Wählen Sie diesen Modus, wenn Sie mehr Kontrolle über Transkription, Modellverhalten, Sprachausgabe und erweiterte Anbietereinstellungen benötigen.
+
+  Dieser Modus folgt der klassischen Pipeline und verwendet die vollständigen Konfigurationsflächen von Voice und Transcriptor. Er passt zu Teams, die jede Stufe unabhängig abstimmen oder Anbieter aus Qualitäts-, Sprach- oder Kostengründen austauschen möchten.
+
+  </Tab>
+  <Tab title="Echtzeit-Modus" icon="zap">
+
+  Der Echtzeit-Modus verwendet ein einzelnes Speech-to-Speech-Modell wie OpenAI Realtime oder Google Gemini Live. Wählen Sie diesen Modus, wenn eine geringere Latenz wichtiger ist als eine fein abgestimmte Kontrolle pro Stufe.
+
+  Der Echtzeit-Modus vereinfacht die Konfiguration, weil die Registerkarten Voice und Transcriptor nicht verwendet werden. Der Großteil des Assistentenverhaltens verlagert sich in Prompt-, Modell-, Telefonie-, Tool- und Einstellungen nach dem Anruf.
+
+  </Tab>
+</Tabs>
+
+## Die Assistenten-Konfigurationsregisterkarten verstehen
+
+Sobald ein Assistent vorhanden ist, konfigurieren Sie ihn über zehn Registerkarten. Jede Registerkarte steuert einen Teil des Anruferlebnisses oder einen Workflow nach dem Anruf.
+
+| Registerkarte | Was sie steuert |
+|---|---|
+| Prompt | System-Prompt, erste Nachricht, CRM-Variablen, Vorlagen und KI-Prompt-Verbesserung |
+| Model | LLM-Anbieter, Modell, Temperatur, maximale Token und Reasoning-Aufwand |
+| Voice | TTS-Anbieter, Stimmauswahl, Emotion, Hintergrundatmosphäre und Geschwindigkeit |
+| Transcriptor | STT-Anbieter, Modell, Sprache und erweiterte Transkriptionsoptionen |
+| Telephony | Telefonnummern, eingehendes und ausgehendes Verhalten, Voicemail und Compliance |
+| Functions | Tool-Integrationen, Anruf beenden, Anrufweiterleitung und Kalenderbuchung |
+| Knowledge Base | Dokumentanbindung für abrufbasierte Antworten |
+| Analysis | Extraktion nach dem Anruf, Ergebnisse und Lead-Scoring |
+| Webhooks | Konfiguration der Ereignisübermittlung |
+| Email Summary | Automatische Zustellung von Anrufzusammenfassungen per E-Mail |
+
+<Callout kind="info">
+
+Wenn Sie den Echtzeit-Modus verwenden, gelten die Registerkarten **Voice** und **Transcriptor** nicht. Echtzeit-Assistenten verwenden das Sprachmodell direkt anstelle einer separaten Transkriptions- und Synthese-Pipeline.
+
+</Callout>
+
+## Wie die Teile zusammenwirken
+
+Ein bereitgestellter Assistent folgt in der Regel demselben übergeordneten Ablauf: einen Anruf annehmen oder platzieren, dem Anrufer zuhören, eine Antwort erzeugen, sie zurücksprechen, bei Bedarf Tools aufrufen und das Ergebnis nach dem Gespräch speichern.
+
+```mermaid
+graph TD
+  A[Incoming or outbound call] --> B[Telephony]
+  B --> C[Assistant prompt and business context]
+  C --> D[Speech processing]
+  D --> E[Reasoning model]
+  E --> F[Voice response]
+  E --> G[Tool functions]
+  C --> H[Knowledge base retrieval]
+  B --> I[Voicemail handling]
+  E --> J[Post-call analysis]
+  J --> K[Webhooks and email summary]
+```
+
+Diesen Ablauf können Sie durchgängig konfigurieren. Sie können den Assistenten für eine eng abgegrenzte Aufgabe einfach halten oder Tools, Wissensabruf, Scoring und Automatisierung für komplexere Produktions-Workflows anbinden.
+
+## Häufige Einsatzmuster
+
+Unterschiedliche Teams strukturieren Assistenten je nach Anruftyp unterschiedlich. Diese Muster sind häufige Ausgangspunkte:
+
+- **Sales-Qualifizierung:** ausgehende Telefonie, CRM-Variablen, Prompt zur Behandlung von Einwänden, Kalenderbuchung und Lead-Scoring
+- **Eingehender Support:** Support-Prompt, Knowledge-Base-Abruf, Weiterleitungsfunktionen und E-Mail-Zusammenfassungen
+- **Reaktivierungskampagnen:** Follow-up-Vorlage, kontaktspezifische Variablen, Webhook-Trigger und Ergebnisextraktion
+- **Empfangs-Weiterleitung:** eingehende Telefonie, Compliance-Briefing, Voicemail-Verarbeitung und Weiterleitungslogik
+
+## Verwandte Konfigurationsanleitungen
+
+<Columns cols={3}>
+  <Card
+    title="Assistenten-Konfiguration"
+    href="/assistants/configuration"
+    icon="settings"
+    cta="Anleitung öffnen"
+  />
+  <Card
+    title="Stimmenbibliothek"
+    href="/voice-library"
+    icon="play-circle"
+    cta="Stimmen durchsuchen"
+  />
+  <Card
+    title="Knowledge Base"
+    href="/knowledge-base"
+    icon="book-open"
+    cta="Dokumente verwalten"
+  />
+  <Card
+    title="Anrufprotokolle"
+    href="/call-logs"
+    icon="bar-chart"
+    cta="Anrufe prüfen"
+  />
+  <Card
+    title="Telephony"
+    href="/telephony"
+    icon="phone"
+    cta="Nummern konfigurieren"
+  />
+</Columns>
+
+## Was als Nächstes konfigurieren
+
+Beginnen Sie mit den Einstellungen für Prompt, Telephony und Tools, weil diese drei Bereiche den größten Teil des Live-Anruferlebnisses prägen. Sobald der Assistent ein grundlegendes Gespräch führen kann, fügen Sie Wissensabruf, Analyse nach dem Anruf und Webhooks hinzu, um ihn mit dem Rest Ihres Workflows zu verbinden.

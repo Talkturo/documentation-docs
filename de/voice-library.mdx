@@ -1,0 +1,200 @@
+---
+title: Stimmenbibliothek
+description: Durchsuchen, probehören und klonen Sie TTS-Stimmen für Ihre Assistenten und weisen Sie die passende Stimme mit Anbieter-, Modell- und Sprachdetails zu.
+---
+
+## Assistentenstimmen wählen und verwalten
+
+Die Stimmenbibliothek ist der Ort, an dem Sie verfügbare Text-to-Speech-Stimmen durchsuchen, Hörproben anhören und die Stimme auswählen, die Ihr Assistent verwenden soll. Sie unterstützt auch geklonte Stimmen, sodass Sie aus hochgeladenen Stimmproben eine benutzerdefinierte Stimme erstellen können, wenn Sie eine engere Abstimmung auf Marke oder Persona brauchen.
+
+Sie können die Bibliothek auf zwei Arten nutzen: integrierte Stimmen über unterstützte Anbieter hinweg vergleichen oder eigene geklonte Stimmen erstellen und sie wie jeden anderen Bibliothekseintrag verwenden. Sobald Sie eine Stimme für einen Assistenten auswählen, füllt Talkturo die zugehörigen Stimmeinstellungen automatisch aus.
+
+<Callout kind="info">
+
+Hören Sie eine Stimme probe, bevor Sie sie einem Assistenten zuweisen. Stimmenname, Sprache und Modellkennzeichnungen helfen beim Eingrenzen der Liste, aber die Hörprobe ist der schnellste Weg, um Ton, Tempo und Klarheit zu prüfen.
+
+</Callout>
+
+## Stimmen über Anbieter hinweg durchsuchen
+
+Die Bibliothek kombiniert Stimmen aus Talkturos gespeichertem Katalog und Live-Daten der Anbieter. So haben Sie einen zentralen Ort, um Standardstimmen mehrerer TTS-Anbieter zu prüfen, ohne zwischen den Dashboards der Anbieter wechseln zu müssen.
+
+### Verfügbare Anbieter
+
+Nutzen Sie die Bibliothek, um Stimmen der folgenden Anbieter zu durchsuchen.
+
+| Anbieter | Was Sie in der Bibliothek sehen | Hinweise |
+| --- | --- | --- |
+| Cartesia | Anbieter, Stimmenname, Sprache, verfügbare Modelle | Ermöglicht auch Stimm-Kloning |
+| ElevenLabs | Anbieter, Stimmenname, Sprache, verfügbare Modelle | Unterstützt Browser-Vorschau |
+| Inworld | Anbieter, Stimmenname, Sprache, verfügbare Modelle | Unterstützt Browser-Vorschau |
+| OpenAI | Anbieter, Stimmenname, Sprache, verfügbare Modelle | Verfügbar für Assistenten-Stimmauswahl |
+| DashScope | Anbieter, Stimmenname, Sprache, verfügbare Modelle | Unterstützt Browser-Vorschau |
+| Kugel | Anbieter, Stimmenname, Sprache, verfügbare Modelle | Verfügbar im geteilten Katalog |
+
+### Die Bibliothek filtern
+
+Verwenden Sie Filter, um die Liste einzugrenzen, bevor Sie Hörproben anhören. Die wichtigsten Filter sind:
+
+- **Anbieter**, um sich auf einen bestimmten TTS-Anbieter zu konzentrieren
+- **Sprache**, damit sie zur Sprache passt, die Ihr Assistent spricht
+- **Geschlecht**, um die Liste zu verkleinern, wenn Sie das gewünschte Stimmprofil bereits kennen
+
+Jeder Stimmeintrag zeigt:
+
+- **Anbieter**
+- **Stimmenname**
+- **Sprache**
+- **Verfügbare Modelle**
+
+Die Stimmdaten stammen aus zwei Quellen:
+
+- `/api/tts-voices` für katalogbasierte Einträge aus der Datenbank
+- `/api/voice-providers/voices` für anbieterseitige Stimmdaten
+
+<Callout kind="tip">
+
+Wenn Sie eine Stimme für einen mehrsprachigen Assistenten auswählen, filtern Sie zuerst nach Sprache. So entfernen Sie Stimmen, die in der Hörprobe gut klingen, aber nicht für die Sprache vorgesehen sind, die Ihr Assistent im produktiven Einsatz spricht.
+
+</Callout>
+
+## Stimmen vor der Zuweisung probehören
+
+Hören Sie Stimmproben direkt im Browser an, um Vortrag, Akzent, Tempo und die generelle Eignung zu vergleichen. Probehören ist der schnellste Weg, um zu vermeiden, dass Sie eine Stimme zuweisen, die in der Liste richtig aussieht, in Live-Anrufen aber falsch klingt.
+
+Talkturo verwendet anbieterspezifische Vorschau-Endpunkte für unterstützte Anbieter:
+
+| Anbieter | Vorschau-Endpunkt |
+| --- | --- |
+| Cartesia | `/api/tts-voices/cartesia-preview` |
+| ElevenLabs | `/api/tts-voices/elevenlabs-preview` |
+| DashScope | `/api/tts-voices/dashscope-preview` |
+| Inworld | `/api/tts-voices/inworld-preview` |
+
+### Worauf Sie achten sollten
+
+Eine kurze Hörprobe zeigt meist schon, ob eine Stimme für Ihren Assistenten geeignet ist. Achten Sie auf einige praktische Punkte:
+
+- **Klarheit** bei Namen, Zahlen und kurzen Antworten
+- **Tempo** bei längeren Antworten
+- **Ton** für Ihre Marke, Kampagne oder Persona
+- **Sprachpassung** bei Akzent und Aussprache
+
+<Callout kind="alert">
+
+Nicht jeder Anbieter verwendet denselben Vorschauablauf. Wenn eine Stimme in der Bibliothek verfügbar ist, aber keine Browser-Vorschau auf die gleiche Weise bereitstellt, prüfen Sie die Stimme in einem Testanruf des Assistenten, bevor Sie sie breit ausrollen.
+
+</Callout>
+
+## Eine benutzerdefinierte Stimme klonen
+
+Erstellen Sie eine geklonte Stimme, wenn integrierte Stimmen nah dran sind, aber nicht nah genug. Geklonte Stimmen sind nützlich, wenn Sie eine konsistente Markenstimme, eine bestimmte Persona oder einen benutzerdefinierten Sprechstil möchten, den Standardstimmen der Anbieter nicht abdecken.
+
+Talkturo verwendet **Cartesia voice cloning** für benutzerdefinierte geklonte Stimmen. Nachdem Sie Stimmproben hochgeladen und den Klon erstellt haben, erscheint die neue Stimme in der Stimmenbibliothek neben den Anbieterstimmen.
+
+### Wie geklonte Stimmen funktionieren
+
+Geklonte Stimmen werden über `/api/voice-cloning` für Create-, Read-, Update- und Delete-Vorgänge verwaltet. Sobald ein Klon in der Bibliothek verfügbar ist, können Sie ihn genauso auswählen wie jede Standardstimme.
+
+<Steps>
+  <Step title="Stimmproben hochladen" icon="upload">
+
+  Fügen Sie die Audioproben hinzu, die zum Erstellen einer geklonten Stimme benötigt werden. Verwenden Sie klare Aufnahmen, die zu dem Sprechstil passen, den der Assistent wiedergeben soll.
+
+  Erfolg sieht so aus: Ein neuer Klonvorgang oder eine gespeicherte Stimmprobe erscheint im Workflow für Stimm-Kloning.
+
+  </Step>
+  <Step title="Geklonnte Stimme erstellen" icon="plus">
+
+  Senden Sie den Klon über den von Cartesia gestützten Workflow für Stimm-Kloning ab. Talkturo speichert und verwaltet die geklonte Stimme über die Voice-Cloning-API.
+
+  Erfolg sieht so aus: Ein abgeschlossener Eintrag für eine benutzerdefinierte Stimme wird verfügbar und erscheint in der Bibliothek.
+
+  </Step>
+  <Step title="Geklonnte Stimme in der Bibliothek finden" icon="check-circle">
+
+  Kehren Sie zur Stimmenbibliothek zurück und suchen oder filtern Sie nach Ihrer neuen benutzerdefinierten Stimme. Geklonte Stimmen erscheinen zusammen mit dem restlichen verfügbaren Katalog.
+
+  Erfolg sieht so aus: Ein Stimmeintrag, den Sie wie jede andere Stimme probehören und auswählen können.
+
+  </Step>
+</Steps>
+
+<Callout kind="info">
+
+Verwenden Sie saubere, repräsentative Proben für das Klonen. Hintergrundgeräusche, inkonsistentes Tempo oder wechselnde Sprecher können die Ähnlichkeit der geklonten Stimme mit Ihrem Zielstil verringern.
+
+</Callout>
+
+## Eine Stimme für einen Assistenten auswählen
+
+Wählen Sie eine Stimme direkt aus der Bibliothek, wenn Sie einen Assistenten im Tab Voice konfigurieren. Nach der Auswahl müssen Sie nicht jedes Stimmfeld manuell ausfüllen.
+
+Wenn Sie eine Stimme aus der Bibliothek zuweisen, setzt Talkturo diese Assistentenfelder automatisch:
+
+- `voice_provider`
+- `voice_model`
+- `voice_id`
+- `voice_language`
+- `voice_name`
+
+Dadurch bleibt die Stimmkonfiguration konsistent und Einrichtungsfehler werden reduziert, besonders wenn ein Anbieter mehrere Modelle für dieselbe Stimme anbietet.
+
+### Was sich bei der Auswahl einer Stimme ändert
+
+Die Auswahl einer Bibliotheksstimme aktualisiert die TTS-Konfiguration des Assistenten mit den Anbieter- und Modelldetails, die an diesen Stimmeintrag gebunden sind. Das ist wichtig, weil sich derselbe Stimmenname je nach Anbieter oder Modell unterschiedlich verhalten kann.
+
+<Callout kind="success">
+
+Wenn die ausgewählte Stimme in der Hörprobe korrekt klingt und der Assistent mit ausgefüllten Anbieter-, Modell- und Sprachdetails gespeichert wird, ist die Stimme bereit für Tests in einem Live-Assistentenablauf.
+
+</Callout>
+
+## Den Stimmenkatalog aktuell halten
+
+Stimmenkataloge von Anbietern ändern sich im Laufe der Zeit, wenn neue Stimmen oder Modelle hinzukommen. Talkturo unterstützt die Synchronisierung mit Anbietern, damit die Bibliothek diese Aktualisierungen widerspiegeln kann.
+
+### Admin-Synchronisierungsverhalten
+
+Admin-Benutzer können den geteilten Stimmenkatalog aus den APIs der Anbieter synchronisieren. Die Synchronisierung verwendet diese Endpunkte:
+
+- `/api/voice-providers/voices`
+- `/api/voice-providers/models`
+
+Durch die Synchronisierung werden neu verfügbare Anbieterstimmen und Modelle in der Bibliothek verfügbar, sodass Benutzer sie durchsuchen und zuweisen können, ohne auf eine manuelle Katalogaktualisierung warten zu müssen.
+
+<Callout kind="alert">
+
+Die Synchronisierung mit Anbietern ist eine Admin-Aufgabe. Wenn Sie eine neu veröffentlichte Stimme eines Anbieters nicht in der Bibliothek sehen, bitten Sie einen Admin, den Katalog zu synchronisieren, bevor Sie die Assistentenkonfiguration weiter untersuchen.
+
+</Callout>
+
+## Die richtige Stimme schneller finden
+
+Beginnen Sie mit dem engsten Filter, der zu Ihrem Anwendungsfall passt, und hören Sie dann nur einige wenige starke Kandidaten probe. So finden Sie meist schneller die richtige Stimme, als wenn Sie den gesamten Katalog durchsuchen.
+
+Ein praktischer Auswahlablauf sieht so aus:
+
+- Nach **Sprache** filtern
+- Nach **Anbieter** eingrenzen
+- **Verfügbare Modelle** prüfen
+- Top-Kandidaten probehören
+- Die beste Übereinstimmung dem Assistenten zuweisen
+- Einen Testanruf durchführen, um die Qualität in echten Anrufen zu bestätigen
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+  <Card
+    title="Assistenten konfigurieren"
+    href="/assistants/configuration"
+    icon="settings"
+    cta="Anleitung öffnen"
+  />
+  <Card
+    title="Workflow zur Stimmauswahl"
+    href="/assistants/configuration"
+    icon="book-open"
+    cta="Assistenten-Einrichtung ansehen"
+  />
+</Columns>
