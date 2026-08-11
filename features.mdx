@@ -44,6 +44,27 @@ Configure AI assistants to handle inbound and outbound calls. Customize voices, 
 }
 ````
   </Tab>
+  <Tab title="Transcription Settings" icon="closed-caption">
+    Control how your assistant transcribes caller speech. The panel shows only the settings supported by the selected transcription provider and model, so unsupported options never clutter the screen.
+
+    **Keyterms** — Add up to 100 custom words (names, product names, spellings) that the transcriber should recognise. Available for Deepgram Nova-3 and AssemblyAI.
+
+    **Recognition accuracy** — Enable smart formatting to write numbers, dates, and currency naturally. Turn spoken numbers into digits for data collection. Choose specialist vocabulary (e.g., medical) or describe your call subject to bias the transcriber toward the right words.
+
+    **Turn-taking** — Tune how long the caller must pause before the assistant treats the turn as finished. Adjust silence thresholds and end-of-turn confidence to balance responsiveness against interrupting callers mid-sentence.
+
+    **Privacy and compliance** — Redact sensitive data (card numbers, national insurance numbers) from stored transcripts. Opt out of provider model training — recommended if you handle EU personal data, though the provider may charge a higher rate.
+
+    **Speakers** — Label who said what when multiple people are on the line.
+
+    **Transcript formatting** — Toggle punctuation, filler words, and formatted transcripts to control how the transcript reads afterwards.
+
+    **Audio handling** — Isolate the caller's voice from background noise and adjust silence sensitivity for noisy lines.
+
+<Callout kind="info">
+  Providers without configurable settings (Cartesia, ElevenLabs, Inworld) display a message guiding you to Deepgram Nova-3 or AssemblyAI if you need keyterm support. Settings are preserved when you switch models within the same provider, and cloned assistants carry their transcription settings.
+</Callout>
+  </Tab>
 </Tabs>
 
 <Steps>

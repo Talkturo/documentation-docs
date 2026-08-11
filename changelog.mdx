@@ -29,6 +29,9 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
   - **City-level verification enforcement** — Phone number purchases in compliance-gated countries now enforce city-level verification with a clear error message, preventing silent purchase failures.
   - **Expired carrier verifications detected** — Expired carrier approvals are now detected and re-evaluated automatically, preventing silent purchase rejections.
   - **Workflow function cards show current name** — Function cards in the assistant editor now display the current workflow name instead of a stale snapshot from when it was first attached.
+  - **Transcription validation errors are now visible** — When saving an assistant with an invalid transcription setting, the specific error message is shown in a toast notification instead of being silently discarded.
+  - **Carrier verification "no longer eligible" status now shows as rejected** — Carrier verifications that lapse are now displayed as rejected with a call to action, instead of remaining stuck in an indefinite "under review" state.
+  - **Business and individual verifications no longer overwrite each other** — Submitting a business verification in a city where an individual verification already exists (or vice versa) no longer overwrites the existing record; both can coexist independently.
 </Update>
 
 <Update label="2024-11-15" description="v2.1.0" tags={["feature","improvement","bugfix"]}>
