@@ -14,9 +14,13 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
   - **Transcription Settings panel** — Configure how your AI assistant processes caller speech directly in the assistant editor. Add up to 100 custom keyterms (names, product names, spellings), enable smart formatting, profanity filtering, sensitive-data redaction, GDPR training opt-out, speaker diarization, and provider-specific options for Deepgram and AssemblyAI. See [Features](/features).
   - **German localization for transcription settings** — All transcription setting labels, help texts, and descriptions are now fully translated into German.
   - **Dual-carrier phone number purchasing** — Workspaces can now buy and use phone numbers from two Talkturo carriers at the same time, plus their own connected Twilio account. See [Quickstart](/quickstart).
+  - **City-level compliance verification** — Workspaces in countries that require a local business address can now verify each city individually from the Compliance page, with a city selector and checkmarks for already-verified cities. See [Features](/features).
+  - **Carrier decision email notifications** — Workspace owners now receive an automated email when a carrier approves or rejects a business verification, with direct links to the relevant page and the carrier's rejection reason included verbatim. Emails are sent in the workspace's language.
 
   ## Improvements
 
+  - **Compliance page redesign** — Verification request rows now show country flags, full country names, and color-coded status pills with clear explanations instead of raw status codes. See [Features](/features).
+  - **City lock indicators on number search** — Phone number search results now show a lock icon on cities and numbers that require unverified compliance, making it clear what's available and what to unlock. See [Quickstart](/quickstart).
   - **Workflow publish validation** — Publishing a workflow now checks for missing required fields before saving, with clear error messages instead of silent failures during live calls. See [Integrations](/integrations).
   - **Admin verification list shows city** — The admin Verifications page now displays the city alongside the country, making it easier to match submitted documents to the correct dialing area.
 
@@ -26,6 +30,7 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
   - **Workflow tool definitions now match the editor** — The tool name and parameters the voice agent registers now exactly match what you see in the editor, so prompt-authored tool calls work reliably. See [Integrations](/integrations).
   - **Failed workflow triggers now visible** — Rejected workflow triggers now create a failed run record with the reason, so they appear in the Runs view instead of silently disappearing.
   - **Transcription settings preserved across actions** — Settings are no longer lost when switching models within the same provider, when using the default provider, or when cloning an assistant.
+  - **Save error messages now visible** — When saving assistant transcription settings fails, the specific validation error is now shown in a toast instead of a generic failure message.
   - **City-level verification enforcement** — Phone number purchases in compliance-gated countries now enforce city-level verification with a clear error message, preventing silent purchase failures.
   - **Expired carrier verifications detected** — Expired carrier approvals are now detected and re-evaluated automatically, preventing silent purchase rejections.
   - **Workflow function cards show current name** — Function cards in the assistant editor now display the current workflow name instead of a stale snapshot from when it was first attached.
