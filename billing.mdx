@@ -1,18 +1,17 @@
 ---
 title: Billing and Credits
-description: Manage Talkturo credits, subscription plans, auto-reload, payment methods, and call billing costs across your workspace.
+description: >-
+  Manage Talkturo credits, subscription plans, auto-reload, payment methods, and
+  call billing costs across your workspace.
 ---
-
 ## Understand your billing model
 
 Talkturo bills usage with **credits**, not direct per-call invoices. Your workspace balance decreases as calls run, and you can add credits separately from your subscription plan.
 
 Subscription plans and credits serve different purposes. A plan controls product access and included monthly credits, while top-ups add spendable credits for voice usage when you need more capacity.
 
-<Callout kind="info">
-
-Credits are consumed in real time as calls happen. If your workflows depend on phone calls, keep enough credits available or enable auto-reload to avoid interruptions.
-
+<Callout kind="info" collapsed="false">
+  Credits are consumed in real time as calls happen. If your workflows depend on phone calls, keep enough credits available or enable auto-reload to avoid interruptions.
 </Callout>
 
 ## How credits work
@@ -27,47 +26,43 @@ Talkturo uses a base exchange rate of **$1 USD = 2 credits**. That exchange rate
 
 ### Transaction types
 
-| Transaction type | What it means |
-| --- | --- |
-| `purchase` | Credits added after a paid top-up |
-| `usage` | Credits consumed by calls and related usage |
-| `bonus` | Promotional or extra credits added to the workspace |
-| `refund` | Credits returned after an adjustment |
-| `signup_bonus` | Initial free credits granted when a workspace is created |
-| `reset` | Administrative credit balance reset or correction |
+| Transaction type | What it means                                            |
+| ---------------- | -------------------------------------------------------- |
+| `purchase`       | Credits added after a paid top-up                        |
+| `usage`          | Credits consumed by calls and related usage              |
+| `bonus`          | Promotional or extra credits added to the workspace      |
+| `refund`         | Credits returned after an adjustment                     |
+| `signup_bonus`   | Initial free credits granted when a workspace is created |
+| `reset`          | Administrative credit balance reset or correction        |
 
-<Callout kind="tip">
-
-Because credits support fractional amounts, small calls and partial minutes do not overcharge your workspace. You pay for the underlying usage pattern, not a rounded bundle.
-
+<Callout kind="tip" collapsed="false">
+  Because credits support fractional amounts, small calls and partial minutes do not overcharge your workspace. You pay for the underlying usage pattern, not a rounded bundle.
 </Callout>
 
 ## Compare subscription plans
 
 Plans define your monthly base package. Credits included in a plan refresh monthly, while purchased top-up credits are separate from plan pricing.
 
-| Plan | Monthly price | Included monthly credits | Includes |
-| --- | --- | --- | --- |
-| Free | $0/month | 10 | Public projects, unlimited collaborators |
-| Pro | $100/month default | 400 | All Free features |
-| Business | $200/month default | 400 | All Pro features, SSO, internal publish |
-| Enterprise | Custom pricing | Custom | Dedicated support, custom connections |
+| Plan       | Monthly price      | Included monthly credits | Includes                                 |
+| ---------- | ------------------ | ------------------------ | ---------------------------------------- |
+| Free       | $0/month           | 10                       | Public projects, unlimited collaborators |
+| Pro        | $100/month default | 400                      | All Free features                        |
+| Business   | $200/month default | 400                      | All Pro features, SSO, internal publish  |
+| Enterprise | Custom pricing     | Custom                   | Dedicated support, custom connections    |
 
-<Callout kind="info">
-
-Pro and Business pricing is dynamically set and may vary from the default amounts shown here.
-
+<Callout kind="info" collapsed="false">
+  Pro and Business pricing is dynamically set and may vary from the default amounts shown here.
 </Callout>
 
 ## Add credit top-ups
 
 Top-ups increase your available usage balance beyond the credits included in your subscription. This is the amount you draw down during voice activity.
 
-| Package | Price | Credits added |
-| --- | --- | --- |
-| Starter Pack | $99 | 198 |
-| Pro Pack | $349 | 698 |
-| Business Pack | $499 | 998 |
+| Package       | Price       | Credits added                                               |
+| ------------- | ----------- | ----------------------------------------------------------- |
+| Starter Pack  | $99         | 198                                                         |
+| Pro Pack      | $349        | 698                                                         |
+| Business Pack | $499        | 998                                                         |
 | Custom top-up | Minimum $99 | Any amount above the minimum, converted at the current rate |
 
 Bonus credits may apply when you buy through agent payment links. In those cases, Talkturo can add up to **20% extra credits** on top of the standard conversion.
@@ -78,13 +73,13 @@ Call cost depends on the components your assistant uses. Standard voice pipeline
 
 ### Standard usage components
 
-| Component | Billing unit | Notes |
-| --- | --- | --- |
-| Speech-to-Text | Per minute | Charged for transcribing live call audio |
-| LLM prompt tokens | Per 1,000 tokens | Charged for model input |
-| LLM completion tokens | Per 1,000 tokens | Charged for model output |
-| Text-to-Speech | Per 1,000 characters | Charged for generated spoken output |
-| Telephony | Per minute | Charged for phone connectivity and call time |
+| Component             | Billing unit         | Notes                                        |
+| --------------------- | -------------------- | -------------------------------------------- |
+| Speech-to-Text        | Per minute           | Charged for transcribing live call audio     |
+| LLM prompt tokens     | Per 1,000 tokens     | Charged for model input                      |
+| LLM completion tokens | Per 1,000 tokens     | Charged for model output                     |
+| Text-to-Speech        | Per 1,000 characters | Charged for generated spoken output          |
+| Telephony             | Per minute           | Charged for phone connectivity and call time |
 
 ### Realtime mode
 
@@ -103,18 +98,16 @@ With a standard stack such as **Deepgram STT + OpenAI LLM + Cartesia TTS + Telny
 That means:
 
 | Call length | Approximate cost |
-| --- | --- |
-| 1 minute | 0.21 credits |
-| 5 minutes | 1.05 credits |
-| 10 minutes | 2.1 credits |
-| 30 minutes | 6.3 credits |
+| ----------- | ---------------- |
+| 1 minute    | 0.21 credits     |
+| 5 minutes   | 1.05 credits     |
+| 10 minutes  | 2.1 credits      |
+| 30 minutes  | 6.3 credits      |
 
 These figures are estimates, not a fixed guarantee. Actual cost changes with call duration, speaking rate, token usage, generated speech volume, telephony routing, and whether you use standard or realtime mode.
 
-<Callout kind="info">
-
-A call with heavier model output or longer assistant responses consumes more LLM tokens and TTS characters, so two calls with the same duration may cost different amounts.
-
+<Callout kind="info" collapsed="false">
+  A call with heavier model output or longer assistant responses consumes more LLM tokens and TTS characters, so two calls with the same duration may cost different amounts.
 </Callout>
 
 ## Configure auto-reload
@@ -123,16 +116,16 @@ Auto-reload keeps your workspace funded by charging your saved payment method wh
 
 ### Auto-reload settings
 
-<ParamField body="enabled" param-type="boolean" required="true" show-location="false">
-Turn auto-reload on or off for the workspace.
+<ParamField body="enabled" param-type="boolean" required="true" deprecated="false" show-location="false">
+  Turn auto-reload on or off for the workspace.
 </ParamField>
 
-<ParamField body="amount" param-type="number" required="true" show-location="false">
-Dollar amount to charge on each reload. The default is `$10`.
+<ParamField body="amount" param-type="number" required="true" deprecated="false" show-location="false">
+  Dollar amount to charge on each reload. The default is `$10`.
 </ParamField>
 
-<ParamField body="threshold" param-type="number" required="true" show-location="false">
-Credit balance that triggers a reload. The default threshold is `10` credits.
+<ParamField body="threshold" param-type="number" required="true" deprecated="false" show-location="false">
+  Credit balance that triggers a reload. The default threshold is `10` credits.
 </ParamField>
 
 ### How reload credits are calculated
@@ -150,22 +143,20 @@ For example, a **$10** auto-reload adds **20 credits**.
 - A successful reload can reactivate **suspended phone numbers**
 - Reload happens automatically when the balance drops below the configured threshold
 
-<Callout kind="alert">
-
-If no default payment method is available, Talkturo cannot complete an auto-reload. Low balances may interrupt phone-based workflows until you add a payment method or top up manually.
-
+<Callout kind="alert" collapsed="false">
+  If no default payment method is available, Talkturo cannot complete an auto-reload. Low balances may interrupt phone-based workflows until you add a payment method or top up manually.
 </Callout>
 
 ## Understand desktop app plans
 
 Close AI desktop access is billed separately from workspace voice credits. These plans control desktop seats, not call-credit balances for voice agents.
 
-| Desktop plan | Monthly price | Seats | Notes |
-| --- | --- | --- | --- |
-| Desktop Starter | $186/month | 1 | Single-seat plan |
-| Desktop Pro | $373/month | 3 | Expandable with additional seats |
-| Desktop Enterprise | Custom | Custom | Negotiable pricing and terms |
-| Additional seat | $99/month or $1,188/year | 1 each | Add-on seat pricing |
+| Desktop plan       | Monthly price            | Seats  | Notes                            |
+| ------------------ | ------------------------ | ------ | -------------------------------- |
+| Desktop Starter    | $186/month               | 1      | Single-seat plan                 |
+| Desktop Pro        | $373/month               | 3      | Expandable with additional seats |
+| Desktop Enterprise | Custom                   | Custom | Negotiable pricing and terms     |
+| Additional seat    | $99/month or $1,188/year | 1 each | Add-on seat pricing              |
 
 If your team uses both desktop coaching and voice agents, manage these as separate budget lines: desktop seats for users, credits for call execution.
 
@@ -188,19 +179,17 @@ Talkturo can attach credits to purchases made through **agent payment links**. T
 
 ### Grant lifecycle
 
-| Status | Meaning |
-| --- | --- |
+| Status      | Meaning                                                    |
+| ----------- | ---------------------------------------------------------- |
 | `unclaimed` | The credit grant exists but is not assigned to a workspace |
-| `claimed` | The grant has been applied to a workspace |
+| `claimed`   | The grant has been applied to a workspace                  |
 
 ### How grants are used
 
 Workspace owners or admins can claim a grant into a workspace from the dashboard. When the payment link supports buy-and-clone behavior, Talkturo can also clone the source assistant into the destination workspace during the claim flow.
 
-<Callout kind="tip">
-
-If you sell assistants through payment links, grants can fund usage immediately after purchase and reduce setup work by cloning the original assistant into the buyer's workspace.
-
+<Callout kind="tip" collapsed="false">
+  If you sell assistants through payment links, grants can fund usage immediately after purchase and reduce setup work by cloning the original assistant into the buyer's workspace.
 </Callout>
 
 ## Keep billing predictable
@@ -215,7 +204,13 @@ A few habits make credit usage easier to manage:
 
 ## Related pages
 
-<Columns cols={2}>
-  <Card title="Workspaces" href="/workspaces" icon="users" cta="Manage workspaces" />
-  <Card title="Authentication" href="/authentication" icon="lock" cta="Review authentication options" />
+<Columns cols="2">
+  <Card title="Workspaces" href="/workspaces" icon="users" cta="Manage workspaces" horizontal="false">
+
+  </Card>
+
+  <Card title="Authentication" href="/authentication" icon="lock" cta="Review authentication options" horizontal="false">
+
+  </Card>
 </Columns>
+
