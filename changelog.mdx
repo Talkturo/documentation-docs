@@ -1,0 +1,159 @@
+---
+title: Changelog
+description: Version history highlighting recent updates, new features, and important changes to the Talkturo platform.
+---
+
+## Recent Updates
+
+Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
+
+<Update label="2024-11-15" description="v2.1.0" tags={["feature", "improvement", "bugfix"]}>
+
+## New Features
+
+- Added support for custom voice models in AI assistants, enabling branded voice experiences for campaigns.
+- Introduced real-time analytics dashboard for monitoring live phone call metrics like duration and sentiment.
+
+## Improvements
+
+- Enhanced CRM integration with bulk contact import from CSV files.
+- Optimized campaign scheduling with timezone-aware timing options.
+
+## Bug Fixes
+
+- Fixed intermittent audio latency issues during high-volume outbound calls.
+- Resolved prompt template rendering errors in the assistant configuration UI.
+
+</Update>
+
+<Update label="2024-10-20" description="v2.0.0" tags={["feature", "breaking"]}>
+
+## New Features
+
+- Launched outbound campaign builder with A/B testing for voice scripts.
+- Added function calling support in assistants for dynamic CRM lookups during calls.
+
+## Breaking Changes
+
+- Updated API authentication to require JWT tokens instead of API keys. Migrate using the guide below.
+- Deprecated legacy voice endpoints; use `/v2/voice` paths.
+
+## Improvements
+
+- Improved call transcription accuracy by 15% with new speech-to-text models.
+
+</Update>
+
+<Update label="2024-09-10" description="v1.5.0" tags={["feature", "bugfix"]}>
+
+## New Features
+
+- Integrated company records in CRM for better contact organization.
+- Enabled webhook notifications for call completion events.
+
+## Bug Fixes
+
+- Patched scheduling overlaps in campaigns.
+- Fixed desktop app crashes on macOS during long sessions.
+
+</Update>
+
+## Migration Guide
+
+For upgrades involving breaking changes, follow these steps to update your Talkturo integration seamlessly.
+
+<Steps>
+  <Step title="Update SDK Version" icon="package">
+
+    Install the latest SDK across platforms.
+
+    <CodeGroup tabs="npm,yarn,pip">
+      ```bash
+      npm install @talkturo/sdk@2.1.0
+      ```
+      ```bash
+      yarn add @talkturo/sdk@2.1.0
+      ```
+      ```bash
+      pip install talkturo-sdk==2.1.0
+      ```
+    </CodeGroup>
+
+  </Step>
+  <Step title="Replace API Keys with JWT" icon="key">
+
+    Generate JWT tokens via the new auth endpoint.
+
+    ```bash
+    curl -X POST https://api.example.com/v2/auth/token \
+      -H "Content-Type: application/json" \
+      -d '{"client_id": "YOUR_CLIENT_ID", "client_secret": "YOUR_CLIENT_SECRET"}'
+    ```
+
+    Update your requests:
+
+    <ParamField header="Authorization" param-type="string" required="true">
+      Bearer `{YOUR_JWT_TOKEN}`
+    </ParamField>
+
+  </Step>
+  <Step title="Test Updated Endpoints" icon="play">
+
+    Verify voice configurations with the new paths.
+
+    <Callout kind="tip">
+      Run end-to-end tests on staging before production deployment.
+    </Callout>
+
+  </Step>
+</Steps>
+
+## Upcoming Roadmap
+
+Track upcoming priorities for Talkturo's voice AI features.
+
+<Board title="Q4 2024 Roadmap">
+  <BoardColumn title="Planned" color="0" icon="calendar">
+    <BoardCard
+      title="Multilingual Voice Support"
+      description="Add 5+ languages for global campaigns"
+      icon="globe"
+      dueDate="2024-12-15"
+    />
+    <BoardCard
+      title="Advanced Analytics"
+      description="Predictive insights from call data"
+      icon="bar-chart-3"
+    />
+  </BoardColumn>
+  <BoardColumn title="In Progress" color="1" icon="loader-2">
+    <BoardCard
+      title="Inbound Call Routing"
+      description="AI-powered call distribution"
+      icon="phone"
+      author="Engineering Team"
+    />
+  </BoardColumn>
+  <BoardColumn title="Completed" color="2" icon="check-circle">
+    <BoardCard
+      title="Webhook v2"
+      description="Enhanced event payloads"
+      createdAt="2024-11-01"
+    />
+  </BoardColumn>
+</Board>
+
+## Explore Further
+
+<Columns cols={2}>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Detailed endpoints for voice agents and campaigns.
+  </Card>
+  <Card title="Key Concepts" icon="book-open" href="/key-concepts" horizontal>
+    Understand core Talkturo terminology and architecture.
+  </Card>
+</Columns>
+
+<Callout kind="info">
+  Subscribe to our changelog RSS feed or join the support mailing list at info@talkturo.ai for instant notifications.
+</Callout>
