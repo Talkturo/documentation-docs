@@ -9,117 +9,277 @@
     }
   },
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "Documentation",
-        "icon": "book",
-        "groups": [
+        "language": "English",
+        "tabs": [
           {
-            "group": "Getting Started",
-            "icon": "rocket",
+            "tab": "Documentation",
+            "icon": "book",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "icon": "rocket",
+                "pages": [
+                  {
+                    "title": "Introduction",
+                    "path": "en/introduction",
+                    "icon": "home"
+                  },
+                  {
+                    "title": "Quick Start",
+                    "path": "en/quickstart",
+                    "icon": "zap"
+                  },
+                  {
+                    "title": "Authentication",
+                    "path": "en/authentication",
+                    "icon": "lock"
+                  }
+                ]
+              },
+              {
+                "group": "Core Concepts",
+                "icon": "layers",
+                "pages": [
+                  {
+                    "title": "Features",
+                    "path": "en/features",
+                    "icon": "star"
+                  },
+                  {
+                    "title": "Workspaces and Teams",
+                    "path": "en/workspaces",
+                    "icon": "users"
+                  },
+                  {
+                    "title": "Billing and Credits",
+                    "path": "en/billing",
+                    "icon": "credit-card"
+                  }
+                ]
+              },
+              {
+                "group": "AI Voice Agents",
+                "icon": "bot",
+                "pages": [
+                  {
+                    "title": "AI Voice Agents",
+                    "path": "en/assistants/overview",
+                    "icon": "bot"
+                  },
+                  {
+                    "title": "Assistant Configuration",
+                    "path": "en/assistants/configuration",
+                    "icon": "settings"
+                  },
+                  {
+                    "title": "Voice Library",
+                    "path": "en/voice-library",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Knowledge Base",
+                    "path": "en/knowledge-base",
+                    "icon": "database"
+                  }
+                ]
+              },
+              {
+                "group": "Campaigns",
+                "icon": "megaphone",
+                "pages": [
+                  {
+                    "title": "Campaigns",
+                    "path": "en/campaigns/overview",
+                    "icon": "megaphone"
+                  },
+                  {
+                    "title": "Campaign Configuration",
+                    "path": "en/campaigns/configuration",
+                    "icon": "settings"
+                  },
+                  {
+                    "title": "Real-time Campaign Monitoring",
+                    "path": "en/campaigns/realtime",
+                    "icon": "activity"
+                  }
+                ]
+              },
+              {
+                "group": "Telephony and Calls",
+                "icon": "phone",
+                "pages": [
+                  {
+                    "title": "Telephony and Phone Numbers",
+                    "path": "en/telephony",
+                    "icon": "phone"
+                  },
+                  {
+                    "title": "Call Logs and Transcripts",
+                    "path": "en/call-logs",
+                    "icon": "file-text"
+                  },
+                  {
+                    "title": "Intelligence and Analytics",
+                    "path": "en/intelligence",
+                    "icon": "bar-chart"
+                  }
+                ]
+              },
+              {
+                "group": "CRM",
+                "icon": "users",
+                "pages": [
+                  {
+                    "title": "Contacts",
+                    "path": "en/crm/contacts",
+                    "icon": "user"
+                  },
+                  {
+                    "title": "Companies",
+                    "path": "en/crm/companies",
+                    "icon": "building"
+                  },
+                  {
+                    "title": "Opportunities",
+                    "path": "en/crm/opportunities",
+                    "icon": "target"
+                  },
+                  {
+                    "title": "Custom Fields",
+                    "path": "en/crm/custom-fields",
+                    "icon": "sliders"
+                  }
+                ]
+              },
+              {
+                "group": "TurboFlow",
+                "icon": "workflow",
+                "pages": [
+                  {
+                    "title": "TurboFlow",
+                    "path": "en/turboflow/overview",
+                    "icon": "workflow"
+                  },
+                  {
+                    "title": "TurboFlow Triggers and Actions",
+                    "path": "en/turboflow/triggers-actions",
+                    "icon": "zap"
+                  }
+                ]
+              },
+              {
+                "group": "Close AI Desktop",
+                "icon": "monitor",
+                "pages": [
+                  {
+                    "title": "Close AI Desktop App",
+                    "path": "en/close-ai/overview",
+                    "icon": "monitor"
+                  },
+                  {
+                    "title": "Desktop Sessions",
+                    "path": "en/close-ai/sessions",
+                    "icon": "play-circle"
+                  },
+                  {
+                    "title": "Script Editor",
+                    "path": "en/close-ai/script-editor",
+                    "icon": "edit"
+                  },
+                  {
+                    "title": "Prompt Library",
+                    "path": "en/close-ai/prompts",
+                    "icon": "message-square"
+                  }
+                ]
+              },
+              {
+                "group": "Guides",
+                "icon": "compass",
+                "pages": [
+                  {
+                    "title": "Integrations",
+                    "path": "en/integrations",
+                    "icon": "plug"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "icon": "code",
+            "groups": [
+              {
+                "group": "Endpoints",
+                "icon": "terminal",
+                "openapi": "en/api-reference/openapi.yaml",
+                "pages": []
+              }
+            ]
+          },
+          {
+            "tab": "Help Center",
+            "icon": "help-circle",
             "pages": [
               {
-                "title": "Introduction",
-                "path": "introduction",
+                "title": "Help Center",
+                "path": "en/help-center",
                 "icon": "home"
               },
               {
-                "title": "Quick Start",
-                "path": "quickstart",
-                "icon": "zap"
+                "group": "FAQs",
+                "icon": "help-circle",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Getting Started",
+                    "path": "en/help-center/faq/getting-started"
+                  }
+                ]
+              },
+              {
+                "group": "Troubleshooting",
+                "icon": "alert-circle",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Call Quality",
+                    "path": "en/help-center/troubleshooting/call-quality"
+                  }
+                ]
+              },
+              {
+                "group": "Guides",
+                "icon": "book-open",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Launch Voice Agent",
+                    "path": "en/help-center/guides/launch-voice-agent"
+                  }
+                ]
               }
             ]
           },
           {
-            "group": "Core Concepts",
-            "icon": "layers",
+            "tab": "Changelog",
+            "icon": "clock",
             "pages": [
               {
-                "title": "Features",
-                "path": "features",
-                "icon": "star"
-              }
-            ]
-          },
-          {
-            "group": "Guides",
-            "icon": "compass",
-            "pages": [
-              {
-                "title": "Integrations",
-                "path": "integrations",
-                "icon": "plug"
+                "title": "Release History",
+                "path": "en/changelog",
+                "icon": "history"
               }
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
-        "icon": "code",
-        "groups": [
-          {
-            "group": "Endpoints",
-            "icon": "terminal",
-            "openapi": "api-reference/openapi.yaml",
-            "pages": []
-          }
-        ]
-      },
-      {
-        "tab": "Help Center",
-        "icon": "help-circle",
-        "pages": [
-          {
-            "title": "Help Center",
-            "path": "help-center",
-            "icon": "home"
-          },
-          {
-            "group": "FAQs",
-            "icon": "help-circle",
-            "expandable": false,
-            "pages": [
-              {
-                "title": "Getting Started",
-                "path": "help-center/faq/getting-started"
-              }
-            ]
-          },
-          {
-            "group": "Troubleshooting",
-            "icon": "alert-circle",
-            "expandable": false,
-            "pages": [
-              {
-                "title": "Call Quality",
-                "path": "help-center/troubleshooting/call-quality"
-              }
-            ]
-          },
-          {
-            "group": "Guides",
-            "icon": "book-open",
-            "expandable": false,
-            "pages": [
-              {
-                "title": "Launch Voice Agent",
-                "path": "help-center/guides/launch-voice-agent"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Changelog",
-        "icon": "clock",
-        "pages": [
-          {
-            "title": "Release History",
-            "path": "changelog",
-            "icon": "history"
-          }
-        ]
+        "language": "German",
+        "pages": []
       }
     ]
   }
