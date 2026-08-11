@@ -1,0 +1,224 @@
+---
+title: AI Voice Agents
+description: Build and deploy configurable AI phone agents with flexible models, telephony, tools, knowledge retrieval, and post-call automation.
+---
+
+## Deploy AI phone agents from a single assistant
+
+Assistants are the core building block of Talkturo AI Voice Agents. Each assistant packages conversation behavior, models, voice, transcription, telephony, tools, and post-call workflows into one deployable phone agent for real inbound and outbound calls.
+
+You can use an assistant to qualify leads, answer support calls, book meetings, route callers, collect structured data, and trigger downstream systems after the conversation ends. The same assistant can be tuned for low-latency live conversations or for deeper configuration across each stage of the voice pipeline.
+
+<Callout kind="info">
+
+Talkturo uses the term **assistant** for an AI voice agent. Throughout the product, assistant settings control how the agent speaks, listens, reasons, and acts during a phone call.
+
+</Callout>
+
+## What assistants can do
+
+Assistants combine the voice stack and your business logic in one place. Out of the box, you can configure:
+
+- **Custom system prompts** with CRM variable interpolation such as `{{contact.first_name}}` and `{{company.name}}`
+- **Multiple LLM providers** including OpenAI, Google Gemini, DeepSeek, Qwen, Kimi, Anthropic, Cerebras, and Talkturo Fast
+- **Multiple STT providers** including Deepgram, AssemblyAI, Cartesia, ElevenLabs, and Inworld
+- **Multiple TTS providers** including Cartesia, ElevenLabs, Inworld, OpenAI, DashScope, and Kugel
+- **Standard and Realtime modes** for different latency and configuration needs
+- **Telephony assignment** for inbound and outbound calling
+- **Tool functions** such as call transfer, calendar booking, custom webhooks, Zapier, and TurboFlow workflows
+- **Knowledge base attachment** for retrieval-based answers during calls
+- **Post-call AI analysis** with custom extraction prompts
+- **Event webhooks** for call lifecycle events
+- **Email summaries** after calls
+- **Voicemail detection and handling**
+- **Compliance briefing support**
+- **Assistant cloning** to duplicate working configurations
+
+## Start from a template or build your own
+
+Templates give you a faster starting point when you already know the call type you want to automate. Custom setup gives you full control over the assistant from the first screen.
+
+| Template | Best for | What it starts with |
+|---|---|---|
+| Outbound Setter | Outbound sales qualification calls | Prospecting-focused call flow and outreach defaults |
+| Inbound Support | Answering incoming customer support calls | Support-oriented prompt structure and inbound call handling |
+| Follow-up | Re-engaging existing contacts | Follow-up messaging and contact reactivation patterns |
+| Custom | Starting from scratch with full control | Minimal defaults so you can configure every part yourself |
+
+## Create an assistant
+
+Talkturo supports three common creation paths. Most teams start with the guided wizard, then clone assistants as they refine successful setups.
+
+<Steps>
+  <Step title="Use the setup wizard" icon="rocket">
+
+  The guided flow walks through the main assistant requirements in seven steps:
+
+  1. Configure Assistant
+  2. Business Info
+  3. Phone Number
+  4. Company
+  5. Contacts
+  6. Campaign
+  7. Complete
+
+  This path is the fastest way to launch a working assistant with telephony and business context already connected.
+
+  </Step>
+
+  <Step title="Create an assistant with the API" icon="code">
+
+  If you provision assistants programmatically, create them with `POST /api/assistants` and pass the account slug, assistant name, and template identifier.
+
+  <Request>
+  ```bash
+  curl -X POST "https://api.talkturo.com/api/assistants" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer tkt_example_9xmk7q2r" \
+    -d '{
+      "accountSlug": "acme-sales",
+      "name": "Acme inbound support",
+      "templateId": "inbound-support"
+    }'
+  ```
+  </Request>
+
+  <Response>
+  ```json
+  {
+    "id": "ast_7f4c2d91",
+    "name": "Acme inbound support",
+    "templateId": "inbound-support",
+    "status": "draft"
+  }
+  ```
+  </Response>
+
+  A successful request returns a new assistant record you can continue configuring in the app.
+
+  </Step>
+
+  <Step title="Clone an existing assistant" icon="copy">
+
+  Duplicate an existing assistant when you want the same prompt, models, tools, and telephony behavior with small changes. Cloning is the quickest way to create variants for new campaigns, regions, products, or teams.
+
+  </Step>
+</Steps>
+
+<Callout kind="tip">
+
+Clone a known-good assistant before making large prompt or provider changes. That gives you a safe rollback path and keeps production behavior stable while you test.
+
+</Callout>
+
+## Choose between standard and realtime mode
+
+The assistant mode determines how Talkturo handles speech processing during the call. Standard mode exposes each stage of the pipeline separately, while Realtime mode uses a speech-to-speech model with fewer moving parts.
+
+<Tabs>
+  <Tab title="Standard mode" icon="settings">
+
+  Standard mode uses separate STT, LLM, and TTS components. Choose this mode when you need deeper control over transcription, model behavior, voice output, and advanced provider settings.
+
+  This mode follows the traditional pipeline and uses the full Voice and Transcriptor configuration surfaces. It fits teams that want to tune each stage independently or swap providers for quality, language, or cost reasons.
+
+  </Tab>
+  <Tab title="Realtime mode" icon="zap">
+
+  Realtime mode uses a single speech-to-speech model such as OpenAI Realtime or Google Gemini Live. Choose this mode when lower latency matters more than fine-grained per-stage control.
+
+  Realtime mode simplifies configuration because the Voice and Transcriptor tabs are not used. Most of the assistant behavior shifts into the prompt, model, telephony, tools, and post-call settings.
+
+  </Tab>
+</Tabs>
+
+## Understand the assistant configuration tabs
+
+Once an assistant exists, you configure it through ten tabs. Each tab controls one part of the call experience or one post-call workflow.
+
+| Tab | What it controls |
+|---|---|
+| Prompt | System prompt, first message, CRM variables, templates, and AI prompt improvement |
+| Model | LLM provider, model, temperature, max tokens, and reasoning effort |
+| Voice | TTS provider, voice selection, emotion, background ambience, and speed |
+| Transcriptor | STT provider, model, language, and advanced transcription options |
+| Telephony | Phone numbers, inbound and outbound behavior, voicemail, and compliance |
+| Functions | Tool integrations, call transfer, end call, and calendar booking |
+| Knowledge Base | Document attachment for retrieval-based answers |
+| Analysis | Post-call extraction, outcomes, and lead scoring |
+| Webhooks | Event delivery configuration |
+| Email Summary | Automatic call summary email delivery |
+
+<Callout kind="info">
+
+If you use Realtime mode, the **Voice** and **Transcriptor** tabs do not apply. Realtime assistants use the speech model directly instead of a separate transcription and synthesis pipeline.
+
+</Callout>
+
+## How the pieces fit together
+
+A deployed assistant usually follows the same high-level flow: answer or place a call, listen to the caller, generate a response, speak it back, call tools when needed, and save the outcome after the conversation.
+
+```mermaid
+graph TD
+  A[Incoming or outbound call] --> B[Telephony]
+  B --> C[Assistant prompt and business context]
+  C --> D[Speech processing]
+  D --> E[Reasoning model]
+  E --> F[Voice response]
+  E --> G[Tool functions]
+  C --> H[Knowledge base retrieval]
+  B --> I[Voicemail handling]
+  E --> J[Post-call analysis]
+  J --> K[Webhooks and email summary]
+```
+
+That flow is configurable end to end. You can keep the assistant simple for one narrow task or attach tools, knowledge retrieval, scoring, and automation for more complex production workflows.
+
+## Common deployment patterns
+
+Different teams structure assistants differently depending on the call type. These patterns are common starting points:
+
+- **Sales qualification:** outbound telephony, CRM variables, objection-handling prompt, calendar booking, and lead scoring
+- **Inbound support:** support prompt, knowledge base retrieval, transfer functions, and email summaries
+- **Reactivation campaigns:** follow-up template, contact-specific variables, webhook triggers, and outcome extraction
+- **Front-desk routing:** inbound telephony, compliance briefing, voicemail handling, and transfer logic
+
+## Related configuration guides
+
+<Columns cols={3}>
+  <Card
+    title="Assistant configuration"
+    href="/assistants/configuration"
+    icon="settings"
+    cta="Open guide"
+  />
+  <Card
+    title="Voice library"
+    href="/voice-library"
+    icon="play-circle"
+    cta="Browse voices"
+  />
+  <Card
+    title="Knowledge base"
+    href="/knowledge-base"
+    icon="book-open"
+    cta="Manage documents"
+  />
+  <Card
+    title="Call logs"
+    href="/call-logs"
+    icon="bar-chart"
+    cta="Review calls"
+  />
+  <Card
+    title="Telephony"
+    href="/telephony"
+    icon="phone"
+    cta="Configure numbers"
+  />
+</Columns>
+
+## What to configure next
+
+Start with the prompt, telephony, and tool settings because those three areas shape most of the live call experience. After the assistant can complete a basic conversation, add knowledge retrieval, post-call analysis, and webhooks to connect it to the rest of your workflow.

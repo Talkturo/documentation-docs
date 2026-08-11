@@ -1,22 +1,125 @@
 ---
-title: How do I launch my first AI voice agent?
-description: Quick steps to start with Talkturo voice agents.
+title: Getting Started FAQ
+description: Find quick answers to common Talkturo setup questions, including assistants, phone numbers, credits, campaigns, and integrations.
 ---
 
-## Overview
+## Common getting started questions
 
-To get started, you'll need a Talkturo account and a project.
+Use these answers to get your first Talkturo workspace, assistant, phone number, and campaign running without guessing which page or API endpoint to use.
 
-## Steps
+<ExpandableGroup>
+  <Expandable title="How do I create my first AI voice assistant?" default-open="true">
 
-1. Sign up at `https://dashboard.talkturo.com`
-2. Click "Create Project"
-3. Choose a voice agent template or build custom
+  Create your first assistant from the dashboard on the **Assistants** page. Click **New Assistant**, choose a template, and complete the 7-step setup wizard.
 
-## Deploy the Agent
+  Talkturo provides these starting templates:
 
-1. Enter a phone number for outbound calls
-2. Click "Deploy"
-3. Monitor calls in the dashboard
+  - **Outbound Setter** for booking and qualification calls
+  - **Inbound Support** for handling incoming support conversations
+  - **Follow-up** for post-call or post-lead outreach
+  - **Custom** for building your own configuration from scratch
 
-<Callout kind="tip">Check analytics for live insight.</Callout>
+  If you prefer automation, create an assistant through the API with a `POST` request to `/api/assistants` and include `accountSlug`, `name`, and `templateId` in the request body.
+
+  ```bash
+  curl -X POST "https://api.talkturo.com/api/assistants" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "accountSlug": "acme-sales",
+      "name": "North America Outbound Assistant",
+      "templateId": "outbound-setter"
+    }'
+  ```
+
+  After setup finishes, your new assistant appears in the **Assistants** list and is ready for phone number assignment, testing, or campaign use.
+
+  </Expandable>
+
+  <Expandable title="How do I get a phone number?">
+
+  Get a number from the dashboard on the **Phone Numbers** page by searching available numbers and purchasing the one you want. After purchase, assign the number to an assistant for inbound or outbound use.
+
+  You can also provision numbers through the API if your workflow is automated. New numbers on managed accounts include a 14-day free trial, but active numbers still consume monthly credits after the trial period or when billing applies.
+
+  <Callout kind="info">
+
+  Phone numbers are a billable resource. Keep enough credits in your workspace to avoid service interruptions.
+
+  </Callout>
+
+  </Expandable>
+
+  <Expandable title="How many free credits do I get?">
+
+  Each new workspace receives **10 free credits** when the workspace is created. You can use those credits to test assistants, place calls, and validate your setup before adding more balance.
+
+  Talkturo consumes credits per minute based on the services used during a call. Usage can include speech-to-text, language model processing, text-to-speech, and telephony costs, so total burn rate depends on how your assistant is configured.
+
+  </Expandable>
+
+  <Expandable title="What is the difference between Standard and Realtime mode?">
+
+  **Standard mode** uses separate speech-to-text, language model, and text-to-speech components. Use this mode when you need more control over each layer of the voice stack, including model selection and configuration.
+
+  **Realtime mode** uses a single speech-to-speech model such as OpenAI Realtime or Google Gemini Live. Use this mode when lower latency matters more than fine-grained component control.
+
+  | Mode | How it works | Best for |
+  | --- | --- | --- |
+  | Standard | Separate STT, LLM, and TTS services | Flexible configurations and deeper tuning |
+  | Realtime | One speech-to-speech model | Faster turn response and lower latency |
+
+  </Expandable>
+
+  <Expandable title="Can I import contacts in bulk?">
+
+  Yes. Use CSV import on the **CRM Contacts** page to upload contacts in bulk and map each CSV column to the correct Talkturo contact field before import starts.
+
+  If you import contacts programmatically, send a `POST` request to `/api/crm/contacts/import`. Bulk import works well for campaign enrollment, lead follow-up, and recurring list syncs from your existing CRM.
+
+  ```bash
+  curl -X POST "https://api.talkturo.com/api/crm/contacts/import" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "accountSlug": "acme-sales",
+      "fileUrl": "https://storage.acmecrm.com/exports/q3-leads.csv"
+    }'
+  ```
+
+  After the import completes, the contacts appear in the **CRM Contacts** page and can be enrolled into campaigns.
+
+  </Expandable>
+
+  <Expandable title="How do I start an outbound campaign?">
+
+  Start by creating a campaign and linking it to an assistant that is enabled for outbound calling. Then enroll contacts, configure your allowed call windows, review retry settings, and start the campaign when the list is ready.
+
+  Once the campaign is live, monitor progress in the real-time dashboard. You can track active calls, completed calls, retries, and campaign status without leaving the workspace.
+
+  </Expandable>
+
+  <Expandable title="What happens when credits run out during a campaign?">
+
+  Campaigns automatically pause when workspace credits drop below **1.0**. This prevents new calls from starting when the account balance can no longer support call activity.
+
+  If credits remain too low, phone numbers may also be suspended. Add credits manually or enable auto-reload so campaigns can continue without unexpected pauses.
+
+  <Callout kind="alert">
+
+  If you run high-volume outbound campaigns, enable auto-reload before launch. Auto-reload reduces the chance of mid-campaign pauses caused by low balance.
+
+  </Callout>
+
+  </Expandable>
+
+  <Expandable title="How do I connect my assistant to external services?">
+
+  Connect assistants to external systems in three common ways, depending on when you need the integration to run.
+
+  - **TurboFlow** for workflow automations across external tools and internal actions
+  - **Assistant tool functions** for real-time actions during live calls
+  - **Event webhooks** for post-call notifications and downstream processing
+
+  Use TurboFlow when you want multi-step automation, assistant tool functions when the assistant needs to act during a conversation, and webhooks when another system should react after a call or event completes.
+
+  </Expandable>
+</ExpandableGroup>

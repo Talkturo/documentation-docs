@@ -1,0 +1,226 @@
+---
+title: Script Editor
+description: Build branching call scripts for Close AI with a visual node-based editor, proactive prompts, templates, and import tools.
+---
+
+## Build scripts visually
+
+The Script Editor lets you map a live call as a branching flow instead of writing a long linear script. Each section becomes a node on the canvas, each branch defines when the conversation should move next, and proactive prompts help Close AI guide reps during the call.
+
+Sales enablement teams usually use the editor to turn a sales motion into a repeatable path: opening, qualification, objection handling, booking, and follow-up. Managers can then review how consistently reps covered the script in session analysis.
+
+<Callout kind="info">
+
+Sections marked as `script` count toward coverage analysis during calls. Sections marked as `info` stay available as reference but do not affect coverage.
+
+</Callout>
+
+## Create a script from start to finish
+
+<Steps>
+  <Step title="Choose an existing script or create a new one" icon="plus">
+
+  Use the script tabs at the top of the page to switch between workspace scripts. Click **New Script** to start from scratch, or open a standard template and choose **Copy to Edit** to fork it into your workspace.
+
+  </Step>
+  <Step title="Add the main conversation sections" icon="git-branch">
+
+  Click **Add Section** to create the core parts of the call flow, such as intro, discovery, pricing, and close. Drag nodes into a layout that matches how your team naturally moves through the conversation.
+
+  </Step>
+  <Step title="Connect sections with conditions" icon="arrow-right">
+
+  Draw branches between nodes to define what happens next. Add a condition to each branch so reps and managers can tell when the script should move in that direction.
+
+  A useful condition looks like `if the prospect asks about pricing` or `if budget is confirmed`.
+
+  </Step>
+  <Step title="Add reference-only guidance where needed" icon="info">
+
+  Use **Add Info** for supporting material that should stay visible during the call without counting as a required script section. Teams often use info nodes for competitor notes, pricing reminders, or legal language.
+
+  </Step>
+  <Step title="Set proactive prompts" icon="zap">
+
+  Add prompts below the canvas to tell Close AI when to surface timely guidance. Prompts work well for moments like pricing objections, silence after a key question, or booking hesitation.
+
+  </Step>
+  <Step title="Check, save, and activate the script" icon="check-circle">
+
+  Run **Check Script** to find branches missing conditions, then click **Save**. When the script is ready for live use, turn on **Active** so the desktop app follows it during conversations.
+
+  </Step>
+</Steps>
+
+<Callout kind="alert">
+
+Only one script can be active at a time. Turning on **Active** marks that script as the live script Close AI follows during calls.
+
+</Callout>
+
+## Understand the script structure
+
+Every script has two parts: **sections** and **prompts**. Sections define the visible call flow on the canvas, while prompts define proactive guidance that can fire during a live conversation.
+
+A section includes the following fields:
+
+- `id` — unique section identifier
+- `name` — label shown on the node
+- `type` — `script` or `info`
+- `content` — what the rep should say or reference
+- `position` — the node location on the canvas
+- `next` — the list of branches leading to other sections
+
+Branches live inside `next`. Each branch points to another section and can include a condition that explains when the flow should move there.
+
+## Use the right section type
+
+Pick the section type based on whether the content should count toward script coverage.
+
+| Type | How it appears | Use it for |
+| --- | --- | --- |
+| `script` | Numbered node | Required talking points you want tracked during calls |
+| `info` | Blue dashed node | Reference-only guidance that should not count toward coverage |
+
+A common pattern is to keep the main talk track as `script` sections and add supporting notes as `info` sections near the relevant part of the flow.
+
+## Work with the canvas controls
+
+The canvas gives you the controls you need to build and reorganize a script quickly.
+
+- **Add Section** — creates a new tracked script node
+- **Add Info** — creates a reference-only node
+- **Auto-Arrange** — stacks nodes vertically at fixed spacing
+- **Zoom and fit controls** — help you inspect details or reset the canvas view
+
+Auto-Arrange is useful after importing a script or adding several nodes at once. It does not change your script logic; it only repositions nodes on the canvas.
+
+## Edit nodes in the inspector
+
+When you select a node, the inspector on the right lets you update the section without leaving the canvas.
+
+- **Name** — rename the section
+- **Type toggle** — switch between `script` and `info`
+- **Content** — write what the rep should say or what they should reference
+- **Delete section** — remove the node
+
+Use short, scan-friendly names for sections so reps can orient quickly during a live call. Put the full guidance in the content field.
+
+## Define branch conditions clearly
+
+When you select a branch between two nodes, the branch inspector lets you control how the conversation should move.
+
+- **Condition** — describe when the script should follow this branch
+- **Delete branch** — remove the connection
+
+Good branch conditions are specific and observable. For example:
+
+- `if the prospect asks about pricing`
+- `if the prospect is not the decision maker`
+- `if the prospect agrees to book a follow-up`
+
+<Callout kind="alert">
+
+Branches without a condition are highlighted in dashed red and flagged by **Check Script**. Use conditions on every branch so the flow is easier to review, maintain, and coach against.
+
+</Callout>
+
+## Manage the script from the header
+
+The header controls affect the whole script, not just the selected node.
+
+| Control | What it does |
+| --- | --- |
+| Name input | Renames the current script |
+| Active switch | Marks this as the live script the desktop app follows |
+| Published switch | Makes the script published in admin mode |
+| Check Script | Highlights branches missing conditions |
+| Save | Persists your changes |
+| Delete | Removes the current script |
+
+Use **Check Script** before saving when you have added new branches or rearranged the flow. It is the fastest way to spot incomplete decision paths.
+
+## Add proactive prompts
+
+The proactive prompts panel sits below the canvas and gives Close AI extra guidance it can surface during the call. Each prompt includes:
+
+- **Enabled** — turns the prompt on or off
+- **Trigger** — defines when the prompt should fire
+- **Text** — defines what Close AI should suggest
+- **Delete** — removes the prompt
+
+Prompts work best when they are narrow and situational. Instead of writing one broad reminder, create several prompts tied to distinct moments such as pricing pressure, timeline objections, or booking hesitation.
+
+## Start from standard templates
+
+Standard templates are global scripts managed by an admin and shown as read-only options in the workspace. They help teams start from a proven structure instead of building every script from scratch.
+
+Available template categories include:
+
+- outbound setter
+- appointment booking
+- upsell
+
+When a template is close to what you need, use **Copy to Edit**. That creates a workspace version you can modify without changing the original template.
+
+## Import or export scripts
+
+If you already have a script in another format, import it instead of rebuilding it by hand.
+
+### Import from raw text with AI
+
+Paste a raw script with at least 20 characters into the AI import dialog. Close AI parses the text into sections, branches, and prompts, then loads the result onto the canvas for review before you save it.
+
+This path works well when your team has a script in a document, spreadsheet, or notes app and wants to turn it into a usable flow quickly.
+
+### Import from JSON
+
+Upload a `.talkturo.json` file to load a versioned script export. After upload, choose whether to:
+
+- **Create New Script**
+- **Overwrite Current**
+
+Import regenerates IDs to avoid collisions with existing nodes and branches.
+
+### Export to JSON
+
+Use **Export** to download the current script as a `.talkturo.json` file. Export is useful for backups, review, and moving scripts between workspaces.
+
+## Manage multiple scripts
+
+Teams often keep separate scripts for different motions, segments, or offer types. The editor supports that workflow directly.
+
+- **Script tabs** let you switch between workspace scripts
+- **New Script** creates another script in the workspace
+- **Active** determines which script Close AI follows live
+
+A practical setup might include one script for cold outbound, one for booked demos, and one for expansion calls. Keep only the script your reps should follow right now marked as active.
+
+## Build scripts that are easy to coach from
+
+The best scripts are easy to follow during a conversation and easy to review afterward. A few habits make a big difference:
+
+- Keep each section focused on one stage of the conversation
+- Name sections with the rep's goal, not a vague label
+- Use branch conditions that describe a real prospect signal
+- Reserve `info` nodes for material that helps but should not count toward coverage
+- Add proactive prompts for moments where reps commonly hesitate or miss the next move
+
+Coverage analysis becomes more useful when the script reflects how calls actually unfold. If the flow is too theoretical, managers will get weaker coaching signals after the session.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card
+    title="Close AI overview"
+    href="/close-ai/overview"
+    icon="book-open"
+    cta="Open overview"
+  />
+  <Card
+    title="Sessions"
+    href="/close-ai/sessions"
+    icon="monitor"
+    cta="Review sessions"
+  />
+</Columns>

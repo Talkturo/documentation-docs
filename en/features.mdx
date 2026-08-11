@@ -1,149 +1,123 @@
 ---
 title: Features
-description: Overview of Talkturo's primary features, including AI assistants, campaigns, CRM tools, and analytics for managing voice interactions.
+description: Explore Talkturo's core features for building AI voice agents, running campaigns, managing CRM data, and automating call workflows.
 ---
 
 ## Overview
 
-Talkturo provides enterprise-grade tools to deploy AI voice agents for real phone calls. You manage CRM integrations, launch outbound campaigns, configure intelligent assistants, and analyze interactions through transcripts and recordings. Key features include customizable AI assistants with prompt templates and functions, campaign scheduling, contact management, and comprehensive analytics.
+Talkturo combines AI voice agents, telephony, CRM, campaigns, analytics, and workflow automation into one platform for managing voice-based customer interactions at scale.
+
+<Callout kind="info">
+
+Start with the [Quickstart](/quickstart) to create your first assistant, connect a phone number, and place a test call.
+
+</Callout>
 
 <Columns cols={2}>
-  <Card title="AI Assistants" icon="bot" href="/assistants/overview">
-    Build and deploy voice agents with custom prompts, voices, and functions for natural conversations.
+  <Card title="AI Voice Agents" icon="bot" href="/assistants/overview">
+    Configure assistants with custom prompts, voices, LLM models, speech-to-text, telephony, functions, and knowledge base for inbound and outbound calls.
   </Card>
   <Card title="Campaigns" icon="megaphone" href="/campaigns/overview">
-    Schedule outbound calls at scale with precise timing and targeting.
+    Run outbound calling campaigns with scheduling, retry logic, local presence, and real-time monitoring.
   </Card>
-  <Card title="CRM Tools" icon="users" href="/crm/contacts">
-    Manage contacts and companies seamlessly integrated with your voice operations.
+  <Card title="CRM" icon="users" href="/crm/contacts">
+    Manage contacts, companies, opportunities, and custom fields with AI-powered data extraction from calls.
   </Card>
-  <Card title="Analytics" icon="bar-chart-3" href="/analytics/overview">
-    Review call transcripts, recordings, and performance metrics.
+  <Card title="Call Logs" icon="file-text" href="/call-logs">
+    Review full transcripts, recordings with waveform playback, call events, and cost breakdowns.
+  </Card>
+  <Card title="Intelligence" icon="bar-chart-3" href="/intelligence">
+    Analyze call performance with sentiment, objections, topics, and trend reporting.
+  </Card>
+  <Card title="TurboFlow" icon="git-branch" href="/turboflow/overview">
+    Build visual workflows that connect assistants to external services with triggers, actions, and integrations.
+  </Card>
+  <Card title="Knowledge Base" icon="book-open" href="/knowledge-base">
+    Upload documents for retrieval-based answers during live calls.
+  </Card>
+  <Card title="Voice Library" icon="mic" href="/voice-library">
+    Browse TTS voices, preview samples, and clone custom voices.
+  </Card>
+  <Card title="Close AI Desktop" icon="monitor" href="/close-ai/overview">
+    Use the desktop app for live sales coaching, script guidance, and post-call analysis.
+  </Card>
+  <Card title="Telephony" icon="phone" href="/telephony">
+    Search, purchase, and manage phone numbers through Telnyx and Twilio with compliance support.
   </Card>
 </Columns>
 
-<Callout kind="info">
-  Start with the <a href="/quickstart">Quickstart</a> to set up your first AI assistant and make a test call.
-</Callout>
+## AI Voice Agents
 
-## AI Assistants
+AI Voice Agents handle both inbound and outbound conversations from a single assistant configuration. You control how the agent speaks, what it knows, which model it uses, how it routes calls, and what actions it can take during a live conversation.
 
-Configure AI assistants to handle inbound and outbound calls. Customize voices, prompts, and integrate functions for dynamic interactions.
+The assistant builder is organized into 10 configuration tabs so you can tune behavior without leaving the workflow. Those tabs cover **Prompt**, **Model**, **Voice**, **Transcriptor**, **Telephony**, **Functions**, **Knowledge Base**, **Analysis**, **Webhooks**, and **Email Summary**.
 
 <Tabs>
-  <Tab title="Voice Configuration" icon="mic">
-    Select from natural-sounding voices and adjust parameters like speed and tone.
+  <Tab title="Configuration tabs" icon="settings">
+
+  - **Prompt** — define the assistant's instructions, tone, goals, and guardrails.
+  - **Model** — choose the LLM and model settings that drive the conversation.
+  - **Voice** — select the speaking voice and related text-to-speech settings.
+  - **Transcriptor** — configure speech-to-text behavior for call transcription.
+  - **Telephony** — control phone settings for inbound and outbound call handling.
+  - **Functions** — connect tools and callable actions the assistant can use.
+  - **Knowledge Base** — attach documents for retrieval during live calls.
+  - **Analysis** — configure structured extraction and post-call insights.
+  - **Webhooks** — send call events and outcomes to external systems.
+  - **Email Summary** — generate follow-up summaries after completed calls.
+
   </Tab>
-  <Tab title="Prompt Templates" icon="file-text">
-    Use templates to define conversation flows. Example template:
-    
-````json
-{
-  "system_prompt": "You are a helpful sales assistant for Talkturo. Greet callers warmly and qualify leads.",
-  "user_prompt": "{caller_name}, how can I assist you today?"
-}
-````
+  <Tab title="Templates and setup" icon="rocket">
+
+  Talkturo includes assistant templates for common use cases, including **Outbound Setter**, **Inbound Support**, **Follow-up**, and **Custom**.
+
+  New assistants are created through a 7-step wizard that guides you through the core setup flow. The wizard covers the assistant type, base configuration, prompt behavior, model and voice choices, telephony options, tools and knowledge, and final review before activation.
+
   </Tab>
 </Tabs>
 
-<Steps>
-  <Step title="Create Assistant" icon="plus">
-    Navigate to the Assistants dashboard and click "New Assistant".
-  </Step>
-  <Step title="Configure Prompts" icon="edit-3">
-    Enter your system and user prompts. Test with sample inputs.
-  </Step>
-  <Step title="Add Functions" icon="code">
-    Define custom functions for CRM lookups or scheduling.
-    
-````javascript
-const functions = [
-  {
-    name: "lookup_contact",
-    description: "Look up contact by phone number",
-    parameters: { phone: "string" }
-  }
-];
-````
-  </Step>
-  <Step title="Deploy" icon="rocket">
-    Assign a phone number and publish your assistant.
-  </Step>
-</Steps>
-
 ## Campaigns
 
-Launch targeted outbound campaigns with scheduling and analytics.
+Campaigns let you run outbound calling programs at scale while keeping calling behavior controlled and observable. You decide who to call, when to call them, how often to retry, and how the platform should handle voicemail and non-responsive leads.
 
-<Board title="Campaign Workflow">
-  <BoardColumn title="Draft" color="0" icon="edit">
-    <BoardCard title="Q1 Lead Gen" description="Call 500 prospects from CRM" icon="phone" />
-  </BoardColumn>
-  <BoardColumn title="Scheduled" color="1" icon="clock">
-    <BoardCard title="Follow-up Calls" description="Re-engage warm leads" dueDate="2024-12-15" author="Sales Team" />
-  </BoardColumn>
-  <BoardColumn title="Active" color="3" icon="zap">
-    <BoardCard title="Product Demo" description="Schedule demos via voice" />
-  </BoardColumn>
-  <BoardColumn title="Completed" color="2" icon="check-circle">
-    <BoardCard title="Holiday Promo" createdAt="2024-11-20" />
-  </BoardColumn>
-</Board>
+Core campaign controls include call windows, retry logic with backoff modes, and local presence for number matching. You can also apply DNC filtering, configure voicemail handling, and monitor campaign activity from a real-time dashboard as calls move through the queue.
 
-## CRM Integration
+## CRM
 
-Handle contacts and companies effortlessly.
+The CRM keeps contact and account data close to your call operations so assistants and campaigns work from the same source of truth. You can manage individual records directly or import contacts in bulk with CSV upload.
 
-<ParamField path="phone" param-type="string" required="true">
-  Contact phone number in E.164 format, e.g., `+15551234567`.
-</ParamField>
+Beyond contacts, Talkturo supports **companies**, **opportunities**, and **custom fields** for capturing account-specific context. Opportunity management includes Kanban-style stages, while AI data extraction from calls can populate structured fields and reduce manual note entry.
 
-<ParamField body="company_id" param-type="string" required="false">
-  Associate contact with a company for better tracking.
-</ParamField>
+## Call Logs and Intelligence
 
-Example API call to add a contact:
+Call Logs give you the complete record of each interaction after a call finishes. You can review transcripts, listen to recordings with waveform playback, inspect call events, and understand how usage and cost were calculated.
 
-<CodeGroup tabs="cURL,JavaScript">
-```bash
-curl -X POST https://api.talkturo.ai/v1/contacts \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phone": "+15551234567",
-    "name": "Jane Doe",
-    "company_id": "comp_123"
-  }'
-```
+Intelligence builds on those records with analysis across conversations. Use it to track sentiment, objections, topics, and broader trends so you can identify what high-performing calls do differently and where campaigns or scripts need adjustment.
 
-```javascript
-const response = await fetch('https://api.talkturo.ai/v1/contacts', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    phone: '+15551234567',
-    name: 'Jane Doe',
-    company_id: 'comp_123'
-  })
-});
-```
-</CodeGroup>
+## TurboFlow
 
-## Analytics and Insights
+TurboFlow provides a visual, node-based builder for automating what happens before, during, and after calls. It connects assistants to external systems without requiring custom orchestration code for every workflow.
 
-Review call transcripts, recordings, and metrics to optimize performance.
+The builder supports trigger types such as **webhook**, **Cal.com**, **Calendly**, **Slack**, and **Meta**. From there, you can add action nodes like **HTTP request**, **CRM upsert**, and **call contact**, then connect integrations including **Gmail**, **HubSpot**, and **Slack**. The Robert AI assistant panel helps you assemble and refine workflows inside the editor.
 
-<Expandable title="Access Transcripts" default-open="true">
-  Download full transcripts and listen to recordings directly in the dashboard. Filter by sentiment, duration, or outcome.
-</Expandable>
+## Close AI Desktop
 
-<Expandable title="Key Metrics">
-  Track metrics like connect rate (`>80%`), average handle time (`<5min`), and conversion rates.
-</Expandable>
+Close AI Desktop brings live sales support and post-call review into a dedicated desktop experience. It is designed for teams that need guidance during active conversations and structured coaching after the call ends.
 
-<Callout kind="tip">
-  Enable real-time analytics for live campaign monitoring. Integrate with your BI tools via webhooks to `https://your-webhook-url.com/webhook`.
-</Callout>
+The desktop app includes live coaching, session analysis with **CloseScore**, and a script editor with branching paths for different call outcomes. It also includes a prompt library and a desktop dashboard for reviewing activity, performance, and follow-up opportunities.
+
+## Knowledge Base, Voice Library, and Telephony
+
+Knowledge Base improves live conversations by giving assistants retrieval-based access to uploaded documents. That makes it easier to answer policy, pricing, or product questions without hard-coding every detail into the base prompt.
+
+Voice Library helps you choose how assistants sound. You can browse available TTS voices, preview samples, and clone custom voices when you need tighter brand or persona alignment.
+
+Telephony handles the phone infrastructure behind your assistants and campaigns. You can search, purchase, and manage numbers through Telnyx and Twilio, then apply the compliance and routing settings required for production calling.
+
+## Where to go next
+
+<Columns cols={3}>
+  <Card title="Build your first assistant" href="/assistants/overview" icon="bot" />
+  <Card title="Launch a campaign" href="/campaigns/overview" icon="megaphone" />
+  <Card title="Automate workflows" href="/turboflow/overview" icon="git-branch" />
+</Columns>

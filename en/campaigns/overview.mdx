@@ -1,0 +1,311 @@
+---
+title: Campaigns
+description: Run outbound calling campaigns with AI assistants, contact queues, scheduling, and retry logic that dial automatically within your rules.
+---
+
+## Run outbound campaigns at scale
+
+Campaigns are Talkturo's outbound calling system. A campaign pairs an AI assistant with a contact list, a set of phone numbers, and calling rules, then dials contacts automatically according to the schedule and retry behavior you define.
+
+The campaign engine checks for work every 30 seconds. When a campaign is active and inside its call window, the engine pulls eligible contacts from the queue and starts calls based on your campaign settings.
+
+<Callout kind="info">
+
+Campaigns are for outbound calling only. The assistant you attach to a campaign must support outbound calls.
+
+</Callout>
+
+## How campaigns work
+
+A campaign moves through a predictable lifecycle. You set it up once, enroll contacts, define the rules, and then let the dialing engine work through the queue.
+
+<Steps>
+  <Step title="Create the campaign" icon="plus">
+
+  Create a campaign and connect it to an assistant, a company, and one or more outbound phone numbers.
+
+  At this stage, the campaign is usually still in `draft` until you add scheduling or start it manually.
+
+  </Step>
+  <Step title="Enroll contacts" icon="users">
+
+  Add contacts from your CRM, import them in bulk, or manually select the records you want to call.
+
+  Contacts become campaign contacts and enter the queue with their own delivery status.
+
+  </Step>
+  <Step title="Define dialing rules" icon="settings">
+
+  Configure when calls are allowed, how many attempts each contact should receive, how long to wait before retries, and how many calls can run at once.
+
+  These rules control who gets called, when they get called, and how the queue advances.
+
+  </Step>
+  <Step title="Start or schedule the campaign" icon="play-circle">
+
+  Start the campaign immediately or set a future start time.
+
+  If you schedule it, the cron-driven engine launches it automatically when the start time arrives, as long as the account has enough credits.
+
+  </Step>
+  <Step title="Monitor and adjust" icon="bar-chart">
+
+  Watch campaign activity in real time and pause the campaign if you need to change configuration.
+
+  Running campaigns continue processing contacts every 30 seconds until all eligible contacts are handled or the campaign is paused, completed, or cancelled.
+
+  </Step>
+</Steps>
+
+## Campaign statuses
+
+Campaigns use a small set of statuses that tell you whether they are ready, waiting, dialing, or finished.
+
+| Status | Meaning |
+|---|---|
+| `draft` | Created but not yet scheduled or launched. |
+| `scheduled` | A future start time is set. The engine launches the campaign automatically when that time arrives. |
+| `running` | The campaign is actively dialing contacts. |
+| `paused` | Dialing is halted, but enrolled contacts stay in the queue. |
+| `completed` | All contacts have been processed. |
+| `cancelled` | The campaign was stopped manually and will not resume. |
+
+## Understand status transitions
+
+Most campaign behavior comes down to a few important state changes. Knowing these transitions helps you predict when a campaign will start, pause, or stop.
+
+### Common transitions
+
+| Transition | What causes it |
+|---|---|
+| `draft` → `scheduled` | Set `scheduledStartAt` to a future launch time. |
+| `scheduled` → `running` | The start time arrives and the account has sufficient credits. |
+| `scheduled` → `paused` | The start time arrives, but the account does not have enough credits to launch. |
+| `running` → `paused` | You pause the campaign manually, or credits run out while the campaign is active. |
+| `running` → `completed` | All contacts are processed, unless automatic completion is disabled. |
+| `completed` / `cancelled` | These are terminal states and cannot return to active states. |
+
+<Callout kind="alert">
+
+You cannot change core campaign configuration while a campaign is `running`. Pause the campaign first, make your changes, and then resume it.
+
+</Callout>
+
+### What completion means
+
+A campaign reaches `completed` when it has no more work to process. In practice, that means every enrolled contact has been called, skipped, failed, or otherwise moved out of the active queue.
+
+If your workflow disables automatic completion, the campaign may stay out of the normal completion path even after the queue is empty. Use real-time campaign stats to confirm whether work is still pending.
+
+## Create a campaign
+
+You need four required fields to create a valid campaign. Everything else controls scheduling, concurrency, retries, and integrations.
+
+### Required fields
+
+<ParamField body="assistantId" param-type="string" required="true" show-location="false">
+
+The assistant assigned to the campaign. The assistant must be outbound-enabled.
+
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="true" show-location="false">
+
+The company the campaign belongs to. The company must belong to your workspace.
+
+</ParamField>
+
+<ParamField body="fromNumberIds" param-type="string[]" required="true" show-location="false">
+
+One or more outbound phone number UUIDs the campaign can dial from.
+
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true" show-location="false">
+
+A non-empty campaign name.
+
+</ParamField>
+
+### Optional fields
+
+<ParamField body="description" param-type="string" required="false" show-location="false">
+
+Short internal context for the campaign.
+
+</ParamField>
+
+<ParamField body="scheduledStartAt" param-type="string" required="false" show-location="false">
+
+Future start timestamp. Setting this moves a campaign from `draft` to `scheduled`.
+
+</ParamField>
+
+<ParamField body="callWindowStart" param-type="string" required="false" show-location="false">
+
+The daily time when calling can begin.
+
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false" show-location="false">
+
+The daily time when calling must stop.
+
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false" show-location="false">
+
+Timezone used to interpret the call window.
+
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false" show-location="false">
+
+Maximum number of calls the campaign can run at the same time.
+
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false" show-location="false">
+
+Maximum number of call attempts allowed for each contact.
+
+</ParamField>
+
+<ParamField body="retryDelayMinutes" param-type="integer" required="false" show-location="false">
+
+Delay between retry attempts for the same contact.
+
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false" show-location="false">
+
+Additional campaign behavior settings.
+
+</ParamField>
+
+<ParamField body="webhook configuration" param-type="object" required="false" show-location="false">
+
+Webhook destination and related delivery settings for campaign events.
+
+</ParamField>
+
+### Example create request
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/campaigns" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Q4 reactivation campaign",
+    "assistantId": "asst_7d92f4a1",
+    "companyId": "cmp_31ab82d9",
+    "fromNumberIds": [
+      "9f8d1c5f-3c31-45b7-8ef1-72e4b53e6b11"
+    ],
+    "scheduledStartAt": "2026-09-15T14:00:00Z",
+    "callWindowStart": "09:00",
+    "callWindowEnd": "17:00",
+    "callWindowTimezone": "America/New_York",
+    "maxConcurrentCalls": 4,
+    "maxAttemptsPerContact": 3,
+    "retryDelayMinutes": 120
+  }'
+```
+</Request>
+
+<Response tabs="201">
+```json
+{
+  "id": "camp_4bc91e27",
+  "name": "Q4 reactivation campaign",
+  "status": "scheduled",
+  "assistantId": "asst_7d92f4a1",
+  "companyId": "cmp_31ab82d9",
+  "fromNumberIds": [
+    "9f8d1c5f-3c31-45b7-8ef1-72e4b53e6b11"
+  ],
+  "scheduledStartAt": "2026-09-15T14:00:00Z",
+  "callWindowStart": "09:00",
+  "callWindowEnd": "17:00",
+  "callWindowTimezone": "America/New_York",
+  "maxConcurrentCalls": 4,
+  "maxAttemptsPerContact": 3,
+  "retryDelayMinutes": 120
+}
+```
+</Response>
+
+## Campaign API
+
+Use these endpoints to create campaigns, manage contacts, control execution, and read live stats.
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/crm/campaigns` | `GET` | List campaigns with filters. |
+| `/api/crm/campaigns` | `POST` | Create a campaign. |
+| `/api/crm/campaigns/[id]` | `GET` | Get campaign details, including contacts. |
+| `/api/crm/campaigns/[id]` | `PUT` | Update campaign fields and apply status transitions. |
+| `/api/crm/campaigns/[id]` | `DELETE` | Soft delete a campaign. Only `draft` or `cancelled` campaigns can be deleted. |
+| `/api/crm/campaigns/[id]/run` | `POST` | Start or stop a campaign. |
+| `/api/crm/campaigns/[id]/contacts` | `POST` | Enroll contacts into a campaign. |
+| `/api/crm/campaigns/[id]/dashboard` | `GET` | Read real-time campaign statistics. |
+
+## Work with campaign contacts
+
+Campaigns do not dial CRM contacts directly. They dial campaign contacts, which are enrolled records tracked inside a specific campaign.
+
+### Enrollment methods
+
+You can add contacts to a campaign in three ways:
+
+- **All eligible contacts** through audience mode
+- **Manual selection** by contact IDs
+- **Inline create and enroll** when you need to add a new contact directly into the campaign
+
+If a contact is marked DNC, Talkturo still records the enrollment but marks that contact as `skipped` automatically.
+
+### Contact statuses
+
+Each enrolled contact moves through its own delivery state as the campaign progresses.
+
+| Contact status | Meaning |
+|---|---|
+| `pending` | Enrolled but not yet prepared for dialing. |
+| `queued` | Ready to be picked up by the dialing engine. |
+| `calling` | A call attempt is currently in progress. |
+| `completed` | The contact finished the campaign flow successfully. |
+| `skipped` | The contact was not dialed, including DNC contacts. |
+| `failed` | The campaign could not complete the contact after processing. |
+
+### Queue ordering
+
+When multiple contacts are ready at the same time, Talkturo processes them in this order:
+
+1. Higher `priority` first
+2. Earlier `created_at` first when priority is the same
+
+That ordering is equivalent to `priority DESC, created_at ASC`. If you rely on careful sequencing, set contact priority before the campaign begins.
+
+## Credits and campaign execution
+
+Campaigns need credits available at launch time and while they are running. Credits affect both whether a campaign can start and whether it can keep dialing.
+
+<Callout kind="alert">
+
+A campaign needs at least `1.0` credits to run. If credits drop below the required threshold, Talkturo pauses the campaign automatically.
+
+</Callout>
+
+When a scheduled campaign reaches its launch time, Talkturo checks account credits before moving it to `running`. If the account does not have enough credits, the campaign moves to `paused` instead of dialing contacts.
+
+After you add credits, suspended phone numbers are reactivated. You can then resume the paused campaign and continue processing the existing queue.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Configure campaigns" href="/campaigns/configuration" icon="settings" cta="Open guide" />
+  <Card title="Monitor campaigns in real time" href="/campaigns/realtime" icon="bar-chart" cta="View dashboard" />
+  <Card title="Manage CRM contacts" href="/crm/contacts" icon="users" cta="Open contacts" />
+  <Card title="Choose an assistant" href="/assistants/overview" icon="bot" cta="View assistants" />
+</Columns>

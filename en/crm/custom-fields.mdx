@@ -1,0 +1,145 @@
+---
+title: Custom Fields
+description: Extend your CRM contact and company schemas with workspace-specific fields for prompts, segmentation, and reporting.
+---
+
+## Extend your CRM schema
+
+Custom fields add workspace-specific data to contacts and companies beyond the built-in CRM fields. Use them to track details such as account tier, product interest, employee count, or any other attribute your team needs to store consistently.
+
+Those values flow into the rest of Talkturo. You can reference custom fields in assistant prompts, filter campaign audiences with them, and use them in reporting across your workspace.
+
+## Field types
+
+Choose a field type based on the kind of value you need to store.
+
+| Type | Use for |
+|---|---|
+| `text` | Free-form text values |
+| `number` | Numeric values |
+| `date` | Date values |
+| `select` | Predefined option lists |
+| `boolean` | True or false values |
+
+## Create and manage custom fields
+
+Create custom fields from the dashboard or manage them through the API.
+
+<Steps>
+  <Step title="Open Custom Fields in the dashboard" icon="settings">
+
+  Go to **Workspace Settings** → **CRM** → **Custom Fields**.
+
+  Create a field for either the contact schema or the company schema, depending on where you want the data to live.
+
+  </Step>
+  <Step title="Define the field" icon="edit">
+
+  Each custom field includes these properties:
+
+  <ParamField body="name" param-type="string" required="true" show-location="false">
+  The display name your team sees in the CRM.
+  </ParamField>
+
+  <ParamField body="key" param-type="string" required="true" show-location="false">
+  The unique field identifier used in variables and integrations. Use a stable key such as `product_interest` or `account_tier`.
+  </ParamField>
+
+  <ParamField body="type" param-type="text | number | date | select | boolean" required="true" show-location="false">
+  The field's value type.
+  </ParamField>
+
+  <ParamField body="options" param-type="string[]" required="false" show-location="false">
+  The list of allowed values for `select` fields.
+  </ParamField>
+
+  </Step>
+  <Step title="Manage fields with the API" icon="code">
+
+  Use these endpoints to list, create, update, and delete custom fields.
+
+  <Request tabs="cURL" default-tab="1">
+  ```bash
+  curl -X GET "https://api.talkturo.com/api/crm/custom-fields" \
+    -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+  ```
+
+  ```bash
+  curl -X POST "https://api.talkturo.com/api/crm/custom-fields" \
+    -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "Product Interest",
+      "key": "product_interest",
+      "type": "select",
+      "options": ["Voice AI", "CRM", "Analytics"]
+    }'
+  ```
+
+  ```bash
+  curl -X PUT "https://api.talkturo.com/api/crm/custom-fields/cf_a1b2c3d4" \
+    -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "Account Tier",
+      "key": "account_tier",
+      "type": "select",
+      "options": ["Starter", "Growth", "Enterprise"]
+    }'
+  ```
+
+  ```bash
+  curl -X DELETE "https://api.talkturo.com/api/crm/custom-fields/cf_a1b2c3d4" \
+    -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+  ```
+  </Request>
+
+  The collection endpoint is `/api/crm/custom-fields`. Individual fields use `/api/crm/custom-fields/[id]`.
+
+  </Step>
+</Steps>
+
+## Use custom fields in assistant prompts
+
+Assistant prompts can read custom field values from both contacts and companies. This lets you tailor agent behavior with CRM data that is specific to your workspace.
+
+Use these variable patterns in prompts:
+
+- **Contact custom fields** — `{{contact.custom.key}}`
+- **Company custom fields** — `{{company.custom.key}}`
+
+For example:
+
+- `{{contact.custom.product_interest}}`
+- `{{company.custom.account_tier}}`
+
+Open the **Prompt** tab and use the CRM Variable Picker with <kbd>Ctrl</kbd> + <kbd>Space</kbd> to insert available variables without typing them manually.
+
+## Let AI populate custom fields after calls
+
+<Callout kind="info">
+AI call analysis can extract structured values from transcripts and write them into matching custom fields on contacts and companies.
+
+This helps reduce manual data entry and keeps CRM records current after each call.
+</Callout>
+
+Extraction works best when your field names and keys clearly match the information you want captured. For example, fields such as `product_interest`, `employee_count`, or `account_tier` are easier for the system to map reliably than vague labels.
+
+## Use custom fields in campaigns
+
+Custom fields also shape who enters a campaign. Filter audience lists by custom field values to target the right contacts and companies for each workflow.
+
+This is useful for segmentation such as:
+
+- contacts interested in a specific product line
+- companies in a certain account tier
+- records above or below an employee-count threshold
+- leads with a qualifying true or false flag
+
+## Related pages
+
+<Columns cols={3}>
+  <Card title="Contacts" href="/crm/contacts" icon="users" cta="Open contacts" />
+  <Card title="Companies" href="/crm/companies" icon="database" cta="Open companies" />
+  <Card title="Assistant configuration" href="/assistants/configuration" icon="settings" cta="Configure assistants" />
+</Columns>

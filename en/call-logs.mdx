@@ -1,0 +1,265 @@
+---
+title: Call Logs and Transcripts
+description: Review call history, recordings, transcripts, analysis, and per-call credit costs for every conversation handled by your assistants.
+---
+
+## Review every call in one place
+
+Call Logs give you a complete record of every call handled by your assistants. Use them to trace what happened on a call, listen to the recording, read the transcript, inspect system events, and understand how many credits the conversation used.
+
+If you need account-level trends instead of individual call details, use the [Intelligence dashboard](/intelligence). Call Logs are best when you want to investigate a specific conversation.
+
+## What you can do in Call Logs
+
+The call list is built for day-to-day review. You can scan recent activity quickly, then open any row for a full call breakdown.
+
+| Area | What you can review |
+| --- | --- |
+| Call list | Full call history in a filterable, paginated table |
+| Detail view | Logs, transcripts, analysis, messages, and cost for one call |
+| Recordings | Stereo playback with separate human and AI channels |
+| Transcript review | Speaker-by-speaker conversation history, voicemail greetings, and missing transcript states |
+| Cost review | Per-call credit usage across STT, LLM, TTS, and platform overhead |
+
+## Use the call list to find the conversation you need
+
+The main Call Logs page shows your full call history in a paginated table. Each row represents one call and opens a full-screen detail view.
+
+### Call list columns
+
+| Column | Description |
+| --- | --- |
+| Type | Whether the call was `inbound` or `outbound` |
+| Call ID | The call identifier shown in shortened form |
+| Cost | Total cost for the call, shown in credits |
+| Ended reason | Why the call ended |
+| Outcome | The recorded result, such as voicemail or no answer |
+| Assistant | The assistant that handled the call |
+| From number | The caller or originating phone number |
+| To number | The destination phone number |
+| Start time | When the call started |
+| Duration | Total call length in seconds |
+
+### Filter the list
+
+Use filters at the top of the page to narrow the results before opening a call.
+
+| Filter | How it works |
+| --- | --- |
+| Free-text search | Searches call history by query |
+| From number | Matches the originating phone number |
+| To number | Matches the destination phone number |
+| Campaign selector | Filters calls by campaign |
+
+Pagination is handled in the page URL, so you can move through larger call histories without losing your filters.
+
+<Callout kind="tip">
+
+If you are comparing call outcomes across a campaign, start with the campaign filter first. That usually narrows the list faster than free-text search.
+
+</Callout>
+
+## Open the call detail view for a complete timeline
+
+Selecting a row opens a full-screen call detail view. This view is organized into five tabs so you can move from a high-level summary to raw event data without leaving the call.
+
+### Tabs in the call detail view
+
+| Tab | What it shows |
+| --- | --- |
+| Logs | Chronological call events with timestamps, status badges, and messages |
+| Transcripts | The conversation transcript, voicemail greeting details, and transcript availability |
+| Analysis | AI summary, transfer details, success evaluation, extracted data, and metadata |
+| Messages | System, assistant, and user message turns with timestamps |
+| Cost | Total credits and a breakdown by STT, LLM, TTS, and platform overhead |
+
+### Header details
+
+The detail view includes the full call ID and lets you copy it to your clipboard. This is useful when you need to share a specific call with a teammate or match the call to another workflow.
+
+If a recording is available, the player appears near the top of the detail view so you can listen while reviewing the rest of the call.
+
+## Listen to call recordings
+
+Call recordings use stereo MP3 playback with a WaveSurfer waveform view. The waveform is split into separate channels so you can distinguish the human voice from the Talkturo AI voice more easily.
+
+### Recording playback features
+
+| Control | Description |
+| --- | --- |
+| Play and pause | Start or stop playback |
+| Current time and total duration | Track where you are in the recording |
+| Speed selector | Adjust playback from 0.5x to 2.0x |
+| Download | Save the recording file locally |
+| Split-channel waveform | View human and AI audio on separate channels |
+
+Talkturo fetches recording playback links from the recording URL endpoint and loads a fresh presigned URL before playback. This keeps access secure while still allowing download and replay for authorized users.
+
+```text
+GET /api/calls/[id]/recording-url
+```
+
+## Read transcripts and voicemail greetings
+
+The Transcripts tab shows the call content in a message-by-message format. This is the fastest way to understand what happened when you do not need to listen to the full recording.
+
+### Transcript content
+
+| Transcript element | Description |
+| --- | --- |
+| Speaker labels | Identifies who said each message |
+| Timestamps | Shows when each message occurred |
+| Full conversation | Displays the transcript for the full call |
+| Empty state | Shows when no transcript data is available |
+
+### Voicemail greeting details
+
+If the call reached voicemail, the transcript can include a separate voicemail greeting section. This helps you review what the answering machine said without scanning the full conversation transcript.
+
+| Voicemail detail | Description |
+| --- | --- |
+| Greeting transcript | The transcribed voicemail or answering machine greeting |
+| Intent detection | A detected voicemail intent, such as away until a date or do not disturb |
+| Alternate number | A phone number extracted from the greeting when available |
+
+<Callout kind="info">
+
+Some calls do not produce transcript data. In those cases, the detail view shows a clear no-transcript state instead of partial or misleading content.
+
+</Callout>
+
+## Review AI-generated analysis
+
+The Analysis tab summarizes the call and exposes the structured data Talkturo extracted from it. Use this tab when you want the main outcome quickly or need to inspect what the system captured for downstream workflows.
+
+### Analysis sections
+
+| Section | What it includes |
+| --- | --- |
+| Call summary | AI-generated summary of the conversation |
+| Success evaluation | Whether the call was marked successful |
+| Extracted data | Structured data parsed from the conversation |
+| Metadata | Call metadata stored with the record |
+| Transfer details | Transfer department, number, type, status, and timestamp when a transfer occurred |
+
+### Transfer metadata
+
+If the call was transferred, the analysis view shows the transfer details in one place.
+
+| Field | Description |
+| --- | --- |
+| Department | The destination department |
+| Phone number | The number used for the transfer |
+| Transfer type | Whether the transfer was warm or cold |
+| Status | The transfer result |
+| Timestamp | When the transfer happened |
+
+## Inspect raw system and assistant messages
+
+The Messages tab shows conversation turns as system, assistant, and user messages with timestamps. This is useful when you want to inspect the message flow behind the transcript or understand how the assistant responded internally.
+
+The Logs tab is more operational. It shows chronological events with timestamps, message text, and clear `LOG` or `ERROR` badges so you can spot failures or unusual behavior quickly.
+
+### When to use Logs vs. Messages
+
+| If you need to know... | Open this tab |
+| --- | --- |
+| What happened at the system level during the call | Logs |
+| What the assistant, user, and system messages looked like | Messages |
+| Whether the call encountered errors | Logs |
+| How the conversation was structured turn by turn | Messages |
+
+## Understand per-call credit costs
+
+The Cost tab breaks down how many credits a call used and where those credits went. This helps you explain unusually expensive calls and compare the relative cost of transcription, model usage, and speech output.
+
+### Cost components
+
+| Component | Description |
+| --- | --- |
+| STT | Speech-to-text cost |
+| LLM | Language model cost, including prompt and completion tokens |
+| TTS | Text-to-speech cost, including character usage |
+| Platform overhead | Talkturo platform cost for the call |
+
+### What the cost view includes
+
+| Element | Description |
+| --- | --- |
+| Total credits | The full cost of the call |
+| Donut chart | Visual breakdown of all credit components |
+| Component cards | Per-component credit totals and usage details |
+| Token details | Prompt and completion token counts for LLM usage |
+| Character details | Character count for TTS usage |
+
+The donut chart uses color-coded segments so you can see the largest contributors at a glance. The component cards below the chart provide the exact numbers behind each segment.
+
+## Admin-only latency metrics
+
+Some call detail views include latency metrics for operational review. These metrics are intended for admins and help diagnose response speed across the call pipeline.
+
+<Callout kind="info">
+
+Latency metrics are only available to admins when latency visibility is enabled for the call detail view.
+
+</Callout>
+
+### Available latency metrics
+
+| Metric | Description |
+| --- | --- |
+| Response P95 | 95th percentile response latency |
+| Response P50 | Median response latency |
+| Turn count | Number of turns in the call |
+| EOU latency | End-of-utterance stage latency |
+| LLM latency | Model response stage latency |
+| TTS latency | Speech synthesis stage latency |
+
+If you are investigating assistant quality rather than system performance, start with the transcript, analysis, and cost tabs first. Use latency metrics when you need to explain delays or escalations.
+
+## Best ways to review a call
+
+<Steps>
+  <Step title="Find the call">
+
+  Filter the call list by campaign, phone number, or text query, then open the matching row.
+
+  A successful match opens the full-screen detail view for that call.
+
+  </Step>
+  <Step title="Check the recording and transcript">
+
+  Start with the recording player if you need tone and pacing, or go straight to the Transcripts tab if you only need the spoken content.
+
+  If transcript data exists, you will see speaker-labeled entries with timestamps. If the call reached voicemail, check the voicemail greeting section for intent and alternate number extraction.
+
+  </Step>
+  <Step title="Use Analysis for the outcome">
+
+  Open the Analysis tab to review the AI-generated summary, success evaluation, extracted data, and any transfer details.
+
+  This is the quickest way to confirm what happened without reading every event or message.
+
+  </Step>
+  <Step title="Inspect Logs, Messages, and Cost when needed">
+
+  Use Logs to trace events, Messages to inspect turn-by-turn interactions, and Cost to understand the credit impact of the call.
+
+  If you are an admin and latency metrics are visible, use them to investigate slow responses.
+
+  </Step>
+</Steps>
+
+## Related pages
+
+<Columns cols={3}>
+  <Card title="Intelligence dashboard" href="/intelligence" icon="bar-chart" cta="View dashboard">
+    Track trends across calls, outcomes, objections, sentiment, and performance over time.
+  </Card>
+  <Card title="Assistants overview" href="/assistants/overview" icon="users" cta="View assistants">
+    Review and manage the assistants responsible for handling inbound and outbound calls.
+  </Card>
+  <Card title="Campaigns overview" href="/campaigns/overview" icon="folder" cta="View campaigns">
+    Organize call activity by campaign and filter call logs by campaign performance.
+  </Card>
+</Columns>
