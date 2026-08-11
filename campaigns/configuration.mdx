@@ -1,0 +1,281 @@
+---
+title: Campaign Configuration
+description: Configure call windows, retry logic, local presence, do not call enforcement, voicemail handling, and campaign delivery limits.
+---
+
+## Configure campaign calling behavior
+
+Campaign configuration controls when calls can be placed, how retries are scheduled, which caller ID a contact sees, and how voicemail or do not call records are handled. Use this page as the source of truth for the campaign settings that affect delivery behavior.
+
+<Callout kind="info">
+
+A campaign can combine account-level defaults, assistant-level defaults, and campaign-specific settings. When a campaign setting is present, the campaign setting takes precedence for that behavior.
+
+</Callout>
+
+## Apply configuration in the right order
+
+Most teams configure a campaign in four passes: set when calls are allowed, define retry rules, choose caller ID behavior, and then add voicemail or webhook options. That order makes it easier to validate the campaign before you start enrollment.
+
+<Steps>
+  <Step title="Set the call window" icon="clock">
+
+  Start with `callWindowStart`, `callWindowEnd`, and `callWindowTimezone`. These values determine whether a contact is eligible to be called at a given moment.
+
+  If you want the window to follow each contact's local time, leave `useContactTimezoneForCallWindow` enabled.
+
+  </Step>
+  <Step title="Define retry behavior" icon="refresh-cw">
+
+  Set the base retry delays for `no_answer`, `busy`, and `error`, then choose a backoff mode. After that, decide whether you want a single max-attempt limit for all outcomes or outcome-specific overrides.
+
+  </Step>
+  <Step title="Choose caller ID behavior" icon="phone">
+
+  Assign one or more campaign from-numbers if you want local presence or caller ID consistency across retries. Weight each number based on how often you want it selected.
+
+  </Step>
+  <Step title="Add voicemail, limits, and webhooks" icon="settings">
+
+  Finish by defining voicemail behavior, concurrency limits, evergreen behavior, and webhook delivery. At that point, the campaign is ready to run or accept continuous enrollment.
+
+  </Step>
+</Steps>
+
+## Configure call windows
+
+Call windows define the earliest and latest local time when a campaign may place a call. The campaign engine checks the current time against these values before it attempts the call.
+
+<ParamField body="callWindowStart" param-type="string" required="false" show-location="false">
+Earliest time of day when calling may begin. Use `HH:MM:SS` format. Default: `09:00:00`.
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false" show-location="false">
+Latest time of day when calling may continue. Use `HH:MM:SS` format. Default: `17:00:00`.
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false" show-location="false">
+IANA timezone used to evaluate the call window when contact-local evaluation is not applied. Default: `America/New_York`.
+</ParamField>
+
+<ParamField body="useContactTimezoneForCallWindow" param-type="boolean" required="false" show-location="false">
+Controls whether the campaign evaluates the call window in the contact's local timezone. When this setting is not explicitly `false`, the effective default is `true`.
+</ParamField>
+
+A call window can span midnight. If `callWindowStart` is later than `callWindowEnd`, the window is treated as an overnight window such as `22:00:00` through `06:00:00`.
+
+### How contact-local evaluation works
+
+When `useContactTimezoneForCallWindow` is enabled, the campaign evaluates `callWindowStart` and `callWindowEnd` in the contact's timezone instead of the campaign timezone. This keeps the same local calling hours across regions.
+
+For example, if the campaign is configured for `09:00:00` to `17:00:00` and the campaign timezone is `America/New_York`, a contact in `America/Los_Angeles` is still only called between `09:00:00` and `17:00:00` Pacific time.
+
+<Callout kind="tip">
+
+Use contact-local windows when your audience spans multiple timezones. It prevents East Coast schedules from calling West Coast contacts too early.
+
+</Callout>
+
+## Configure retry logic
+
+Retry logic controls when the campaign should try a contact again after a retriable outcome. Base delays are stored in campaign settings, and the campaign engine sets `next_attempt_at` when a call ends with a retriable outcome.
+
+### Retry delay settings
+
+| Setting | Default | Applies to |
+|---|---:|---|
+| `retry_delay_minutes_no_answer` | 5 | Calls that end with `no_answer` |
+| `retry_delay_minutes_busy` | 10 | Calls that end with `busy` |
+| `retry_delay_minutes_error` | 60 | Calls that end with `error` |
+
+<ParamField body="retry_delay_minutes_no_answer" param-type="integer" required="false" show-location="false">
+Base retry delay in minutes after a `no_answer` outcome. Default: `5`.
+</ParamField>
+
+<ParamField body="retry_delay_minutes_busy" param-type="integer" required="false" show-location="false">
+Base retry delay in minutes after a `busy` outcome. Default: `10`.
+</ParamField>
+
+<ParamField body="retry_delay_minutes_error" param-type="integer" required="false" show-location="false">
+Base retry delay in minutes after an `error` outcome. Default: `60`.
+</ParamField>
+
+<ParamField body="retryOnError" param-type="boolean" required="false" show-location="false">
+Controls whether technical errors should trigger retries. Default: `false`.
+</ParamField>
+
+<ParamField body="next_attempt_at" param-type="timestamp" required="false" show-location="false">
+Timestamp scheduled by the campaign engine after a retriable outcome. The engine updates this field when the contact should be attempted again.
+</ParamField>
+
+### Retry backoff settings
+
+Use fixed backoff when you want every retry to wait the same amount of time. Use exponential backoff when you want each retry to wait longer than the previous one.
+
+<ParamField body="retryBackoffMode" param-type="string" required="false" show-location="false" enum="fixed,exponential">
+Backoff strategy for retry delays. `fixed` uses the base delay every time. `exponential` multiplies the delay for later retries.
+</ParamField>
+
+<ParamField body="retryBackoffMultiplier" param-type="number" required="false" show-location="false">
+Multiplier used when `retryBackoffMode` is `exponential`. Allowed range: `1.01` to `10`. Default: `2`.
+</ParamField>
+
+<ParamField body="retryBackoffMaxMinutes" param-type="integer" required="false" show-location="false">
+Maximum retry delay cap in minutes after backoff is applied. Allowed range: `1` to `10080`, which is up to 1 week.
+</ParamField>
+
+### Max attempt settings
+
+The campaign can use a shared attempt limit for all outcomes or outcome-specific limits for `no_answer`, `busy`, and `error`. Outcome-specific settings override the default when they are set.
+
+| Setting | Range | Default behavior |
+|---|---|---|
+| `max_attempts_per_contact` | 1 to unlimited | Column-level default max attempts per contact is `3` |
+| `settings.max_attempts_no_answer` | 1–50 or `null` | Overrides the default for `no_answer`; `null` clears the override |
+| `settings.max_attempts_busy` | 1–50 or `null` | Overrides the default for `busy`; `null` clears the override |
+| `settings.max_attempts_error` | 1–50 or `null` | Overrides the default for `error`; `null` clears the override |
+
+<ParamField body="max_attempts_per_contact" param-type="integer" required="false" show-location="false">
+Default maximum number of attempts allowed for a contact. Column default: `3`.
+</ParamField>
+
+<ParamField body="settings.max_attempts_no_answer" param-type="integer|null" required="false" show-location="false">
+Outcome-specific max attempts for `no_answer`. Allowed range: `1` to `50`. Set to `null` to clear the override and fall back to `max_attempts_per_contact`.
+</ParamField>
+
+<ParamField body="settings.max_attempts_busy" param-type="integer|null" required="false" show-location="false">
+Outcome-specific max attempts for `busy`. Allowed range: `1` to `50`. Set to `null` to clear the override and fall back to `max_attempts_per_contact`.
+</ParamField>
+
+<ParamField body="settings.max_attempts_error" param-type="integer|null" required="false" show-location="false">
+Outcome-specific max attempts for `error`. Allowed range: `1` to `50`. Set to `null` to clear the override and fall back to `max_attempts_per_contact`.
+</ParamField>
+
+### Retry examples
+
+A fixed retry policy with `retry_delay_minutes_no_answer = 5` waits 5 minutes after every `no_answer` result until the max-attempt rule is reached.
+
+An exponential retry policy with `retry_delay_minutes_busy = 10`, `retryBackoffMode = exponential`, and `retryBackoffMultiplier = 2` produces delays of 10 minutes, 20 minutes, 40 minutes, and then continues increasing until it hits `retryBackoffMaxMinutes`.
+
+## Configure local presence
+
+Local presence uses multiple from-numbers on the same campaign so contacts can see a caller ID that is closer to their own area. This improves consistency without changing the selected number on every retry.
+
+<ParamField body="campaign_from_numbers" param-type="relation" required="false" show-location="false">
+Campaign-to-phone-number mapping table used to assign one or more from-numbers to a campaign.
+</ParamField>
+
+<ParamField body="weight" param-type="integer" required="false" show-location="false">
+Relative selection weight for a campaign from-number. Allowed range: `1` to `20`.
+</ParamField>
+
+<Callout kind="info">
+
+From-number selection is deterministic. The system uses a SHA-256 hash of `campaign_contact_id` to pick the campaign from-number, so the same contact gets the same caller ID on every retry.
+
+</Callout>
+
+<Callout kind="tip">
+
+Assign numbers from the same area code as your target contacts when you want a local presence effect. Because selection is deterministic, caller ID stays consistent across attempts instead of rotating between retries.
+
+</Callout>
+
+## Configure do not call enforcement
+
+Do not call enforcement happens at multiple points in the campaign lifecycle. The goal is to prevent a DNC record from being called even if it was enrolled earlier or remains in a queue unexpectedly.
+
+<ParamField body="excludeDnc" param-type="boolean" required="false" show-location="false">
+Controls audience filtering for do not call contacts during enrollment. Default: `true`.
+</ParamField>
+
+<Callout kind="alert">
+
+DNC enforcement uses four separate gates:
+
+- **Audience filtering** excludes DNC contacts during enrollment when `excludeDnc` is enabled.
+- **Enrollment status** marks DNC contacts as `skipped` instead of `pending`.
+- **Database-level gating** in `get_next_campaign_contacts()` filters contacts where `c.do_not_call = FALSE`.
+- **Cron cleanup** finds DNC contacts that remain `pending` or `queued` and marks them as `skipped`.
+
+</Callout>
+
+Contacts with no phone number are also cleaned up. Those records are marked as `skipped` with outcome `invalid_number`.
+
+## Configure voicemail handling
+
+Voicemail behavior can come from assistant defaults or campaign-specific overrides. If a campaign override is absent, the assistant-level setting remains in effect.
+
+### Assistant defaults and campaign overrides
+
+| Setting | Scope | Default or allowed values |
+|---|---|---|
+| `voicemail_detection_enabled` | Assistant default and campaign override | Default: `true` |
+| `voicemail_action` | Assistant default and campaign override | Default: `leave_message`; allowed: `leave_message`, `hangup` |
+| `voicemail_drop_message` | Campaign override | Custom TTS message |
+| `unavailable_action` | Campaign override | Allowed: `retry`, `fail` |
+
+<ParamField body="voicemail_detection_enabled" param-type="boolean" required="false" show-location="false">
+Enables voicemail detection. Assistant default: `true`. A campaign value overrides the assistant setting when present.
+</ParamField>
+
+<ParamField body="voicemail_action" param-type="string" required="false" show-location="false" enum="leave_message,hangup">
+Action to take when voicemail is detected. Assistant default: `leave_message`. If the campaign does not set this value, the assistant default is used.
+</ParamField>
+
+<ParamField body="voicemail_drop_message" param-type="string" required="false" show-location="false">
+Custom TTS message to play when voicemail is detected. This setting applies at the campaign level.
+</ParamField>
+
+<ParamField body="unavailable_action" param-type="string" required="false" show-location="false" enum="retry,fail">
+Action to take when the line is unavailable. Use `retry` to schedule another attempt or `fail` to stop retrying for that unavailable result.
+</ParamField>
+
+## Configure concurrency and campaign limits
+
+These settings control how aggressively a campaign places calls and whether it stops automatically after the current audience is exhausted.
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false" show-location="false">
+Maximum number of simultaneous calls the campaign may place.
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false" show-location="false">
+Default max attempts per contact used by the campaign configuration layer. Default: `3`. This corresponds to the campaign's shared attempt limit behavior.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false" show-location="false">
+When `true`, the campaign stays running after the current audience is exhausted so it can accept continuous enrollment. This is evergreen mode.
+</ParamField>
+
+<Callout kind="info">
+
+Use `noAutoComplete = true` only when your workflow continuously adds new contacts. Otherwise, let the campaign complete when it finishes its current queue.
+
+</Callout>
+
+## Configure webhooks
+
+Webhooks send campaign events to an external system such as a CRM, warehouse, or internal automation service.
+
+<ParamField body="webhookEnabled" param-type="boolean" required="false" show-location="false">
+Enables or disables webhook delivery for the campaign.
+</ParamField>
+
+<ParamField body="webhookUrl" param-type="string" required="false" show-location="false">
+Destination URL that receives campaign webhook events.
+</ParamField>
+
+<ParamField body="webhookSecret" param-type="string" required="false" show-location="false">
+Shared secret used to verify webhook requests on your server.
+</ParamField>
+
+<ParamField body="webhookEvents" param-type="array" required="false" show-location="false">
+List of campaign event names that should trigger webhook delivery.
+</ParamField>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Campaign overview" href="/campaigns/overview" icon="book-open" cta="Open guide" />
+  <Card title="Real-time campaign monitoring" href="/campaigns/realtime" icon="bar-chart" cta="View dashboard" />
+</Columns>

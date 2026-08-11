@@ -1,158 +1,282 @@
 ---
 title: Quickstart
-description: Guide to get up and running with Talkturo quickly, from account creation to deploying your first AI voice agent.
+description: Create an assistant, buy a phone number, and place your first Talkturo test call using the dashboard or API.
 ---
 
 ## Prerequisites
 
 <Callout kind="info">
 
-Before starting, ensure you have:
-- A Talkturo account (free trial available)
-- Access to a credit card for phone number purchase
-- Basic familiarity with APIs or the Talkturo dashboard at `https://dashboard.talkturo.ai`
+Before you start, make sure you have:
+
+- A Talkturo account
+- Access to the Talkturo dashboard at `https://app.talkturo.ai`
+- An API key if you plan to use the API
+- A credit card if you want to purchase a phone number beyond your included credits
+
+New workspaces start with 10 free credits, so you can complete the initial setup before committing to a larger spend.
 
 </Callout>
 
-Talkturo enables you to deploy enterprise AI voice agents for real phone calls. Follow these steps to create your first agent and make a test call.
+Talkturo lets you create an AI voice assistant, connect a phone number, and test a live call in a single setup flow. The steps below follow the fastest path to a working assistant.
 
 ## Create and Verify Your Account
 
-Sign up at `https://talkturo.ai` to get started.
+Create your workspace first, then generate an API key if you want to automate setup.
 
 <Steps>
-  <Step title="Sign Up" icon="user-plus">
+  <Step title="Sign up for Talkturo">
 
-    Visit `https://dashboard.talkturo.ai/signup` and create an account with your email.
+    Open `https://app.talkturo.ai/signup` and create your account.
 
-  </Step>
-  <Step title="Verify Email" icon="mail">
-
-    Check your inbox for a verification email from Talkturo and click the link.
+    When signup succeeds, Talkturo creates your workspace and applies 10 free credits automatically.
 
   </Step>
-  <Step title="Set API Key" icon="key">
+  <Step title="Verify your email">
 
-    Navigate to Account Settings. Generate an API key named `my-first-agent-key`.
+    Open the verification email from Talkturo and confirm your address.
 
-    Copy it securely as `YOUR_API_KEY`.
+    After verification, you can sign in to the dashboard and access your workspace settings.
+
+  </Step>
+  <Step title="Create an API key">
+
+    In the dashboard, open your account settings and generate an API key.
+
+    Talkturo API keys use the format `tk_live_...` for live environments and `tk_test_...` for test environments. Copy the key when Talkturo shows it. You will use it in the `Authorization` header as `Bearer tk_test_example_9xmk7q2r`.
 
   </Step>
 </Steps>
 
 ## Build Your First AI Assistant
 
-Create an AI assistant via the dashboard or API. This agent handles voice conversations for CRM, campaigns, or analytics.
+Create your first assistant from the guided wizard or with a single API request. Both paths create the same underlying assistant record.
 
 <Tabs>
   <Tab title="Dashboard" icon="monitor">
 
-    1. Go to `https://dashboard.talkturo.ai/assistants`.
-    2. Click **New Assistant**.
-    3. Enter name: `My First Agent`.
-    4. Add instructions: `You are a helpful sales assistant. Greet callers and offer product demos.`
-    5. Save and note the assistant ID.
+    The dashboard walks you through a 7-step setup flow:
+
+    1. **Configure Assistant** — choose a template and name your assistant.
+    2. **Business Info** — add the business context the assistant should use in conversations.
+    3. **Phone Number** — search for or connect a number.
+    4. **Company** — define the company the assistant represents.
+    5. **Contacts** — add or import contacts if you plan to call out.
+    6. **Campaign** — configure an outbound campaign if needed.
+    7. **Complete** — review the setup and finish.
+
+    Start at `https://app.talkturo.ai/assistants` and click **New Assistant**.
+
+    Choose one of these templates:
+
+    - **Outbound Setter**
+    - **Inbound Support**
+    - **Follow-up**
+    - **Custom**
+
+    When the assistant is created, Talkturo shows it in your assistants list and opens the editor so you can continue setup.
 
   </Tab>
   <Tab title="API" icon="code">
 
-    Use your `YOUR_API_KEY` to create the assistant.
+    Send a `POST` request to `/api/assistants` to create the assistant directly.
 
     <CodeGroup tabs="cURL,JavaScript">
-      ````bash
-      curl -X POST https://api.talkturo.ai/v1/assistants \
-        -H "Authorization: Bearer YOUR_API_KEY" \
+      ```bash
+      curl -X POST https://app.talkturo.ai/api/assistants \
+        -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
         -H "Content-Type: application/json" \
         -d '{
-          "name": "My First Agent",
-          "instructions": "You are a helpful sales assistant. Greet callers and offer product demos."
+          "accountSlug": "acme-sales",
+          "name": "Acme Inbound Assistant",
+          "templateId": "custom"
         }'
-      ````
+      ```
 
-      ````javascript
-      const response = await fetch('https://api.talkturo.ai/v1/assistants', {
-        method: 'POST',
+      ```javascript
+      const response = await fetch("https://app.talkturo.ai/api/assistants", {
+        method: "POST",
         headers: {
-          'Authorization': 'Bearer YOUR_API_KEY',
-          'Content-Type': 'application/json'
+          "Authorization": "Bearer tk_test_example_9xmk7q2r",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          name: 'My First Agent',
-          instructions: 'You are a helpful sales assistant. Greet callers and offer product demos.'
+          accountSlug: "acme-sales",
+          name: "Acme Inbound Assistant",
+          templateId: "custom"
         })
       });
+
       const assistant = await response.json();
       console.log(assistant.id);
-      ````
+      ```
+
     </CodeGroup>
+
+    Use these request fields:
+
+    - `accountSlug` — required workspace slug
+    - `name` — required assistant name
+    - `templateId` — optional template identifier, defaults to `custom`
+
+    A successful request returns the new assistant record. Keep the assistant ID because you will use it when assigning phone numbers.
 
   </Tab>
 </Tabs>
 
-<ParamField path="name" param-type="string" required="true">
-  Assistant display name.
-</ParamField>
-
-<ParamField path="instructions" param-type="string" required="true">
-  System prompt defining agent behavior.
-</ParamField>
-
 ## Purchase and Assign a Phone Number
 
-Assign a phone number to your assistant for inbound/outbound calls.
+Search for a number first, then purchase it and connect it to your assistant.
 
 <Steps>
-  <Step title="Buy Number" icon="phone">
+  <Step title="Search for a phone number" icon="search">
 
-    In the dashboard, go to Phone Numbers > Purchase.
-    Select a US or international number (starts at $1/month).
+    Use the dashboard phone number flow or call the search API to find available numbers.
+
+    <CodeGroup tabs="cURL,JavaScript">
+      ```bash
+      curl -X POST https://app.talkturo.ai/api/phone-numbers/search \
+        -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "country": "US",
+          "searchType": "local",
+          "features": ["voice"],
+          "limit": 5
+        }'
+      ```
+
+      ```javascript
+      const response = await fetch("https://app.talkturo.ai/api/phone-numbers/search", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer tk_test_example_9xmk7q2r",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          country: "US",
+          searchType: "local",
+          features: ["voice"],
+          limit: 5
+        })
+      });
+
+      const results = await response.json();
+      console.log(results);
+      ```
+
+    </CodeGroup>
+
+    When the search succeeds, Talkturo returns a list of available numbers. Pick one value from the response for the purchase step.
 
   </Step>
-  <Step title="Assign Assistant" icon="link">
+  <Step title="Purchase the number" icon="phone">
 
-    Edit the number and assign `My First Agent`.
-    Set as inbound for incoming calls.
+    Purchase the selected number for your workspace.
+
+    <CodeGroup tabs="cURL,JavaScript">
+      ```bash
+      curl -X POST https://app.talkturo.ai/api/phone-numbers/purchase \
+        -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "phoneNumber": "+14155550123",
+          "accountSlug": "acme-sales"
+        }'
+      ```
+
+      ```javascript
+      const response = await fetch("https://app.talkturo.ai/api/phone-numbers/purchase", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer tk_test_example_9xmk7q2r",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          phoneNumber: "+14155550123",
+          accountSlug: "acme-sales"
+        })
+      });
+
+      const purchase = await response.json();
+      console.log(purchase);
+      ```
+
+    </CodeGroup>
+
+    After purchase, the number appears in your workspace phone number inventory.
+
+  </Step>
+  <Step title="Assign the number to your assistant" icon="link">
+
+    Connect the purchased number to your assistant and enable call handling.
+
+    <CodeGroup tabs="cURL,JavaScript">
+      ```bash
+      curl -X POST https://app.talkturo.ai/api/assistants/asst_7f3k29d/telephony/settings \
+        -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "accountSlug": "acme-sales",
+          "phoneNumberIds": ["pn_4m8x2q1"],
+          "inboundEnabled": true,
+          "outboundEnabled": true
+        }'
+      ```
+
+      ```javascript
+      const response = await fetch("https://app.talkturo.ai/api/assistants/asst_7f3k29d/telephony/settings", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer tk_test_example_9xmk7q2r",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          accountSlug: "acme-sales",
+          phoneNumberIds: ["pn_4m8x2q1"],
+          inboundEnabled: true,
+          outboundEnabled: true
+        })
+      });
+
+      const settings = await response.json();
+      console.log(settings);
+      ```
+
+    </CodeGroup>
+
+    When this step succeeds, the assistant can answer inbound calls on the assigned number and place outbound calls if you enabled outbound telephony.
 
   </Step>
 </Steps>
 
 ## Test Your First Call
 
+Use the built-in test call tools after the number is assigned.
+
 <Callout kind="tip">
 
-  Test inbound: Call your assigned number. The AI agent answers automatically.
+Open your assistant in the dashboard, then go to the **Telephony** tab to place a test call.
 
-  For outbound, use the dashboard's Call Tester or API.
+For an inbound test, call the number you assigned to the assistant from your phone. For an outbound test, use the test call controls in the assistant editor. A successful test connects the call and routes audio through the assistant you just configured.
 
 </Callout>
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant P as Phone Number
-  participant A as AI Assistant
-  U->>P: Call +1-XXX-XXX-XXXX
-  P->>A: Route call
-  A->>U: "Hello, this is My First Agent..."
-  U->>A: Respond
-  A->>U: Continue conversation
-```
-
 ## Next Steps
 
-Explore more features to scale your voice AI agents.
+Once your first call works, expand the setup with campaigns, CRM data, and assistant configuration.
 
 <Columns cols={2}>
-  <Card title="AI Assistants" icon="bot" href="/assistants/overview">
-    Customize voice, prompts, and functions.
+  <Card title="AI Assistants" icon="monitor" href="/assistants/overview">
+    Customize assistant behavior, templates, and telephony settings.
   </Card>
-  <Card title="Campaigns" icon="megaphone" href="/campaigns/overview">
-    Launch outbound calling campaigns.
+  <Card title="Campaigns" icon="bar-chart" href="/campaigns/overview">
+    Launch outbound workflows and manage call activity at scale.
   </Card>
   <Card title="CRM Integration" icon="users" href="/crm/contacts">
-    Manage contacts and companies.
+    Add contacts and company data that your assistants can use in calls.
   </Card>
-  <Card title="Key Concepts" icon="book-open" href="/key-concepts">
-    Learn core architecture.
+  <Card title="Features" icon="book-open" href="/features">
+    Explore the main platform capabilities before moving into advanced setup.
   </Card>
 </Columns>

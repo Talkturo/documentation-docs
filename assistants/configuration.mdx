@@ -1,0 +1,608 @@
+---
+title: Assistant Configuration
+description: Configure prompts, models, voice, telephony, tools, analysis, webhooks, and email summaries for Talkturo AI voice agents.
+---
+
+## Configure every assistant tab
+
+Assistant configuration controls how your voice agent speaks, listens, places calls, handles tools, and reports outcomes. Use this page as the field-level reference for all 10 configuration tabs in the assistant editor.
+
+<Callout kind="info">
+
+Some fields change based on the selected mode, provider, or enabled feature. When a field appears only in Standard mode or for a specific provider, that dependency is called out in the field description.
+
+</Callout>
+
+## Prompt tab
+
+The Prompt tab defines what the assistant says first and how it should behave for the rest of the call. Both prompt fields support CRM variables, so you can personalize calls with campaign, contact, and company data.
+
+### Prompt fields
+
+<ParamField body="first_message" param-type="string" show-location="false">
+The first spoken sentence when a call connects. This field supports CRM variables such as `{{contact.first_name}}` and `{{company.name}}`.
+</ParamField>
+
+<ParamField body="system_prompt" param-type="string" show-location="false">
+The full assistant instruction prompt. This field is shown as a monospace, expandable textarea and supports CRM variables.
+</ParamField>
+
+<ParamField body="prompt_template" param-type="string" show-location="false" enum="B2B SaaS Sales Qualify (Outbound),No Template">
+Optional starting template for the system prompt.
+</ParamField>
+
+### CRM variable picker
+
+Press <kbd>Ctrl</kbd> + <kbd>Space</kbd> in a supported prompt field to open the variable picker and insert a variable at the cursor position.
+
+#### Campaign variables
+
+- `{{campaign.name}}`
+- `{{campaign.description}}`
+- `{{campaign.from_number}}`
+
+#### Contact variables
+
+- `{{contact.first_name}}`
+- `{{contact.last_name}}`
+- `{{contact.full_name}}`
+- `{{contact.email}}`
+- `{{contact.phone}}`
+- `{{contact.job_title}}`
+- `{{contact.lead_status}}`
+
+#### Company variables
+
+- `{{company.name}}`
+- `{{company.website}}`
+- `{{company.industry}}`
+- `{{company.phone}}`
+- `{{company.city}}`
+- `{{company.state}}`
+- `{{company.country}}`
+
+#### Custom field variables
+
+- `{{contact.custom.<key>}}`
+- `{{company.custom.<key>}}`
+
+<Callout kind="tip">
+
+Use custom field variables when your CRM stores account-specific data such as renewal date, plan tier, territory, or owner name. Replace `<key>` with the custom field key from your CRM schema.
+
+</Callout>
+
+### Prompt actions
+
+| Action | What it does |
+| --- | --- |
+| **AI Improve** | Sends the current prompt to `/api/improve-prompt` and returns an improved version |
+| **AI Translate** | Translates the prompt to a supported language |
+| **Template selector** | Replaces the current template choice with `B2B SaaS Sales Qualify (Outbound)` or `No Template` |
+
+### Supported translation languages
+
+AI Translate supports these 15 languages:
+
+- German
+- English
+- Spanish
+- French
+- Italian
+- Portuguese
+- Dutch
+- Polish
+- Russian
+- Turkish
+- Arabic
+- Hindi
+- Japanese
+- Chinese
+- Korean
+
+## Model tab
+
+The Model tab controls the LLM provider, model, and generation settings. The available fields change depending on whether the assistant runs in Standard mode or Realtime mode.
+
+<Tabs>
+  <Tab title="Standard mode" icon="settings">
+
+  Standard mode separates the language model, transcription, and text-to-speech pipeline. It exposes the widest provider set and the most tuning options.
+
+  <ParamField body="mode" param-type="string" show-location="false" enum="standard,realtime">
+  Set to `standard` to use the non-realtime model pipeline.
+  </ParamField>
+
+  <ParamField body="provider" param-type="string" show-location="false" enum="talkturo,openai,google,deepseek-ai,qwen,moonshotai,anthropic,cerebras">
+  LLM provider for Standard mode.
+  </ParamField>
+
+  <ParamField body="model" param-type="string" show-location="false">
+  Model name selected from the provider-specific dropdown. Available values depend on the selected provider.
+  </ParamField>
+
+  <ParamField body="temperature" param-type="number" show-location="false">
+  Sampling temperature. Range `0` to `2`, step `0.1`, default `0`.
+  </ParamField>
+
+  <ParamField body="max_tokens" param-type="integer" show-location="false">
+  Maximum number of tokens the model can generate.
+  </ParamField>
+
+  <ParamField body="top_p" param-type="number" show-location="false">
+  Nucleus sampling setting for Cerebras only. Range `0` to `1`, step `0.05`, default `1`.
+  </ParamField>
+
+  <ParamField body="reasoning_effort" param-type="string" show-location="false" enum="default,low,medium,high">
+  Reasoning level for Cerebras thinking and `gpt-oss` models only.
+  </ParamField>
+
+  ### Standard mode providers
+
+  | Provider value | Display name |
+  | --- | --- |
+  | `talkturo` | Talkturo Fast |
+  | `openai` | OpenAI |
+  | `google` | Google |
+  | `deepseek-ai` | DeepSeek AI |
+  | `qwen` | Qwen |
+  | `moonshotai` | Moonshot AI |
+  | `anthropic` | Anthropic |
+  | `cerebras` | Cerebras |
+
+  </Tab>
+  <Tab title="Realtime mode" icon="zap">
+
+  Realtime mode combines speaking and model response into a low-latency streaming flow. It supports fewer providers but is optimized for live conversations.
+
+  <ParamField body="mode" param-type="string" show-location="false" enum="standard,realtime">
+  Set to `realtime` to use a streaming realtime model.
+  </ParamField>
+
+  <ParamField body="provider" param-type="string" show-location="false" enum="openai,google">
+  Realtime model provider.
+  </ParamField>
+
+  <ParamField body="model" param-type="string" show-location="false">
+  Realtime model name. OpenAI uses `gpt-realtime` or `gpt-realtime-mini`. Google uses Gemini Live models.
+  </ParamField>
+
+  <ParamField body="voice" param-type="string" show-location="false">
+  Built-in realtime voice used by the provider.
+  </ParamField>
+
+  <ParamField body="temperature" param-type="number" show-location="false">
+  Sampling temperature. OpenAI supports `0.6` to `1.2`. Google supports `0` to `2`.
+  </ParamField>
+
+  ### Realtime providers and voice options
+
+  | Provider value | Display name | Example models | Voice options |
+  | --- | --- | --- | --- |
+  | `openai` | OpenAI Realtime | `gpt-realtime`, `gpt-realtime-mini` | `marin`, `cedar`, `alloy`, `ash`, `ballad`, `coral`, `echo`, `sage`, `shimmer`, `verse` |
+  | `google` | Gemini Live | Gemini realtime models | `Puck`, `Charon`, `Kore`, and other Google voice options |
+
+  </Tab>
+</Tabs>
+
+<Callout kind="info">
+
+Voice configuration behaves differently by mode. In Realtime mode, voice selection happens inside the Model tab. In Standard mode, use the separate Voice tab.
+
+</Callout>
+
+## Voice tab
+
+The Voice tab is available in Standard mode only. It controls TTS provider selection, voice identity, speaking style, playback speed, and synthesized background sound.
+
+<Callout kind="info">
+
+This tab does not apply to Realtime mode. Realtime voices are configured in the Model tab because the provider handles generation and speech together.
+
+</Callout>
+
+### Voice fields
+
+<ParamField body="voice_provider" param-type="string" show-location="false" enum="cartesia,elevenlabs,inworld,openai,dashscope,kugel">
+Text-to-speech provider.
+</ParamField>
+
+<ParamField body="voice_model" param-type="string" show-location="false">
+Provider-specific voice model. The list is loaded dynamically from `/api/voice-providers/models`.
+</ParamField>
+
+<ParamField body="voice_id" param-type="string" show-location="false">
+Specific voice selection for the chosen provider and model. The list is loaded dynamically from `/api/tts-voices`.
+</ParamField>
+
+<ParamField body="emotion" param-type="string" show-location="false" enum="neutral,excited,sad,angry">
+Speaking emotion for Cartesia only.
+</ParamField>
+
+<ParamField body="background_ambience" param-type="string" show-location="false" enum="none,office_ambience,keyboard_typing,keyboard_typing2,hold_music">
+Background ambience mixed into synthesized speech.
+</ParamField>
+
+<ParamField body="ambience_volume" param-type="number" show-location="false">
+Ambience volume. Range `0` to `1`, step `0.05`, default `0.8`.
+</ParamField>
+
+<ParamField body="thinking_sound" param-type="string" show-location="false" enum="none,keyboard_typing,keyboard_typing2,keyboard_typing_mix">
+Sound effect played while the assistant is thinking.
+</ParamField>
+
+<ParamField body="noise_cancellation" param-type="string" show-location="false" enum="off,nc,bvc">
+Noise cancellation mode. `bvc` is the default.
+</ParamField>
+
+<ParamField body="speed" param-type="number" show-location="false">
+Speech speed multiplier. Range `0.5` to `2.0`, step `0.1`, default `1`.
+</ParamField>
+
+### Noise cancellation modes
+
+| Value | Meaning | Default |
+| --- | --- | --- |
+| `off` | No noise cancellation | No |
+| `nc` | Standard noise cancellation | No |
+| `bvc` | Background Voice Cancellation | Yes |
+
+## Transcriptor tab
+
+The Transcriptor tab is available in Standard mode only. It controls the speech-to-text provider, recognition model, language, and provider-specific streaming settings.
+
+### Transcriptor fields
+
+<ParamField body="provider" param-type="string" show-location="false" enum="deepgram,assemblyai,cartesia,elevenlabs,inworld">
+Speech-to-text provider.
+</ParamField>
+
+<ParamField body="model" param-type="string" show-location="false">
+Provider-specific transcription model, such as `deepgram/nova-3`, `deepgram/nova-2`, or `assemblyai/universal-streaming`.
+</ParamField>
+
+<ParamField body="language" param-type="string" show-location="false">
+Language code used for recognition. Supported values depend on the selected model and can include codes such as `en`, `en-US`, `de`, `es`, `fr`, `it`, `pt`, and `multi`.
+</ParamField>
+
+<ParamField body="keyterms" param-type="array[string]" show-location="false">
+Custom terms to improve recognition accuracy. You can add up to `100` keyterms.
+</ParamField>
+
+### Advanced transcription settings
+
+<Expandable title="Provider-specific advanced options" default-open="false">
+
+Advanced options vary by provider and model. These settings are used to tune turn detection, transcript cleanup, and recognition behavior.
+
+<ParamField body="endpointing" param-type="number | boolean" show-location="false">
+Provider-specific endpointing control for deciding when an utterance has ended.
+</ParamField>
+
+<ParamField body="vad_sensitivity" param-type="string | number" show-location="false">
+Voice activity detection sensitivity for supported providers.
+</ParamField>
+
+<ParamField body="punctuation" param-type="boolean" show-location="false">
+Enable or disable automatic punctuation where supported.
+</ParamField>
+
+<ParamField body="filler_word_filter" param-type="boolean" show-location="false">
+Filter filler words where supported by the provider.
+</ParamField>
+
+</Expandable>
+
+<Callout kind="tip">
+
+Add company names, product names, competitor names, and industry terms to `keyterms` before testing a new campaign. That usually improves transcript quality more than changing the base model alone.
+
+</Callout>
+
+## Telephony tab
+
+The Telephony tab controls phone number assignment, calling permissions, test calls, compliance playback, and voicemail behavior.
+
+### Telephony fields
+
+<ParamField body="assigned_phone_numbers" param-type="array[string]" show-location="false">
+Phone numbers assigned to the assistant. This is a multi-select sourced from the workspace phone number inventory.
+</ParamField>
+
+<ParamField body="region_or_sip_trunk" param-type="string" show-location="false">
+Region or SIP trunk selection for Telnyx accounts.
+</ParamField>
+
+<ParamField body="inbound_calling_enabled" param-type="boolean" show-location="false">
+Enable inbound calling for this assistant.
+</ParamField>
+
+<ParamField body="inbound_company" param-type="string" show-location="false">
+Company selected for inbound calling when inbound calling is enabled.
+</ParamField>
+
+<ParamField body="outbound_calling_enabled" param-type="boolean" show-location="false">
+Enable outbound calling for this assistant.
+</ParamField>
+
+<ParamField body="destination_countries" param-type="array[string]" show-location="false">
+Allowed destination countries for outbound calling.
+</ParamField>
+
+<ParamField body="test_call_from_number" param-type="string" show-location="false">
+Source number used for test calls.
+</ParamField>
+
+<ParamField body="test_call_to_number" param-type="string" show-location="false">
+Destination number used for test calls.
+</ParamField>
+
+### Compliance briefing
+
+<ParamField body="compliance_briefing_enabled" param-type="boolean" show-location="false">
+Enable a compliance briefing at the start of the call.
+</ParamField>
+
+<ParamField body="compliance_template" param-type="string" show-location="false">
+Predefined compliance briefing template.
+</ParamField>
+
+<ParamField body="compliance_custom_text" param-type="string" show-location="false">
+Custom compliance briefing text. Maximum `2000` characters.
+</ParamField>
+
+<ParamField body="require_acknowledgement" param-type="boolean" show-location="false">
+Require the callee to acknowledge the compliance briefing before the assistant continues.
+</ParamField>
+
+<ParamField body="fallback_policy" param-type="string" show-location="false" enum="continue,retry,block">
+Fallback behavior if acknowledgement fails or the flow cannot continue as expected.
+</ParamField>
+
+### Voicemail detection
+
+<ParamField body="voicemail_detection_enabled" param-type="boolean" show-location="false">
+Enable voicemail detection. Default `true`.
+</ParamField>
+
+<ParamField body="voicemail_action" param-type="string" show-location="false" enum="leave_message,hangup">
+Action taken when voicemail is detected.
+</ParamField>
+
+<ParamField body="voicemail_message" param-type="string" show-location="false">
+Voicemail message to leave when `voicemail_action` is `leave_message`. Maximum `2000` characters.
+</ParamField>
+
+<Callout kind="alert">
+
+Review compliance and voicemail text before enabling outbound campaigns. These fields affect live call behavior and may have legal or policy implications for your use case and region.
+
+</Callout>
+
+## Functions tab
+
+The Functions tab attaches callable tools to the assistant. These tools let the assistant end calls, transfer callers, schedule meetings, trigger automations, or call external systems.
+
+### Built-in call functions
+
+<ParamField body="end_call.enabled" param-type="boolean" show-location="false">
+Enable the End Call function.
+</ParamField>
+
+<ParamField body="end_call.trigger_phrases" param-type="array[string]" show-location="false">
+Phrases that allow or encourage the assistant to end the call.
+</ParamField>
+
+<ParamField body="end_call.closing_phrase_mode" param-type="string" show-location="false" enum="fixed,none,ai">
+How the assistant chooses its closing phrase before disconnecting.
+</ParamField>
+
+<ParamField body="end_call.closing_phrase" param-type="string" show-location="false">
+Closing phrase used when `closing_phrase_mode` is `fixed`.
+</ParamField>
+
+<ParamField body="call_transfer.enabled" param-type="boolean" show-location="false">
+Enable call transfer.
+</ParamField>
+
+<ParamField body="call_transfer.play_dialtone" param-type="boolean" show-location="false">
+Play a dialtone during transfer.
+</ParamField>
+
+### Transfer department fields
+
+Each transfer department defines one destination the assistant can route to.
+
+<ParamField body="departments[].name" param-type="string" show-location="false">
+Display name for the department.
+</ParamField>
+
+<ParamField body="departments[].transfer_mode" param-type="string" show-location="false" enum="warm,cold">
+Transfer mode for the department.
+</ParamField>
+
+<ParamField body="departments[].phone_number" param-type="string" show-location="false">
+Phone number used for the transfer destination.
+</ParamField>
+
+### Connected tool integrations
+
+<ParamField body="cal.com" param-type="object" show-location="false">
+Cal.com integration. Supported functions are `schedule`, `get_bookings`, `cancel`, and `check_availability`.
+</ParamField>
+
+<ParamField body="zapier" param-type="object" show-location="false">
+Zapier integration. Each assistant supports a single Zapier instance.
+</ParamField>
+
+<ParamField body="custom_webhooks" param-type="array[object]" show-location="false">
+Custom webhook tools. An assistant can have multiple webhook tool configurations.
+</ParamField>
+
+<ParamField body="turboflow_workflows" param-type="array[object]" show-location="false">
+Published TurboFlow workflows attached as callable tools.
+</ParamField>
+
+### Function availability summary
+
+| Function | Multiplicity | Notes |
+| --- | --- | --- |
+| End Call | One configuration | Built in |
+| Call Transfer | One configuration with multiple departments | Built in |
+| Cal.com | One integration | Exposes scheduling actions |
+| Zapier | One integration per assistant | Single instance only |
+| Custom Webhook | Multiple | Each webhook has its own config |
+| TurboFlow Workflows | Multiple | Attach published flows |
+
+## Knowledge Base tab
+
+The Knowledge Base tab connects processed documents from your workspace knowledge base to the assistant. Attached files become available for retrieval during calls.
+
+### Knowledge base fields
+
+<ParamField body="attached_documents" param-type="array[string]" show-location="false">
+Documents attached to the assistant from the workspace knowledge base.
+</ParamField>
+
+<ParamField body="file_status" param-type="string" show-location="false">
+Processing status of each file. Files must be processed before the assistant can use them.
+</ParamField>
+
+<ParamField body="chunk_count" param-type="integer" show-location="false">
+Number of chunks generated from the file.
+</ParamField>
+
+<ParamField body="character_count" param-type="integer" show-location="false">
+Number of characters in the file.
+</ParamField>
+
+<Callout kind="info">
+
+A file is usable only after it has been processed into chunks and embeddings. If a file is attached but still processing, the assistant will not retrieve from it yet.
+
+</Callout>
+
+### Attached file list
+
+| Field shown in UI | Meaning |
+| --- | --- |
+| Status | Whether the file is ready for use |
+| Chunk count | Number of indexed chunks |
+| Character count | Source text size |
+| Attachment state | Whether the document is currently attached to the assistant |
+
+## Analysis tab
+
+The Analysis tab defines what Talkturo should extract and evaluate after each call. Use it to capture structured fields, classify outcomes, score leads, and determine whether the call succeeded.
+
+### Analysis fields
+
+<ParamField body="custom_extraction_prompts" param-type="array[string]" show-location="false">
+Custom prompts for extracting structured post-call data.
+</ParamField>
+
+<ParamField body="outcome_classification" param-type="object" show-location="false">
+Configuration for post-call outcome classification.
+</ParamField>
+
+<ParamField body="lead_scoring" param-type="object" show-location="false">
+Configuration for lead scoring logic.
+</ParamField>
+
+<ParamField body="success_evaluation" param-type="object" show-location="false">
+Configuration for determining whether a call counts as successful.
+</ParamField>
+
+<Expandable title="What belongs in a custom extraction prompt" default-open="false">
+
+Use extraction prompts for fields that are business-specific and hard to infer from a generic summary. Good candidates include budget range, renewal window, implementation timeline, incumbent vendor, product interest, or follow-up owner.
+
+Keep each extraction prompt focused on one output. Smaller prompts are easier to validate and maintain than one large prompt that tries to capture everything.
+
+</Expandable>
+
+## Webhooks tab
+
+The Webhooks tab sends call lifecycle events to your systems. Configure the destination URL, choose which events to send, and use the built-in test flow before turning a webhook on for production traffic.
+
+### Webhook fields
+
+<ParamField body="webhook_url" param-type="string" show-location="false">
+Destination URL that receives webhook events.
+</ParamField>
+
+<ParamField body="secret" param-type="string" show-location="false">
+Secret used to sign or validate webhook delivery.
+</ParamField>
+
+<ParamField body="events" param-type="array[string]" show-location="false" enum="call.started,call.ended,call.transcribed">
+Selected event types for this webhook configuration.
+</ParamField>
+
+<ParamField body="test_webhook" param-type="action" show-location="false">
+Sends a test webhook using the current configuration.
+</ParamField>
+
+### Supported events
+
+| Event | Trigger |
+| --- | --- |
+| `call.started` | A call begins |
+| `call.ended` | A call finishes |
+| `call.transcribed` | Transcription data becomes available |
+
+<Callout kind="tip">
+
+Run a test webhook after changing the URL, secret, or event set. That catches signing mistakes and endpoint mismatches before live calls start sending traffic.
+
+</Callout>
+
+## Email Summary tab
+
+The Email Summary tab sends an automatic call summary after a call completes. Use it when a human operator, manager, or shared inbox needs a copy of each completed call summary.
+
+### Email summary fields
+
+<ParamField body="enabled" param-type="boolean" show-location="false">
+Enable or disable automatic email summaries.
+</ParamField>
+
+<ParamField body="recipient_email" param-type="string" show-location="false">
+Recipient email address for the summary.
+</ParamField>
+
+<ParamField body="language" param-type="string" show-location="false">
+Language used for the email summary.
+</ParamField>
+
+<ParamField body="auto_send" param-type="boolean" show-location="false">
+Summaries are sent automatically after call completion when enabled.
+</ParamField>
+
+## Mode-dependent tabs
+
+Not every tab is available in every assistant mode. Use this matrix when you need to know where a setting lives.
+
+| Tab | Standard mode | Realtime mode |
+| --- | --- | --- |
+| Prompt | Yes | Yes |
+| Model | Yes | Yes |
+| Voice | Yes | No |
+| Transcriptor | Yes | No |
+| Telephony | Yes | Yes |
+| Functions | Yes | Yes |
+| Knowledge Base | Yes | Yes |
+| Analysis | Yes | Yes |
+| Webhooks | Yes | Yes |
+| Email Summary | Yes | Yes |
+
+## What to configure first
+
+<Columns cols={2}>
+  <Card title="Choose the right model mode" href="/assistants/configuration" icon="zap" cta="Review model settings">
+  Standard mode gives you separate control over model, voice, and transcription. Realtime mode reduces latency and moves voice selection into the Model tab.
+  </Card>
+  <Card title="Set up telephony before testing" href="/assistants/configuration" icon="phone" cta="Review telephony fields">
+  Assign numbers, enable inbound or outbound calling, and confirm voicemail and compliance behavior before placing live calls.
+  </Card>
+</Columns>

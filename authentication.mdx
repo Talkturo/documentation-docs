@@ -1,0 +1,308 @@
+---
+title: Authentication
+description: Secure Talkturo API and app access with API keys, bearer tokens, supported sign-in methods, scopes, and key management flows.
+---
+
+## Choose the right authentication method
+
+Talkturo uses three authentication contexts, and the right one depends on what you are building. Use a Supabase session in the web app, a bearer JWT for the Close AI desktop app, and an API key for server-to-server API access or automations.
+
+| Context | Used by | Credential type | How you send it |
+| --- | --- | --- | --- |
+| Web app | Talkturo dashboard | Cookie-based Supabase session | Browser session cookie |
+| Desktop app | Close AI desktop client | JWT access token | `Authorization: Bearer access_token` |
+| API clients and automations | External integrations, scripts, backend services | API key | `Authorization: Bearer tk_live_...` |
+
+<Callout kind="info">
+
+For most API integrations, use an API key. JWT access tokens are primarily for the desktop app sign-in flow.
+
+</Callout>
+
+## Supported sign-in methods
+
+Talkturo supports several user sign-in methods for dashboard and app access.
+
+| Method | Use case | Notes |
+| --- | --- | --- |
+| Email and password | Standard account sign-in | Available for web and app sign-in flows |
+| Magic link | Passwordless sign-in by email | Uses a one-time email link or OTP flow |
+| Google OAuth | Social login | Starts an OAuth sign-in flow |
+| Facebook OAuth | Social login | Starts an OAuth sign-in flow |
+| TOTP multi-factor authentication | Extra account protection | Works with authenticator apps such as Google Authenticator and Authy |
+
+### Multi-factor authentication
+
+Talkturo supports time-based one-time passwords through authenticator apps. After MFA is enabled on an account, the sign-in flow requires a valid TOTP code in addition to the primary sign-in method.
+
+## API keys
+
+API keys authenticate server-side requests to Talkturo APIs. They are intended for backend services, scheduled jobs, internal tools, and other non-interactive clients.
+
+### Key format
+
+Live keys start with a visible prefix followed by a longer secret value. Test or sandbox keys use the same structure with a different prefix.
+
+- Live key format: `tk_live_XXXXXXXX` followed by 48 random characters
+- Test key format: `tk_test_XXXXXXXX` followed by 48 random characters
+
+The visible prefix helps you identify a key in the dashboard without exposing the full secret.
+
+<Callout kind="alert">
+
+API keys are shown only once at creation. Store the full key in your secret manager, password vault, or environment configuration before you leave the creation screen.
+
+</Callout>
+
+### How Talkturo stores keys
+
+Talkturo stores only the SHA-256 hash of the full key. The original key value cannot be retrieved later.
+
+The dashboard shows the key prefix, such as `tk_live_a1b2c3d4`, so you can identify which key is in use. If you lose the full key, revoke it and create a new one.
+
+### Send an API key in the Authorization header
+
+Pass the full API key in the `Authorization` header using the bearer scheme.
+
+<CodeGroup tabs="cURL">
+
+```bash
+curl https://api.talkturo.com/api/api-keys \
+  -H "Authorization: Bearer tk_live_a1b2c3d4m7np9q4r8s2x6v1k5z0c3j7h9l2p6w8y1t4u6e" \
+  -H "Content-Type: application/json"
+```
+
+</CodeGroup>
+
+If authentication succeeds, the API processes the request using the permissions attached to that key.
+
+### API key capabilities
+
+Keys can include metadata and lifecycle controls so you can manage them safely across environments.
+
+- **Name** — a short label for the key
+- **Description** — optional context about who or what uses the key
+- **Expiration** — an optional expiry date
+- **Revocation** — immediate invalidation without deleting related audit history
+
+### Who can create and manage keys
+
+Workspace owners and admins can create, modify, and delete API keys. Any workspace member can view keys in the dashboard, including identifying metadata such as the visible prefix.
+
+## Permission scopes
+
+API keys use scopes to control what a request can access. Scopes are stored in the key permissions record.
+
+### Default scope
+
+New keys default to full access.
+
+<ParamField body="scopes" param-type="string[]" required="true" show-location="false">
+
+Default value: `["*"]`
+
+Grants all permissions available to the key within the workspace.
+
+</ParamField>
+
+### Specific scopes
+
+Use narrower scopes when you want to limit a key to a subset of the API.
+
+<ParamField body="kb:read" param-type="scope" show-location="false">
+
+Read knowledge base resources.
+
+</ParamField>
+
+<ParamField body="kb:write" param-type="scope" show-location="false">
+
+Create, update, or delete knowledge base resources.
+
+</ParamField>
+
+<ParamField body="assistants:read" param-type="scope" show-location="false">
+
+Read assistant configuration and related resources.
+
+</ParamField>
+
+Specific scope names can follow the same resource-and-action pattern as these examples.
+
+### Wildcard matching
+
+Scopes support wildcard prefix matching. A scope such as `assistants:*` matches any scope that begins with `assistants:`.
+
+That means a key with `assistants:*` can satisfy checks for values such as `assistants:read` or `assistants:write`.
+
+### Rate limit
+
+API keys include a default rate limit in their permissions data.
+
+<ParamField body="rate_limit_per_hour" param-type="integer" show-location="false">
+
+Default value: `1000`
+
+Maximum number of requests allowed per hour for the key.
+
+</ParamField>
+
+## Desktop app authentication
+
+The Close AI desktop app authenticates with bearer JWTs instead of API keys. The app signs in with user credentials, receives an access token and refresh token, and sends the access token on subsequent requests.
+
+### Sign in
+
+Use the sign-in endpoint to exchange an email address and password for a token pair.
+
+<Request>
+```bash
+curl -X POST https://api.talkturo.com/api/auth/sign-in \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "jane.chen@acme.com",
+    "password": "Str0ngPassw0rd!"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsImtpZCI6InRhbGt0dXJvLWRlc2tvcC1hY2Nlc3MiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ1c2VyX2ExYjJjM2Q0IiwiZW1haWwiOiJqYW5lLmNoZW5AYWNtZS5jb20iLCJyb2xlIjoibWVtYmVyIiwiZXhwIjoxNzI2MjAwMDAwfQ.desktop_signature_example",
+  "refresh_token": "rt_desktop_example_f84n2m1q9x7v5k3c8p6z4h2j0s1d9b7",
+  "expires_in": 3600,
+  "expires_at": 1726200000,
+  "user": {
+    "id": "user_a1b2c3d4",
+    "email": "jane.chen@acme.com"
+  }
+}
+```
+</Response>
+
+Add the returned access token to the `Authorization` header on protected requests.
+
+### Refresh tokens
+
+Use the refresh endpoint when the access token expires.
+
+<Request>
+```bash
+curl -X POST https://api.talkturo.com/api/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "rt_desktop_example_f84n2m1q9x7v5k3c8p6z4h2j0s1d9b7"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsImtpZCI6InRhbGt0dXJvLWRlc2tvcC1hY2Nlc3MiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ1c2VyX2ExYjJjM2Q0IiwiZW1haWwiOiJqYW5lLmNoZW5AYWNtZS5jb20iLCJyb2xlIjoibWVtYmVyIiwiZXhwIjoxNzI2MjAzNjAwfQ.desktop_signature_example",
+  "refresh_token": "rt_desktop_example_g52p8n4q1x9v6k3c7m2z5h0j4s8d1b6",
+  "expires_in": 3600,
+  "expires_at": 1726203600,
+  "user": {
+    "id": "user_a1b2c3d4",
+    "email": "jane.chen@acme.com"
+  }
+}
+```
+</Response>
+
+### Sign out
+
+Use the sign-out endpoint to revoke the current token set.
+
+<Request>
+```bash
+curl -X POST https://api.talkturo.com/api/auth/sign-out \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "rt_desktop_example_g52p8n4q1x9v6k3c7m2z5h0j4s8d1b6"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Desktop bearer token format
+
+Desktop requests use the same bearer header pattern as API keys, but the credential value is the JWT access token.
+
+<CodeGroup tabs="cURL">
+
+```bash
+curl https://api.talkturo.com/api/close-ai/sessions \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6InRhbGt0dXJvLWRlc2tvcC1hY2Nlc3MiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ1c2VyX2ExYjJjM2Q0IiwiZW1haWwiOiJqYW5lLmNoZW5AYWNtZS5jb20iLCJyb2xlIjoibWVtYmVyIiwiZXhwIjoxNzI2MjAzNjAwfQ.desktop_signature_example"
+```
+
+</CodeGroup>
+
+## Manage API keys
+
+You can manage API keys in the dashboard or through the REST API.
+
+### Dashboard location
+
+Open **Workspace** and then **API Keys** to create, inspect, revoke, or delete keys.
+
+### REST API endpoints
+
+Use these endpoints to automate key management.
+
+<ParamField path="/api/api-keys" param-type="GET" show-location="false">
+
+List API keys available in the current workspace.
+
+</ParamField>
+
+<ParamField path="/api/api-keys" param-type="POST" show-location="false">
+
+Create a new API key.
+
+</ParamField>
+
+<ParamField path="/api/api-keys/{id}" param-type="PATCH" show-location="false">
+
+Update key metadata, expiration, scopes, or revocation state for a specific key.
+
+</ParamField>
+
+<ParamField path="/api/api-keys/{id}" param-type="DELETE" show-location="false">
+
+Delete an API key.
+
+</ParamField>
+
+<Callout kind="info">
+
+Only users with the owner or admin role can create, update, revoke, or delete API keys.
+
+</Callout>
+
+## Security practices
+
+Treat Talkturo credentials as production secrets. The most common authentication issues come from exposing keys in client-side code, storing unrecoverable keys in the wrong place, or using broader scopes than necessary.
+
+<Callout kind="alert">
+
+Do not embed API keys in browser code, mobile apps, or distributed desktop binaries. Keep keys on a trusted server and proxy requests when a client application needs Talkturo data.
+
+</Callout>
+
+### Recommended practices
+
+- Use API keys only in server-side environments.
+- Prefer narrowly scoped keys over `["*"]` when a workload needs limited access.
+- Set an expiration date for temporary integrations.
+- Rotate keys when ownership changes or when you suspect exposure.
+- Revoke a key immediately if it appears in logs, screenshots, commits, or support tickets.

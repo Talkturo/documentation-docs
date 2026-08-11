@@ -1,0 +1,92 @@
+---
+title: Prompt Library
+description: Save and manage personal prompt presets for Ask mode so you can reuse common guidance during live calls without retyping it.
+---
+
+## Save prompts you use often
+
+The Prompt Library stores personal prompt presets for Close AI's Ask mode. Use it to save instructions you rely on during live calls so you can apply them quickly instead of rewriting the same guidance every time.
+
+System templates also appear in the library as starting points. You can keep using a template as-is or edit it into a prompt that matches how you sell.
+
+<Callout kind="info">
+
+Only one prompt can be the default at a time. When you set a new default prompt, Close AI automatically removes the default setting from the previous one.
+
+</Callout>
+
+## What each prompt card shows
+
+Each prompt appears as a card in the library so you can scan your presets quickly before a call.
+
+| Field | What it shows |
+| --- | --- |
+| Title | The prompt name, truncated when it is too long to fit |
+| Default badge | A star badge that marks the current default prompt |
+| Template badge | Indicates a system-provided starter prompt |
+| Preview | The first two lines of the prompt text |
+| Updated timestamp | When the prompt was last changed |
+
+## Manage prompts from the library
+
+Use the actions on each card to control which prompt you use and keep your library up to date.
+
+| Action | What it does |
+| --- | --- |
+| Set default / Unset default | Toggles the star and marks that prompt as your default |
+| Edit | Opens the prompt editor dialog |
+| Delete | Removes the prompt after you confirm the action |
+
+### Default prompts
+
+A default prompt gives you a ready-to-use starting point in Ask mode. This works well if you have one set of instructions you use on most calls.
+
+If you switch to a different default, Close AI updates it immediately and unsets the older one for you.
+
+### System templates
+
+System-provided prompts include a template badge. These presets give you a starting point when you want to save a common workflow without writing the full prompt from scratch.
+
+Prompts you create yourself do not show the template badge.
+
+## Edit or create a prompt
+
+Use the prompt editor to create a new preset or update an existing one.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| Title | Text input | Yes | Names the prompt |
+| Prompt text | Monospace textarea | Yes | Minimum height of 220 pixels and spellcheck is off |
+| Use by default | Switch | No | Marks the prompt as your default |
+
+<Callout kind="tip">
+
+Create short, specific prompts that tell Ask mode exactly what you want. Clear instructions are faster to review during a live call.
+
+</Callout>
+
+## When to use the Prompt Library
+
+The Prompt Library is most useful when you repeat the same type of request across calls.
+
+- Save objection-handling instructions you use every day.
+- Keep discovery or qualification prompts ready for fast reuse.
+- Start from a system template when you want a quicker first draft.
+- Set one prompt as your default if you want Ask mode to open with your usual guidance.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card
+    title="Close AI overview"
+    href="/close-ai/overview"
+    icon="book-open"
+    cta="Open overview"
+  />
+  <Card
+    title="Sessions"
+    href="/close-ai/sessions"
+    icon="monitor"
+    cta="View sessions"
+  />
+</Columns>

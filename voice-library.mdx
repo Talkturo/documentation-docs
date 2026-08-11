@@ -1,0 +1,200 @@
+---
+title: Voice Library
+description: Browse, preview, and clone TTS voices for your assistants, then assign the right voice with provider, model, and language details.
+---
+
+## Choose and manage assistant voices
+
+The Voice Library is where you browse available text-to-speech voices, listen to samples, and pick the voice your assistant will use. It also supports cloned voices, so you can create a custom voice from uploaded samples when you need closer brand or persona alignment.
+
+You can use the library in two ways: compare built-in voices across supported providers, or create your own cloned voices and use them like any other library entry. Once you select a voice for an assistant, Talkturo fills in the related voice settings automatically.
+
+<Callout kind="info">
+
+Preview a voice before you assign it to an assistant. Voice name, language, and model labels help narrow the list, but the sample is the fastest way to confirm tone, pacing, and clarity.
+
+</Callout>
+
+## Browse voices across providers
+
+The library combines voices from Talkturo's stored catalog and live provider data. That gives you one place to review standard voices from multiple TTS providers without switching between provider dashboards.
+
+### Available providers
+
+Use the library to browse voices from the providers below.
+
+| Provider | What you see in the library | Notes |
+| --- | --- | --- |
+| Cartesia | Provider, voice name, language, available models | Also powers voice cloning |
+| ElevenLabs | Provider, voice name, language, available models | Supports in-browser preview |
+| Inworld | Provider, voice name, language, available models | Supports in-browser preview |
+| OpenAI | Provider, voice name, language, available models | Available for assistant voice selection |
+| DashScope | Provider, voice name, language, available models | Supports in-browser preview |
+| Kugel | Provider, voice name, language, available models | Available in the shared catalog |
+
+### Filter the library
+
+Use filters to narrow the list before you listen to samples. The main filters are:
+
+- **Provider** to focus on one TTS vendor
+- **Language** to match the language your assistant speaks
+- **Gender** to reduce the list when you already know the voice profile you want
+
+Each voice listing shows:
+
+- **Provider**
+- **Voice name**
+- **Language**
+- **Available models**
+
+Voice data comes from two sources:
+
+- `/api/tts-voices` for database-backed catalog entries
+- `/api/voice-providers/voices` for provider-sourced voice data
+
+<Callout kind="tip">
+
+If you are choosing a voice for a multilingual assistant, filter by language first. That removes voices that may sound good in previews but are not intended for the language your assistant will speak in production.
+
+</Callout>
+
+## Preview voices before you assign them
+
+Listen to voice samples directly in the browser to compare delivery, accent, pacing, and overall fit. Previewing is the quickest way to avoid assigning a voice that looks right in the list but sounds wrong in live calls.
+
+Talkturo uses provider-specific preview endpoints for supported providers:
+
+| Provider | Preview endpoint |
+| --- | --- |
+| Cartesia | `/api/tts-voices/cartesia-preview` |
+| ElevenLabs | `/api/tts-voices/elevenlabs-preview` |
+| DashScope | `/api/tts-voices/dashscope-preview` |
+| Inworld | `/api/tts-voices/inworld-preview` |
+
+### What to listen for
+
+A short preview usually tells you whether a voice is usable for your assistant. Focus on a few practical checks:
+
+- **Clarity** for names, numbers, and short answers
+- **Pacing** for longer responses
+- **Tone** for your brand, campaign, or persona
+- **Language fit** for accent and pronunciation
+
+<Callout kind="alert">
+
+Not every provider uses the same preview flow. If a voice is available in the library but does not expose a browser preview in the same way, confirm the voice in an assistant test call before rolling it out broadly.
+
+</Callout>
+
+## Clone a custom voice
+
+Create a cloned voice when built-in voices are close but not close enough. Cloned voices are useful when you want a consistent brand voice, a specific persona, or a custom delivery style that standard provider voices do not match.
+
+Talkturo uses **Cartesia voice cloning** for custom cloned voices. After you upload voice samples and create the clone, the new voice appears in the Voice Library alongside provider voices.
+
+### How cloned voices work
+
+Cloned voices are managed through `/api/voice-cloning` for create, read, update, and delete operations. Once a clone is available in the library, you can select it the same way you select any standard voice.
+
+<Steps>
+  <Step title="Upload voice samples" icon="upload">
+
+  Add the sample audio needed to create a cloned voice. Use clear recordings that match the speaking style you want the assistant to reproduce.
+
+  Success looks like a new cloning job or saved voice sample appearing in the voice cloning workflow.
+
+  </Step>
+  <Step title="Create the cloned voice" icon="plus">
+
+  Submit the clone through the voice cloning flow backed by Cartesia. Talkturo stores and manages the cloned voice through the voice cloning API.
+
+  Success looks like a completed custom voice entry that becomes available in the library.
+
+  </Step>
+  <Step title="Find the cloned voice in the library" icon="check-circle">
+
+  Return to the Voice Library and search or filter for your new custom voice. Cloned voices appear alongside the rest of the available catalog.
+
+  Success looks like a voice entry you can preview and select like any other voice.
+
+  </Step>
+</Steps>
+
+<Callout kind="info">
+
+Use clean, representative samples for cloning. Background noise, inconsistent pacing, or mixed speakers can reduce how closely the cloned voice matches your target style.
+
+</Callout>
+
+## Select a voice for an assistant
+
+Choose a voice directly from the library when you configure an assistant in the Voice tab. You do not need to fill each voice field manually after selection.
+
+When you assign a voice from the library, Talkturo automatically sets these assistant fields:
+
+- `voice_provider`
+- `voice_model`
+- `voice_id`
+- `voice_language`
+- `voice_name`
+
+That keeps voice configuration consistent and reduces setup mistakes, especially when a provider exposes multiple models for the same voice.
+
+### What changes when you select a voice
+
+Selecting a library voice updates the assistant's TTS configuration with the provider and model details attached to that voice entry. This matters because the same voice name can behave differently across providers or models.
+
+<Callout kind="success">
+
+If the selected voice sounds correct in preview and the assistant saves with provider, model, and language details populated, the voice is ready for testing in a live assistant flow.
+
+</Callout>
+
+## Keep the voice catalog up to date
+
+Provider voice catalogs change over time as vendors add new voices or models. Talkturo supports provider sync so the library can reflect those updates.
+
+### Admin sync behavior
+
+Admin users can sync the shared voice catalog from provider APIs. Sync uses these endpoints:
+
+- `/api/voice-providers/voices`
+- `/api/voice-providers/models`
+
+Syncing makes newly available provider voices and models available in the library, so users can browse and assign them without waiting for a manual catalog update.
+
+<Callout kind="alert">
+
+Provider sync is an admin task. If you do not see a newly released provider voice in the library, ask an admin to sync the catalog before troubleshooting assistant configuration.
+
+</Callout>
+
+## Choose the right voice faster
+
+Start with the narrowest filter that matches your use case, then preview only a few strong candidates. This usually gets you to the right voice faster than browsing the entire catalog.
+
+A practical selection flow looks like this:
+
+- Filter by **language**
+- Narrow by **provider**
+- Check **available models**
+- Preview top candidates
+- Assign the best match to the assistant
+- Run a test call to confirm real-call quality
+
+## Related pages
+
+<Columns cols={2}>
+  <Card
+    title="Configure assistants"
+    href="/assistants/configuration"
+    icon="settings"
+    cta="Open guide"
+  />
+  <Card
+    title="Voice selection workflow"
+    href="/assistants/configuration"
+    icon="book-open"
+    cta="See assistant setup"
+  />
+</Columns>

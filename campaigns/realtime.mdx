@@ -1,0 +1,194 @@
+---
+title: Real-time Campaign Monitoring
+description: Monitor live campaign dialing progress, queue status, and recent call activity with auto-refresh and campaign control actions.
+---
+
+## Monitor a live campaign
+
+The real-time campaign dashboard shows what a single campaign is doing right now: how many contacts are waiting, how many are being called, which outcomes are accumulating, and which calls just finished. The page refreshes automatically so you can watch progress without reloading the browser.
+
+<Callout kind="info">
+
+Choose the refresh interval that matches how closely you need to watch the campaign:
+
+- **No refresh** stops automatic updates.
+- **Every 2 seconds** is the default and keeps the dashboard close to real time.
+- **Every 5 seconds** reduces refresh frequency if you are monitoring a long-running campaign.
+
+The dashboard fetches its data from `GET /api/crm/campaigns/[id]/dashboard`.
+
+</Callout>
+
+## What the dashboard shows
+
+The page is organized into a few monitoring views so you can answer different questions quickly:
+
+- **Top-row KPIs** show overall campaign progress.
+- **Outcome metrics** show what happened to processed contacts.
+- **Configuration panels** show how the campaign is currently set up.
+- **Queue tables** show which contacts are waiting or actively being dialed.
+- **Recent call history** shows the latest completed or in-progress calls tied to the campaign.
+
+If you need to verify how the campaign was set up before it started, compare what you see here with the campaign settings in [Campaign configuration](/campaigns/configuration).
+
+## Read the KPI metrics
+
+The first metric row summarizes where contacts are in the dialing lifecycle.
+
+| Metric | What it means |
+|---|---|
+| **Total** | Sum of all status counts for contacts in the campaign. |
+| **Pending** | Contacts not yet queued for dialing. |
+| **Queued** | Contacts ready for dialing. |
+| **Calling** | Contacts in active calls right now. |
+| **Completed** | Contacts that finished processing. |
+| **Answered** | Contacts where the call was answered. This metric is highlighted because it is the clearest signal of live connection volume. |
+
+A healthy campaign usually shows contacts moving from **Pending** to **Queued**, then briefly into **Calling**, and finally into **Completed**. If **Queued** grows while **Calling** stays near zero, the campaign may be waiting on dialing capacity, schedule restrictions, or retry timing.
+
+## Track outcomes as the campaign runs
+
+The second metric row breaks completed activity into specific outcomes.
+
+| Outcome | What it means |
+|---|---|
+| **Voicemail** | The call reached voicemail or an answering machine. |
+| **No Answer** | The call rang but nobody answered. |
+| **Busy** | The destination line was busy. |
+| **Invalid Number** | The phone number could not be called successfully because it was invalid or unusable. |
+| **Declined** | The contact declined the call or interaction. |
+| **Do Not Call** | The contact was marked as do not call. |
+| **Error** | The call failed because of a dialing or processing error. |
+
+Use these counts to decide whether a campaign is progressing normally or repeatedly hitting the same failure mode. For example, a spike in **Busy** or **No Answer** often points to retry behavior, while a spike in **Invalid Number** usually points to list quality.
+
+## Review the campaign configuration summary
+
+The configuration panel is read-only and gives you a quick snapshot of the campaign rules currently driving queue behavior. This is useful when the queue looks slower or more aggressive than expected.
+
+### Call window
+
+The dashboard shows the campaign's allowed calling window in `HH:MM–HH:MM` format, along with the configured timezone. This tells you when the engine is allowed to place calls for the campaign.
+
+### Per-contact timezone mode
+
+The panel also shows whether per-contact timezone handling is on or off. When enabled, the campaign uses each contact's timezone when applying the call window instead of applying one shared timezone to everyone.
+
+### Retry delays
+
+Retry delays show how long the campaign waits before retrying contacts after these outcomes:
+
+- **No answer**
+- **Busy**
+- **Error**
+
+The dashboard displays these values in minutes so you can compare queue timing against actual retry behavior.
+
+### Backoff mode
+
+Backoff controls how retry delays scale across attempts. The dashboard shows whether the campaign uses:
+
+- **Fixed** backoff
+- **Exponential** backoff, including its multiplier and cap
+
+If retries seem to happen later than expected, check whether exponential backoff is increasing the wait time after each failed attempt.
+
+### Max attempts
+
+The configuration summary shows the maximum number of attempts allowed per contact. Once a contact reaches that limit, the campaign stops retrying unless a more specific rule applies.
+
+### Per-outcome attempt overrides
+
+If the campaign uses different maximum attempt counts for specific outcomes, the dashboard shows those overrides separately. This helps explain why one contact may stop retrying after a voicemail while another continues after a busy signal.
+
+### Retry on error
+
+The panel also shows whether retry-on-error is enabled. If it is off, contacts that fail with an error stop instead of returning to the queue.
+
+## Check voicemail drop status
+
+A separate voicemail drop panel shows whether a voicemail message is configured for the campaign.
+
+- If a voicemail drop is configured, the panel shows a configured badge and previews the first 140 characters of the message.
+- If no voicemail drop is configured, the panel shows that state clearly so you do not mistake voicemail outcomes for message drops.
+
+This panel is especially useful when you are reviewing a campaign with high voicemail volume and need to confirm whether the system is leaving a prepared message.
+
+## Watch the queues
+
+Two queue tables show where contacts are in the active pipeline.
+
+### Pending and queued contacts
+
+The first queue table covers contacts that have not started calling yet or are ready to be dialed next. It includes these columns:
+
+| Column | Description |
+|---|---|
+| **Contact name** | The contact's display name. |
+| **Phone** | The contact's phone number. |
+| **Timezone** | The contact timezone used for scheduling. |
+| **Status + outcome** | The current queue status and any known outcome. |
+| **Attempt count** | How many times the campaign has tried this contact. |
+| **Next retry time** | When the contact is scheduled to re-enter the queue. |
+
+Use this table when you need to answer questions like "Who is still waiting?" or "When will this contact retry?"
+
+### Currently calling
+
+The second queue table shows contacts in active calls. It uses the same columns as the pending and queued table, but it is ordered by `last_attempt_at` in descending order so the most recently started calls appear first.
+
+This table is the fastest way to confirm that the engine is actively working and to see which contacts are on calls at the moment you are watching.
+
+## Review recent call history
+
+The recent call history table shows the latest campaign calls with enough detail to jump into deeper investigation when needed.
+
+| Column | Description |
+|---|---|
+| **Call ID** | Truncated call identifier. |
+| **From** | The originating phone number. |
+| **To** | The destination phone number. |
+| **Outcome** | The recorded call outcome. |
+| **Started** | Call start time. |
+| **Ended** | Call end time. |
+| **Recording** | Whether a recording is available. |
+| **View** | Link to inspect the call in Call Logs. |
+
+Use the **View** link when a single call needs deeper analysis, such as transcripts, messages, cost, or recordings. The dashboard links into [Call Logs](/call-logs) with the campaign filter already applied.
+
+## Use dashboard actions
+
+The real-time dashboard also gives you direct control over campaign execution.
+
+| Action | What it does |
+|---|---|
+| **Pause** | Sends `PUT /api/crm/campaigns/[id]` with `status: "paused"` to stop active progress without cancelling the campaign. |
+| **Resume** | Sends `PUT /api/crm/campaigns/[id]` with `status: "running"` to continue a paused campaign. |
+| **Cancel** | Sends `PUT /api/crm/campaigns/[id]` with `status: "cancelled"` to stop the campaign and mark it as cancelled. |
+| **Open in Call Logs** | Opens the campaign in Call Logs with the campaign filter applied. |
+
+<Callout kind="alert">
+
+Use **Cancel** only when you want to stop the campaign entirely. If you only need to temporarily halt dialing, use **Pause** so you can resume later.
+
+</Callout>
+
+## When to use this page
+
+The real-time dashboard is most useful when you need to:
+
+- Confirm that a newly launched campaign is actively dialing
+- Watch queue movement during a live send window
+- Check whether retries are happening as expected
+- Spot unusual outcome patterns before the campaign finishes
+- Jump from live monitoring into detailed call inspection
+
+For historical analysis across all campaign calls, move to [Call Logs](/call-logs). For campaign setup details, return to [Campaign configuration](/campaigns/configuration).
+
+## Related pages
+
+<Columns cols={3}>
+  <Card title="Campaign overview" href="/campaigns/overview" icon="bar-chart" cta="Open guide" />
+  <Card title="Campaign configuration" href="/campaigns/configuration" icon="settings" cta="Review settings" />
+  <Card title="Call Logs" href="/call-logs" icon="phone" cta="Inspect calls" />
+</Columns>

@@ -1,0 +1,163 @@
+---
+title: Workspaces and Teams
+description: Organize your team in shared workspaces, manage roles and invitations, and control access to billing, settings, and resources.
+---
+
+## How Talkturo organizes your account
+
+Talkturo separates your personal account from the workspaces where your team does its work. A workspace is a shared environment for one team, company, or client account, and it holds the resources that everyone on that team uses together.
+
+Inside a workspace, you manage assistants, campaigns, CRM data, phone numbers, billing, API keys, telephony settings, and other shared configuration. If you work with more than one team, you can belong to multiple workspaces and switch between them as needed.
+
+<Callout kind="info">
+
+All operational work happens inside a workspace. Your personal account stores your identity and security settings, while your workspace stores the team's shared resources and access rules.
+
+</Callout>
+
+## Personal accounts and team workspaces
+
+A personal account belongs to you as an individual. It includes your profile details, sign-in methods, and personal security settings.
+
+A team workspace belongs to the organization or team you work with. It gives multiple people access to the same shared assistants, campaigns, CRM records, phone numbers, and configuration.
+
+### What lives in your personal account
+
+Your personal account includes:
+
+- Your name
+- Your avatar
+- Your email address
+- Your password
+- Multi-factor authentication settings
+- Personal billing for individual subscriptions
+
+### What lives in a team workspace
+
+A workspace includes the shared tools and data your team uses together:
+
+- Assistants
+- Campaigns
+- CRM data
+- Phone numbers
+- Billing for the workspace
+- API keys
+- Telephony settings
+- Compliance and verification settings
+- Team members and their roles
+
+<Callout kind="tip">
+
+Each new workspace starts with 10 free credits. That gives your team a small balance to test setup and basic workflows before adding more usage.
+
+</Callout>
+
+## Roles and permissions
+
+Roles control what each member can manage inside a workspace. Use the most limited role that still lets someone do their job.
+
+| Role | Access level | Can manage billing | Can manage API keys | Can manage members | Can manage workspace settings | Can use operational features |
+| --- | --- | --- | --- | --- | --- | --- |
+| Owner | Full control | Yes | Yes | Yes | Yes | Yes |
+| Admin | Broad workspace access | No | Yes | Yes | Yes | Yes |
+| Member | Standard workspace access | No | No | No | No | Yes |
+
+### What each role is for
+
+**Owner** is the highest workspace role. Owners can manage billing, API keys, members, compliance settings, and all other workspace configuration.
+
+**Admin** is for trusted team members who need to manage most workspace resources without owning the account financially. Admins can manage operational resources and API keys, and they can help manage members and settings.
+
+**Member** is for day-to-day users. Members can work with assistants, campaigns, CRM, and other operational features, but they do not control workspace administration.
+
+<Callout kind="alert">
+
+Only give owner or admin access to people who need to manage shared settings, access, or credentials. These roles affect the entire workspace, not just their own account.
+
+</Callout>
+
+## Managing team members
+
+Invite teammates by email when you want them to join your workspace. After you send an invitation, the person joins through the `/join` page and receives access based on the role you assigned.
+
+Owners and admins can remove members when someone no longer needs access. They can also assign or update roles so a member's permissions match their responsibilities.
+
+### Common member management tasks
+
+- **Invite a member** by entering their email address
+- **Assign a role** as owner, admin, or member
+- **Update a role** when responsibilities change
+- **Remove a member** to revoke workspace access
+- **Accept an invitation** through the `/join` page
+
+## Workspace settings
+
+Workspace settings control how the shared environment behaves for everyone in the team. These settings belong to the workspace, not to any individual member.
+
+### Core workspace details
+
+Use workspace settings to define the basics of your shared account:
+
+- **Workspace name** for team identification
+- **Language** for supported interface localization
+- **Timezone** for scheduling and reporting consistency
+
+Talkturo supports workspace language settings for **English** and **German**.
+
+### Shared configuration areas
+
+Most teams will also manage these workspace-level settings:
+
+- **CRM custom field definitions** to structure shared CRM data
+- **API keys** for workspace integrations and programmatic access
+- **Telephony settings** for calling infrastructure and number configuration
+- **Compliance and KYC verification** for regulated setup and account verification
+
+<Callout kind="info">
+
+Workspace settings affect everyone in the workspace. Before changing language, timezone, telephony, or CRM definitions, confirm the change with the people who rely on those settings every day.
+
+</Callout>
+
+## Personal settings
+
+Personal settings affect only your own account. They travel with you across every workspace you belong to.
+
+### Profile settings
+
+Use your personal profile settings to manage:
+
+- Your name
+- Your avatar
+- Your email address
+
+### Security settings
+
+Use personal security settings to protect your account:
+
+- Password changes
+- Multi-factor authentication with TOTP
+
+### Danger zone
+
+Delete your account from your personal settings if you no longer want to use Talkturo. Account deletion is a personal action and is separate from leaving or being removed from a workspace.
+
+<Callout kind="danger">
+
+Deleting your personal account is different from removing a member from a workspace. If you only need to leave one team, ask an owner or admin to remove your workspace access instead of deleting your account.
+
+</Callout>
+
+## Choose the right account for each task
+
+Use your **personal account** when you need to update your identity, sign-in, or personal security. Use a **workspace** when you need to manage shared team resources, members, billing, or configuration.
+
+That distinction keeps personal identity separate from team operations and makes it easier to work across multiple organizations without mixing data or permissions.
+
+## Related pages
+
+<Columns cols={3}>
+  <Card title="Billing" href="/billing" icon="bar-chart" cta="Open billing" />
+  <Card title="Authentication" href="/authentication" icon="lock" cta="Manage sign-in and security" />
+  <Card title="Telephony" href="/telephony" icon="phone" cta="Configure calling" />
+</Columns>

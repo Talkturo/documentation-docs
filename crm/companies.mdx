@@ -1,0 +1,246 @@
+---
+title: Companies
+description: Manage company records linked to your contacts, store account-level details, and use company data in calls and campaigns.
+---
+
+## Manage company records
+
+Companies represent the accounts your contacts work at. Use companies to store shared account details such as website, industry, phone number, and location, then reuse that data across contacts, campaigns, and assistant prompts.
+
+A company can have many contacts, but each contact belongs to one company. The company list shows the contact count for each record, and search matches company name or website.
+
+<Callout kind="info">
+
+Assistants can use company fields to personalize calls, and campaigns can filter records by company.
+
+</Callout>
+
+## Company fields
+
+Use these fields to create and maintain company records.
+
+<ParamField body="name" param-type="string" required="true" show-location="false">
+
+Company name. This field is required and cannot be empty.
+
+</ParamField>
+
+<ParamField body="website" param-type="string" required="false" show-location="false">
+
+Company website.
+
+</ParamField>
+
+<ParamField body="industry" param-type="string" required="false" show-location="false">
+
+Industry or vertical for the company.
+
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false" show-location="false">
+
+Main company phone number.
+
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false" show-location="false">
+
+City where the company is based.
+
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false" show-location="false">
+
+State or region where the company is based.
+
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false" show-location="false">
+
+Country where the company is based.
+
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false" show-location="false">
+
+Workspace-specific custom field values for the company.
+
+</ParamField>
+
+## Create companies
+
+Create companies from the CRM Companies page in the dashboard or through the API.
+
+<Steps>
+  <Step title="Create a company in the dashboard" icon="building">
+
+Open the CRM Companies page, then add the company name and any account details you want to track.
+
+A successful save adds the company to your list and makes it available when linking contacts.
+
+  </Step>
+  <Step title="Create a company with the API" icon="code">
+
+Send a `POST` request to `/api/crm/companies` with `name` and any optional fields.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/companies" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Northstar Logistics",
+    "website": "https://northstarlogistics.com",
+    "industry": "Logistics",
+    "phone": "+1-312-555-0148",
+    "city": "Chicago",
+    "state": "Illinois",
+    "country": "United States",
+    "customFields": {
+      "account_tier": "enterprise"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/companies", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    name: "Northstar Logistics",
+    website: "https://northstarlogistics.com",
+    industry: "Logistics",
+    phone: "+1-312-555-0148",
+    city: "Chicago",
+    state: "Illinois",
+    country: "United States",
+    customFields: {
+      account_tier: "enterprise"
+    }
+  })
+})
+
+const company = await response.json()
+console.log(company)
+```
+</Request>
+
+<Response tabs="201">
+```json
+{
+  "id": "cmp_7f3a2c91",
+  "name": "Northstar Logistics",
+  "website": "https://northstarlogistics.com",
+  "industry": "Logistics",
+  "phone": "+1-312-555-0148",
+  "city": "Chicago",
+  "state": "Illinois",
+  "country": "United States",
+  "customFields": {
+    "account_tier": "enterprise"
+  }
+}
+```
+</Response>
+
+Use either an authenticated session or an API key. A successful request returns the new company record.
+
+  </Step>
+</Steps>
+
+## Manage companies
+
+Use these endpoints to list, view, update, and delete companies.
+
+| Action | Method and path | Notes |
+|---|---|---|
+| List companies | `GET /api/crm/companies` | Supports `teamId`, `search`, `industry`, `limit`, and `offset` |
+| Get company detail | `GET /api/crm/companies/[id]` | Returns the company record with its contact list |
+| Update company | `PUT /api/crm/companies/[id]` | Update any editable company fields |
+| Delete company | `DELETE /api/crm/companies/[id]` | Permanently removes the company |
+| List company contacts | `GET /api/crm/companies/[id]/contacts` | Returns contacts linked to the company |
+
+### Filter and search companies
+
+The company list supports these query parameters.
+
+<ParamField query="teamId" param-type="string" required="false">
+
+Limits results to a team.
+
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false">
+
+Searches company records by name or website using partial matching.
+
+</ParamField>
+
+<ParamField query="industry" param-type="string" required="false">
+
+Filters companies by industry.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximum number of companies to return.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Number of records to skip before returning results.
+
+</ParamField>
+
+### Update or delete a company
+
+Update company details when account information changes. Delete a company only when you no longer need the record or its linked contact context.
+
+<Callout kind="alert">
+
+Deleting a company removes the company record. Review linked contacts before you delete it.
+
+</Callout>
+
+## Understand company and contact relationships
+
+Every contact must be linked to a company. That makes the company record the shared source of truth for account-level data, while contacts store person-level details.
+
+This relationship works in one direction:
+
+- **One company can have many contacts**
+- **Each contact belongs to one company**
+- **Company lists show contact count**
+- **Company search matches name or website**
+
+If you want to review the people linked to an account, open the company detail view or call `GET /api/crm/companies/[id]/contacts`.
+
+## Use company data in calls
+
+Assistant prompts can reference company fields directly. Use these variables to personalize scripts, greetings, and objection handling.
+
+| Variable | Description |
+|---|---|
+| `{{company.name}}` | Company name |
+| `{{company.website}}` | Company website |
+| `{{company.industry}}` | Company industry |
+| `{{company.phone}}` | Company phone number |
+| `{{company.city}}` | Company city |
+| `{{company.state}}` | Company state or region |
+| `{{company.country}}` | Company country |
+| `{{company.custom.key}}` | Company custom field value |
+
+For custom fields, replace `key` with the custom field key you created in your workspace. For example, use `{{company.custom.account_tier}}` to reference an `account_tier` field.
+
+## Related pages
+
+<Columns cols={3}>
+  <Card title="Contacts" href="/crm/contacts" icon="users" cta="Open page" />
+  <Card title="Opportunities" href="/crm/opportunities" icon="bar-chart" cta="Open page" />
+  <Card title="Custom fields" href="/crm/custom-fields" icon="settings" cta="Open page" />
+</Columns>

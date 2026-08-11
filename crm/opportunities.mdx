@@ -1,0 +1,110 @@
+---
+title: Opportunities
+description: Track deals through a visual sales pipeline with stages, linked contacts and companies, and AI-assisted updates.
+---
+
+## Track deals across your pipeline
+
+Opportunities represent deals you are actively working. Each opportunity links to a contact and company, and stores the stage, amount, win probability, and expected close date so your team can see pipeline status at a glance.
+
+The opportunities dashboard uses a Kanban board, which makes stage changes easy to manage. Move a deal by dragging it between columns, or update the same record through the API.
+
+<Callout kind="info">
+
+Use opportunities when a conversation has moved beyond a lead and you want to track value, timing, and likelihood of closing.
+
+</Callout>
+
+## Opportunity stages
+
+Stages show where a deal sits in your pipeline. Your workspace can use the built-in stages below and add custom stages when needed.
+
+| Stage | Meaning |
+|---|---|
+| `new` | Newly created deal |
+| `contacted` | Initial contact made |
+| `proposal` | Proposal sent or in progress |
+| `closed-won` | Deal won |
+| `closed-lost` | Deal lost |
+| `custom` | Custom stages defined by your workspace |
+
+## Opportunity fields
+
+These fields define the core information stored on an opportunity.
+
+| Field | Description |
+|---|---|
+| `name` | Opportunity name or title |
+| `stage` | Current pipeline stage |
+| `amount` | Deal value |
+| `probability` | Win probability percentage |
+| `expectedCloseDate` | Expected close date |
+| `contactId` | Linked contact |
+| `companyId` | Linked company |
+
+## Manage opportunities
+
+Create opportunities when you want to track a specific deal, then keep the record current as conversations progress.
+
+<Steps>
+  <Step title="Create an opportunity" icon="plus">
+
+  Add an opportunity and link it to the relevant contact and company. This gives the deal context and keeps your pipeline tied to the people and businesses involved.
+
+  A complete opportunity usually includes:
+
+  - A clear `name`
+  - The current `stage`
+  - An `amount`
+  - A `probability`
+  - An `expectedCloseDate`
+  - A linked `contactId`
+  - A linked `companyId`
+
+  </Step>
+  <Step title="Move deals between stages" icon="arrow-right">
+
+  Use the Kanban board to drag an opportunity from one stage to another. This is the fastest way to reflect progress during day-to-day pipeline review.
+
+  You can also update the stage through the API if you sync opportunities from another workflow or automation.
+
+  </Step>
+  <Step title="Read and update records through the API" icon="code">
+
+  Use the CRM opportunities endpoints to list, create, update, and delete records.
+
+  <CodeGroup tabs="List and create,Read update and delete">
+  ```bash
+  GET /api/crm/opportunities
+  POST /api/crm/opportunities
+  ```
+
+  ```bash
+  GET /api/crm/opportunities/[id]
+  PUT /api/crm/opportunities/[id]
+  DELETE /api/crm/opportunities/[id]
+  ```
+  </CodeGroup>
+
+  </Step>
+</Steps>
+
+## AI-driven pipeline updates
+
+Call analysis can keep your pipeline more accurate without requiring every update to be entered by hand. When Talkturo analyzes calls, the extracted deal data can populate opportunity fields and move opportunities forward as conversations progress.
+
+Depending on the call outcome, AI can update the opportunity stage automatically. For example, a successful qualification call might move a deal forward, while another outcome can mark the opportunity as lost or update key deal details.
+
+<Callout kind="tip">
+
+If you use call intelligence to drive pipeline changes, review stage definitions with your team first so automated updates match your sales process.
+
+</Callout>
+
+## Related pages
+
+<Columns cols={3}>
+  <Card title="Contacts" href="/crm/contacts" icon="users" cta="View contacts" />
+  <Card title="Companies" href="/crm/companies" icon="building" cta="View companies" />
+  <Card title="Intelligence" href="/intelligence" icon="bar-chart" cta="View call insights" />
+</Columns>

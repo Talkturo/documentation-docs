@@ -1,32 +1,144 @@
 ---
 title: Voice Agent Call Quality Issues
-description: How to fix low audio quality or dropped calls.
+description: Diagnose robotic audio, slow responses, dropped calls, and transcript problems with targeted fixes in Talkturo voice settings and logs.
 ---
 
 ## Symptoms
 
-- Calls sound distorted
-- Voice agent is hard to hear
-- Calls drop unexpectedly
+Call quality issues usually show up in one of a few repeatable patterns. Match what you are hearing or seeing first, then jump to the relevant section below.
 
-## Possible Causes
+- Assistant responses sound robotic or unnatural
+- Call audio has static, hiss, or background noise
+- Assistant takes too long to respond
+- Calls drop or end unexpectedly
+- Transcript accuracy is poor for names, acronyms, or domain-specific terms
+- Voicemail detection behaves unexpectedly
 
-- Network instability
-- Low bandwidth
-- Outdated browser
+<Callout kind="info">
 
-## Quick Fix
+Most call quality problems come from configuration, not a platform outage. Check the assistant's Voice, STT, and telephony settings first, then use call logs to confirm where latency or call termination happened.
 
-<Steps>
-  <Step title="Check your network">
-    ````bash
-    ping api.talkturo.com
-    ````
-  </Step>
-  <Step title="Switch network">
-    Try a wired or stable WiFi connection.
-  </Step>
-  <Step title="Update browser">
-    Use the latest version of Chrome or Firefox.
-  </Step>
-</Steps>
+</Callout>
+
+## Troubleshoot by symptom
+
+<ExpandableGroup>
+  <Expandable title="Assistant responses sound robotic or unnatural" default-open="true">
+
+  Start in the **Voice** tab of your assistant settings. The fastest improvement usually comes from changing the text-to-speech provider or voice model rather than rewriting prompts.
+
+  Check these settings in order:
+
+  - **TTS provider** — switch between Cartesia, ElevenLabs, and Inworld to compare naturalness.
+  - **Speed** — if speech sounds rushed or dragged out, adjust the speed setting. The supported range is `0.5` to `2.0`, and the default is `1.0`.
+  - **Voice model or voice ID** — some voices handle pacing, emphasis, and pronunciation better than others.
+  - **Noise cancellation** — enable `bvc` for Background Voice Cancellation or `nc` for Standard noise cancellation. Avoid `off` unless you are testing raw input quality.
+
+  If only certain phrases sound wrong, test with a different voice before changing your prompt. Voice quality issues often come from the synthesis model, not the conversation logic.
+
+  </Expandable>
+
+  <Expandable title="Call audio has static or background noise">
+
+  Background noise usually comes from either ambience settings or disabled noise cancellation. Fix those before investigating anything deeper.
+
+  Review these settings in the **Voice** tab:
+
+  - **Background ambience** — set this to `none` if you do not want ambient audio mixed into the call.
+  - **Ambience volume** — lower the volume slider if ambience is present but too loud. The range is `0` to `1`, and the default is `0.8`.
+  - **Noise cancellation mode** — make sure the mode is not set to `off`. Use `bvc` by default, or `nc` if you want standard cancellation.
+
+  If callers report that your assistant is hard to hear, check ambience volume before changing the voice itself. Loud ambience can make a good voice sound unclear.
+
+  </Expandable>
+
+  <Expandable title="Assistant takes too long to respond">
+
+  High latency usually comes from model choice, voice pipeline settings, or the mode the assistant is using. Start by reducing the time spent in each stage of the response pipeline.
+
+  Try these changes:
+
+  - **Switch to Realtime mode** if you need faster turn-taking.
+  - In Realtime mode, try **`gpt-realtime-mini`** instead of **`gpt-realtime`** if response speed matters more than maximum model quality.
+  - **Use a faster LLM provider or model** if your current model produces strong answers but long delays.
+  - **Review call logs** to identify where time is being spent.
+
+  In call logs, check latency metrics such as:
+
+  - **P50 response time** for typical responses
+  - **P95 response time** for slow outliers
+  - **EOU latency** for end-of-utterance detection
+  - **LLM latency** for model generation time
+  - **TTS latency** for speech synthesis time
+
+  If only a small percentage of calls are slow, P95 is the best signal. If every call feels slow, compare EOU, LLM, and TTS latencies to find the bottleneck.
+
+  </Expandable>
+
+  <Expandable title="Transcript accuracy is poor for specific terms">
+
+  Transcript problems are usually caused by STT model choice, missing keyterms, or language mismatch. Fix recognition quality before you try to compensate with prompt logic.
+
+  Check these settings:
+
+  - **Keyterms** — add product names, acronyms, proper nouns, and industry-specific vocabulary.
+  - **STT model** — try a different speech-to-text model, such as Deepgram Nova-3, if you need better recognition accuracy.
+  - **STT language** — make sure the configured language matches the caller's language.
+  - **Advanced STT options** — review endpointing and VAD sensitivity if speech is getting cut off or merged incorrectly.
+
+  Keyterms help most when the transcript is wrong in a consistent way. If the assistant repeatedly misses the same company name or technical term, add that term explicitly.
+
+  </Expandable>
+
+  <Expandable title="Calls drop or end unexpectedly">
+
+  Unexpected call endings usually come from assistant configuration, telephony setup, or account state. Check the end condition before assuming the connection failed.
+
+  Review these areas:
+
+  - **End Call function settings** — make sure trigger phrases are not too broad or easy to match in normal conversation.
+  - **Telephony settings** — verify the phone number is still active and assigned correctly.
+  - **Workspace credits** — campaigns automatically pause when credits drop below `1.0`.
+  - **Call logs** — inspect the **ended reason** field to see what terminated the call.
+
+  <Callout kind="alert">
+
+  If calls stop during active campaigns, check workspace credits immediately. Low credits can pause outbound activity even when the assistant configuration looks correct.
+
+  </Callout>
+
+  If the ended reason points to assistant logic, narrow your end-call triggers. If the ended reason points to account or telephony state, fix the assignment or billing issue first.
+
+  </Expandable>
+
+  <Expandable title="Voicemail detection is not working as expected">
+
+  Voicemail behavior depends on three settings: whether detection is enabled, what action to take, and what message to leave.
+
+  Check the following:
+
+  - **Voicemail detection** — verify it is enabled. The default is `true`.
+  - **Voicemail action** — confirm whether the assistant should `leave_message` or `hangup`.
+  - **Voicemail message text** — review the message content for missing or incorrect text.
+
+  If the assistant hangs up when you expected a message, check the voicemail action first. If it leaves a poor message, review the voicemail text before changing detection behavior.
+
+  </Expandable>
+</ExpandableGroup>
+
+## What to check in call logs
+
+Call logs help you confirm whether the issue comes from speech recognition, model latency, voice synthesis, or call termination logic.
+
+Use call logs to answer these questions:
+
+- Which stage is slow: **EOU**, **LLM**, or **TTS**
+- Whether high latency affects all calls or only outliers through **P50** and **P95**
+- Why the call ended by checking the **ended reason** field
+- Whether transcript errors are isolated to specific terms or happen across the entire call
+
+<Callout kind="tip">
+
+When one symptom overlaps with another, fix the earliest point in the pipeline first. For example, poor transcripts can make the assistant respond slowly or incorrectly, even when your voice settings are fine.
+
+</Callout>

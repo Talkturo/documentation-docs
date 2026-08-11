@@ -1,0 +1,185 @@
+---
+title: Intelligence and Analytics
+description: Analyze call performance, sentiment, outcomes, and conversation trends across your voice assistant calls in one dashboard.
+---
+
+## See patterns across your voice assistant calls
+
+The Intelligence dashboard gives you a single view of call performance across campaigns and assistants. Use it to understand what is happening across many conversations at once, then decide where to adjust prompts, assistant behavior, or campaign targeting.
+
+Unlike [Call Logs](/call-logs), which help you inspect individual calls, Intelligence summarizes patterns over time. That makes it useful when you want to answer questions like which objections appear most often, whether sentiment is improving, or whether a campaign is producing more voicemail than answered calls.
+
+<Callout kind="info">
+
+Intelligence analyzes **voice assistant calls** at the account level. It is separate from the desktop coaching views used for live sales sessions.
+
+</Callout>
+
+## Filter the data you want to analyze
+
+Start by narrowing the dashboard to the calls that matter for your question. Every chart and KPI updates based on the filters you select.
+
+| Filter | What it does | Options |
+|---|---|---|
+| Date range | Limits the reporting window for all metrics and charts | Last 7 days, 14 days, 30 days, or 90 days |
+| Campaign | Shows calls for one campaign or all campaigns | All campaigns or a specific campaign |
+| Assistant | Shows calls for one assistant or all assistants | All assistants or a specific assistant |
+| Refresh | Reloads the dashboard with the latest data | Manual refresh button |
+
+### When to change each filter
+
+Use a **short date range** when you are validating a recent change, such as a new prompt or campaign launch. Use a **longer date range** when you want a more stable baseline or need to compare broader patterns.
+
+Filter by **campaign** when you want to diagnose delivery or performance issues tied to a specific audience. Filter by **assistant** when you are comparing assistant behavior, prompt quality, or conversational outcomes between different configurations.
+
+<Callout kind="tip">
+
+If you recently updated an assistant or campaign, refresh the dashboard after new calls complete so the latest results appear in the charts.
+
+</Callout>
+
+## Track the four headline KPIs
+
+The KPI row gives you the fastest read on overall performance in the selected period. Review these cards first before moving into the detailed charts.
+
+| KPI | What it measures | How to use it |
+|---|---|---|
+| Total Calls | Number of calls in the selected period | Confirm you have enough volume to trust the trends you see elsewhere on the page |
+| Success Rate | Percentage of successful calls | Measure overall effectiveness and compare performance before and after configuration changes |
+| Avg Duration | Average call length | Spot unusually short or long calls that may indicate qualification issues or weak prompt flow |
+| Avg Interruptions | Average interruptions per call | Understand how often the conversation breaks rhythm or overlaps |
+
+### Success rate badges
+
+The Success Rate card includes a badge that helps you interpret results quickly.
+
+| Range | Badge |
+|---|---|
+| 60% and above | Good |
+| 40% to 59% | Fair |
+| Below 40% | Low |
+
+A low success rate does not always mean the assistant is underperforming. It can also point to list quality, campaign timing, or a high percentage of calls that never become real conversations.
+
+## Read each chart and panel
+
+After the KPI row, the dashboard breaks performance into trends, sentiment, conversation content, and outcomes. Each panel answers a different question.
+
+| Panel | Visualization | What it shows | What to look for |
+|---|---|---|---|
+| Success Rate Trend | Area chart | Daily success rate across the selected date range | Upward or downward movement after prompt, assistant, or campaign changes |
+| Sentiment Breakdown | Donut pie chart | Count of positive, neutral, and negative calls | Whether conversations are generally landing well with callers |
+| Top Objections | Horizontal bar chart, top 8 | Most common objections raised by prospects | Repeated objections your assistant should address earlier or more clearly |
+| Top Questions | Horizontal bar chart, top 8 | Most common prospect questions | Information gaps in your script, prompts, or offer explanation |
+| Competitor Mentions | Horizontal bar chart, top 8 | Most frequently mentioned competitors | Competitive pressure that may require sharper positioning |
+| Topics Discussed | Tag cloud | Topics mentioned in calls, weighted by frequency | What conversations are actually about, not only what you intended them to cover |
+| Talk Ratio | Dual progress bars | Agent talk percentage and words per call compared with caller talk percentage and words per call | Whether the assistant is balancing guidance with listening |
+| Outcome Distribution | Horizontal bar chart | Call outcomes such as answered, voicemail, no_answer, busy, and error | Delivery issues, answer rates, and operational friction |
+| Sentiment Trend | Stacked area chart | Positive, neutral, and negative sentiment over time | Whether caller experience is improving or declining over time |
+
+### Success rate trend
+
+Use the Success Rate Trend to connect results to changes you made. If success improves after updating prompts or retargeting a campaign, the effect usually appears here before it is obvious elsewhere.
+
+Short-term spikes are useful, but repeated movement matters more. Check whether the trend holds across several days before treating it as a real improvement.
+
+### Sentiment charts
+
+Sentiment Breakdown gives you the current mix, while Sentiment Trend shows how that mix changes over time. Together, they help you tell whether callers are reacting better or worse as your assistant and campaign evolve.
+
+If negative sentiment rises after a prompt change, review the call experience before making broader rollout decisions. A small wording change can affect how natural or pushy the assistant sounds.
+
+### Objections, questions, and competitor mentions
+
+These panels tell you what prospects are actually saying back. They are often the fastest way to find friction in your messaging.
+
+When the same objection appears repeatedly, update your assistant prompts to address it earlier or with clearer language. When the same question appears repeatedly, treat that question as a missing part of your script rather than a caller exception.
+
+### Topics discussed
+
+The topic cloud helps you compare intended conversation flow with real conversation content. Larger or darker topics indicate themes that appear more often across calls.
+
+Use this view to verify whether campaigns are attracting the right conversations. If unexpected topics dominate, revisit your targeting, opening message, or qualification logic.
+
+### Talk ratio and outcomes
+
+Talk Ratio shows whether the assistant leaves enough room for the caller. High agent talk share can indicate that the assistant is over-explaining, while very low talk share can suggest weak guidance or early disengagement.
+
+Outcome Distribution helps you separate conversation quality from delivery quality. For example, a high voicemail or `no_answer` rate usually points to contactability or campaign timing issues, not to prompt quality alone.
+
+<Callout kind="tip">
+
+Read **Talk Ratio** and **Outcome Distribution** together. If success is low but most calls are voicemail or unanswered, focus on campaign delivery before rewriting assistant prompts.
+
+</Callout>
+
+## Turn dashboard findings into improvements
+
+Use the dashboard as a decision tool, not only a reporting view. The most valuable insights usually come from comparing trends before and after a change.
+
+<Steps>
+  <Step title="Review the KPI row first" icon="bar-chart">
+
+  Start with Total Calls, Success Rate, Avg Duration, and Avg Interruptions to establish the overall state of performance. If call volume is low, treat individual chart movements carefully because small changes can look larger than they are.
+
+  </Step>
+  <Step title="Find the main source of friction" icon="search">
+
+  Check Top Objections, Top Questions, and Competitor Mentions to see what repeatedly blocks progress. This tells you whether the issue is messaging, positioning, qualification, or campaign targeting.
+
+  </Step>
+  <Step title="Check caller experience" icon="users">
+
+  Review Sentiment Breakdown, Sentiment Trend, and Talk Ratio to understand how the assistant sounds in real conversations. If sentiment declines or the assistant dominates airtime, adjust prompts to improve pacing and responsiveness.
+
+  </Step>
+  <Step title="Separate conversation issues from delivery issues" icon="phone">
+
+  Use Outcome Distribution to see whether poor results come from bad conversations or from calls that never connect properly. High voicemail, busy, or `no_answer` rates often point to campaign execution problems rather than assistant behavior.
+
+  </Step>
+  <Step title="Measure the impact of each change" icon="check-circle">
+
+  After updating prompts, assistant settings, or campaign setup, return to the same date range and compare the Success Rate Trend and Sentiment Trend. Consistent improvement across several days is a stronger signal than a one-day spike.
+
+  </Step>
+</Steps>
+
+## Common ways to use Intelligence data
+
+The dashboard is most useful when you tie each panel to a specific action.
+
+- **Update objection handling** when the same objections appear near the top of the objections chart.
+- **Improve prompt clarity** when top questions reveal information callers keep asking for.
+- **Adjust conversation pacing** when talk ratio shows the assistant is speaking too much.
+- **Investigate campaign delivery** when voicemail, busy, or `no_answer` outcomes dominate.
+- **Validate changes over time** when success rate and sentiment trends move after configuration updates.
+
+<Callout kind="info">
+
+When you test a change, change one thing at a time where possible. That makes it easier to connect movement in success rate or sentiment to the update that caused it.
+
+</Callout>
+
+## Related pages
+
+<Columns cols={3}>
+  <Card
+    title="Review individual calls"
+    href="/call-logs"
+    icon="phone"
+    cta="Open call logs"
+  />
+  <Card
+    title="Adjust assistant configuration"
+    href="/assistants/configuration"
+    icon="settings"
+    cta="Configure assistants"
+  />
+  <Card
+    title="Review campaign setup"
+    href="/campaigns/overview"
+    icon="bar-chart"
+    cta="Open campaigns"
+  />
+</Columns>

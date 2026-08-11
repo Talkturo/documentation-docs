@@ -1,0 +1,217 @@
+---
+title: Desktop Sessions
+description: Review Close AI call sessions with transcripts, AI coaching, summaries, and team analytics from the desktop app.
+---
+
+## Work from a single record of each call
+
+Sessions are the main record inside Close AI. Every live interaction in the desktop app creates a session, whether you use **Listen** mode for live coaching from call audio or **Ask** mode to question the AI during a call.
+
+When the call ends, the session stays available for review. You can reopen it to check the transcript, inspect AI messages, read the summary, and run analysis for coaching and script coverage.
+
+<Callout kind="info">
+
+Analysis is available after a session has transcript data. If the session does not include a transcript yet, the **Analyze** button cannot generate coaching results.
+
+</Callout>
+
+## Find and scan sessions quickly
+
+The sessions page shows a searchable, paginated list of desktop call records. Each page displays up to **25 sessions**, so reps can review recent calls while managers can scan activity across the team.
+
+### What each session card shows
+
+Each session card surfaces the details you need to decide whether to open it:
+
+- **Title** — the session name, with a fallback based on the session ID if no custom title exists
+- **Session type** — **Listen** or **Ask**
+- **Status** — active, ended, completed, or another recorded state
+- **Started** — the session start time
+- **Duration** — elapsed call time
+- **Short ID** — the first part of the session ID for quick reference
+
+### Session status indicators
+
+| Status | What you see | What it means |
+|---|---|---|
+| Active | Spinning indicator | The session is live now |
+| Ended or completed | Green check | The call finished and the record is ready to review |
+| Other states | Clock indicator | The session is not active and did not resolve to a completed state |
+
+### Desktop status banner
+
+At the top of the list, the desktop status banner shows whether the workspace has desktop access and how much monthly usage remains.
+
+| Banner state | What it shows |
+|---|---|
+| Desktop access enabled | Current plan, monthly call usage, and a progress bar |
+| Usage above threshold | A warning state as usage approaches the monthly limit |
+| Unlimited plan | No usage limit indicator |
+| No desktop access | Locked state with a billing prompt |
+
+<Callout kind="tip">
+
+Use search when you know part of a title or want to locate a specific call quickly. Search works across the session list before you paginate further.
+
+</Callout>
+
+## Open a session to review the full call
+
+Select a session to open its detail view. The header gives you the basic facts first so you can orient quickly before digging into the call.
+
+### Header details
+
+The top of the session detail page includes four metadata cards:
+
+| Card | Shows |
+|---|---|
+| Type | Listen or Ask |
+| Status | Current recorded session state |
+| Duration | Total session length |
+| Started | Local date and time when the session began |
+
+You can also rename the session inline using the pencil edit control. If the current title is too generic, update it to match the customer, deal, or objection discussed on the call.
+
+### Delete a session
+
+Delete removes the session record from the list. Use this when a session was created by mistake or should not stay in the workspace.
+
+<Callout kind="alert">
+
+Delete is meant for cleanup, not routine call management. Confirm the session is no longer needed before removing it.
+
+</Callout>
+
+## Use the summary card for a fast recap
+
+If AI summary data exists, the session shows a summary card near the top of the detail view. This is the fastest way to understand what happened without reading the entire transcript first.
+
+The summary card can include:
+
+- **TL;DR** — a short written recap of the call
+- **Key points** — the main topics or moments pulled into bullet points
+- **Action items** — follow-up work captured from the conversation
+- **Token usage** — how much model usage the summary consumed
+
+For managers, this is often enough to spot whether a call needs deeper coaching. For reps, it gives a clean handoff into follow-up work.
+
+## Run analysis for coaching and review
+
+The analysis section turns a completed session into a coaching record. Use **Analyze** to generate analysis for the first time, or **Re-analyze** to refresh the results after transcript data changes.
+
+### Talk metrics
+
+These metrics show how the rep handled the conversation at a speaking-pattern level.
+
+| Metric | Unit | What it tells you |
+|---|---|---|
+| Talk Share | % | How much of the call time the salesperson spoke |
+| WPM | Words per minute | Speaking pace during the call |
+| Patience | % | How often pauses were timed well |
+| Longest Monologue | Time | Longest uninterrupted speaking stretch |
+
+### CloseScore breakdown
+
+CloseScore gives the session an overall score from **0 to 100** and breaks that score into categories. The score is color-coded so you can judge performance at a glance.
+
+| Score range | Color meaning |
+|---|---|
+| 80 and above | Emerald |
+| 60 to 79 | Yellow |
+| 40 to 59 | Orange |
+| Below 40 | Red |
+
+Below the overall score, the analysis shows category-level breakdowns with sub-items and notes. That helps managers see whether the score dropped because of discovery, handling objections, pacing, or script execution rather than treating the number as a black box.
+
+### Strengths and improvements
+
+Coaching results are split into two practical sections:
+
+- **Strengths** — behaviors the rep should keep repeating
+- **Improvements** — weaknesses and risks that need correction
+
+This layout makes post-call review faster because the rep can see both what worked and what to change in one pass.
+
+### Script coverage
+
+If the session used a script, analysis also shows how fully the conversation followed it. The checklist marks each section based on coverage and shows the time spent in that section.
+
+You can use script coverage to answer questions like:
+
+- Did the rep reach the pricing section
+- Did the call skip a key discovery step
+- Where did the conversation spend the most time
+
+### Prospect personality
+
+The personality block helps the rep adapt follow-up and future calls. It shows:
+
+- **Personality type**
+- **Levers** — what tends to motivate this prospect
+- **Avoid** — what tends to irritate or disengage them
+
+## Review the transcript and AI message history
+
+Below the summary and analysis, session content is organized into tabs so you can switch between the call itself and the AI's internal conversation.
+
+### Transcript tab
+
+The transcript tab shows speaker-attributed rows with timestamps and language tags. The layout uses chat-style bubbles, which makes it easier to follow turn-taking during longer calls.
+
+This view is the best place to verify exactly what was said before giving coaching feedback or writing a follow-up.
+
+### AI Messages tab
+
+The AI Messages tab shows the message log behind the session. Entries are grouped by role:
+
+- **System**
+- **User**
+- **Assistant**
+
+Each message includes its role, token count, and time. Use this tab when you want to understand how the AI responded during the session or troubleshoot why guidance looked a certain way.
+
+## Use the desktop dashboard for team trends
+
+Individual sessions help with call-by-call review. The desktop dashboard helps managers step back and see patterns across the team.
+
+### KPI cards
+
+The dashboard header summarizes performance for the selected time range.
+
+| KPI | What it shows |
+|---|---|
+| Calls in period | Total desktop sessions in the selected range |
+| Avg CloseScore | Average session score across analyzed calls |
+| Avg Duration | Average call length |
+| Active Team Members | Number of reps with session activity |
+
+### Time ranges and analysis tabs
+
+Use the time selector to switch between **7d**, **30d**, and **90d** views. Each range updates the charts and tables across the dashboard.
+
+The dashboard includes eight analysis tabs:
+
+| Tab | Focus |
+|---|---|
+| Overview | Overall trends, duration patterns, and leaderboard view |
+| CloseScore | Score trends and distribution |
+| Objections | Objection counts and categories |
+| Questions | Question mix and missed questions |
+| Personality | Personality distribution across calls |
+| Language | Talk share, WPM, patience, and monologue trends |
+| Coaching | Strengths, weaknesses, risks, and per-member coaching data |
+| Script | Script usage, coverage, and deviation patterns |
+
+### AI narrative insights
+
+Each dashboard tab can generate a written narrative based on the current data. This adds a short AI summary and recommendation layer on top of the charts.
+
+For managers, the narrative is useful when preparing coaching reviews or team updates. For reps, it helps turn dashboard trends into a concrete next action.
+
+## Related pages
+
+<Columns cols={3}>
+  <Card title="Close AI overview" href="/close-ai/overview" icon="monitor" cta="Open page" />
+  <Card title="Prompt presets" href="/close-ai/prompts" icon="edit" cta="Manage prompts" />
+  <Card title="Script editor" href="/close-ai/script-editor" icon="git-branch" cta="Review scripts" />
+</Columns>
