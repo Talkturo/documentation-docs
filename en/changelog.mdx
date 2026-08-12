@@ -8,6 +8,26 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-12" description="v2.3.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Credits and profile menu on mobile** — Your credit balance and profile menu are now accessible from the mobile top bar, so you can check credits and manage your account without switching to desktop. See [Billing](/billing).
+  - **Telnyx city-level verification enforcement** — Telnyx phone number purchases now enforce city-level regulatory verification, matching the protection Twilio already provides. This prevents buying numbers in cities you aren't verified for. See [Telephony](/telephony).
+
+  ## Improvements
+
+  - **Compliance city selector redesigned** — When requesting regulatory verification, you must now explicitly select or enter your city. A new note explains that approval covers only that city — not the entire country. See [Telephony](/telephony).
+  - **Admin account search improved** — Admin account search now matches name, email, and workspace slug, case-insensitively, making it faster to locate the right account.
+  - **Expired Telnyx verifications detected** — Expired carrier approvals for Telnyx are now automatically detected and re-evaluated, keeping the purchase gate accurate over time. See [Telephony](/telephony).
+
+  ## Bug Fixes
+
+  - **Mobile menu scrolling** — The mobile hamburger menu now scrolls on small screens, so all navigation items — including sign-out — are always reachable.
+  - **Twilio compliance approval webhook** — Real-time approval notifications from Twilio are now processed correctly instead of being silently skipped, so approvals reflect immediately.
+  - **Verification review dialog layout** — Fixed a layout issue where long field names caused the admin verification review dialog to clip labels and buttons.
+  - **Regulatory bundle renewal logging** — Fixed a logging error in the nightly regulatory bundle renewal job that made it impossible to distinguish successful renewals from carrier outages.
+</Update>
+
 <Update label="2026-08-11" description="v2.2.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
