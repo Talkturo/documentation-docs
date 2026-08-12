@@ -1,0 +1,194 @@
+---
+title: Echtzeit-Kampagnenüberwachung
+description: Überwache den Live-Fortschritt von Kampagnen, den Status der Warteschlange und aktuelle Anrufaktivitäten mit automatischer Aktualisierung und Kampagnenaktionen.
+---
+
+## Überwache eine Live-Kampagne
+
+Das Echtzeit-Kampagnen-Dashboard zeigt, was eine einzelne Kampagne gerade tut: wie viele Kontakte warten, wie viele gerade angerufen werden, welche Ergebnisse sich ansammeln und welche Anrufe soeben beendet wurden. Die Seite wird automatisch aktualisiert, damit du den Fortschritt verfolgen kannst, ohne den Browser neu zu laden.
+
+<Callout kind="info">
+
+Wähle das Aktualisierungsintervall, das dazu passt, wie genau du die Kampagne überwachen musst:
+
+- **Keine Aktualisierung** stoppt automatische Updates.
+- **Alle 2 Sekunden** ist die Standardeinstellung und hält das Dashboard nahe an Echtzeit.
+- **Alle 5 Sekunden** reduziert die Aktualisierungshäufigkeit, wenn du eine lang laufende Kampagne überwachst.
+
+Das Dashboard ruft seine Daten aus `GET /api/crm/campaigns/[id]/dashboard` ab.
+
+</Callout>
+
+## Was das Dashboard zeigt
+
+Die Seite ist in einige Überwachungsansichten gegliedert, damit du unterschiedliche Fragen schnell beantworten kannst:
+
+- **KPIs in der oberen Zeile** zeigen den allgemeinen Fortschritt der Kampagne.
+- **Ergebniskennzahlen** zeigen, was mit verarbeiteten Kontakten passiert ist.
+- **Konfigurationsbereiche** zeigen, wie die Kampagne aktuell eingerichtet ist.
+- **Tabellen zur Warteschlange** zeigen, welche Kontakte warten oder gerade gewählt werden.
+- **Aktuelle Anrufhistorie** zeigt die zuletzt abgeschlossenen oder laufenden Anrufe, die mit der Kampagne verknüpft sind.
+
+Wenn du prüfen musst, wie die Kampagne vor dem Start eingerichtet wurde, vergleiche das, was du hier siehst, mit den Kampagneneinstellungen in [Kampagnenkonfiguration](/campaigns/configuration).
+
+## Lies die KPI-Kennzahlen
+
+Die erste Kennzahlenzeile fasst zusammen, an welcher Stelle des Wählvorgangs sich Kontakte befinden.
+
+| Kennzahl | Bedeutung |
+|---|---|
+| **Gesamt** | Summe aller Statuszähler für Kontakte in der Kampagne. |
+| **Ausstehend** | Kontakte, die noch nicht in die Warteschlange für den Wählvorgang aufgenommen wurden. |
+| **In Warteschlange** | Kontakte, die für den Wählvorgang bereit sind. |
+| **Wird angerufen** | Kontakte in aktuell laufenden Anrufen. |
+| **Abgeschlossen** | Kontakte, deren Verarbeitung beendet ist. |
+| **Beantwortet** | Kontakte, bei denen der Anruf angenommen wurde. Diese Kennzahl ist hervorgehoben, weil sie das klarste Signal für das aktuelle Verbindungsvolumen ist. |
+
+Eine gesunde Kampagne zeigt normalerweise Kontakte, die sich von **Ausstehend** zu **In Warteschlange**, dann kurz zu **Wird angerufen** und schließlich zu **Abgeschlossen** bewegen. Wenn **In Warteschlange** wächst, während **Wird angerufen** nahe null bleibt, wartet die Kampagne möglicherweise auf Wählkapazität, Zeitplanbeschränkungen oder das Timing für Wiederholungen.
+
+## Verfolge Ergebnisse während die Kampagne läuft
+
+Die zweite Kennzahlenzeile unterteilt abgeschlossene Aktivitäten in konkrete Ergebnisse.
+
+| Ergebnis | Bedeutung |
+|---|---|
+| **Voicemail** | Der Anruf erreichte Voicemail oder einen Anrufbeantworter. |
+| **Keine Antwort** | Das Telefon klingelte, aber niemand nahm ab. |
+| **Besetzt** | Die Zielleitung war besetzt. |
+| **Ungültige Nummer** | Die Telefonnummer konnte nicht erfolgreich angerufen werden, weil sie ungültig oder nicht nutzbar war. |
+| **Abgelehnt** | Der Kontakt hat den Anruf oder die Interaktion abgelehnt. |
+| **Nicht anrufen** | Der Kontakt wurde als nicht anrufen markiert. |
+| **Fehler** | Der Anruf ist wegen eines Fehlers beim Wählvorgang oder bei der Verarbeitung fehlgeschlagen. |
+
+Nutze diese Zähler, um zu beurteilen, ob eine Kampagne normal voranschreitet oder wiederholt auf denselben Fehlermodus trifft. Ein Anstieg bei **Besetzt** oder **Keine Antwort** weist zum Beispiel oft auf Wiederholungsverhalten hin, während ein Anstieg bei **Ungültige Nummer** meist auf die Qualität der Liste hindeutet.
+
+## Prüfe die Zusammenfassung der Kampagnenkonfiguration
+
+Der Konfigurationsbereich ist schreibgeschützt und gibt dir einen schnellen Überblick über die Kampagnenregeln, die aktuell das Verhalten der Warteschlange steuern. Das ist hilfreich, wenn die Warteschlange langsamer oder aggressiver wirkt als erwartet.
+
+### Anruffenster
+
+Das Dashboard zeigt das erlaubte Anruffenster der Kampagne im Format `HH:MM–HH:MM` zusammen mit der konfigurierten Zeitzone. Damit siehst du, wann die Engine Anrufe für die Kampagne platzieren darf.
+
+### Zeitzonenmodus pro Kontakt
+
+Der Bereich zeigt auch, ob die Zeitzonenbehandlung pro Kontakt aktiviert oder deaktiviert ist. Wenn sie aktiviert ist, verwendet die Kampagne die Zeitzone jedes Kontakts beim Anwenden des Anruffensters, statt eine gemeinsame Zeitzone für alle zu verwenden.
+
+### Wiederholungsverzögerungen
+
+Wiederholungsverzögerungen zeigen, wie lange die Kampagne wartet, bevor sie Kontakte nach diesen Ergebnissen erneut versucht:
+
+- **Keine Antwort**
+- **Besetzt**
+- **Fehler**
+
+Das Dashboard zeigt diese Werte in Minuten an, damit du das Timing der Warteschlange mit dem tatsächlichen Wiederholungsverhalten vergleichen kannst.
+
+### Backoff-Modus
+
+Backoff steuert, wie Wiederholungsverzögerungen über mehrere Versuche skaliert werden. Das Dashboard zeigt, ob die Kampagne Folgendes verwendet:
+
+- **Fixen** Backoff
+- **Exponentiellen** Backoff einschließlich Multiplikator und Obergrenze
+
+Wenn Wiederholungen später stattfinden als erwartet, prüfe, ob exponentieller Backoff die Wartezeit nach jedem fehlgeschlagenen Versuch erhöht.
+
+### Maximale Versuche
+
+Die Konfigurationsübersicht zeigt die maximal zulässige Anzahl von Versuchen pro Kontakt. Sobald ein Kontakt dieses Limit erreicht, führt die Kampagne keine weiteren Wiederholungen mehr aus, sofern keine spezifischere Regel gilt.
+
+### Überschreibungen für Versuche pro Ergebnis
+
+Wenn die Kampagne für bestimmte Ergebnisse unterschiedliche maximale Versuchszahlen verwendet, zeigt das Dashboard diese Überschreibungen separat an. Das hilft zu erklären, warum ein Kontakt nach einer Voicemail keine weiteren Wiederholungen mehr erhält, während ein anderer nach einem Besetzt-Signal fortfährt.
+
+### Wiederholung bei Fehler
+
+Der Bereich zeigt auch, ob Wiederholung bei Fehler aktiviert ist. Wenn sie deaktiviert ist, stoppen Kontakte mit einem Fehler, statt in die Warteschlange zurückzukehren.
+
+## Prüfe den Status der Voicemail-Ablage
+
+Ein separater Bereich zur Voicemail-Ablage zeigt, ob für die Kampagne eine Voicemail-Nachricht konfiguriert ist.
+
+- Wenn eine Voicemail-Ablage konfiguriert ist, zeigt der Bereich ein Konfiguriert-Badge und eine Vorschau der ersten 140 Zeichen der Nachricht.
+- Wenn keine Voicemail-Ablage konfiguriert ist, zeigt der Bereich diesen Zustand klar an, damit du Voicemail-Ergebnisse nicht mit hinterlassenen Nachrichten verwechselst.
+
+Dieser Bereich ist besonders nützlich, wenn du eine Kampagne mit hohem Voicemail-Volumen prüfst und bestätigen musst, ob das System eine vorbereitete Nachricht hinterlässt.
+
+## Beobachte die Warteschlangen
+
+Zwei Tabellen zur Warteschlange zeigen, an welcher Stelle der aktiven Pipeline sich Kontakte befinden.
+
+### Ausstehende und in Warteschlange befindliche Kontakte
+
+Die erste Tabelle zur Warteschlange behandelt Kontakte, bei denen der Anruf noch nicht begonnen hat oder die als Nächstes für den Wählvorgang bereitstehen. Sie enthält diese Spalten:
+
+| Spalte | Beschreibung |
+|---|---|
+| **Name des Kontakts** | Der Anzeigename des Kontakts. |
+| **Telefon** | Die Telefonnummer des Kontakts. |
+| **Zeitzone** | Die Zeitzone des Kontakts, die für die Planung verwendet wird. |
+| **Status + Ergebnis** | Der aktuelle Status der Warteschlange und jedes bekannte Ergebnis. |
+| **Anzahl der Versuche** | Wie oft die Kampagne diesen Kontakt bereits versucht hat. |
+| **Zeitpunkt der nächsten Wiederholung** | Wann der Kontakt erneut in die Warteschlange aufgenommen wird. |
+
+Nutze diese Tabelle, wenn du Fragen beantworten musst wie „Wer wartet noch?“ oder „Wann wird dieser Kontakt erneut versucht?“.
+
+### Gerade im Anruf
+
+Die zweite Tabelle zur Warteschlange zeigt Kontakte in aktiven Anrufen. Sie verwendet dieselben Spalten wie die Tabelle für ausstehende und in Warteschlange befindliche Kontakte, ist aber nach `last_attempt_at` in absteigender Reihenfolge sortiert, sodass die zuletzt gestarteten Anrufe zuerst erscheinen.
+
+Diese Tabelle ist der schnellste Weg, um zu bestätigen, dass die Engine aktiv arbeitet, und um zu sehen, welche Kontakte im Moment der Beobachtung gerade telefonieren.
+
+## Prüfe die aktuelle Anrufhistorie
+
+Die Tabelle zur aktuellen Anrufhistorie zeigt die neuesten Kampagnenanrufe mit genügend Details, um bei Bedarf direkt in eine tiefere Untersuchung einzusteigen.
+
+| Spalte | Beschreibung |
+|---|---|
+| **Anruf-ID** | Gekürzte Anrufkennung. |
+| **Von** | Die ausgehende Telefonnummer. |
+| **An** | Die Zieltelefonnummer. |
+| **Ergebnis** | Das erfasste Anrufergebnis. |
+| **Gestartet** | Startzeit des Anrufs. |
+| **Beendet** | Endzeit des Anrufs. |
+| **Aufzeichnung** | Ob eine Aufzeichnung verfügbar ist. |
+| **Ansehen** | Link, um den Anruf in den Anrufprotokollen zu prüfen. |
+
+Nutze den Link **Ansehen**, wenn ein einzelner Anruf tiefer analysiert werden muss, etwa für Transkripte, Nachrichten, Kosten oder Aufzeichnungen. Das Dashboard verlinkt in die [Anrufprotokolle](/call-logs), wobei der Kampagnenfilter bereits angewendet ist.
+
+## Nutze Dashboard-Aktionen
+
+Das Echtzeit-Dashboard gibt dir auch direkte Kontrolle über die Ausführung der Kampagne.
+
+| Aktion | Was sie tut |
+|---|---|
+| **Pausieren** | Sendet `PUT /api/crm/campaigns/[id]` mit `status: "paused"`, um den aktiven Fortschritt zu stoppen, ohne die Kampagne abzubrechen. |
+| **Fortsetzen** | Sendet `PUT /api/crm/campaigns/[id]` mit `status: "running"`, um eine pausierte Kampagne fortzusetzen. |
+| **Abbrechen** | Sendet `PUT /api/crm/campaigns/[id]` mit `status: "cancelled"`, um die Kampagne zu stoppen und als abgebrochen zu markieren. |
+| **In Anrufprotokollen öffnen** | Öffnet die Kampagne in den Anrufprotokollen, wobei der Kampagnenfilter bereits angewendet ist. |
+
+<Callout kind="alert">
+
+Nutze **Abbrechen** nur dann, wenn du die Kampagne vollständig stoppen willst. Wenn du den Wählvorgang nur vorübergehend anhalten musst, nutze **Pausieren**, damit du später fortsetzen kannst.
+
+</Callout>
+
+## Wann du diese Seite verwenden solltest
+
+Das Echtzeit-Dashboard ist besonders nützlich, wenn du:
+
+- bestätigen musst, dass eine neu gestartete Kampagne aktiv wählt
+- Bewegungen in der Warteschlange während eines aktiven Sendezeitfensters beobachten willst
+- prüfen musst, ob Wiederholungen wie erwartet stattfinden
+- ungewöhnliche Ergebnismuster erkennen willst, bevor die Kampagne beendet ist
+- von der Live-Überwachung direkt in eine detaillierte Anrufprüfung wechseln musst
+
+Für historische Analysen über alle Kampagnenanrufe hinweg wechsle zu [Anrufprotokolle](/call-logs). Für Details zur Kampagneneinrichtung gehe zurück zu [Kampagnenkonfiguration](/campaigns/configuration).
+
+## Verwandte Seiten
+
+<Columns cols={3}>
+  <Card title="Kampagnenübersicht" href="/campaigns/overview" icon="bar-chart" cta="Anleitung öffnen" />
+  <Card title="Kampagnenkonfiguration" href="/campaigns/configuration" icon="settings" cta="Einstellungen prüfen" />
+  <Card title="Anrufprotokolle" href="/call-logs" icon="phone" cta="Anrufe prüfen" />
+</Columns>

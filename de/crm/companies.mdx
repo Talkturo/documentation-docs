@@ -1,0 +1,197 @@
+---
+title: Unternehmen
+description: Verwalte Unternehmensdatensätze, die mit deinen Kontakten verknüpft sind, speichere Account-Daten und nutze sie in Anrufen und Kampagnen.
+---
+
+## Unternehmensdatensätze verwalten
+
+Unternehmen repräsentieren die Accounts, bei denen deine Kontakte arbeiten. Nutze Unternehmen, um gemeinsame Account-Details wie Website, Branche, Telefonnummer und Standort zu speichern und diese Daten dann in Kontakten, Kampagnen und Assistent-Prompts wiederzuverwenden.
+
+Ein Unternehmen kann viele Kontakte haben, aber jeder Kontakt gehört zu genau einem Unternehmen. Die Unternehmensliste zeigt die Anzahl der Kontakte für jeden Datensatz an, und die Suche findet Übereinstimmungen im Unternehmensnamen oder in der Website.
+
+<Callout kind="info">
+
+Assistenten können Unternehmensfelder verwenden, um Anrufe zu personalisieren, und Kampagnen können Datensätze nach Unternehmen filtern.
+
+</Callout>
+
+## Unternehmensfelder
+
+Verwende diese Felder, um Unternehmensdatensätze zu erstellen und zu pflegen.
+
+<ParamField body="name" param-type="string" required="true" show-location="false">
+Name des Unternehmens. Dieses Feld ist erforderlich und darf nicht leer sein.
+</ParamField>
+
+<ParamField body="website" param-type="string" required="false" show-location="false">
+Website des Unternehmens.
+</ParamField>
+
+<ParamField body="industry" param-type="string" required="false" show-location="false">
+Branche oder Vertikale des Unternehmens.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false" show-location="false">
+Haupttelefonnummer des Unternehmens.
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false" show-location="false">
+Stadt, in der das Unternehmen ansässig ist.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false" show-location="false">
+Bundesland oder Region, in der das Unternehmen ansässig ist.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false" show-location="false">
+Land, in dem das Unternehmen ansässig ist.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false" show-location="false">
+Workspace-spezifische Werte für benutzerdefinierte Felder des Unternehmens.
+</ParamField>
+
+## Unternehmen erstellen
+
+Erstelle Unternehmen auf der CRM-Unternehmensseite im Dashboard oder über die API.
+
+<Steps>
+  <Step title="Ein Unternehmen im Dashboard erstellen" icon="building">
+  Öffne die CRM-Unternehmensseite und füge dann den Unternehmensnamen sowie alle Account-Details hinzu, die du verfolgen möchtest. Nach einem erfolgreichen Speichern wird das Unternehmen deiner Liste hinzugefügt und steht beim Verknüpfen von Kontakten zur Verfügung.
+  </Step>
+  <Step title="Ein Unternehmen mit der API erstellen" icon="code">
+  Sende eine `POST`-Anfrage an `/api/crm/companies` mit `name` und optionalen Feldern.
+  <Request tabs="cURL,JavaScript" default-tab="1">
+  ```bash
+  curl -X POST "https://app.talkturo.com/api/crm/companies" \
+    -H "Authorization: Bearer tk_example_9xmk7q2r" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "Northstar Logistics",
+      "website": "https://northstarlogistics.com",
+      "industry": "Logistics",
+      "phone": "+1-312-555-0148",
+      "city": "Chicago",
+      "state": "Illinois",
+      "country": "United States",
+      "customFields": {
+        "account_tier": "enterprise"
+      }
+    }'
+  ```
+  ```javascript
+  const response = await fetch("https://app.talkturo.com/api/crm/companies", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer tk_example_9xmk7q2r",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: "Northstar Logistics",
+      website: "https://northstarlogistics.com",
+      industry: "Logistics",
+      phone: "+1-312-555-0148",
+      city: "Chicago",
+      state: "Illinois",
+      country: "United States",
+      customFields: {
+        account_tier: "enterprise"
+      }
+    })
+  })
+  const company = await response.json()
+  console.log(company)
+  ```
+  </Request>
+  <Response tabs="201">
+  ```json
+  {
+    "id": "cmp_7f3a2c91",
+    "name": "Northstar Logistics",
+    "website": "https://northstarlogistics.com",
+    "industry": "Logistics",
+    "phone": "+1-312-555-0148",
+    "city": "Chicago",
+    "state": "Illinois",
+    "country": "United States",
+    "customFields": {
+      "account_tier": "enterprise"
+    }
+  }
+  ```
+  </Response>
+  Verwende entweder eine authentifizierte Sitzung oder einen API-Schlüssel. Eine erfolgreiche Anfrage gibt den neuen Unternehmensdatensatz zurück.
+  </Step>
+</Steps>
+
+## Unternehmen verwalten
+
+| Aktion | Methode und Pfad | Hinweise |
+|---|---|---|
+| Unternehmen auflisten | `GET /api/crm/companies` | Unterstützt `teamId`, `search`, `industry`, `limit` und `offset` |
+| Unternehmensdetails abrufen | `GET /api/crm/companies/[id]` | Gibt den Unternehmensdatensatz mit der zugehörigen Kontaktliste zurück |
+| Unternehmen aktualisieren | `PUT /api/crm/companies/[id]` | Aktualisiert beliebige bearbeitbare Unternehmensfelder |
+| Unternehmen löschen | `DELETE /api/crm/companies/[id]` | Entfernt das Unternehmen dauerhaft |
+| Unternehmenskontakte auflisten | `GET /api/crm/companies/[id]/contacts` | Gibt Kontakte zurück, die mit dem Unternehmen verknüpft sind |
+
+### Unternehmen filtern und suchen
+
+<ParamField query="teamId" param-type="string" required="false">
+Begrenzt die Ergebnisse auf ein Team.
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false">
+Durchsucht Unternehmensdatensätze anhand von Name oder Website mit partieller Übereinstimmung.
+</ParamField>
+
+<ParamField query="industry" param-type="string" required="false">
+Filtert Unternehmen nach Branche.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximale Anzahl von Unternehmen, die zurückgegeben werden.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Anzahl der Datensätze, die übersprungen werden, bevor Ergebnisse zurückgegeben werden.
+</ParamField>
+
+### Ein Unternehmen aktualisieren oder löschen
+
+<Callout kind="alert">
+Das Löschen eines Unternehmens entfernt den Unternehmensdatensatz. Prüfe verknüpfte Kontakte, bevor du ihn löschst.
+</Callout>
+
+## Beziehungen zwischen Unternehmen und Kontakten verstehen
+
+Jeder Kontakt muss mit einem Unternehmen verknüpft sein. Dadurch ist der Unternehmensdatensatz die gemeinsame Single Source of Truth für Account-Daten, während Kontakte personenbezogene Details speichern.
+
+- Ein Unternehmen kann viele Kontakte haben
+- Jeder Kontakt gehört zu genau einem Unternehmen
+- Unternehmenslisten zeigen die Anzahl der Kontakte an
+- Die Unternehmenssuche findet Übereinstimmungen in Name oder Website
+
+## Unternehmensdaten in Anrufen verwenden
+
+Assistent-Prompts können direkt auf Unternehmensfelder verweisen.
+
+| Variable | Beschreibung |
+|---|---|
+| `{{company.name}}` | Unternehmensname |
+| `{{company.website}}` | Website des Unternehmens |
+| `{{company.industry}}` | Branche des Unternehmens |
+| `{{company.phone}}` | Telefonnummer des Unternehmens |
+| `{{company.city}}` | Stadt des Unternehmens |
+| `{{company.state}}` | Bundesland oder Region des Unternehmens |
+| `{{company.country}}` | Land des Unternehmens |
+| `{{company.custom.key}}` | Wert eines benutzerdefinierten Felds des Unternehmens |
+
+Ersetze bei benutzerdefinierten Feldern `key` durch den Schlüssel des benutzerdefinierten Felds, den du in deinem Workspace erstellt hast.
+
+## Verwandte Seiten
+
+<Columns cols={3}>
+  <Card title="Kontakte" href="/crm/contacts" icon="users" cta="Seite öffnen" />
+  <Card title="Opportunities" href="/crm/opportunities" icon="bar-chart" cta="Seite öffnen" />
+  <Card title="Benutzerdefinierte Felder" href="/crm/custom-fields" icon="settings" cta="Seite öffnen" />
+</Columns>

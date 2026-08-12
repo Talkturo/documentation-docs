@@ -1,0 +1,488 @@
+---
+title: Kontakte
+description: Verwalte Kontaktdatensätze, Anmeldung und wählbereite Daten, damit Assistenten ausgehende und eingehende Sprachgespräche personalisieren können.
+---
+
+## Kontaktdaten an einem Ort verwalten
+
+Kontakte sind die Personen, die deine Assistenten anrufen, und die Personen, die deine Assistenten anrufen. Jeder Kontaktdatensatz speichert persönliche Details, Lead-Status, die Beziehung zum Unternehmen und benutzerdefinierte Felder, die Talkturo verwendet, um Gespräche zu personalisieren, Aktivitäten nachzuverfolgen und den Wählvorgang für Kampagnen zu unterstützen.
+
+Ein vollständiger Kontaktdatensatz macht nachgelagerte Workflows zuverlässiger. Wenn Telefonnummern, Unternehmensverknüpfungen und Lead-Daten korrekt sind, können Assistenten Anrufe richtig weiterleiten, CRM-Datensätze nach Gesprächen aktualisieren und vermeiden, Kontakte anzurufen, die ausgeschlossen werden sollten.
+
+<Callout kind="info">
+
+Verwende [Unternehmen](/crm/companies), um geschäftliche Datensätze auf Unternehmensebene zu verwalten, die mit Kontakten verknüpft sind, und [benutzerdefinierte Felder](/crm/custom-fields), um Workspace-spezifische Daten zu erfassen, die nicht in das Standardschema passen.
+
+</Callout>
+
+## Kontaktfelder
+
+Verwende diese Felder, wenn du Kontakte erstellst, importierst oder aktualisierst.
+
+<ParamField body="firstName" param-type="string" required="true" show-location="false">
+
+Vorname des Kontakts. Dieses Feld muss vorhanden und darf nicht leer sein.
+
+</ParamField>
+
+<ParamField body="lastName" param-type="string" required="true" show-location="false">
+
+Nachname des Kontakts. Dieses Feld muss vorhanden und darf nicht leer sein.
+
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="true" show-location="false">
+
+Primäre Telefonnummer im E.164-Format. Dieses Feld muss vorhanden sein und `+[1-9]` gefolgt von 6 bis 14 Ziffern entsprechen.
+
+</ParamField>
+
+<Callout kind="tip">
+
+Speichere Telefonnummern im E.164-Format, zum Beispiel `+14155550182`. So bleiben Wählvorgang, Deduplizierung und der Abgleich eingehender Anrufer im gesamten Workspace konsistent.
+
+</Callout>
+
+<ParamField body="email" param-type="string" required="false" show-location="false">
+
+E-Mail-Adresse des Kontakts.
+
+</ParamField>
+
+<ParamField body="phoneSecondary" param-type="string" required="false" show-location="false">
+
+Sekundäre Telefonnummer des Kontakts.
+
+</ParamField>
+
+<ParamField body="jobTitle" param-type="string" required="false" show-location="false">
+
+Berufsbezeichnung oder Rolle.
+
+</ParamField>
+
+<ParamField body="leadStatus" param-type="string" required="false" show-location="false">
+
+Aktueller Lead-Status für Qualifizierung, Routing oder Follow-up-Workflows.
+
+</ParamField>
+
+<ParamField body="source" param-type="string" required="false" show-location="false">
+
+Wie der Kontakt in deine Pipeline gelangt ist, zum Beispiel über ein Formular, eine Empfehlung oder eine hochgeladene Liste.
+
+</ParamField>
+
+<ParamField body="timezone" param-type="string" required="false" show-location="false">
+
+Zeitzone des Kontakts im IANA-Format, zum Beispiel `America/Los_Angeles`.
+
+</ParamField>
+
+<ParamField body="preferredContactMethod" param-type="string" required="false" show-location="false">
+
+Bevorzugte Kontaktmethode des Kontakts.
+
+</ParamField>
+
+<ParamField body="doNotCall" param-type="boolean" required="false" show-location="false">
+
+Kennzeichnet den Kontakt als vom Wählvorgang in Kampagnen ausgeschlossen.
+
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false" show-location="false">
+
+Freitextnotizen für Vertrieb, Support oder Qualifizierungskontext.
+
+</ParamField>
+
+<ParamField body="customFields" param-type="Record<string, any>" required="false" show-location="false">
+
+Workspace-spezifische strukturierte Daten, die für den Kontakt gespeichert werden. Verwende dieses Feld für Daten, die je nach Team oder Workflow variieren.
+
+</ParamField>
+
+<ParamField body="tags" param-type="string[]" required="false" show-location="false">
+
+Liste von Tags für Segmentierung, Filterung oder Reporting.
+
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="true" show-location="false">
+
+Zugehöriger Unternehmensdatensatz. Das Unternehmen muss zum selben Workspace gehören wie der Kontakt.
+
+</ParamField>
+
+## Kontakte erstellen
+
+Erstelle Kontakte entweder einzeln im Dashboard oder programmgesteuert über die API. In beiden Fällen sind die mindestens erforderlichen Felder `companyId`, `firstName`, `lastName` und `phone`.
+
+### Einen Kontakt im Dashboard erstellen
+
+<Steps>
+  <Step title="Die Seite Kontakte öffnen" icon="users">
+
+  Gehe in deinem Workspace zur CRM-Seite Kontakte und beginne einen neuen Kontaktdatensatz.
+
+  </Step>
+  <Step title="Die erforderlichen Felder eingeben" icon="edit">
+
+  Füge den Vornamen, den Nachnamen, die primäre Telefonnummer und das zugehörige Unternehmen des Kontakts hinzu.
+  Wenn die Telefonnummer gültig ist, sollte sie im E.164-Format gespeichert werden und für Wählvorgang-Workflows bereit sein.
+
+  </Step>
+  <Step title="Optionalen Kontext hinzufügen" icon="plus">
+
+  Fülle Lead-Status, Quelle, Zeitzone, Tags, Notizen und alle benutzerdefinierten Felder aus, die dein Team verwendet.
+  Dieser Kontext steht Assistenten während Gesprächen und für Follow-up-Automatisierungen zur Verfügung.
+
+  </Step>
+  <Step title="Den Kontakt speichern" icon="check-circle">
+
+  Speichere den Datensatz. Nach dem Speichern erscheint der Kontakt in der Kontaktliste und kann für Kampagnenanmeldung, Aktivitätsverfolgung und Opportunity-Workflows verwendet werden.
+
+  </Step>
+</Steps>
+
+### Einen Kontakt über die API erstellen
+
+| Endpunkt | Methode | Zweck |
+|---|---|---|
+| `/api/crm/contacts` | POST | Einen neuen Kontakt erstellen |
+| `/api/crm/contacts` | GET | Kontakte mit Filtern auflisten |
+| `/api/crm/contacts/[id]` | GET | Einen einzelnen Kontakt mit zugehörigen Aktivitäten abrufen |
+| `/api/crm/contacts/[id]` | PUT | Einen bestehenden Kontakt aktualisieren |
+| `/api/crm/contacts/[id]` | DELETE | Einen Kontakt löschen, falls zulässig |
+
+<Callout kind="info">
+
+Authentifiziere Kontakt-API-Anfragen entweder mit einer angemeldeten Sitzung oder einem API-Schlüssel.
+
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/contacts" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "companyId": "cmp_7f3c2a91",
+    "firstName": "Maya",
+    "lastName": "Patel",
+    "phone": "+14155550182",
+    "email": "maya.patel@northstar.io",
+    "leadStatus": "qualified",
+    "source": "webinar",
+    "timezone": "America/Los_Angeles",
+    "tags": ["enterprise", "west-region"],
+    "customFields": {
+      "productInterest": "voice automation",
+      "employeeCount": 120
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/contacts", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    companyId: "cmp_7f3c2a91",
+    firstName: "Maya",
+    lastName: "Patel",
+    phone: "+14155550182",
+    email: "maya.patel@northstar.io",
+    leadStatus: "qualified",
+    source: "webinar",
+    timezone: "America/Los_Angeles",
+    tags: ["enterprise", "west-region"],
+    customFields: {
+      productInterest: "voice automation",
+      employeeCount: 120
+    }
+  })
+});
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="201,422,403" default-tab="1">
+```json
+{
+  "id": "ctc_a1b2c3d4",
+  "companyId": "cmp_7f3c2a91",
+  "firstName": "Maya",
+  "lastName": "Patel",
+  "phone": "+14155550182",
+  "email": "maya.patel@northstar.io",
+  "leadStatus": "qualified",
+  "source": "webinar",
+  "timezone": "America/Los_Angeles",
+  "doNotCall": false,
+  "tags": ["enterprise", "west-region"],
+  "customFields": {
+    "productInterest": "voice automation",
+    "employeeCount": 120
+  }
+}
+```
+
+```json
+{
+  "error": "Validation failed",
+  "details": {
+    "phone": "Phone must be in E.164 format"
+  }
+}
+```
+
+```json
+{
+  "error": "Company does not belong to this workspace"
+}
+```
+</Response>
+
+### Einen Kontakt bei der Erstellung in einer Kampagne anmelden
+
+Du kannst einen Kontakt bei der Erstellung anmelden, indem du `campaignId` und `campaignPriority` in die Anfrage aufnimmst. Das ist nützlich, wenn importierte oder synchronisierte Kontakte sofort mit dem Wählvorgang beginnen sollen.
+
+<ParamField body="campaignId" param-type="string" required="false" show-location="false">
+Kampagne, in die der Kontakt bei der Erstellung aufgenommen werden soll.
+</ParamField>
+
+<ParamField body="campaignPriority" param-type="number" required="false" show-location="false">
+Wählpriorität für den Kontakt in dieser Kampagne. Höhere Werte werden früher gewählt.
+</ParamField>
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/contacts" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "companyId": "cmp_7f3c2a91",
+    "firstName": "Daniel",
+    "lastName": "Ruiz",
+    "phone": "+12125550149",
+    "campaignId": "cam_4820af31",
+    "campaignPriority": 90
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "id": "ctc_g7h8i9j0",
+  "firstName": "Daniel",
+  "lastName": "Ruiz",
+  "phone": "+12125550149",
+  "companyId": "cmp_7f3c2a91",
+  "campaignEnrollment": {
+    "campaignId": "cam_4820af31",
+    "status": "pending",
+    "priority": 90
+  }
+}
+```
+</Response>
+
+Wenn der Kontakt als do not call markiert ist, erstellt die Kampagnenanmeldung keinen wählbaren Datensatz mit dem Status pending. Stattdessen setzt Talkturo den Kampagnenstatus auf `skipped`.
+
+## Kontakte aus CSV importieren
+
+Verwende den CSV-Import, wenn du eine große Liste von Kontakten auf einmal hinzufügen musst. Der Importablauf unterstützt Spaltenzuordnung, Validierung und Deduplizierung, bevor Datensätze erstellt werden.
+
+<Steps>
+  <Step title="Die CSV-Datei vorbereiten" icon="download">
+
+  Füge eine Kopfzeile und mindestens die Spalten ein, die zum Zuordnen von `firstName`, `lastName`, `phone` und `companyId` oder eines anderen Felds benötigt werden, das dein Import-Workflow zur Identifizierung des Unternehmens verwendet. Formatiere Telefonnummern vor dem Upload einheitlich, um Validierungsfehler und doppelte Datensätze zu reduzieren.
+
+  </Step>
+  <Step title="Hochladen und Spalten zuordnen" icon="upload">
+
+  Lade die CSV-Datei von der Seite Kontakte hoch und ordne jede CSV-Spalte dem richtigen Talkturo-Kontaktfeld zu. Ordne zusätzliche Spalten Feldern wie `leadStatus`, `source`, `tags`, `notes` oder den benutzerdefinierten Feldern deines Workspace zu.
+
+  </Step>
+  <Step title="Validierungsergebnisse prüfen" icon="alert-triangle">
+
+  Talkturo validiert Feldformate und prüft während des Imports auf Duplikate. Erfolgreiche Zeilen sind bereit für den Import, während ungültige Zeilen korrigiert und erneut versucht werden können.
+
+  </Step>
+  <Step title="Den Import ausführen" icon="play-circle">
+
+  Starte den Import, nachdem die Zuordnungen korrekt aussehen. Wenn der Import abgeschlossen ist, erscheinen die neuen Kontakte in der Liste und stehen für Filterung, Kampagnenanmeldung und Personalisierung durch Assistenten zur Verfügung.
+
+  </Step>
+</Steps>
+
+### Was der CSV-Import übernimmt
+
+- **Spaltenzuordnung** zu standardmäßigen Talkturo-Kontaktfeldern
+- **Zuordnung benutzerdefinierter Felder** für Workspace-spezifische Daten
+- **Validierung** für erforderliche Felder und Telefonnummernformatierung
+- **Deduplizierung** zur Reduzierung doppelter Kontakte
+
+## Kontakte suchen und filtern
+
+| Filter | Typ | Verhalten |
+|---|---|---|
+| `teamId` | Query-Parameter | Begrenzt Ergebnisse auf ein Team |
+| `companyId` | Query-Parameter | Begrenzt Ergebnisse auf ein Unternehmen |
+| `search` | Query-Parameter | Durchsucht Name, E-Mail und Telefonnummer mit Groß-/Kleinschreibung-unabhängiger Suche |
+| `leadStatus` | Query-Parameter | Filtert nach Lead-Status |
+| `doNotCall` | Query-Parameter | Filtert nach DNC-Flag |
+| `hasPhone` | Query-Parameter | Begrenzt Ergebnisse auf Kontakte mit Telefonnummer |
+| `limit` | Query-Parameter | Maximale Anzahl zurückgegebener Ergebnisse |
+| `offset` | Query-Parameter | Ergebnisversatz für Paginierung |
+
+<Request>
+```bash
+curl -G "https://app.talkturo.com/api/crm/contacts" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  --data-urlencode "search=maya" \
+  --data-urlencode "companyId=cmp_7f3c2a91" \
+  --data-urlencode "leadStatus=qualified" \
+  --data-urlencode "doNotCall=false" \
+  --data-urlencode "hasPhone=true" \
+  --data-urlencode "limit=25" \
+  --data-urlencode "offset=0"
+```
+</Request>
+
+<Response>
+```json
+{
+  "data": [
+    {
+      "id": "ctc_a1b2c3d4",
+      "firstName": "Maya",
+      "lastName": "Patel",
+      "phone": "+14155550182",
+      "email": "maya.patel@northstar.io",
+      "leadStatus": "qualified",
+      "doNotCall": false,
+      "companyId": "cmp_7f3c2a91"
+    }
+  ],
+  "limit": 25,
+  "offset": 0
+}
+```
+</Response>
+
+Die Suche verwendet Groß-/Kleinschreibung-unabhängige Übereinstimmung für Namens-, E-Mail- und Telefonnummernfelder. Die Paginierung verwendet `limit` und `offset`.
+
+## Bestehende Kontakte verwalten
+
+| Endpunkt | Methode | Rückgabe |
+|---|---|---|
+| `/api/crm/contacts` | GET | Paginierte Liste von Kontakten |
+| `/api/crm/contacts/[id]` | GET | Ein einzelner Kontakt mit zugehörigen Details |
+| `/api/crm/contacts/[id]` | PUT | Aktualisierter Kontaktdatensatz |
+| `/api/crm/contacts/[id]` | DELETE | Löschresultat oder blockierender Fehler |
+
+### Einen Kontaktdatensatz anzeigen
+
+`GET /api/crm/contacts/[id]` gibt den Kontakt zusammen mit zugehörigem CRM-Kontext zurück. Verwende das, wenn du einen vollständigen Datensatz für Agent-Tools, interne Dashboards oder Synchronisierungslogik benötigst.
+
+### Einen Kontakt aktualisieren
+
+Verwende `PUT /api/crm/contacts/[id]`, um Standardfelder, benutzerdefinierte Felder, Tags, Lead-Status oder das do not call-Flag zu ändern.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/crm/contacts/ctc_a1b2c3d4" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "leadStatus": "customer",
+    "jobTitle": "Operations Director",
+    "doNotCall": true,
+    "customFields": {
+      "implementationStage": "contract-sent"
+    }
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "id": "ctc_a1b2c3d4",
+  "leadStatus": "customer",
+  "jobTitle": "Operations Director",
+  "doNotCall": true,
+  "customFields": {
+    "implementationStage": "contract-sent"
+  }
+}
+```
+</Response>
+
+### Einen Kontakt löschen
+
+Verwende `DELETE /api/crm/contacts/[id]`, um einen Datensatz zu entfernen, der nicht mehr benötigt wird.
+
+<Callout kind="alert">
+
+Talkturo blockiert das Löschen, wenn der Kontakt Teil einer aktiven Kampagne ist. Entferne den Kontakt aus aktiven Kampagnen-Workflows, bevor du es erneut versuchst.
+
+</Callout>
+
+<Request>
+```bash
+curl -X DELETE "https://app.talkturo.com/api/crm/contacts/ctc_a1b2c3d4" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response tabs="200,409" default-tab="1">
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "Contact is enrolled in an active campaign"
+}
+```
+</Response>
+
+## Do not call-Verhalten
+
+Setze `doNotCall` für jeden Kontakt, der niemals von Kampagnen gewählt werden soll. Dieses Flag wird auf mehreren Ebenen durchgesetzt, sodass ausgeschlossene Kontakte nicht über Importe, Aktualisierungen oder Kampagnenanmeldung erneut in Warteschlangen für den Wählvorgang gelangen.
+
+<Callout kind="danger">
+
+Do not call-Kontakte sind vom Wählvorgang in Kampagnen ausgeschlossen. Wenn ein do not call-Kontakt in einer Kampagne angemeldet wird, setzt Talkturo den Kampagnenstatus auf `skipped` statt auf `pending`.
+
+</Callout>
+
+## Kampagnenanmeldung und Verlauf
+
+Kontakte können Kampagnen beitreten, wenn du sie erstellst, oder später über die Seite für Kampagnenkontakte. Die Priorität steuert die Reihenfolge des Wählvorgangs, wobei höhere Werte früher gewählt werden. Der Kampagnenverlauf erscheint in der Detailansicht des Kontakts.
+
+## KI-Datenextraktion und Aktivitätsprotokollierung
+
+Talkturo kann strukturierte Daten aus Anruftranskripten extrahieren und sie zurück in den Kontaktdatensatz schreiben. Dazu gehören Standard-CRM-Felder und `customFields`, sodass Assistenten Informationen erfassen können, ohne dass von Anfang an ein vollständig starres Schema erforderlich ist.
+
+Jede extrahierte Aktualisierung ist mit einer CRM-Aktivität verknüpft. Kontaktdatensätze können protokollierte Anrufaktivitäten mit Aktivitätstyp, Betreff und Ergebnis enthalten.
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+  <Card title="Unternehmen" href="/crm/companies" icon="building" cta="Unternehmensdatensätze verwalten" />
+  <Card title="Opportunities" href="/crm/opportunities" icon="bar-chart" cta="Pipeline-Fortschritt verfolgen" />
+  <Card title="Benutzerdefinierte Felder" href="/crm/custom-fields" icon="settings" cta="Workspace-spezifische Felder definieren" />
+  <Card title="Kampagnenübersicht" href="/campaigns/overview" icon="rocket" cta="Wählkampagnen verwalten" />
+</Columns>

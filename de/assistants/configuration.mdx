@@ -1,0 +1,608 @@
+---
+title: Assistent-Konfiguration
+description: Konfiguriere Prompts, Modelle, Stimme, Telefonie, Tools, Analyse, Webhooks und E-Mail-Zusammenfassungen für Talkturo AI-Sprachagenten.
+---
+
+## Alle Assistenten-Tabs konfigurieren
+
+Die Assistenten-Konfiguration steuert, wie dein Sprachagent spricht, zuhört, Anrufe durchführt, Tools verwendet und Ergebnisse meldet. Nutze diese Seite als Referenz auf Feldebene für alle 10 Konfigurations-Tabs im Assistenten-Editor.
+
+<Callout kind="info">
+
+Einige Felder ändern sich abhängig vom ausgewählten Modus, Provider oder aktivierten Feature. Wenn ein Feld nur im Standard-Modus oder für einen bestimmten Provider angezeigt wird, ist diese Abhängigkeit in der Feldbeschreibung vermerkt.
+
+</Callout>
+
+## Prompt tab
+
+Der Prompt-Tab legt fest, was der Assistent zuerst sagt und wie er sich im weiteren Verlauf des Anrufs verhalten soll. Beide Prompt-Felder unterstützen CRM-Variablen, sodass du Anrufe mit Kampagnen-, Kontakt- und Unternehmensdaten personalisieren kannst.
+
+### Prompt-Felder
+
+<ParamField body="first_message" param-type="string" show-location="false">
+Der erste gesprochene Satz, wenn ein Anruf verbunden wird. Dieses Feld unterstützt CRM-Variablen wie `{{contact.first_name}}` und `{{company.name}}`.
+</ParamField>
+
+<ParamField body="system_prompt" param-type="string" show-location="false">
+Der vollständige Anweisungs-Prompt für den Assistenten. Dieses Feld wird als Monospace-Textarea mit Aufklappfunktion angezeigt und unterstützt CRM-Variablen.
+</ParamField>
+
+<ParamField body="prompt_template" param-type="string" show-location="false" enum="B2B SaaS Sales Qualify (Outbound),No Template">
+Optionale Ausgangsvorlage für den System-Prompt.
+</ParamField>
+
+### CRM-Variablenauswahl
+
+Drücke in einem unterstützten Prompt-Feld <kbd>Ctrl</kbd> + <kbd>Space</kbd>, um die Variablenauswahl zu öffnen und eine Variable an der Cursorposition einzufügen.
+
+#### Kampagnenvariablen
+
+- `{{campaign.name}}`
+- `{{campaign.description}}`
+- `{{campaign.from_number}}`
+
+#### Kontaktvariablen
+
+- `{{contact.first_name}}`
+- `{{contact.last_name}}`
+- `{{contact.full_name}}`
+- `{{contact.email}}`
+- `{{contact.phone}}`
+- `{{contact.job_title}}`
+- `{{contact.lead_status}}`
+
+#### Unternehmensvariablen
+
+- `{{company.name}}`
+- `{{company.website}}`
+- `{{company.industry}}`
+- `{{company.phone}}`
+- `{{company.city}}`
+- `{{company.state}}`
+- `{{company.country}}`
+
+#### Benutzerdefinierte Feldvariablen
+
+- `{{contact.custom.<key>}}`
+- `{{company.custom.<key>}}`
+
+<Callout kind="tip">
+
+Verwende benutzerdefinierte Feldvariablen, wenn dein CRM konto- oder kundenspezifische Daten wie Verlängerungsdatum, Plan-Stufe, Vertriebsgebiet oder Namen von Verantwortlichen speichert. Ersetze `<key>` durch den Schlüssel des benutzerdefinierten Felds aus deinem CRM-Schema.
+
+</Callout>
+
+### Prompt-Aktionen
+
+| Aktion | Funktion |
+| --- | --- |
+| **AI Improve** | Sendet den aktuellen Prompt an `/api/improve-prompt` und gibt eine verbesserte Version zurück |
+| **AI Translate** | Übersetzt den Prompt in eine unterstützte Sprache |
+| **Template selector** | Ersetzt die aktuelle Vorlagenauswahl durch `B2B SaaS Sales Qualify (Outbound)` oder `No Template` |
+
+### Unterstützte Übersetzungssprachen
+
+AI Translate unterstützt diese 15 Sprachen:
+
+- Deutsch
+- Englisch
+- Spanisch
+- Französisch
+- Italienisch
+- Portugiesisch
+- Niederländisch
+- Polnisch
+- Russisch
+- Türkisch
+- Arabisch
+- Hindi
+- Japanisch
+- Chinesisch
+- Koreanisch
+
+## Model tab
+
+Der Model-Tab steuert den LLM-Provider, das Modell und die Generierungseinstellungen. Die verfügbaren Felder ändern sich abhängig davon, ob der Assistent im Standard-Modus oder im Realtime-Modus läuft.
+
+<Tabs>
+  <Tab title="Standard mode" icon="settings">
+
+  Der Standard-Modus trennt die Pipeline für Sprachmodell, Transkription und Text-to-Speech. Er bietet die größte Auswahl an Providern und die meisten Feinabstimmungsoptionen.
+
+  <ParamField body="mode" param-type="string" show-location="false" enum="standard,realtime">
+  Setze den Wert auf `standard`, um die nicht in Realtime arbeitende Modell-Pipeline zu verwenden.
+  </ParamField>
+
+  <ParamField body="provider" param-type="string" show-location="false" enum="talkturo,openai,google,deepseek-ai,qwen,moonshotai,anthropic,cerebras">
+  LLM-Provider für den Standard-Modus.
+  </ParamField>
+
+  <ParamField body="model" param-type="string" show-location="false">
+  Modellname, der aus dem providerspezifischen Dropdown ausgewählt wird. Verfügbare Werte hängen vom ausgewählten Provider ab.
+  </ParamField>
+
+  <ParamField body="temperature" param-type="number" show-location="false">
+  Sampling-Temperatur. Bereich `0` bis `2`, Schrittweite `0.1`, Standardwert `0`.
+  </ParamField>
+
+  <ParamField body="max_tokens" param-type="integer" show-location="false">
+  Maximale Anzahl an Tokens, die das Modell generieren kann.
+  </ParamField>
+
+  <ParamField body="top_p" param-type="number" show-location="false">
+  Einstellung für Nucleus Sampling nur für Cerebras. Bereich `0` bis `1`, Schrittweite `0.05`, Standardwert `1`.
+  </ParamField>
+
+  <ParamField body="reasoning_effort" param-type="string" show-location="false" enum="default,low,medium,high">
+  Reasoning-Stufe nur für Cerebras-Thinking- und `gpt-oss`-Modelle.
+  </ParamField>
+
+  ### Standard-Mode-Provider
+
+  | Provider-Wert | Anzeigename |
+  | --- | --- |
+  | `talkturo` | Talkturo Fast |
+  | `openai` | OpenAI |
+  | `google` | Google |
+  | `deepseek-ai` | DeepSeek AI |
+  | `qwen` | Qwen |
+  | `moonshotai` | Moonshot AI |
+  | `anthropic` | Anthropic |
+  | `cerebras` | Cerebras |
+
+  </Tab>
+  <Tab title="Realtime mode" icon="zap">
+
+  Der Realtime-Modus kombiniert Sprechen und Modellantwort in einem Streaming-Ablauf mit niedriger Latenz. Er unterstützt weniger Provider, ist aber für Live-Gespräche optimiert.
+
+  <ParamField body="mode" param-type="string" show-location="false" enum="standard,realtime">
+  Setze den Wert auf `realtime`, um ein streamingfähiges Realtime-Modell zu verwenden.
+  </ParamField>
+
+  <ParamField body="provider" param-type="string" show-location="false" enum="openai,google">
+  Realtime-Modell-Provider.
+  </ParamField>
+
+  <ParamField body="model" param-type="string" show-location="false">
+  Name des Realtime-Modells. OpenAI verwendet `gpt-realtime` oder `gpt-realtime-mini`. Google verwendet Gemini-Live-Modelle.
+  </ParamField>
+
+  <ParamField body="voice" param-type="string" show-location="false">
+  Integrierte Realtime-Stimme, die vom Provider verwendet wird.
+  </ParamField>
+
+  <ParamField body="temperature" param-type="number" show-location="false">
+  Sampling-Temperatur. OpenAI unterstützt `0.6` bis `1.2`. Google unterstützt `0` bis `2`.
+  </ParamField>
+
+  ### Realtime-Provider und Stimmenoptionen
+
+  | Provider-Wert | Anzeigename | Beispielmodelle | Stimmenoptionen |
+  | --- | --- | --- | --- |
+  | `openai` | OpenAI Realtime | `gpt-realtime`, `gpt-realtime-mini` | `marin`, `cedar`, `alloy`, `ash`, `ballad`, `coral`, `echo`, `sage`, `shimmer`, `verse` |
+  | `google` | Gemini Live | Gemini-Realtime-Modelle | `Puck`, `Charon`, `Kore` und weitere Google-Stimmenoptionen |
+
+  </Tab>
+</Tabs>
+
+<Callout kind="info">
+
+Die Konfiguration der Stimme verhält sich je nach Modus unterschiedlich. Im Realtime-Modus erfolgt die Auswahl der Stimme im Model-Tab. Im Standard-Modus verwendest du den separaten Voice-Tab.
+
+</Callout>
+
+## Voice tab
+
+Der Voice-Tab ist nur im Standard-Modus verfügbar. Er steuert die Auswahl des TTS-Providers, die Identität der Stimme, den Sprechstil, die Wiedergabegeschwindigkeit und synthetische Hintergrundgeräusche.
+
+<Callout kind="info">
+
+Dieser Tab gilt nicht für den Realtime-Modus. Realtime-Stimmen werden im Model-Tab konfiguriert, weil der Provider Generierung und Sprache gemeinsam verarbeitet.
+
+</Callout>
+
+### Voice-Felder
+
+<ParamField body="voice_provider" param-type="string" show-location="false" enum="cartesia,elevenlabs,inworld,openai,dashscope,kugel">
+Text-to-Speech-Provider.
+</ParamField>
+
+<ParamField body="voice_model" param-type="string" show-location="false">
+Providerspezifisches Stimmenmodell. Die Liste wird dynamisch aus `/api/voice-providers/models` geladen.
+</ParamField>
+
+<ParamField body="voice_id" param-type="string" show-location="false">
+Konkrete Stimmenauswahl für den gewählten Provider und das gewählte Modell. Die Liste wird dynamisch aus `/api/tts-voices` geladen.
+</ParamField>
+
+<ParamField body="emotion" param-type="string" show-location="false" enum="neutral,excited,sad,angry">
+Sprech-Emotion nur für Cartesia.
+</ParamField>
+
+<ParamField body="background_ambience" param-type="string" show-location="false" enum="none,office_ambience,keyboard_typing,keyboard_typing2,hold_music">
+Hintergrundgeräusch, das in die synthetisierte Sprache eingemischt wird.
+</ParamField>
+
+<ParamField body="ambience_volume" param-type="number" show-location="false">
+Lautstärke des Hintergrundgeräuschs. Bereich `0` bis `1`, Schrittweite `0.05`, Standardwert `0.8`.
+</ParamField>
+
+<ParamField body="thinking_sound" param-type="string" show-location="false" enum="none,keyboard_typing,keyboard_typing2,keyboard_typing_mix">
+Soundeffekt, der abgespielt wird, während der Assistent nachdenkt.
+</ParamField>
+
+<ParamField body="noise_cancellation" param-type="string" show-location="false" enum="off,nc,bvc">
+Modus für die Geräuschunterdrückung. `bvc` ist der Standardwert.
+</ParamField>
+
+<ParamField body="speed" param-type="number" show-location="false">
+Multiplikator für die Sprechgeschwindigkeit. Bereich `0.5` bis `2.0`, Schrittweite `0.1`, Standardwert `1`.
+</ParamField>
+
+### Modi für die Geräuschunterdrückung
+
+| Wert | Bedeutung | Standard |
+| --- | --- | --- |
+| `off` | Keine Geräuschunterdrückung | Nein |
+| `nc` | Standard-Geräuschunterdrückung | Nein |
+| `bvc` | Background Voice Cancellation | Ja |
+
+## Transcriptor tab
+
+Der Transcriptor-Tab ist nur im Standard-Modus verfügbar. Er steuert den STT-Provider, das Erkennungsmodell, die Sprache und providerspezifische Streaming-Einstellungen.
+
+### Transcriptor-Felder
+
+<ParamField body="provider" param-type="string" show-location="false" enum="deepgram,assemblyai,cartesia,elevenlabs,inworld">
+STT-Provider.
+</ParamField>
+
+<ParamField body="model" param-type="string" show-location="false">
+Providerspezifisches Transkriptionsmodell, zum Beispiel `deepgram/nova-3`, `deepgram/nova-2` oder `assemblyai/universal-streaming`.
+</ParamField>
+
+<ParamField body="language" param-type="string" show-location="false">
+Sprachcode, der für die Erkennung verwendet wird. Unterstützte Werte hängen vom ausgewählten Modell ab und können Codes wie `en`, `en-US`, `de`, `es`, `fr`, `it`, `pt` und `multi` enthalten.
+</ParamField>
+
+<ParamField body="keyterms" param-type="array[string]" show-location="false">
+Benutzerdefinierte Begriffe, um die Erkennungsgenauigkeit zu verbessern. Du kannst bis zu `100` Keyterms hinzufügen.
+</ParamField>
+
+### Erweiterte Transkriptionseinstellungen
+
+<Expandable title="Providerspezifische erweiterte Optionen" default-open="false">
+
+Erweiterte Optionen unterscheiden sich je nach Provider und Modell. Diese Einstellungen werden verwendet, um Turn Detection, Transkriptbereinigung und das Erkennungsverhalten abzustimmen.
+
+<ParamField body="endpointing" param-type="number | boolean" show-location="false">
+Providerspezifische Endpointing-Steuerung, um zu bestimmen, wann eine Äußerung beendet ist.
+</ParamField>
+
+<ParamField body="vad_sensitivity" param-type="string | number" show-location="false">
+Empfindlichkeit der Voice Activity Detection für unterstützte Provider.
+</ParamField>
+
+<ParamField body="punctuation" param-type="boolean" show-location="false">
+Aktiviert oder deaktiviert automatische Zeichensetzung, sofern unterstützt.
+</ParamField>
+
+<ParamField body="filler_word_filter" param-type="boolean" show-location="false">
+Filtert Füllwörter, sofern dies vom Provider unterstützt wird.
+</ParamField>
+
+</Expandable>
+
+<Callout kind="tip">
+
+Füge Unternehmensnamen, Produktnamen, Namen von Wettbewerbern und Branchenbegriffe zu `keyterms` hinzu, bevor du eine neue Kampagne testest. Das verbessert die Qualität der Transkripte meist stärker als ein Wechsel des Basismodells allein.
+
+</Callout>
+
+## Telephony tab
+
+Der Telephony-Tab steuert die Zuweisung von Telefonnummern, Anrufberechtigungen, Testanrufe, Compliance-Wiedergabe und das Verhalten bei Voicemail.
+
+### Telephony-Felder
+
+<ParamField body="assigned_phone_numbers" param-type="array[string]" show-location="false">
+Dem Assistenten zugewiesene Telefonnummern. Dies ist eine Mehrfachauswahl, die aus dem Telefonnummernbestand des Workspace stammt.
+</ParamField>
+
+<ParamField body="region_or_sip_trunk" param-type="string" show-location="false">
+Auswahl von Region oder SIP-Trunk für Telnyx-Konten.
+</ParamField>
+
+<ParamField body="inbound_calling_enabled" param-type="boolean" show-location="false">
+Aktiviert eingehende Anrufe für diesen Assistenten.
+</ParamField>
+
+<ParamField body="inbound_company" param-type="string" show-location="false">
+Unternehmen, das für eingehende Anrufe ausgewählt ist, wenn eingehende Anrufe aktiviert sind.
+</ParamField>
+
+<ParamField body="outbound_calling_enabled" param-type="boolean" show-location="false">
+Aktiviert ausgehende Anrufe für diesen Assistenten.
+</ParamField>
+
+<ParamField body="destination_countries" param-type="array[string]" show-location="false">
+Erlaubte Zielländer für ausgehende Anrufe.
+</ParamField>
+
+<ParamField body="test_call_from_number" param-type="string" show-location="false">
+Quellnummer, die für Testanrufe verwendet wird.
+</ParamField>
+
+<ParamField body="test_call_to_number" param-type="string" show-location="false">
+Zielnummer, die für Testanrufe verwendet wird.
+</ParamField>
+
+### Compliance-Briefing
+
+<ParamField body="compliance_briefing_enabled" param-type="boolean" show-location="false">
+Aktiviert ein Compliance-Briefing zu Beginn des Anrufs.
+</ParamField>
+
+<ParamField body="compliance_template" param-type="string" show-location="false">
+Vordefinierte Vorlage für das Compliance-Briefing.
+</ParamField>
+
+<ParamField body="compliance_custom_text" param-type="string" show-location="false">
+Benutzerdefinierter Text für das Compliance-Briefing. Maximal `2000` Zeichen.
+</ParamField>
+
+<ParamField body="require_acknowledgement" param-type="boolean" show-location="false">
+Verlangt, dass der angerufene Teilnehmer das Compliance-Briefing bestätigt, bevor der Assistent fortfährt.
+</ParamField>
+
+<ParamField body="fallback_policy" param-type="string" show-location="false" enum="continue,retry,block">
+Fallback-Verhalten, wenn die Bestätigung fehlschlägt oder der Ablauf nicht wie erwartet fortgesetzt werden kann.
+</ParamField>
+
+### Voicemail-Erkennung
+
+<ParamField body="voicemail_detection_enabled" param-type="boolean" show-location="false">
+Aktiviert die Voicemail-Erkennung. Standardwert `true`.
+</ParamField>
+
+<ParamField body="voicemail_action" param-type="string" show-location="false" enum="leave_message,hangup">
+Aktion, die ausgeführt wird, wenn Voicemail erkannt wird.
+</ParamField>
+
+<ParamField body="voicemail_message" param-type="string" show-location="false">
+Voicemail-Nachricht, die hinterlassen wird, wenn `voicemail_action` auf `leave_message` gesetzt ist. Maximal `2000` Zeichen.
+</ParamField>
+
+<Callout kind="alert">
+
+Prüfe Compliance- und Voicemail-Texte, bevor du ausgehende Kampagnen aktivierst. Diese Felder beeinflussen das Verhalten in Live-Anrufen und können rechtliche oder richtlinienbezogene Auswirkungen für deinen Anwendungsfall und deine Region haben.
+
+</Callout>
+
+## Functions tab
+
+Der Functions-Tab verbindet aufrufbare Tools mit dem Assistenten. Mit diesen Tools kann der Assistent Anrufe beenden, Anrufer weiterleiten, Meetings planen, Automatisierungen auslösen oder externe Systeme aufrufen.
+
+### Integrierte Anruffunktionen
+
+<ParamField body="end_call.enabled" param-type="boolean" show-location="false">
+Aktiviert die End-Call-Funktion.
+</ParamField>
+
+<ParamField body="end_call.trigger_phrases" param-type="array[string]" show-location="false">
+Formulierungen, die es dem Assistenten erlauben oder ihn dazu anregen, den Anruf zu beenden.
+</ParamField>
+
+<ParamField body="end_call.closing_phrase_mode" param-type="string" show-location="false" enum="fixed,none,ai">
+Legt fest, wie der Assistent seine Abschlussformulierung auswählt, bevor die Verbindung getrennt wird.
+</ParamField>
+
+<ParamField body="end_call.closing_phrase" param-type="string" show-location="false">
+Abschlussformulierung, die verwendet wird, wenn `closing_phrase_mode` auf `fixed` gesetzt ist.
+</ParamField>
+
+<ParamField body="call_transfer.enabled" param-type="boolean" show-location="false">
+Aktiviert die Anrufweiterleitung.
+</ParamField>
+
+<ParamField body="call_transfer.play_dialtone" param-type="boolean" show-location="false">
+Spielt während der Weiterleitung einen Wählton ab.
+</ParamField>
+
+### Felder für Weiterleitungsabteilungen
+
+Jede Weiterleitungsabteilung definiert ein Ziel, an das der Assistent weiterleiten kann.
+
+<ParamField body="departments[].name" param-type="string" show-location="false">
+Anzeigename für die Abteilung.
+</ParamField>
+
+<ParamField body="departments[].transfer_mode" param-type="string" show-location="false" enum="warm,cold">
+Weiterleitungsmodus für die Abteilung.
+</ParamField>
+
+<ParamField body="departments[].phone_number" param-type="string" show-location="false">
+Telefonnummer, die für das Weiterleitungsziel verwendet wird.
+</ParamField>
+
+### Verbundene Tool-Integrationen
+
+<ParamField body="cal.com" param-type="object" show-location="false">
+Cal.com-Integration. Unterstützte Funktionen sind `schedule`, `get_bookings`, `cancel` und `check_availability`.
+</ParamField>
+
+<ParamField body="zapier" param-type="object" show-location="false">
+Zapier-Integration. Jeder Assistent unterstützt eine einzelne Zapier-Instanz.
+</ParamField>
+
+<ParamField body="custom_webhooks" param-type="array[object]" show-location="false">
+Benutzerdefinierte Webhook-Tools. Ein Assistent kann mehrere Webhook-Tool-Konfigurationen haben.
+</ParamField>
+
+<ParamField body="turboflow_workflows" param-type="array[object]" show-location="false">
+Veröffentlichte TurboFlow-Workflows, die als aufrufbare Tools angehängt sind.
+</ParamField>
+
+### Zusammenfassung der Funktionsverfügbarkeit
+
+| Funktion | Anzahl | Hinweise |
+| --- | --- | --- |
+| End Call | Eine Konfiguration | Integriert |
+| Call Transfer | Eine Konfiguration mit mehreren Abteilungen | Integriert |
+| Cal.com | Eine Integration | Stellt Planungsaktionen bereit |
+| Zapier | Eine Integration pro Assistent | Nur eine Instanz |
+| Custom Webhook | Mehrere | Jeder Webhook hat eine eigene Konfiguration |
+| TurboFlow Workflows | Mehrere | Veröffentlichten Flows anhängen |
+
+## Knowledge Base tab
+
+Der Knowledge-Base-Tab verbindet verarbeitete Dokumente aus der Knowledge Base deines Workspace mit dem Assistenten. Angehangene Dateien stehen während Anrufen für Retrieval zur Verfügung.
+
+### Knowledge-Base-Felder
+
+<ParamField body="attached_documents" param-type="array[string]" show-location="false">
+Dokumente aus der Workspace-Knowledge-Base, die an den Assistenten angehängt sind.
+</ParamField>
+
+<ParamField body="file_status" param-type="string" show-location="false">
+Verarbeitungsstatus jeder Datei. Dateien müssen verarbeitet sein, bevor der Assistent sie verwenden kann.
+</ParamField>
+
+<ParamField body="chunk_count" param-type="integer" show-location="false">
+Anzahl der aus der Datei generierten Chunks.
+</ParamField>
+
+<ParamField body="character_count" param-type="integer" show-location="false">
+Anzahl der Zeichen in der Datei.
+</ParamField>
+
+<Callout kind="info">
+
+Eine Datei ist erst verwendbar, nachdem sie in Chunks und Embeddings verarbeitet wurde. Wenn eine Datei angehängt ist, aber noch verarbeitet wird, ruft der Assistent noch keine Inhalte daraus ab.
+
+</Callout>
+
+### Liste angehängter Dateien
+
+| Im UI angezeigtes Feld | Bedeutung |
+| --- | --- |
+| Status | Ob die Datei einsatzbereit ist |
+| Chunk count | Anzahl der indexierten Chunks |
+| Character count | Größe des Quelltexts |
+| Attachment state | Ob das Dokument aktuell an den Assistenten angehängt ist |
+
+## Analysis tab
+
+Der Analysis-Tab legt fest, was Talkturo nach jedem Anruf extrahieren und auswerten soll. Verwende ihn, um strukturierte Felder zu erfassen, Ergebnisse zu klassifizieren, Leads zu bewerten und festzulegen, ob der Anruf erfolgreich war.
+
+### Analysis-Felder
+
+<ParamField body="custom_extraction_prompts" param-type="array[string]" show-location="false">
+Benutzerdefinierte Prompts zum Extrahieren strukturierter Daten nach dem Anruf.
+</ParamField>
+
+<ParamField body="outcome_classification" param-type="object" show-location="false">
+Konfiguration für die Klassifizierung des Ergebnisses nach dem Anruf.
+</ParamField>
+
+<ParamField body="lead_scoring" param-type="object" show-location="false">
+Konfiguration für die Lead-Scoring-Logik.
+</ParamField>
+
+<ParamField body="success_evaluation" param-type="object" show-location="false">
+Konfiguration zur Bestimmung, ob ein Anruf als erfolgreich gilt.
+</ParamField>
+
+<Expandable title="Was in einen benutzerdefinierten Extraktions-Prompt gehört" default-open="false">
+
+Verwende Extraktions-Prompts für Felder, die geschäftsspezifisch sind und sich aus einer allgemeinen Zusammenfassung nur schwer ableiten lassen. Gute Kandidaten sind Budgetspanne, Verlängerungsfenster, Implementierungszeitplan, bestehender Anbieter, Produktinteresse oder zuständige Person für das Follow-up.
+
+Halte jeden Extraktions-Prompt auf genau eine Ausgabe fokussiert. Kleinere Prompts lassen sich leichter validieren und pflegen als ein großer Prompt, der alles gleichzeitig erfassen soll.
+
+</Expandable>
+
+## Webhooks tab
+
+Der Webhooks-Tab sendet Ereignisse aus dem Lebenszyklus von Anrufen an deine Systeme. Konfiguriere die Ziel-URL, wähle aus, welche Ereignisse gesendet werden sollen, und nutze den integrierten Testablauf, bevor du einen Webhook für produktiven Traffic aktivierst.
+
+### Webhook-Felder
+
+<ParamField body="webhook_url" param-type="string" show-location="false">
+Ziel-URL, die Webhook-Ereignisse empfängt.
+</ParamField>
+
+<ParamField body="secret" param-type="string" show-location="false">
+Secret, das zum Signieren oder Validieren der Webhook-Zustellung verwendet wird.
+</ParamField>
+
+<ParamField body="events" param-type="array[string]" show-location="false" enum="call.started,call.ended,call.transcribed">
+Ausgewählte Ereignistypen für diese Webhook-Konfiguration.
+</ParamField>
+
+<ParamField body="test_webhook" param-type="action" show-location="false">
+Sendet einen Test-Webhook mit der aktuellen Konfiguration.
+</ParamField>
+
+### Unterstützte Ereignisse
+
+| Ereignis | Auslöser |
+| --- | --- |
+| `call.started` | Ein Anruf beginnt |
+| `call.ended` | Ein Anruf endet |
+| `call.transcribed` | Transkriptionsdaten werden verfügbar |
+
+<Callout kind="tip">
+
+Führe nach Änderungen an URL, Secret oder Ereignisauswahl einen Test-Webhook aus. So erkennst du Signaturfehler und nicht passende Endpunkte, bevor Live-Anrufe Traffic senden.
+
+</Callout>
+
+## Email Summary tab
+
+Der Email-Summary-Tab sendet automatisch eine Anrufzusammenfassung, nachdem ein Anruf abgeschlossen wurde. Verwende ihn, wenn eine menschliche Ansprechperson, eine Führungskraft oder ein gemeinsames Postfach eine Kopie jeder abgeschlossenen Anrufzusammenfassung erhalten soll.
+
+### Felder für E-Mail-Zusammenfassungen
+
+<ParamField body="enabled" param-type="boolean" show-location="false">
+Aktiviert oder deaktiviert automatische E-Mail-Zusammenfassungen.
+</ParamField>
+
+<ParamField body="recipient_email" param-type="string" show-location="false">
+E-Mail-Adresse des Empfängers für die Zusammenfassung.
+</ParamField>
+
+<ParamField body="language" param-type="string" show-location="false">
+Sprache, die für die E-Mail-Zusammenfassung verwendet wird.
+</ParamField>
+
+<ParamField body="auto_send" param-type="boolean" show-location="false">
+Wenn aktiviert, werden Zusammenfassungen nach Abschluss des Anrufs automatisch gesendet.
+</ParamField>
+
+## Modusabhängige Tabs
+
+Nicht jeder Tab ist in jedem Assistentenmodus verfügbar. Nutze diese Matrix, wenn du wissen musst, wo sich eine Einstellung befindet.
+
+| Tab | Standard mode | Realtime mode |
+| --- | --- | --- |
+| Prompt | Ja | Ja |
+| Model | Ja | Ja |
+| Voice | Ja | Nein |
+| Transcriptor | Ja | Nein |
+| Telephony | Ja | Ja |
+| Functions | Ja | Ja |
+| Knowledge Base | Ja | Ja |
+| Analysis | Ja | Ja |
+| Webhooks | Ja | Ja |
+| Email Summary | Ja | Ja |
+
+## Was du zuerst konfigurieren solltest
+
+<Columns cols={2}>
+  <Card title="Den richtigen Modellmodus wählen" href="/assistants/configuration" icon="zap" cta="Model-Einstellungen prüfen">
+  Der Standard-Modus gibt dir getrennte Kontrolle über Modell, Stimme und Transkription. Der Realtime-Modus reduziert die Latenz und verlegt die Auswahl der Stimme in den Model-Tab.
+  </Card>
+  <Card title="Telefonie vor dem Testen einrichten" href="/assistants/configuration" icon="phone" cta="Telefonie-Felder prüfen">
+  Weise Nummern zu, aktiviere eingehende oder ausgehende Anrufe und bestätige das Verhalten bei Voicemail und Compliance, bevor du Live-Anrufe startest.
+  </Card>
+</Columns>

@@ -1,0 +1,308 @@
+---
+title: Authentifizierung
+description: Sichere den Zugriff auf Talkturo API und App mit API-Schlüsseln, Bearer-Tokens, unterstützten Anmeldemethoden, Scopes und Schlüsselverwaltung.
+---
+
+## Wähle die richtige Authentifizierungsmethode
+
+Talkturo verwendet drei Authentifizierungskontexte. Welche Methode die richtige ist, hängt davon ab, was du baust. Verwende eine Supabase-Session in der Web-App, ein Bearer-JWT für die Close AI Desktop-App und einen API-Schlüssel für den Server-zu-Server-Zugriff auf die API oder für Automatisierungen.
+
+| Kontext | Verwendet von | Anmeldedatentyp | So übermittelst du ihn |
+| --- | --- | --- | --- |
+| Web-App | Talkturo-Dashboard | Cookie-basierte Supabase-Session | Browser-Session-Cookie |
+| Desktop-App | Close AI Desktop-Client | JWT Access Token | `Authorization: Bearer access_token` |
+| API-Clients und Automatisierungen | Externe Integrationen, Skripte, Backend-Services | API-Schlüssel | `Authorization: Bearer tk_live_...` |
+
+<Callout kind="info">
+
+Für die meisten API-Integrationen verwendest du einen API-Schlüssel. JWT Access Tokens sind in erster Linie für den Anmeldefluss der Desktop-App gedacht.
+
+</Callout>
+
+## Unterstützte Anmeldemethoden
+
+Talkturo unterstützt mehrere Anmeldemethoden für den Zugriff auf Dashboard und App.
+
+| Methode | Anwendungsfall | Hinweise |
+| --- | --- | --- |
+| E-Mail und Passwort | Standardanmeldung für Konten | Für Web- und App-Anmeldeflüsse verfügbar |
+| Magic Link | Passwortlose Anmeldung per E-Mail | Verwendet einen einmaligen E-Mail-Link oder einen OTP-Flow |
+| Google OAuth | Social Login | Startet einen OAuth-Anmeldefluss |
+| Facebook OAuth | Social Login | Startet einen OAuth-Anmeldefluss |
+| TOTP-MFA | Zusätzlicher Kontoschutz | Funktioniert mit Authenticator-Apps wie Google Authenticator und Authy |
+
+### Multi-Faktor-Authentifizierung
+
+Talkturo unterstützt zeitbasierte Einmalpasswörter über Authenticator-Apps. Nachdem MFA für ein Konto aktiviert wurde, erfordert der Anmeldefluss zusätzlich zur primären Anmeldemethode einen gültigen TOTP-Code.
+
+## API-Schlüssel
+
+API-Schlüssel authentifizieren serverseitige Anfragen an Talkturo APIs. Sie sind für Backend-Services, geplante Jobs, interne Tools und andere nicht interaktive Clients gedacht.
+
+### Schlüsselformat
+
+Live-Schlüssel beginnen mit einem sichtbaren Präfix, gefolgt von einem längeren geheimen Wert. Test- oder Sandbox-Schlüssel verwenden dieselbe Struktur mit einem anderen Präfix.
+
+- Live-Schlüsselformat: `tk_live_XXXXXXXX`, gefolgt von 48 zufälligen Zeichen
+- Test-Schlüsselformat: `tk_test_XXXXXXXX`, gefolgt von 48 zufälligen Zeichen
+
+Das sichtbare Präfix hilft dir, einen Schlüssel im Dashboard zu identifizieren, ohne das vollständige Geheimnis offenzulegen.
+
+<Callout kind="alert">
+
+API-Schlüssel werden nur einmal bei der Erstellung angezeigt. Speichere den vollständigen Schlüssel in deinem Secret Manager, Passwort-Tresor oder deiner Umgebungs-Konfiguration, bevor du den Erstellungsbildschirm verlässt.
+
+</Callout>
+
+### So speichert Talkturo Schlüssel
+
+Talkturo speichert nur den SHA-256-Hash des vollständigen Schlüssels. Der ursprüngliche Schlüsselwert kann später nicht wiederhergestellt werden.
+
+Das Dashboard zeigt das Schlüsselfixpräfix, zum Beispiel `tk_live_a1b2c3d4`, damit du erkennen kannst, welcher Schlüssel verwendet wird. Wenn du den vollständigen Schlüssel verlierst, widerrufe ihn und erstelle einen neuen.
+
+### API-Schlüssel im Authorization-Header senden
+
+Übermittle den vollständigen API-Schlüssel im `Authorization`-Header mit dem Bearer-Schema.
+
+<CodeGroup tabs="cURL">
+
+```bash
+curl https://api.talkturo.com/api/api-keys \
+  -H "Authorization: Bearer tk_live_a1b2c3d4m7np9q4r8s2x6v1k5z0c3j7h9l2p6w8y1t4u6e" \
+  -H "Content-Type: application/json"
+```
+
+</CodeGroup>
+
+Wenn die Authentifizierung erfolgreich ist, verarbeitet die API die Anfrage mit den Berechtigungen, die diesem Schlüssel zugewiesen sind.
+
+### Fähigkeiten von API-Schlüsseln
+
+Schlüssel können Metadaten und Lebenszyklus-Kontrollen enthalten, damit du sie sicher über verschiedene Umgebungen hinweg verwalten kannst.
+
+- **Name** — eine kurze Bezeichnung für den Schlüssel
+- **Beschreibung** — optionaler Kontext dazu, wer oder was den Schlüssel verwendet
+- **Ablaufdatum** — ein optionales Ablaufdatum
+- **Widerruf** — sofortige Ungültigmachung, ohne zugehörige Audit-Historie zu löschen
+
+### Wer Schlüssel erstellen und verwalten kann
+
+Workspace-Besitzer und Administratoren können API-Schlüssel erstellen, ändern und löschen. Jedes Workspace-Mitglied kann Schlüssel im Dashboard sehen, einschließlich identifizierender Metadaten wie des sichtbaren Präfixes.
+
+## Berechtigungs-Scopes
+
+API-Schlüssel verwenden Scopes, um zu steuern, worauf eine Anfrage zugreifen kann. Scopes werden im Berechtigungsdatensatz des Schlüssels gespeichert.
+
+### Standard-Scopes
+
+Neue Schlüssel erhalten standardmäßig Vollzugriff.
+
+<ParamField body="scopes" param-type="string[]" required="true" show-location="false">
+
+Standardwert: `["*"]`
+
+Gewährt alle Berechtigungen, die dem Schlüssel innerhalb des Workspace zur Verfügung stehen.
+
+</ParamField>
+
+### Spezifische Scopes
+
+Verwende engere Scopes, wenn du einen Schlüssel auf einen Teilbereich der API beschränken möchtest.
+
+<ParamField body="kb:read" param-type="scope" show-location="false">
+
+Liest Ressourcen der Knowledge Base.
+
+</ParamField>
+
+<ParamField body="kb:write" param-type="scope" show-location="false">
+
+Erstellt, aktualisiert oder löscht Ressourcen der Knowledge Base.
+
+</ParamField>
+
+<ParamField body="assistants:read" param-type="scope" show-location="false">
+
+Liest die Konfiguration von Assistants und zugehörige Ressourcen.
+
+</ParamField>
+
+Namen für spezifische Scopes können demselben Muster aus Ressource und Aktion wie diese Beispiele folgen.
+
+### Wildcard-Abgleich
+
+Scopes unterstützen Wildcard-Präfixabgleich. Ein Scope wie `assistants:*` passt auf jeden Scope, der mit `assistants:` beginnt.
+
+Das bedeutet, dass ein Schlüssel mit `assistants:*` Prüfungen für Werte wie `assistants:read` oder `assistants:write` erfüllen kann.
+
+### Rate Limit
+
+API-Schlüssel enthalten ein Standard-Rate-Limit in ihren Berechtigungsdaten.
+
+<ParamField body="rate_limit_per_hour" param-type="integer" show-location="false">
+
+Standardwert: `1000`
+
+Maximale Anzahl von Anfragen pro Stunde für den Schlüssel.
+
+</ParamField>
+
+## Authentifizierung der Desktop-App
+
+Die Close AI Desktop-App authentifiziert sich mit Bearer-JWTs statt mit API-Schlüsseln. Die App meldet sich mit Benutzeranmeldedaten an, erhält ein Access Token und ein Refresh Token und sendet das Access Token bei nachfolgenden Anfragen.
+
+### Anmeldung
+
+Verwende den Anmelde-Endpunkt, um eine E-Mail-Adresse und ein Passwort gegen ein Token-Paar auszutauschen.
+
+<Request>
+```bash
+curl -X POST https://api.talkturo.com/api/auth/sign-in \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "jane.chen@acme.com",
+    "password": "Str0ngPassw0rd!"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "access_token": "...",
+  "refresh_token": "...",
+  "expires_in": 3600,
+  "expires_at": 1726200000,
+  "user": {
+    "id": "user_a1b2c3d4",
+    "email": "jane.chen@acme.com"
+  }
+}
+```
+</Response>
+
+Füge das zurückgegebene Access Token bei geschützten Anfragen zum `Authorization`-Header hinzu.
+
+### Refresh Tokens
+
+Verwende den Refresh-Endpunkt, wenn das Access Token abläuft.
+
+<Request>
+```bash
+curl -X POST https://api.talkturo.com/api/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "rt_desktop_example_f84n2m1q9x7v5k3c8p6z4h2j0s1d9b7"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "access_token": "...",
+  "refresh_token": "...",
+  "expires_in": 3600,
+  "expires_at": 1726203600,
+  "user": {
+    "id": "user_a1b2c3d4",
+    "email": "jane.chen@acme.com"
+  }
+}
+```
+</Response>
+
+### Abmeldung
+
+Verwende den Abmelde-Endpunkt, um den aktuellen Token-Satz zu widerrufen.
+
+<Request>
+```bash
+curl -X POST https://api.talkturo.com/api/auth/sign-out \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "rt_desktop_example_g52p8n4q1x9v6k3c7m2z5h0j4s8d1b6"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Format des Desktop-Bearer-Tokens
+
+Desktop-Anfragen verwenden dasselbe Bearer-Header-Muster wie API-Schlüssel, aber der Anmeldedatenwert ist das JWT Access Token.
+
+<CodeGroup tabs="cURL">
+
+```bash
+curl https://api.talkturo.com/api/close-ai/sessions \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6InRhbGt0dXJvLWRlc2tvcC1hY2Nlc3MiLCJ0eXAiOiJKV1QifQ..."
+```
+
+</CodeGroup>
+
+## API-Schlüssel verwalten
+
+Du kannst API-Schlüssel im Dashboard oder über die REST API verwalten.
+
+### Speicherort im Dashboard
+
+Öffne **Workspace** und dann **API Keys**, um Schlüssel zu erstellen, zu prüfen, zu widerrufen oder zu löschen.
+
+### REST API-Endpunkte
+
+Verwende diese Endpunkte, um die Schlüsselverwaltung zu automatisieren.
+
+<ParamField path="/api/api-keys" param-type="GET" show-location="false">
+
+Listet API-Schlüssel auf, die im aktuellen Workspace verfügbar sind.
+
+</ParamField>
+
+<ParamField path="/api/api-keys" param-type="POST" show-location="false">
+
+Erstellt einen neuen API-Schlüssel.
+
+</ParamField>
+
+<ParamField path="/api/api-keys/{id}" param-type="PATCH" show-location="false">
+
+Aktualisiert Schlüsselmetadaten, Ablaufdatum, Scopes oder den Widerrufsstatus eines bestimmten Schlüssels.
+
+</ParamField>
+
+<ParamField path="/api/api-keys/{id}" param-type="DELETE" show-location="false">
+
+Löscht einen API-Schlüssel.
+
+</ParamField>
+
+<Callout kind="info">
+
+Nur Benutzer mit der Rolle Workspace-Besitzer oder Administrator können API-Schlüssel erstellen, aktualisieren, widerrufen oder löschen.
+
+</Callout>
+
+## Sicherheitspraktiken
+
+Behandle Talkturo-Anmeldedaten wie Secrets für Produktionssysteme. Die häufigsten Authentifizierungsprobleme entstehen, wenn Schlüssel in clientseitigem Code offengelegt, nicht wiederherstellbare Schlüssel am falschen Ort gespeichert oder breitere Scopes als nötig verwendet werden.
+
+<Callout kind="alert">
+
+Bette API-Schlüssel nicht in Browser-Code, mobile Apps oder verteilte Desktop-Binärdateien ein. Bewahre Schlüssel auf einem vertrauenswürdigen Server auf und leite Anfragen über einen Proxy weiter, wenn eine Client-Anwendung Talkturo-Daten benötigt.
+
+</Callout>
+
+### Empfohlene Vorgehensweisen
+
+- Verwende API-Schlüssel nur in serverseitigen Umgebungen.
+- Bevorzuge eng begrenzte Scopes gegenüber `["*"]`, wenn ein Workload nur eingeschränkten Zugriff benötigt.
+- Setze ein Ablaufdatum für temporäre Integrationen.
+- Rotiere Schlüssel, wenn sich die Zuständigkeit ändert oder du eine Offenlegung vermutest.
+- Widerrufe einen Schlüssel sofort, wenn er in Logs, Screenshots, Commits oder Support-Tickets erscheint.

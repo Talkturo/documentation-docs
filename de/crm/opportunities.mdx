@@ -1,0 +1,110 @@
+---
+title: Opportunities
+description: Verfolge Deals in einer visuellen Sales-Pipeline mit Stages, verknüpften Kontakten und Unternehmen sowie KI-gestützten Updates.
+---
+
+## Verfolge Deals über deine Pipeline hinweg
+
+Opportunities stehen für Deals, an denen du aktiv arbeitest. Jede Opportunity ist mit einem Kontakt und einem Unternehmen verknüpft und speichert die Stage, den Betrag, die Abschlusswahrscheinlichkeit und das erwartete Abschlussdatum, damit dein Team den Status der Pipeline auf einen Blick sehen kann.
+
+Das Opportunities-Dashboard verwendet ein Kanban-Board, wodurch sich Stage-Änderungen einfach verwalten lassen. Verschiebe einen Deal, indem du ihn per Drag-and-Drop zwischen den Spalten bewegst, oder aktualisiere denselben Datensatz über die API.
+
+<Callout kind="info">
+
+Verwende Opportunities, wenn sich ein Gespräch über einen Lead hinaus entwickelt hat und du Wert, Zeitpunkt und Abschlusswahrscheinlichkeit nachverfolgen möchtest.
+
+</Callout>
+
+## Opportunity-Stages
+
+Stages zeigen, an welcher Stelle sich ein Deal in deiner Pipeline befindet. Dein Workspace kann die unten integrierten Stages verwenden und bei Bedarf benutzerdefinierte Stages hinzufügen.
+
+| Stage | Bedeutung |
+|---|---|
+| `new` | Neu erstellter Deal |
+| `contacted` | Erster Kontakt hergestellt |
+| `proposal` | Angebot gesendet oder in Bearbeitung |
+| `closed-won` | Deal gewonnen |
+| `closed-lost` | Deal verloren |
+| `custom` | Benutzerdefinierte Stages, die in deinem Workspace definiert sind |
+
+## Opportunity-Felder
+
+Diese Felder definieren die Kerninformationen, die in einer Opportunity gespeichert werden.
+
+| Feld | Beschreibung |
+|---|---|
+| `name` | Name oder Titel der Opportunity |
+| `stage` | Aktuelle Pipeline-Stage |
+| `amount` | Deal-Wert |
+| `probability` | Prozentuale Abschlusswahrscheinlichkeit |
+| `expectedCloseDate` | Erwartetes Abschlussdatum |
+| `contactId` | Verknüpfter Kontakt |
+| `companyId` | Verknüpftes Unternehmen |
+
+## Opportunities verwalten
+
+Erstelle Opportunities, wenn du einen bestimmten Deal nachverfolgen möchtest, und halte den Datensatz aktuell, während Gespräche voranschreiten.
+
+<Steps>
+  <Step title="Eine Opportunity erstellen" icon="plus">
+
+  Füge eine Opportunity hinzu und verknüpfe sie mit dem relevanten Kontakt und Unternehmen. Dadurch erhält der Deal Kontext und deine Pipeline bleibt mit den beteiligten Personen und Unternehmen verknüpft.
+
+  Eine vollständige Opportunity enthält in der Regel:
+
+  - Einen eindeutigen `name`
+  - Die aktuelle `stage`
+  - Einen `amount`
+  - Eine `probability`
+  - Ein `expectedCloseDate`
+  - Eine verknüpfte `contactId`
+  - Eine verknüpfte `companyId`
+
+  </Step>
+  <Step title="Deals zwischen Stages verschieben" icon="arrow-right">
+
+  Verwende das Kanban-Board, um eine Opportunity per Drag-and-Drop von einer Stage in eine andere zu verschieben. Das ist der schnellste Weg, um Fortschritte bei der täglichen Pipeline-Durchsicht abzubilden.
+
+  Du kannst die Stage auch über die API aktualisieren, wenn du Opportunities aus einem anderen Workflow oder einer Automatisierung synchronisierst.
+
+  </Step>
+  <Step title="Datensätze über die API lesen und aktualisieren" icon="code">
+
+  Verwende die CRM-Opportunities-Endpunkte, um Datensätze aufzulisten, zu erstellen, zu aktualisieren und zu löschen.
+
+  <CodeGroup tabs="List and create,Read update and delete">
+  ```bash
+  GET /api/crm/opportunities
+  POST /api/crm/opportunities
+  ```
+
+  ```bash
+  GET /api/crm/opportunities/[id]
+  PUT /api/crm/opportunities/[id]
+  DELETE /api/crm/opportunities/[id]
+  ```
+  </CodeGroup>
+
+  </Step>
+</Steps>
+
+## KI-gesteuerte Pipeline-Updates
+
+Die Anrufanalyse kann deine Pipeline genauer halten, ohne dass jede Aktualisierung manuell eingetragen werden muss. Wenn Talkturo Anrufe analysiert, können die extrahierten Deal-Daten Opportunity-Felder ausfüllen und Opportunities im Verlauf von Gesprächen weiter durch die Pipeline bewegen.
+
+Abhängig vom Ergebnis des Anrufs kann die KI die Opportunity-Stage automatisch aktualisieren. Ein erfolgreiches Qualifizierungsgespräch kann einen Deal zum Beispiel weiterbringen, während ein anderes Ergebnis die Opportunity als verloren markieren oder wichtige Deal-Details aktualisieren kann.
+
+<Callout kind="tip">
+
+Wenn du Call Intelligence verwendest, um Pipeline-Änderungen auszulösen, prüfe zuerst mit deinem Team die Definitionen der Stages, damit automatisierte Updates zu deinem Sales-Prozess passen.
+
+</Callout>
+
+## Verwandte Seiten
+
+<Columns cols={3}>
+  <Card title="Kontakte" href="/crm/contacts" icon="users" cta="Kontakte ansehen" />
+  <Card title="Unternehmen" href="/crm/companies" icon="building" cta="Unternehmen ansehen" />
+  <Card title="Intelligence" href="/intelligence" icon="bar-chart" cta="Call-Insights ansehen" />
+</Columns>
