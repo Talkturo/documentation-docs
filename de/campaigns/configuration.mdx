@@ -1,0 +1,281 @@
+---
+title: Kampagnenkonfiguration
+description: Konfiguriere Anruffenster, Wiederholungslogik, lokale Präsenz, DNC-Durchsetzung, Voicemail-Verhalten und Zustelllimits für Kampagnen.
+---
+
+## Konfiguriere das Anrufverhalten der Kampagne
+
+Die Kampagnenkonfiguration steuert, wann Anrufe platziert werden können, wie Wiederholungen geplant werden, welche Anrufer-ID ein Kontakt sieht und wie Voicemail- oder Do-not-call-Datensätze behandelt werden. Verwende diese Seite als zentrale Referenz für die Kampagneneinstellungen, die das Zustellverhalten beeinflussen.
+
+<Callout kind="info">
+
+Eine Kampagne kann kontoweite Standardwerte, Standardwerte auf Assistent-Ebene und kampagnenspezifische Einstellungen kombinieren. Wenn eine Kampagneneinstellung vorhanden ist, hat sie für dieses Verhalten Vorrang.
+
+</Callout>
+
+## Wende die Konfiguration in der richtigen Reihenfolge an
+
+Die meisten Teams konfigurieren eine Kampagne in vier Durchgängen: Lege fest, wann Anrufe erlaubt sind, definiere Wiederholungsregeln, wähle das Verhalten der Anrufer-ID und füge danach Voicemail- oder Webhook-Optionen hinzu. Diese Reihenfolge macht es einfacher, die Kampagne zu validieren, bevor du mit der Anmeldung beginnst.
+
+<Steps>
+  <Step title="Lege das Anruffenster fest" icon="clock">
+
+  Beginne mit `callWindowStart`, `callWindowEnd` und `callWindowTimezone`. Diese Werte bestimmen, ob ein Kontakt zu einem bestimmten Zeitpunkt angerufen werden darf.
+
+  Wenn das Fenster der lokalen Zeit jedes Kontakts folgen soll, lass `useContactTimezoneForCallWindow` aktiviert.
+
+  </Step>
+  <Step title="Definiere das Wiederholungsverhalten" icon="refresh-cw">
+
+  Lege die Basisverzögerungen für `no_answer`, `busy` und `error` fest und wähle dann einen Backoff-Modus. Entscheide danach, ob du ein einzelnes Maximalversuchslimit für alle Ergebnisse oder ergebnisspezifische Überschreibungen verwenden willst.
+
+  </Step>
+  <Step title="Wähle das Verhalten der Anrufer-ID" icon="phone">
+
+  Weise der Kampagne eine oder mehrere From-Nummern zu, wenn du lokale Präsenz oder eine konsistente Anrufer-ID über Wiederholungen hinweg willst. Gewichte jede Nummer danach, wie oft sie ausgewählt werden soll.
+
+  </Step>
+  <Step title="Füge Voicemail, Limits und Webhooks hinzu" icon="settings">
+
+  Schließe die Konfiguration ab, indem du das Voicemail-Verhalten, Gleichzeitigkeit, Evergreen-Verhalten und Webhook-Zustellung definierst. Danach ist die Kampagne bereit zum Starten oder für fortlaufende Anmeldung.
+
+  </Step>
+</Steps>
+
+## Konfiguriere Anruffenster
+
+Anruffenster definieren die früheste und späteste lokale Uhrzeit, zu der eine Kampagne einen Anruf platzieren darf. Die Kampagnen-Engine prüft die aktuelle Zeit gegen diese Werte, bevor sie den Anruf versucht.
+
+<ParamField body="callWindowStart" param-type="string" required="false" show-location="false">
+Früheste Tageszeit, zu der Anrufe beginnen dürfen. Verwende das Format `HH:MM:SS`. Standard: `09:00:00`.
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false" show-location="false">
+Späteste Tageszeit, zu der Anrufe fortgesetzt werden dürfen. Verwende das Format `HH:MM:SS`. Standard: `17:00:00`.
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false" show-location="false">
+IANA-Zeitzone, die zur Auswertung des Anruffensters verwendet wird, wenn keine kontaktlokale Auswertung angewendet wird. Standard: `America/New_York`.
+</ParamField>
+
+<ParamField body="useContactTimezoneForCallWindow" param-type="boolean" required="false" show-location="false">
+Steuert, ob die Kampagne das Anruffenster in der lokalen Zeitzone des Kontakts auswertet. Wenn diese Einstellung nicht explizit auf `false` gesetzt ist, ist der effektive Standardwert `true`.
+</ParamField>
+
+Ein Anruffenster kann sich über Mitternacht erstrecken. Wenn `callWindowStart` später ist als `callWindowEnd`, wird das Fenster als Nachtfenster behandelt, zum Beispiel `22:00:00` bis `06:00:00`.
+
+### So funktioniert die kontaktlokale Auswertung
+
+Wenn `useContactTimezoneForCallWindow` aktiviert ist, wertet die Kampagne `callWindowStart` und `callWindowEnd` in der Zeitzone des Kontakts statt in der Kampagnenzeitzone aus. So bleiben dieselben lokalen Anrufzeiten über mehrere Regionen hinweg erhalten.
+
+Wenn die Kampagne zum Beispiel auf `09:00:00` bis `17:00:00` konfiguriert ist und die Kampagnenzeitzone `America/New_York` ist, wird ein Kontakt in `America/Los_Angeles` trotzdem nur zwischen `09:00:00` und `17:00:00` Pacific Time angerufen.
+
+<Callout kind="tip">
+
+Verwende kontaktlokale Fenster, wenn sich deine Zielgruppe über mehrere Zeitzonen erstreckt. So verhinderst du, dass Zeitpläne der Ostküste Kontakte an der Westküste zu früh anrufen.
+
+</Callout>
+
+## Konfiguriere Wiederholungslogik
+
+Die Wiederholungslogik steuert, wann die Kampagne einen Kontakt nach einem wiederholbaren Ergebnis erneut versuchen soll. Basisverzögerungen werden in den Kampagneneinstellungen gespeichert, und die Kampagnen-Engine setzt `next_attempt_at`, wenn ein Anruf mit einem wiederholbaren Ergebnis endet.
+
+### Einstellungen für Wiederholungsverzögerungen
+
+| Einstellung | Standard | Gilt für |
+|---|---:|---|
+| `retry_delay_minutes_no_answer` | 5 | Anrufe, die mit `no_answer` enden |
+| `retry_delay_minutes_busy` | 10 | Anrufe, die mit `busy` enden |
+| `retry_delay_minutes_error` | 60 | Anrufe, die mit `error` enden |
+
+<ParamField body="retry_delay_minutes_no_answer" param-type="integer" required="false" show-location="false">
+Basis-Wiederholungsverzögerung in Minuten nach einem `no_answer`-Ergebnis. Standard: `5`.
+</ParamField>
+
+<ParamField body="retry_delay_minutes_busy" param-type="integer" required="false" show-location="false">
+Basis-Wiederholungsverzögerung in Minuten nach einem `busy`-Ergebnis. Standard: `10`.
+</ParamField>
+
+<ParamField body="retry_delay_minutes_error" param-type="integer" required="false" show-location="false">
+Basis-Wiederholungsverzögerung in Minuten nach einem `error`-Ergebnis. Standard: `60`.
+</ParamField>
+
+<ParamField body="retryOnError" param-type="boolean" required="false" show-location="false">
+Steuert, ob technische Fehler Wiederholungen auslösen sollen. Standard: `false`.
+</ParamField>
+
+<ParamField body="next_attempt_at" param-type="timestamp" required="false" show-location="false">
+Zeitstempel, den die Kampagnen-Engine nach einem wiederholbaren Ergebnis plant. Die Engine aktualisiert dieses Feld, wenn der Kontakt erneut versucht werden soll.
+</ParamField>
+
+### Einstellungen für Wiederholungs-Backoff
+
+Verwende festen Backoff, wenn jede Wiederholung dieselbe Wartezeit haben soll. Verwende exponentiellen Backoff, wenn jede Wiederholung länger warten soll als die vorherige.
+
+<ParamField body="retryBackoffMode" param-type="string" required="false" show-location="false" enum="fixed,exponential">
+Backoff-Strategie für Wiederholungsverzögerungen. `fixed` verwendet jedes Mal die Basisverzögerung. `exponential` multipliziert die Verzögerung bei späteren Wiederholungen.
+</ParamField>
+
+<ParamField body="retryBackoffMultiplier" param-type="number" required="false" show-location="false">
+Multiplikator, der verwendet wird, wenn `retryBackoffMode` auf `exponential` gesetzt ist. Zulässiger Bereich: `1.01` bis `10`. Standard: `2`.
+</ParamField>
+
+<ParamField body="retryBackoffMaxMinutes" param-type="integer" required="false" show-location="false">
+Maximale Obergrenze für die Wiederholungsverzögerung in Minuten, nachdem der Backoff angewendet wurde. Zulässiger Bereich: `1` bis `10080`, also bis zu 1 Woche.
+</ParamField>
+
+### Einstellungen für maximale Versuche
+
+Die Kampagne kann ein gemeinsames Versuchslimit für alle Ergebnisse oder ergebnisspezifische Limits für `no_answer`, `busy` und `error` verwenden. Ergebnisspezifische Einstellungen überschreiben den Standardwert, wenn sie gesetzt sind.
+
+| Einstellung | Bereich | Standardverhalten |
+|---|---|---|
+| `max_attempts_per_contact` | 1 bis unbegrenzt | Der spaltenweite Standardwert für maximale Versuche pro Kontakt ist `3` |
+| `settings.max_attempts_no_answer` | 1–50 oder `null` | Überschreibt den Standard für `no_answer`; `null` entfernt die Überschreibung |
+| `settings.max_attempts_busy` | 1–50 oder `null` | Überschreibt den Standard für `busy`; `null` entfernt die Überschreibung |
+| `settings.max_attempts_error` | 1–50 oder `null` | Überschreibt den Standard für `error`; `null` entfernt die Überschreibung |
+
+<ParamField body="max_attempts_per_contact" param-type="integer" required="false" show-location="false">
+Standardmäßige maximale Anzahl von Versuchen, die für einen Kontakt erlaubt ist. Spaltenstandard: `3`.
+</ParamField>
+
+<ParamField body="settings.max_attempts_no_answer" param-type="integer|null" required="false" show-location="false">
+Ergebnisspezifische maximale Versuche für `no_answer`. Zulässiger Bereich: `1` bis `50`. Setze den Wert auf `null`, um die Überschreibung zu entfernen und auf `max_attempts_per_contact` zurückzufallen.
+</ParamField>
+
+<ParamField body="settings.max_attempts_busy" param-type="integer|null" required="false" show-location="false">
+Ergebnisspezifische maximale Versuche für `busy`. Zulässiger Bereich: `1` bis `50`. Setze den Wert auf `null`, um die Überschreibung zu entfernen und auf `max_attempts_per_contact` zurückzufallen.
+</ParamField>
+
+<ParamField body="settings.max_attempts_error" param-type="integer|null" required="false" show-location="false">
+Ergebnisspezifische maximale Versuche für `error`. Zulässiger Bereich: `1` bis `50`. Setze den Wert auf `null`, um die Überschreibung zu entfernen und auf `max_attempts_per_contact` zurückzufallen.
+</ParamField>
+
+### Beispiele für Wiederholungen
+
+Eine feste Wiederholungsrichtlinie mit `retry_delay_minutes_no_answer = 5` wartet nach jedem `no_answer`-Ergebnis 5 Minuten, bis die Regel für maximale Versuche erreicht ist.
+
+Eine exponentielle Wiederholungsrichtlinie mit `retry_delay_minutes_busy = 10`, `retryBackoffMode = exponential` und `retryBackoffMultiplier = 2` erzeugt Verzögerungen von 10 Minuten, 20 Minuten, 40 Minuten und steigt dann weiter an, bis `retryBackoffMaxMinutes` erreicht wird.
+
+## Konfiguriere lokale Präsenz
+
+Lokale Präsenz verwendet mehrere From-Nummern in derselben Kampagne, damit Kontakte eine Anrufer-ID sehen können, die ihrer eigenen Vorwahl näher ist. Das verbessert die Konsistenz, ohne die ausgewählte Nummer bei jeder Wiederholung zu ändern.
+
+<ParamField body="campaign_from_numbers" param-type="relation" required="false" show-location="false">
+Zuordnungstabelle zwischen Kampagne und Telefonnummer, die verwendet wird, um einer Kampagne eine oder mehrere From-Nummern zuzuweisen.
+</ParamField>
+
+<ParamField body="weight" param-type="integer" required="false" show-location="false">
+Relatives Auswahlgewicht für eine Kampagnen-From-Nummer. Zulässiger Bereich: `1` bis `20`.
+</ParamField>
+
+<Callout kind="info">
+
+Die Auswahl der From-Nummer ist deterministisch. Das System verwendet einen SHA-256-Hash von `campaign_contact_id`, um die Kampagnen-From-Nummer auszuwählen, sodass derselbe Kontakt bei jeder Wiederholung dieselbe Anrufer-ID erhält.
+
+</Callout>
+
+<Callout kind="tip">
+
+Weise Nummern mit derselben Vorwahl wie deinen Zielkontakten zu, wenn du einen Effekt lokaler Präsenz erreichen willst. Da die Auswahl deterministisch ist, bleibt die Anrufer-ID über alle Versuche hinweg konsistent, statt zwischen Wiederholungen zu rotieren.
+
+</Callout>
+
+## Konfiguriere DNC-Durchsetzung
+
+Die DNC-Durchsetzung erfolgt an mehreren Punkten im Lebenszyklus der Kampagne. Ziel ist es zu verhindern, dass ein DNC-Datensatz angerufen wird, selbst wenn er früher angemeldet wurde oder unerwartet in einer Warteschlange verbleibt.
+
+<ParamField body="excludeDnc" param-type="boolean" required="false" show-location="false">
+Steuert die Zielgruppenfilterung für Do-not-call-Kontakte während der Anmeldung. Standard: `true`.
+</ParamField>
+
+<Callout kind="alert">
+
+Die DNC-Durchsetzung verwendet vier separate Prüfstellen:
+
+- **Zielgruppenfilterung** schließt DNC-Kontakte während der Anmeldung aus, wenn `excludeDnc` aktiviert ist.
+- **Anmeldestatus** markiert DNC-Kontakte als `skipped` statt als `pending`.
+- **Prüfung auf Datenbankebene** in `get_next_campaign_contacts()` filtert Kontakte, bei denen `c.do_not_call = FALSE` gilt.
+- **Cron-Bereinigung** findet DNC-Kontakte, die `pending` oder `queued` bleiben, und markiert sie als `skipped`.
+
+</Callout>
+
+Kontakte ohne Telefonnummer werden ebenfalls bereinigt. Diese Datensätze werden als `skipped` mit dem Ergebnis `invalid_number` markiert.
+
+## Konfiguriere Voicemail-Behandlung
+
+Das Voicemail-Verhalten kann aus Standardwerten des Assistenten oder kampagnenspezifischen Überschreibungen stammen. Wenn eine Kampagnenüberschreibung fehlt, bleibt die Einstellung auf Assistent-Ebene wirksam.
+
+### Standardwerte des Assistenten und Kampagnenüberschreibungen
+
+| Einstellung | Geltungsbereich | Standard oder zulässige Werte |
+|---|---|---|
+| `voicemail_detection_enabled` | Standardwert des Assistenten und Kampagnenüberschreibung | Standard: `true` |
+| `voicemail_action` | Standardwert des Assistenten und Kampagnenüberschreibung | Standard: `leave_message`; zulässig: `leave_message`, `hangup` |
+| `voicemail_drop_message` | Kampagnenüberschreibung | Benutzerdefinierte TTS-Nachricht |
+| `unavailable_action` | Kampagnenüberschreibung | Zulässig: `retry`, `fail` |
+
+<ParamField body="voicemail_detection_enabled" param-type="boolean" required="false" show-location="false">
+Aktiviert die Voicemail-Erkennung. Standardwert des Assistenten: `true`. Ein Kampagnenwert überschreibt die Assistenteneinstellung, wenn er vorhanden ist.
+</ParamField>
+
+<ParamField body="voicemail_action" param-type="string" required="false" show-location="false" enum="leave_message,hangup">
+Aktion, die ausgeführt wird, wenn Voicemail erkannt wird. Standardwert des Assistenten: `leave_message`. Wenn die Kampagne diesen Wert nicht setzt, wird der Standardwert des Assistenten verwendet.
+</ParamField>
+
+<ParamField body="voicemail_drop_message" param-type="string" required="false" show-location="false">
+Benutzerdefinierte TTS-Nachricht, die abgespielt wird, wenn Voicemail erkannt wird. Diese Einstellung gilt auf Kampagnenebene.
+</ParamField>
+
+<ParamField body="unavailable_action" param-type="string" required="false" show-location="false" enum="retry,fail">
+Aktion, die ausgeführt wird, wenn die Leitung nicht verfügbar ist. Verwende `retry`, um einen weiteren Versuch zu planen, oder `fail`, um Wiederholungen für dieses Nichtverfügbarkeits-Ergebnis zu beenden.
+</ParamField>
+
+## Konfiguriere Gleichzeitigkeit und Kampagnenlimits
+
+Diese Einstellungen steuern, wie aggressiv eine Kampagne Anrufe platziert und ob sie automatisch stoppt, nachdem die aktuelle Zielgruppe aufgebraucht ist.
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false" show-location="false">
+Maximale Anzahl gleichzeitiger Anrufe, die die Kampagne platzieren darf.
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false" show-location="false">
+Standardmäßige maximale Versuche pro Kontakt, die von der Kampagnenkonfigurationsebene verwendet werden. Standard: `3`. Dies entspricht dem gemeinsamen Versuchslimit-Verhalten der Kampagne.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false" show-location="false">
+Wenn `true`, bleibt die Kampagne nach dem Aufbrauchen der aktuellen Zielgruppe aktiv, damit sie fortlaufende Anmeldung akzeptieren kann. Das ist der Evergreen-Modus.
+</ParamField>
+
+<Callout kind="info">
+
+Verwende `noAutoComplete = true` nur dann, wenn dein Workflow fortlaufend neue Kontakte hinzufügt. Andernfalls solltest du die Kampagne abschließen lassen, wenn ihre aktuelle Warteschlange abgearbeitet ist.
+
+</Callout>
+
+## Konfiguriere Webhooks
+
+Webhooks senden Kampagnenereignisse an ein externes System wie ein CRM, ein Warehouse oder einen internen Automatisierungsdienst.
+
+<ParamField body="webhookEnabled" param-type="boolean" required="false" show-location="false">
+Aktiviert oder deaktiviert die Webhook-Zustellung für die Kampagne.
+</ParamField>
+
+<ParamField body="webhookUrl" param-type="string" required="false" show-location="false">
+Ziel-URL, die Kampagnen-Webhook-Ereignisse empfängt.
+</ParamField>
+
+<ParamField body="webhookSecret" param-type="string" required="false" show-location="false">
+Gemeinsames Geheimnis, das verwendet wird, um Webhook-Anfragen auf deinem Server zu verifizieren.
+</ParamField>
+
+<ParamField body="webhookEvents" param-type="array" required="false" show-location="false">
+Liste von Kampagnenereignisnamen, die die Webhook-Zustellung auslösen sollen.
+</ParamField>
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+  <Card title="Kampagnenübersicht" href="/campaigns/overview" icon="book-open" cta="Leitfaden öffnen" />
+  <Card title="Kampagnenüberwachung in Echtzeit" href="/campaigns/realtime" icon="bar-chart" cta="Dashboard anzeigen" />
+</Columns>

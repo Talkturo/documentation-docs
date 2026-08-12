@@ -1,0 +1,265 @@
+---
+title: Anrufprotokolle und Transkripte
+description: Prüfe den Anrufverlauf, Aufzeichnungen, Transkripte, Analysen und die Guthabenkosten pro Anruf für jede Unterhaltung deiner Assistenten.
+---
+
+## Prüfe jeden Anruf an einem Ort
+
+Anrufprotokolle geben dir eine vollständige Aufzeichnung jedes Anrufs, den deine Assistenten bearbeitet haben. Nutze sie, um nachzuvollziehen, was während eines Anrufs passiert ist, die Aufzeichnung anzuhören, das Transkript zu lesen, Systemereignisse zu prüfen und zu verstehen, wie viele Guthaben die Unterhaltung verbraucht hat.
+
+Wenn du Trends auf Kontoebene statt einzelner Anrufdetails brauchst, nutze das [Intelligence Dashboard](/intelligence). Anrufprotokolle sind am besten geeignet, wenn du eine bestimmte Unterhaltung untersuchen möchtest.
+
+## Was du in den Anrufprotokollen tun kannst
+
+Die Anrufliste ist für die tägliche Prüfung ausgelegt. Du kannst aktuelle Aktivitäten schnell überfliegen und dann jede Zeile für eine vollständige Anrufaufschlüsselung öffnen.
+
+| Bereich | Was du prüfen kannst |
+| --- | --- |
+| Anrufliste | Vollständiger Anrufverlauf in einer filterbaren, paginierten Tabelle |
+| Detailansicht | Protokolle, Transkripte, Analysen, Nachrichten und Kosten für einen Anruf |
+| Aufzeichnungen | Stereo-Wiedergabe mit getrennten Kanälen für Mensch und AI |
+| Transkriptprüfung | Gesprächsverlauf nach Sprecher, Voicemail-Begrüßungen und Status bei fehlenden Transkripten |
+| Kostenprüfung | Guthabenverbrauch pro Anruf über STT, LLM, TTS und Plattform-Overhead |
+
+## Nutze die Anrufliste, um die benötigte Unterhaltung zu finden
+
+Die Hauptseite der Anrufprotokolle zeigt deinen vollständigen Anrufverlauf in einer paginierten Tabelle. Jede Zeile steht für einen Anruf und öffnet eine Vollbild-Detailansicht.
+
+### Spalten der Anrufliste
+
+| Spalte | Beschreibung |
+| --- | --- |
+| Typ | Ob der Anruf `inbound` oder `outbound` war |
+| Anruf-ID | Die Anrufkennung in gekürzter Form |
+| Kosten | Gesamtkosten des Anrufs, angezeigt in Guthaben |
+| Beendigungsgrund | Warum der Anruf beendet wurde |
+| Ergebnis | Das erfasste Resultat, zum Beispiel Voicemail oder keine Antwort |
+| Assistent | Der Assistent, der den Anruf bearbeitet hat |
+| Von Nummer | Die Telefonnummer des Anrufers oder die ausgehende Rufnummer |
+| An Nummer | Die Zieltelefonnummer |
+| Startzeit | Wann der Anruf gestartet wurde |
+| Dauer | Gesamtdauer des Anrufs in Sekunden |
+
+### Filtere die Liste
+
+Nutze die Filter oben auf der Seite, um die Ergebnisse einzugrenzen, bevor du einen Anruf öffnest.
+
+| Filter | Funktionsweise |
+| --- | --- |
+| Freitextsuche | Durchsucht den Anrufverlauf anhand einer Suchanfrage |
+| Von Nummer | Entspricht der ausgehenden Rufnummer |
+| An Nummer | Entspricht der Zieltelefonnummer |
+| Kampagnenauswahl | Filtert Anrufe nach Kampagne |
+
+Die Paginierung wird in der Seiten-URL verarbeitet. So kannst du durch größere Anrufverläufe navigieren, ohne deine Filter zu verlieren.
+
+<Callout kind="tip">
+
+Wenn du Anrufergebnisse innerhalb einer Kampagne vergleichst, beginne zuerst mit dem Kampagnenfilter. Damit lässt sich die Liste meist schneller eingrenzen als mit der Freitextsuche.
+
+</Callout>
+
+## Öffne die Anrufdetailansicht für eine vollständige Zeitleiste
+
+Wenn du eine Zeile auswählst, öffnet sich eine Vollbild-Anrufdetailansicht. Diese Ansicht ist in fünf Tabs organisiert, sodass du von einer Zusammenfassung auf hoher Ebene zu Rohereignisdaten wechseln kannst, ohne den Anruf zu verlassen.
+
+### Tabs in der Anrufdetailansicht
+
+| Tab | Was angezeigt wird |
+| --- | --- |
+| Logs | Chronologische Anrufereignisse mit Zeitstempeln, Status-Badges und Meldungen |
+| Transcripts | Das Gesprächstranskript, Details zu Voicemail-Begrüßungen und Transkriptverfügbarkeit |
+| Analysis | AI-Zusammenfassung, Weiterleitungsdetails, Erfolgsauswertung, extrahierte Daten und Metadaten |
+| Messages | System-, Assistenten- und Nutzernachrichten mit Zeitstempeln |
+| Cost | Gesamtguthaben und eine Aufschlüsselung nach STT, LLM, TTS und Plattform-Overhead |
+
+### Details im Header
+
+Die Detailansicht enthält die vollständige Anruf-ID und ermöglicht es dir, sie in die Zwischenablage zu kopieren. Das ist hilfreich, wenn du einen bestimmten Anruf mit einem Teammitglied teilen oder den Anruf mit einem anderen Workflow abgleichen musst.
+
+Wenn eine Aufzeichnung verfügbar ist, erscheint der Player oben in der Detailansicht, damit du zuhören kannst, während du den restlichen Anruf prüfst.
+
+## Höre dir Anrufaufzeichnungen an
+
+Anrufaufzeichnungen verwenden eine Stereo-MP3-Wiedergabe mit einer WaveSurfer-Wellenformansicht. Die Wellenform ist in getrennte Kanäle aufgeteilt, damit du die menschliche Stimme und die Talkturo AI-Stimme leichter unterscheiden kannst.
+
+### Funktionen der Wiedergabe
+
+| Steuerung | Beschreibung |
+| --- | --- |
+| Wiedergabe und Pause | Startet oder stoppt die Wiedergabe |
+| Aktuelle Zeit und Gesamtdauer | Zeigt, wo du dich in der Aufzeichnung befindest |
+| Geschwindigkeitsauswahl | Passt die Wiedergabe von 0,5x bis 2,0x an |
+| Download | Speichert die Aufzeichnungsdatei lokal |
+| Getrennte Kanal-Wellenform | Zeigt menschliche und AI-Audioinhalte in separaten Kanälen |
+
+Talkturo ruft Wiedergabelinks über den Recording-URL-Endpunkt ab und lädt vor der Wiedergabe eine neue presigned URL. So bleibt der Zugriff sicher und autorisierte Nutzer können trotzdem herunterladen und erneut wiedergeben.
+
+```text
+GET /api/calls/[id]/recording-url
+```
+
+## Lies Transkripte und Voicemail-Begrüßungen
+
+Der Tab Transcripts zeigt den Anrufinhalt in einem Nachricht-für-Nachricht-Format. Das ist der schnellste Weg, um zu verstehen, was passiert ist, wenn du dir nicht die gesamte Aufzeichnung anhören musst.
+
+### Inhalte des Transkripts
+
+| Transkriptelement | Beschreibung |
+| --- | --- |
+| Sprecherkennzeichnungen | Zeigt, wer welche Nachricht gesagt hat |
+| Zeitstempel | Zeigt, wann jede Nachricht aufgetreten ist |
+| Vollständige Unterhaltung | Zeigt das Transkript für den gesamten Anruf |
+| Leerer Status | Zeigt an, wenn keine Transkriptdaten verfügbar sind |
+
+### Details zu Voicemail-Begrüßungen
+
+Wenn der Anruf bei Voicemail gelandet ist, kann das Transkript einen separaten Abschnitt für die Voicemail-Begrüßung enthalten. So kannst du prüfen, was der Anrufbeantworter gesagt hat, ohne das vollständige Gesprächstranskript zu durchsuchen.
+
+| Voicemail-Detail | Beschreibung |
+| --- | --- |
+| Begrüßungstranskript | Das transkribierte Voicemail- oder Anrufbeantworter-Greeting |
+| Intent-Erkennung | Eine erkannte Voicemail-Absicht, zum Beispiel abwesend bis zu einem Datum oder nicht stören |
+| Alternative Nummer | Eine aus der Begrüßung extrahierte Telefonnummer, wenn verfügbar |
+
+<Callout kind="info">
+
+Einige Anrufe erzeugen keine Transkriptdaten. In diesen Fällen zeigt die Detailansicht einen klaren Status ohne Transkript statt unvollständiger oder irreführender Inhalte.
+
+</Callout>
+
+## Prüfe AI-generierte Analysen
+
+Der Tab Analysis fasst den Anruf zusammen und zeigt die strukturierten Daten, die Talkturo daraus extrahiert hat. Nutze diesen Tab, wenn du schnell das wichtigste Ergebnis sehen oder prüfen möchtest, was das System für nachgelagerte Workflows erfasst hat.
+
+### Analysebereiche
+
+| Bereich | Was enthalten ist |
+| --- | --- |
+| Anrufzusammenfassung | AI-generierte Zusammenfassung der Unterhaltung |
+| Erfolgsauswertung | Ob der Anruf als erfolgreich markiert wurde |
+| Extrahierte Daten | Strukturierte Daten, die aus der Unterhaltung geparst wurden |
+| Metadaten | Mit dem Datensatz gespeicherte Anrufmetadaten |
+| Weiterleitungsdetails | Weiterleitungsabteilung, Nummer, Typ, Status und Zeitstempel, wenn eine Weiterleitung erfolgt ist |
+
+### Weiterleitungsmetadaten
+
+Wenn der Anruf weitergeleitet wurde, zeigt die Analyseansicht die Weiterleitungsdetails an einer Stelle.
+
+| Feld | Beschreibung |
+| --- | --- |
+| Abteilung | Die Zielabteilung |
+| Telefonnummer | Die für die Weiterleitung verwendete Nummer |
+| Weiterleitungstyp | Ob die Weiterleitung warm oder kalt war |
+| Status | Das Ergebnis der Weiterleitung |
+| Zeitstempel | Wann die Weiterleitung stattgefunden hat |
+
+## Prüfe rohe System- und Assistentennachrichten
+
+Der Tab Messages zeigt Gesprächsverläufe als System-, Assistenten- und Nutzernachrichten mit Zeitstempeln. Das ist hilfreich, wenn du den Nachrichtenfluss hinter dem Transkript prüfen oder verstehen möchtest, wie der Assistent intern reagiert hat.
+
+Der Tab Logs ist stärker auf den Betrieb ausgerichtet. Er zeigt chronologische Ereignisse mit Zeitstempeln, Nachrichtentext und klaren `LOG`- oder `ERROR`-Badges, damit du Fehler oder ungewöhnliches Verhalten schnell erkennst.
+
+### Wann du Logs oder Messages verwenden solltest
+
+| Wenn du wissen musst ... | Öffne diesen Tab |
+| --- | --- |
+| Was auf Systemebene während des Anrufs passiert ist | Logs |
+| Wie die System-, Assistenten- und Nutzernachrichten aussahen | Messages |
+| Ob beim Anruf Fehler aufgetreten sind | Logs |
+| Wie die Unterhaltung Zug um Zug aufgebaut war | Messages |
+
+## Verstehe die Guthabenkosten pro Anruf
+
+Der Tab Cost schlüsselt auf, wie viele Guthaben ein Anruf verbraucht hat und wohin diese Guthaben gegangen sind. Das hilft dir, ungewöhnlich teure Anrufe zu erklären und die relativen Kosten von Transkription, Modellnutzung und Sprachausgabe zu vergleichen.
+
+### Kostenbestandteile
+
+| Bestandteil | Beschreibung |
+| --- | --- |
+| STT | Kosten für Speech-to-Text |
+| LLM | Kosten für das Sprachmodell, einschließlich Prompt- und Completion-Tokens |
+| TTS | Kosten für Text-to-Speech, einschließlich Zeichenverbrauch |
+| Plattform-Overhead | Talkturo-Plattformkosten für den Anruf |
+
+### Was die Kostenansicht enthält
+
+| Element | Beschreibung |
+| --- | --- |
+| Gesamtguthaben | Die vollständigen Kosten des Anrufs |
+| Donut-Diagramm | Visuelle Aufschlüsselung aller Guthabenbestandteile |
+| Komponentenkarten | Guthabensummen und Nutzungsdetails pro Bestandteil |
+| Token-Details | Anzahl der Prompt- und Completion-Tokens für die LLM-Nutzung |
+| Zeichen-Details | Anzahl der Zeichen für die TTS-Nutzung |
+
+Das Donut-Diagramm verwendet farbcodierte Segmente, damit du die größten Kostenverursacher auf einen Blick erkennen kannst. Die Komponentenkarten unter dem Diagramm zeigen die genauen Zahlen hinter jedem Segment.
+
+## Latenzmetriken nur für Admins
+
+Einige Anrufdetailansichten enthalten Latenzmetriken für die betriebliche Prüfung. Diese Metriken sind für Admins gedacht und helfen dabei, die Antwortgeschwindigkeit entlang der gesamten Anrufpipeline zu diagnostizieren.
+
+<Callout kind="info">
+
+Latenzmetriken sind nur für Admins verfügbar, wenn die Sichtbarkeit von Latenz für die Anrufdetailansicht aktiviert ist.
+
+</Callout>
+
+### Verfügbare Latenzmetriken
+
+| Metrik | Beschreibung |
+| --- | --- |
+| Response P95 | 95. Perzentil der Antwortlatenz |
+| Response P50 | Median der Antwortlatenz |
+| Turn count | Anzahl der Turns im Anruf |
+| EOU latency | Latenz der End-of-Utterance-Phase |
+| LLM latency | Latenz der Modellantwortphase |
+| TTS latency | Latenz der Sprachsynthesephase |
+
+Wenn du statt der Systemleistung eher die Qualität des Assistenten untersuchst, beginne zuerst mit den Tabs Transcripts, Analysis und Cost. Nutze Latenzmetriken, wenn du Verzögerungen oder Eskalationen erklären musst.
+
+## Die besten Wege, einen Anruf zu prüfen
+
+<Steps>
+  <Step title="Finde den Anruf">
+
+  Filtere die Anrufliste nach Kampagne, Telefonnummer oder Textsuche und öffne dann die passende Zeile.
+
+  Ein erfolgreicher Treffer öffnet die Vollbild-Detailansicht für diesen Anruf.
+
+  </Step>
+  <Step title="Prüfe die Aufzeichnung und das Transkript">
+
+  Beginne mit dem Aufzeichnungs-Player, wenn du Tonfall und Tempo brauchst, oder gehe direkt zum Tab Transcripts, wenn du nur den gesprochenen Inhalt brauchst.
+
+  Wenn Transkriptdaten vorhanden sind, siehst du nach Sprechern gekennzeichnete Einträge mit Zeitstempeln. Wenn der Anruf bei Voicemail gelandet ist, prüfe den Abschnitt zur Voicemail-Begrüßung auf Intent- und alternative Nummernerkennung.
+
+  </Step>
+  <Step title="Nutze Analysis für das Ergebnis">
+
+  Öffne den Tab Analysis, um die AI-generierte Zusammenfassung, die Erfolgsauswertung, extrahierte Daten und mögliche Weiterleitungsdetails zu prüfen.
+
+  Das ist der schnellste Weg, um zu bestätigen, was passiert ist, ohne jedes Ereignis oder jede Nachricht zu lesen.
+
+  </Step>
+  <Step title="Prüfe bei Bedarf Logs, Messages und Cost">
+
+  Nutze Logs, um Ereignisse nachzuvollziehen, Messages, um Interaktionen Zug um Zug zu prüfen, und Cost, um die Guthabenauswirkungen des Anrufs zu verstehen.
+
+  Wenn du Admin bist und Latenzmetriken sichtbar sind, nutze sie, um langsame Antworten zu untersuchen.
+
+  </Step>
+</Steps>
+
+## Verwandte Seiten
+
+<Columns cols={3}>
+  <Card title="Intelligence Dashboard" href="/intelligence" icon="bar-chart" cta="Dashboard ansehen">
+    Verfolge Trends über Anrufe, Ergebnisse, Einwände, Stimmungen und die Performance im Zeitverlauf.
+  </Card>
+  <Card title="Übersicht der Assistenten" href="/assistants/overview" icon="users" cta="Assistenten ansehen">
+    Prüfe und verwalte die Assistenten, die eingehende und ausgehende Anrufe bearbeiten.
+  </Card>
+  <Card title="Übersicht der Kampagnen" href="/campaigns/overview" icon="folder" cta="Kampagnen ansehen">
+    Organisiere Anrufaktivitäten nach Kampagne und filtere Anrufprotokolle nach Kampagnenleistung.
+  </Card>
+</Columns>

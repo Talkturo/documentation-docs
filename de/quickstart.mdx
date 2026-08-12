@@ -1,0 +1,282 @@
+---
+title: Schnellstart
+description: Erstelle einen Assistenten, kaufe eine Telefonnummer und führe deinen ersten Talkturo-Testanruf über das Dashboard oder die API durch.
+---
+
+## Voraussetzungen
+
+<Callout kind="info">
+
+Bevor du beginnst, stelle sicher, dass du Folgendes hast:
+
+- Ein Talkturo-Konto
+- Zugriff auf das Talkturo-Dashboard unter `https://app.talkturo.ai`
+- Einen API-Schlüssel, wenn du die API verwenden möchtest
+- Eine Kreditkarte, wenn du eine Telefonnummer über dein enthaltenes Guthaben hinaus kaufen möchtest
+
+Neue Workspaces starten mit 10 kostenlosen Guthaben, sodass du die erste Einrichtung abschließen kannst, bevor du mehr ausgibst.
+
+</Callout>
+
+Mit Talkturo kannst du einen KI-Sprachassistenten erstellen, eine Telefonnummer verbinden und einen Live-Anruf in einem einzigen Einrichtungsablauf testen. Die folgenden Schritte zeigen den schnellsten Weg zu einem funktionierenden Assistenten.
+
+## Erstelle und verifiziere dein Konto
+
+Erstelle zuerst deinen Workspace und generiere dann einen API-Schlüssel, wenn du die Einrichtung automatisieren möchtest.
+
+<Steps>
+  <Step title="Registriere dich bei Talkturo">
+
+    Öffne `https://app.talkturo.ai/signup` und erstelle dein Konto.
+
+    Wenn die Registrierung erfolgreich ist, erstellt Talkturo deinen Workspace und schreibt automatisch 10 kostenlose Guthaben gut.
+
+  </Step>
+  <Step title="Verifiziere deine E-Mail-Adresse">
+
+    Öffne die Verifizierungs-E-Mail von Talkturo und bestätige deine Adresse.
+
+    Nach der Verifizierung kannst du dich im Dashboard anmelden und auf deine Workspace-Einstellungen zugreifen.
+
+  </Step>
+  <Step title="Erstelle einen API-Schlüssel">
+
+    Öffne im Dashboard deine Kontoeinstellungen und generiere einen API-Schlüssel.
+
+    Talkturo-API-Schlüssel verwenden das Format `tk_live_...` für Live-Umgebungen und `tk_test_...` für Testumgebungen. Kopiere den Schlüssel, wenn Talkturo ihn anzeigt. Du verwendest ihn im Header `Authorization` als `Bearer tk_test_example_9xmk7q2r`.
+
+  </Step>
+</Steps>
+
+## Erstelle deinen ersten KI-Assistenten
+
+Erstelle deinen ersten Assistenten über den geführten Assistenten oder mit einer einzelnen API-Anfrage. Beide Wege erstellen denselben zugrunde liegenden Assistenten-Datensatz.
+
+<Tabs>
+  <Tab title="Dashboard" icon="monitor">
+
+    Das Dashboard führt dich durch einen 7-stufigen Einrichtungsablauf:
+
+    1. **Assistent konfigurieren** — Wähle eine Vorlage und gib deinem Assistenten einen Namen.
+    2. **Unternehmensinformationen** — Füge den Geschäftskontext hinzu, den der Assistent in Gesprächen verwenden soll.
+    3. **Telefonnummer** — Suche nach einer Nummer oder verbinde eine Nummer.
+    4. **Unternehmen** — Definiere das Unternehmen, das der Assistent repräsentiert.
+    5. **Kontakte** — Füge Kontakte hinzu oder importiere sie, wenn du ausgehende Anrufe planst.
+    6. **Kampagne** — Konfiguriere bei Bedarf eine ausgehende Kampagne.
+    7. **Abschließen** — Prüfe die Einrichtung und schließe sie ab.
+
+    Starte unter `https://app.talkturo.ai/assistants` und klicke auf **New Assistant**.
+
+    Wähle eine dieser Vorlagen:
+
+    - **Outbound Setter**
+    - **Inbound Support**
+    - **Follow-up**
+    - **Custom**
+
+    Wenn der Assistent erstellt ist, zeigt Talkturo ihn in deiner Assistentenliste an und öffnet den Editor, damit du die Einrichtung fortsetzen kannst.
+
+  </Tab>
+  <Tab title="API" icon="code">
+
+    Sende eine `POST`-Anfrage an `/api/assistants`, um den Assistenten direkt zu erstellen.
+
+    <CodeGroup tabs="cURL,JavaScript">
+      ```bash
+      curl -X POST https://app.talkturo.ai/api/assistants \
+        -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "accountSlug": "acme-sales",
+          "name": "Acme Inbound Assistant",
+          "templateId": "custom"
+        }'
+      ```
+
+      ```javascript
+      const response = await fetch("https://app.talkturo.ai/api/assistants", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer tk_test_example_9xmk7q2r",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          accountSlug: "acme-sales",
+          name: "Acme Inbound Assistant",
+          templateId: "custom"
+        })
+      });
+
+      const assistant = await response.json();
+      console.log(assistant.id);
+      ```
+
+    </CodeGroup>
+
+    Verwende diese Anfragefelder:
+
+    - `accountSlug` — erforderlicher Workspace-Slug
+    - `name` — erforderlicher Assistentenname
+    - `templateId` — optionale Vorlagenkennung, standardmäßig `custom`
+
+    Eine erfolgreiche Anfrage gibt den neuen Assistenten-Datensatz zurück. Behalte die Assistenten-ID, da du sie beim Zuweisen von Telefonnummern brauchst.
+
+  </Tab>
+</Tabs>
+
+## Kaufe und weise eine Telefonnummer zu
+
+Suche zuerst nach einer Nummer, kaufe sie dann und verbinde sie mit deinem Assistenten.
+
+<Steps>
+  <Step title="Suche nach einer Telefonnummer" icon="search">
+
+    Verwende den Telefonnummern-Ablauf im Dashboard oder rufe die Such-API auf, um verfügbare Nummern zu finden.
+
+    <CodeGroup tabs="cURL,JavaScript">
+      ```bash
+      curl -X POST https://app.talkturo.ai/api/phone-numbers/search \
+        -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "country": "US",
+          "searchType": "local",
+          "features": ["voice"],
+          "limit": 5
+        }'
+      ```
+
+      ```javascript
+      const response = await fetch("https://app.talkturo.ai/api/phone-numbers/search", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer tk_test_example_9xmk7q2r",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          country: "US",
+          searchType: "local",
+          features: ["voice"],
+          limit: 5
+        })
+      });
+
+      const results = await response.json();
+      console.log(results);
+      ```
+
+    </CodeGroup>
+
+    Wenn die Suche erfolgreich ist, gibt Talkturo eine Liste verfügbarer Nummern zurück. Wähle einen Wert aus der Antwort für den Kaufschritt aus.
+
+  </Step>
+  <Step title="Kaufe die Nummer" icon="phone">
+
+    Kaufe die ausgewählte Nummer für deinen Workspace.
+
+    <CodeGroup tabs="cURL,JavaScript">
+      ```bash
+      curl -X POST https://app.talkturo.ai/api/phone-numbers/purchase \
+        -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "phoneNumber": "+14155550123",
+          "accountSlug": "acme-sales"
+        }'
+      ```
+
+      ```javascript
+      const response = await fetch("https://app.talkturo.ai/api/phone-numbers/purchase", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer tk_test_example_9xmk7q2r",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          phoneNumber: "+14155550123",
+          accountSlug: "acme-sales"
+        })
+      });
+
+      const purchase = await response.json();
+      console.log(purchase);
+      ```
+
+    </CodeGroup>
+
+    Nach dem Kauf erscheint die Nummer in deinem Telefonnummern-Bestand des Workspaces.
+
+  </Step>
+  <Step title="Weise die Nummer deinem Assistenten zu" icon="link">
+
+    Verbinde die gekaufte Nummer mit deinem Assistenten und aktiviere die Anrufverarbeitung.
+
+    <CodeGroup tabs="cURL,JavaScript">
+      ```bash
+      curl -X POST https://app.talkturo.ai/api/assistants/asst_7f3k29d/telephony/settings \
+        -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "accountSlug": "acme-sales",
+          "phoneNumberIds": ["pn_4m8x2q1"],
+          "inboundEnabled": true,
+          "outboundEnabled": true
+        }'
+      ```
+
+      ```javascript
+      const response = await fetch("https://app.talkturo.ai/api/assistants/asst_7f3k29d/telephony/settings", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer tk_test_example_9xmk7q2r",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          accountSlug: "acme-sales",
+          phoneNumberIds: ["pn_4m8x2q1"],
+          inboundEnabled: true,
+          outboundEnabled: true
+        })
+      });
+
+      const settings = await response.json();
+      console.log(settings);
+      ```
+
+    </CodeGroup>
+
+    Wenn dieser Schritt erfolgreich ist, kann der Assistent eingehende Anrufe auf der zugewiesenen Nummer annehmen und ausgehende Anrufe tätigen, wenn du ausgehende Telefonie aktiviert hast.
+
+  </Step>
+</Steps>
+
+## Teste deinen ersten Anruf
+
+Verwende die integrierten Testanruf-Tools, nachdem die Nummer zugewiesen wurde.
+
+<Callout kind="tip">
+
+Öffne deinen Assistenten im Dashboard und gehe dann zum Tab **Telephony**, um einen Testanruf zu starten.
+
+Für einen eingehenden Test rufst du die Nummer an, die du dem Assistenten zugewiesen hast. Für einen ausgehenden Test verwendest du die Testanruf-Steuerung im Assistenten-Editor. Ein erfolgreicher Test verbindet den Anruf und leitet das Audio an den Assistenten weiter, den du gerade konfiguriert hast.
+
+</Callout>
+
+## Nächste Schritte
+
+Sobald dein erster Anruf funktioniert, kannst du die Einrichtung mit Kampagnen, CRM-Daten und Assistenten-Konfiguration erweitern.
+
+<Columns cols={2}>
+  <Card title="KI-Assistenten" icon="monitor" href="/assistants/overview">
+    Passe das Verhalten des Assistenten, Vorlagen und Telephony-Einstellungen an.
+  </Card>
+  <Card title="Kampagnen" icon="bar-chart" href="/campaigns/overview">
+    Starte ausgehende Workflows und verwalte Anrufaktivitäten in größerem Umfang.
+  </Card>
+  <Card title="CRM-Integration" icon="users" href="/crm/contacts">
+    Füge Kontakte und Unternehmensdaten hinzu, die deine Assistenten in Anrufen verwenden können.
+  </Card>
+  <Card title="Funktionen" icon="book-open" href="/features">
+    Entdecke die wichtigsten Plattformfunktionen, bevor du mit der erweiterten Einrichtung fortfährst.
+  </Card>
+</Columns>
