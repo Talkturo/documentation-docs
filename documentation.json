@@ -281,114 +281,114 @@
         "language": "German",
         "tabs": [
           {
-            "tab": "Documentation",
+            "tab": "Dokumentation",
             "icon": "book",
             "groups": [
               {
-                "group": "Getting Started",
+                "group": "Erste Schritte",
                 "icon": "rocket",
                 "pages": [
                   {
-                    "title": "Introduction",
+                    "title": "Einführung",
                     "path": "de/introduction",
                     "icon": "home"
                   },
                   {
-                    "title": "Quick Start",
+                    "title": "Schnellstart",
                     "path": "de/quickstart",
                     "icon": "zap"
                   },
                   {
-                    "title": "Authentication",
+                    "title": "Authentifizierung",
                     "path": "de/authentication",
                     "icon": "lock"
                   }
                 ]
               },
               {
-                "group": "Core Concepts",
+                "group": "Grundkonzepte",
                 "icon": "layers",
                 "pages": [
                   {
-                    "title": "Features",
+                    "title": "Funktionen",
                     "path": "de/features",
                     "icon": "star"
                   },
                   {
-                    "title": "Workspaces and Teams",
+                    "title": "Workspaces und Teams",
                     "path": "de/workspaces",
                     "icon": "users"
                   },
                   {
-                    "title": "Billing and Credits",
+                    "title": "Abrechnung und Guthaben",
                     "path": "de/billing",
                     "icon": "credit-card"
                   }
                 ]
               },
               {
-                "group": "AI Voice Agents",
+                "group": "KI-Sprachagenten",
                 "icon": "bot",
                 "pages": [
                   {
-                    "title": "AI Voice Agents",
+                    "title": "KI-Sprachagenten",
                     "path": "de/assistants/overview",
                     "icon": "bot"
                   },
                   {
-                    "title": "Assistant Configuration",
+                    "title": "Assistentenkonfiguration",
                     "path": "de/assistants/configuration",
                     "icon": "settings"
                   },
                   {
-                    "title": "Voice Library",
+                    "title": "Stimmenbibliothek",
                     "path": "de/voice-library",
                     "icon": "mic"
                   },
                   {
-                    "title": "Knowledge Base",
+                    "title": "Wissensdatenbank",
                     "path": "de/knowledge-base",
                     "icon": "database"
                   }
                 ]
               },
               {
-                "group": "Campaigns",
+                "group": "Kampagnen",
                 "icon": "megaphone",
                 "pages": [
                   {
-                    "title": "Campaigns",
+                    "title": "Kampagnen",
                     "path": "de/campaigns/overview",
                     "icon": "megaphone"
                   },
                   {
-                    "title": "Campaign Configuration",
+                    "title": "Kampagnenkonfiguration",
                     "path": "de/campaigns/configuration",
                     "icon": "settings"
                   },
                   {
-                    "title": "Real-time Campaign Monitoring",
+                    "title": "Kampagnenüberwachung in Echtzeit",
                     "path": "de/campaigns/realtime",
                     "icon": "activity"
                   }
                 ]
               },
               {
-                "group": "Telephony and Calls",
+                "group": "Telefonie und Anrufe",
                 "icon": "phone",
                 "pages": [
                   {
-                    "title": "Telephony and Phone Numbers",
+                    "title": "Telefonie und Telefonnummern",
                     "path": "de/telephony",
                     "icon": "phone"
                   },
                   {
-                    "title": "Call Logs and Transcripts",
+                    "title": "Anrufprotokolle und Transkripte",
                     "path": "de/call-logs",
                     "icon": "file-text"
                   },
                   {
-                    "title": "Intelligence and Analytics",
+                    "title": "Intelligence und Analytics",
                     "path": "de/intelligence",
                     "icon": "bar-chart"
                   }
@@ -399,22 +399,22 @@
                 "icon": "users",
                 "pages": [
                   {
-                    "title": "Contacts",
+                    "title": "Kontakte",
                     "path": "de/crm/contacts",
                     "icon": "user"
                   },
                   {
-                    "title": "Companies",
+                    "title": "Unternehmen",
                     "path": "de/crm/companies",
                     "icon": "building"
                   },
                   {
-                    "title": "Opportunities",
+                    "title": "Verkaufschancen",
                     "path": "de/crm/opportunities",
                     "icon": "target"
                   },
                   {
-                    "title": "Custom Fields",
+                    "title": "Benutzerdefinierte Felder",
                     "path": "de/crm/custom-fields",
                     "icon": "sliders"
                   }
@@ -430,7 +430,7 @@
                     "icon": "workflow"
                   },
                   {
-                    "title": "TurboFlow Triggers and Actions",
+                    "title": "TurboFlow Trigger und Aktionen",
                     "path": "de/turboflow/triggers-actions",
                     "icon": "zap"
                   }
@@ -441,33 +441,33 @@
                 "icon": "monitor",
                 "pages": [
                   {
-                    "title": "Close AI Desktop App",
+                    "title": "Close AI Desktop-App",
                     "path": "de/close-ai/overview",
                     "icon": "monitor"
                   },
                   {
-                    "title": "Desktop Sessions",
+                    "title": "Desktop-Sitzungen",
                     "path": "de/close-ai/sessions",
                     "icon": "play-circle"
                   },
                   {
-                    "title": "Script Editor",
+                    "title": "Skript-Editor",
                     "path": "de/close-ai/script-editor",
                     "icon": "edit"
                   },
                   {
-                    "title": "Prompt Library",
+                    "title": "Prompt-Bibliothek",
                     "path": "de/close-ai/prompts",
                     "icon": "message-square"
                   }
                 ]
               },
               {
-                "group": "Guides",
+                "group": "Anleitungen",
                 "icon": "compass",
                 "pages": [
                   {
-                    "title": "Integrations",
+                    "title": "Integrationen",
                     "path": "de/integrations",
                     "icon": "plug"
                   }
@@ -476,11 +476,11 @@
             ]
           },
           {
-            "tab": "API Reference",
+            "tab": "API-Referenz",
             "icon": "code",
             "groups": [
               {
-                "group": "Endpoints",
+                "group": "Endpunkte",
                 "icon": "terminal",
                 "openapi": "de/api-reference/openapi.yaml",
                 "pages": []
@@ -488,43 +488,43 @@
             ]
           },
           {
-            "tab": "Help Center",
+            "tab": "Hilfe-Center",
             "icon": "help-circle",
             "pages": [
               {
-                "title": "Help Center",
+                "title": "Hilfe-Center",
                 "path": "de/help-center",
                 "icon": "home"
               },
               {
-                "group": "FAQs",
+                "group": "Häufige Fragen",
                 "icon": "help-circle",
                 "expandable": false,
                 "pages": [
                   {
-                    "title": "Getting Started",
+                    "title": "Erste Schritte",
                     "path": "de/help-center/faq/getting-started"
                   }
                 ]
               },
               {
-                "group": "Troubleshooting",
+                "group": "Fehlerbehebung",
                 "icon": "alert-circle",
                 "expandable": false,
                 "pages": [
                   {
-                    "title": "Call Quality",
+                    "title": "Anrufqualität",
                     "path": "de/help-center/troubleshooting/call-quality"
                   }
                 ]
               },
               {
-                "group": "Guides",
+                "group": "Anleitungen",
                 "icon": "book-open",
                 "expandable": false,
                 "pages": [
                   {
-                    "title": "Launch Voice Agent",
+                    "title": "Sprachagenten starten",
                     "path": "de/help-center/guides/launch-voice-agent"
                   }
                 ]
@@ -532,11 +532,11 @@
             ]
           },
           {
-            "tab": "Changelog",
+            "tab": "Änderungsprotokoll",
             "icon": "clock",
             "pages": [
               {
-                "title": "Release History",
+                "title": "Versionshistorie",
                 "path": "de/changelog",
                 "icon": "history"
               }
