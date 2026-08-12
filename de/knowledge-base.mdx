@@ -72,12 +72,12 @@ Jede hochgeladene Datei durchläuft dieselbe Retrieval-Pipeline, bevor Assistent
 
 ```mermaid
 graph TD
-  A[Upload file] --> B[Store in workspace library]
-  B --> C[Extract text]
-  C --> D[Chunk content]
-  D --> E[Generate embeddings]
-  E --> F[Mark file ready]
-  E --> G[If processing fails mark file error]
+  A[Datei hochladen] --> B[In Workspace-Bibliothek speichern]
+  B --> C[Text extrahieren]
+  C --> D[Inhalt in Chunks aufteilen]
+  D --> E[Embeddings erzeugen]
+  E --> F[Datei als ready markieren]
+  E --> G[Bei Verarbeitungsfehler Datei als error markieren]
 ```
 
 Die Hintergrundverarbeitung läuft asynchron über einen Cron-gesteuerten Job. Uploads geben deshalb meist eine Antwort zurück, bevor die Datei durchsuchbar ist. Statusverfolgung ist in jedem produktiven Workflow wichtig.

@@ -38,7 +38,7 @@ Assistenten kombinieren den Voice-Stack und deine Geschäftslogik an einem Ort. 
 
 Vorlagen bieten dir einen schnelleren Startpunkt, wenn du bereits weißt, welchen Anruftyp du automatisieren möchtest. Die benutzerdefinierte Einrichtung gibt dir vom ersten Bildschirm an die volle Kontrolle über den Assistenten.
 
-| Template | Am besten geeignet für | Womit es startet |
+| Vorlage | Am besten geeignet für | Womit es startet |
 |---|---|---|
 | Outbound Setter | Ausgehende Sales-Qualifizierungsgespräche | Prospecting-orientierter Gesprächsablauf und Standardwerte für Outreach |
 | Inbound Support | Die Beantwortung eingehender Support-Anrufe von Kundinnen und Kunden | Support-orientierte Prompt-Struktur und Verarbeitung eingehender Anrufe |
@@ -161,16 +161,16 @@ Ein bereitgestellter Assistent folgt normalerweise demselben übergeordneten Abl
 
 ```mermaid
 graph TD
-  A[Incoming or outbound call] --> B[Telephony]
-  B --> C[Assistant prompt and business context]
-  C --> D[Speech processing]
-  D --> E[Reasoning model]
-  E --> F[Voice response]
-  E --> G[Tool functions]
-  C --> H[Knowledge base retrieval]
-  B --> I[Voicemail handling]
-  E --> J[Post-call analysis]
-  J --> K[Webhooks and email summary]
+  A[Eingehender oder ausgehender Anruf] --> B[Telefonie]
+  B --> C[Assistenten-Prompt und Geschäftskontext]
+  C --> D[Sprachverarbeitung]
+  D --> E[Reasoning-Modell]
+  E --> F[Sprachantwort]
+  E --> G[Tool-Funktionen]
+  C --> H[Abruf aus der Wissensdatenbank]
+  B --> I[Voicemail-Verarbeitung]
+  E --> J[Analyse nach dem Anruf]
+  J --> K[Webhooks und E-Mail-Zusammenfassung]
 ```
 
 Diesen Ablauf kannst du von Anfang bis Ende konfigurieren. Du kannst den Assistenten für eine enge Einzelaufgabe einfach halten oder Tools, Wissensabruf, Scoring und Automatisierung für komplexere produktive Workflows anbinden.

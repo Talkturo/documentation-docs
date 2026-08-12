@@ -279,7 +279,270 @@
       },
       {
         "language": "German",
-        "pages": []
+        "tabs": [
+          {
+            "tab": "Documentation",
+            "icon": "book",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "icon": "rocket",
+                "pages": [
+                  {
+                    "title": "Introduction",
+                    "path": "de/introduction",
+                    "icon": "home"
+                  },
+                  {
+                    "title": "Quick Start",
+                    "path": "de/quickstart",
+                    "icon": "zap"
+                  },
+                  {
+                    "title": "Authentication",
+                    "path": "de/authentication",
+                    "icon": "lock"
+                  }
+                ]
+              },
+              {
+                "group": "Core Concepts",
+                "icon": "layers",
+                "pages": [
+                  {
+                    "title": "Features",
+                    "path": "de/features",
+                    "icon": "star"
+                  },
+                  {
+                    "title": "Workspaces and Teams",
+                    "path": "de/workspaces",
+                    "icon": "users"
+                  },
+                  {
+                    "title": "Billing and Credits",
+                    "path": "de/billing",
+                    "icon": "credit-card"
+                  }
+                ]
+              },
+              {
+                "group": "AI Voice Agents",
+                "icon": "bot",
+                "pages": [
+                  {
+                    "title": "AI Voice Agents",
+                    "path": "de/assistants/overview",
+                    "icon": "bot"
+                  },
+                  {
+                    "title": "Assistant Configuration",
+                    "path": "de/assistants/configuration",
+                    "icon": "settings"
+                  },
+                  {
+                    "title": "Voice Library",
+                    "path": "de/voice-library",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Knowledge Base",
+                    "path": "de/knowledge-base",
+                    "icon": "database"
+                  }
+                ]
+              },
+              {
+                "group": "Campaigns",
+                "icon": "megaphone",
+                "pages": [
+                  {
+                    "title": "Campaigns",
+                    "path": "de/campaigns/overview",
+                    "icon": "megaphone"
+                  },
+                  {
+                    "title": "Campaign Configuration",
+                    "path": "de/campaigns/configuration",
+                    "icon": "settings"
+                  },
+                  {
+                    "title": "Real-time Campaign Monitoring",
+                    "path": "de/campaigns/realtime",
+                    "icon": "activity"
+                  }
+                ]
+              },
+              {
+                "group": "Telephony and Calls",
+                "icon": "phone",
+                "pages": [
+                  {
+                    "title": "Telephony and Phone Numbers",
+                    "path": "de/telephony",
+                    "icon": "phone"
+                  },
+                  {
+                    "title": "Call Logs and Transcripts",
+                    "path": "de/call-logs",
+                    "icon": "file-text"
+                  },
+                  {
+                    "title": "Intelligence and Analytics",
+                    "path": "de/intelligence",
+                    "icon": "bar-chart"
+                  }
+                ]
+              },
+              {
+                "group": "CRM",
+                "icon": "users",
+                "pages": [
+                  {
+                    "title": "Contacts",
+                    "path": "de/crm/contacts",
+                    "icon": "user"
+                  },
+                  {
+                    "title": "Companies",
+                    "path": "de/crm/companies",
+                    "icon": "building"
+                  },
+                  {
+                    "title": "Opportunities",
+                    "path": "de/crm/opportunities",
+                    "icon": "target"
+                  },
+                  {
+                    "title": "Custom Fields",
+                    "path": "de/crm/custom-fields",
+                    "icon": "sliders"
+                  }
+                ]
+              },
+              {
+                "group": "TurboFlow",
+                "icon": "workflow",
+                "pages": [
+                  {
+                    "title": "TurboFlow",
+                    "path": "de/turboflow/overview",
+                    "icon": "workflow"
+                  },
+                  {
+                    "title": "TurboFlow Triggers and Actions",
+                    "path": "de/turboflow/triggers-actions",
+                    "icon": "zap"
+                  }
+                ]
+              },
+              {
+                "group": "Close AI Desktop",
+                "icon": "monitor",
+                "pages": [
+                  {
+                    "title": "Close AI Desktop App",
+                    "path": "de/close-ai/overview",
+                    "icon": "monitor"
+                  },
+                  {
+                    "title": "Desktop Sessions",
+                    "path": "de/close-ai/sessions",
+                    "icon": "play-circle"
+                  },
+                  {
+                    "title": "Script Editor",
+                    "path": "de/close-ai/script-editor",
+                    "icon": "edit"
+                  },
+                  {
+                    "title": "Prompt Library",
+                    "path": "de/close-ai/prompts",
+                    "icon": "message-square"
+                  }
+                ]
+              },
+              {
+                "group": "Guides",
+                "icon": "compass",
+                "pages": [
+                  {
+                    "title": "Integrations",
+                    "path": "de/integrations",
+                    "icon": "plug"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "icon": "code",
+            "groups": [
+              {
+                "group": "Endpoints",
+                "icon": "terminal",
+                "openapi": "de/api-reference/openapi.yaml",
+                "pages": []
+              }
+            ]
+          },
+          {
+            "tab": "Help Center",
+            "icon": "help-circle",
+            "pages": [
+              {
+                "title": "Help Center",
+                "path": "de/help-center",
+                "icon": "home"
+              },
+              {
+                "group": "FAQs",
+                "icon": "help-circle",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Getting Started",
+                    "path": "de/help-center/faq/getting-started"
+                  }
+                ]
+              },
+              {
+                "group": "Troubleshooting",
+                "icon": "alert-circle",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Call Quality",
+                    "path": "de/help-center/troubleshooting/call-quality"
+                  }
+                ]
+              },
+              {
+                "group": "Guides",
+                "icon": "book-open",
+                "expandable": false,
+                "pages": [
+                  {
+                    "title": "Launch Voice Agent",
+                    "path": "de/help-center/guides/launch-voice-agent"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Changelog",
+            "icon": "clock",
+            "pages": [
+              {
+                "title": "Release History",
+                "path": "de/changelog",
+                "icon": "history"
+              }
+            ]
+          }
+        ]
       }
     ]
   }

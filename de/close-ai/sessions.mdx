@@ -1,0 +1,217 @@
+---
+title: Desktop-Sessions
+description: Prüfe Close-AI-Anruf-Sessions mit Transkripten, AI-Coaching, Zusammenfassungen und Team-Analytics aus der Desktop-App.
+---
+
+## Arbeite mit einem einzigen Datensatz für jeden Anruf
+
+Sessions sind der zentrale Datensatz in Close AI. Jede Live-Interaktion in der Desktop-App erzeugt eine Session, egal ob du den **Listen**-Modus für Live-Coaching aus Anrufaudio oder den **Ask**-Modus nutzt, um die AI während eines Anrufs zu befragen.
+
+Wenn der Anruf endet, bleibt die Session zur Prüfung verfügbar. Du kannst sie erneut öffnen, um das Transkript zu prüfen, AI-Nachrichten zu untersuchen, die Zusammenfassung zu lesen und Analysen für Coaching und Script Coverage auszuführen.
+
+<Callout kind="info">
+
+Analyse ist verfügbar, nachdem eine Session Transkriptdaten hat. Wenn die Session noch kein Transkript enthält, kann die Schaltfläche **Analyze** keine Coaching-Ergebnisse erzeugen.
+
+</Callout>
+
+## Sessions schnell finden und scannen
+
+Die Sessions-Seite zeigt eine durchsuchbare, paginierte Liste von Desktop-Anrufdatensätzen. Jede Seite zeigt bis zu **25 Sessions**, sodass Reps aktuelle Anrufe prüfen und Manager Aktivität im Team scannen können.
+
+### Was jede Session-Karte zeigt
+
+Jede Session-Karte zeigt die Details, die du brauchst, um zu entscheiden, ob du sie öffnest:
+
+- **Title** — der Session-Name, mit einem Fallback basierend auf der Session-ID, wenn kein eigener Titel vorhanden ist
+- **Session type** — **Listen** oder **Ask**
+- **Status** — active, ended, completed oder ein anderer erfasster Zustand
+- **Started** — die Startzeit der Session
+- **Duration** — verstrichene Anrufzeit
+- **Short ID** — der erste Teil der Session-ID zur schnellen Referenz
+
+### Session-Statusindikatoren
+
+| Status | Was du siehst | Was es bedeutet |
+|---|---|---|
+| Active | Drehender Indikator | Die Session läuft gerade live |
+| Ended oder completed | Grünes Häkchen | Der Anruf ist beendet und der Datensatz ist bereit zur Prüfung |
+| Andere Zustände | Uhr-Indikator | Die Session ist nicht aktiv und wurde nicht als completed aufgelöst |
+
+### Desktop-Statusbanner
+
+Oben in der Liste zeigt das Desktop-Statusbanner, ob der Workspace Desktop-Zugriff hat und wie viel monatliche Nutzung noch übrig ist.
+
+| Banner-Zustand | Was er zeigt |
+|---|---|
+| Desktop-Zugriff aktiviert | Aktueller Plan, monatliche Anrufnutzung und ein Fortschrittsbalken |
+| Nutzung über dem Schwellenwert | Ein Warnzustand, wenn die Nutzung sich dem monatlichen Limit nähert |
+| Unbegrenzter Plan | Kein Nutzungs-Limit-Indikator |
+| Kein Desktop-Zugriff | Gesperrter Zustand mit Abrechnungsaufforderung |
+
+<Callout kind="tip">
+
+Verwende die Suche, wenn du einen Teil eines Titels kennst oder einen bestimmten Anruf schnell finden möchtest. Die Suche funktioniert über die Session-Liste, bevor du weiter paginierst.
+
+</Callout>
+
+## Öffne eine Session, um den gesamten Anruf zu prüfen
+
+Wähle eine Session aus, um die Detailansicht zu öffnen. Der Header zeigt dir zuerst die Basisdaten, damit du dich schnell orientieren kannst, bevor du tiefer in den Anruf gehst.
+
+### Header-Details
+
+Oben auf der Session-Detailseite gibt es vier Metadaten-Karten:
+
+| Karte | Zeigt |
+|---|---|
+| Type | Listen oder Ask |
+| Status | Aktueller erfasster Session-Zustand |
+| Duration | Gesamte Session-Länge |
+| Started | Lokales Datum und Uhrzeit, wann die Session begann |
+
+Du kannst die Session auch inline mit dem Stift-Bearbeitungscontrol umbenennen. Wenn der aktuelle Titel zu allgemein ist, aktualisiere ihn so, dass er zum Kunden, Deal oder zur Objection passt, die im Anruf besprochen wurden.
+
+### Eine Session löschen
+
+Delete entfernt den Session-Datensatz aus der Liste. Nutze das, wenn eine Session versehentlich erstellt wurde oder nicht im Workspace bleiben soll.
+
+<Callout kind="alert">
+
+Delete ist für die Bereinigung gedacht, nicht für das routinemäßige Anrufmanagement. Bestätige, dass die Session nicht mehr benötigt wird, bevor du sie entfernst.
+
+</Callout>
+
+## Nutze die Summary-Karte für eine schnelle Zusammenfassung
+
+Wenn AI-Summary-Daten vorhanden sind, zeigt die Session nahe dem oberen Rand der Detailansicht eine Summary-Karte. Das ist der schnellste Weg zu verstehen, was passiert ist, ohne zuerst das gesamte Transkript zu lesen.
+
+Die Summary-Karte kann Folgendes enthalten:
+
+- **TL;DR** — eine kurze schriftliche Zusammenfassung des Anrufs
+- **Key points** — die wichtigsten Themen oder Momente als Aufzählungspunkte
+- **Action items** — Follow-up-Arbeit aus dem Gespräch
+- **Token usage** — wie viel Model-Nutzung die Zusammenfassung verbraucht hat
+
+Für Manager reicht das oft aus, um zu erkennen, ob ein Anruf tieferes Coaching braucht. Für Reps gibt es eine saubere Übergabe in die Follow-up-Arbeit.
+
+## Führe Analysen für Coaching und Review aus
+
+Der Analysebereich macht aus einer abgeschlossenen Session einen Coaching-Datensatz. Nutze **Analyze**, um die Analyse zum ersten Mal zu erzeugen, oder **Re-analyze**, um die Ergebnisse zu aktualisieren, nachdem sich Transkriptdaten geändert haben.
+
+### Talk-Metriken
+
+Diese Metriken zeigen, wie der Rep das Gespräch auf Ebene der Sprechmuster gehandhabt hat.
+
+| Metrik | Einheit | Was sie dir sagt |
+|---|---|---|
+| Talk Share | % | Wie viel der Anrufzeit der Salesperson gesprochen hat |
+| WPM | Wörter pro Minute | Sprechtempo während des Anrufs |
+| Patience | % | Wie oft Pausen gut getimt waren |
+| Longest Monologue | Zeit | Längster ununterbrochener Sprechabschnitt |
+
+### CloseScore-Aufschlüsselung
+
+CloseScore gibt der Session einen Gesamt-Score von **0 bis 100** und bricht diesen Score in Kategorien auf. Der Score ist farbcodiert, damit du Performance auf einen Blick einschätzen kannst.
+
+| Score-Bereich | Farbbedeutung |
+|---|---|
+| 80 und darüber | Emerald |
+| 60 bis 79 | Yellow |
+| 40 bis 59 | Orange |
+| Unter 40 | Red |
+
+Unter dem Gesamt-Score zeigt die Analyse kategoriebezogene Aufschlüsselungen mit Unterpunkten und Notizen. So sehen Manager, ob der Score wegen Discovery, Objection Handling, Tempo oder Skriptausführung gesunken ist, statt die Zahl als Blackbox zu behandeln.
+
+### Strengths und Improvements
+
+Coaching-Ergebnisse sind in zwei praktische Abschnitte unterteilt:
+
+- **Strengths** — Verhaltensweisen, die der Rep wiederholen sollte
+- **Improvements** — Schwächen und Risiken, die korrigiert werden müssen
+
+Dieses Layout macht die Review nach dem Anruf schneller, weil der Rep in einem Durchgang sowohl sieht, was funktioniert hat, als auch was geändert werden sollte.
+
+### Script Coverage
+
+Wenn die Session ein Skript verwendet hat, zeigt die Analyse außerdem, wie vollständig das Gespräch ihm gefolgt ist. Die Checkliste markiert jeden Abschnitt anhand der Coverage und zeigt die Zeit, die in diesem Abschnitt verbracht wurde.
+
+Du kannst Script Coverage nutzen, um Fragen wie diese zu beantworten:
+
+- Hat der Rep den Pricing-Abschnitt erreicht
+- Hat der Anruf einen wichtigen Discovery-Schritt übersprungen
+- Wo hat das Gespräch die meiste Zeit verbracht
+
+### Prospect-Persönlichkeit
+
+Der Persönlichkeitsblock hilft dem Rep, Follow-ups und zukünftige Anrufe anzupassen. Er zeigt:
+
+- **Personality type**
+- **Levers** — was diesen Prospect typischerweise motiviert
+- **Avoid** — was ihn typischerweise irritiert oder distanziert
+
+## Prüfe Transkript und AI-Nachrichtenverlauf
+
+Unter Summary und Analyse ist der Session-Inhalt in Tabs organisiert, damit du zwischen dem Anruf selbst und der internen Unterhaltung der AI wechseln kannst.
+
+### Transcript-Tab
+
+Der Transcript-Tab zeigt sprecherzugeordnete Zeilen mit Zeitstempeln und Sprach-Tags. Das Layout nutzt Chat-ähnliche Bubbles, wodurch Turn-Taking in längeren Anrufen leichter zu verfolgen ist.
+
+Diese Ansicht ist der beste Ort, um genau zu prüfen, was gesagt wurde, bevor du Coaching-Feedback gibst oder ein Follow-up schreibst.
+
+### AI Messages-Tab
+
+Der AI Messages-Tab zeigt das Nachrichtenprotokoll hinter der Session. Einträge sind nach Rolle gruppiert:
+
+- **System**
+- **User**
+- **Assistant**
+
+Jede Nachricht enthält ihre Rolle, Token-Anzahl und Zeit. Nutze diesen Tab, wenn du verstehen möchtest, wie die AI während der Session geantwortet hat oder warum Guidance auf eine bestimmte Weise aussah.
+
+## Nutze das Desktop-Dashboard für Teamtrends
+
+Einzelne Sessions helfen bei der Anruf-für-Anruf-Review. Das Desktop-Dashboard hilft Managern, einen Schritt zurückzutreten und Muster im Team zu erkennen.
+
+### KPI-Karten
+
+Der Dashboard-Header fasst die Performance für den ausgewählten Zeitraum zusammen.
+
+| KPI | Was sie zeigt |
+|---|---|
+| Calls in period | Gesamte Desktop-Sessions im ausgewählten Zeitraum |
+| Avg CloseScore | Durchschnittlicher Session-Score über analysierte Anrufe |
+| Avg Duration | Durchschnittliche Anruflänge |
+| Active Team Members | Anzahl der Reps mit Session-Aktivität |
+
+### Zeiträume und Analyse-Tabs
+
+Verwende den Zeitraum-Selektor, um zwischen den Ansichten **7d**, **30d** und **90d** zu wechseln. Jeder Zeitraum aktualisiert die Charts und Tabellen im gesamten Dashboard.
+
+Das Dashboard enthält acht Analyse-Tabs:
+
+| Tab | Fokus |
+|---|---|
+| Overview | Gesamttrends, Dauermuster und Leaderboard-Ansicht |
+| CloseScore | Score-Trends und Verteilung |
+| Objections | Objection-Anzahl und Kategorien |
+| Questions | Fragenmix und verpasste Fragen |
+| Personality | Persönlichkeitsverteilung über Anrufe |
+| Language | Trends bei Talk Share, WPM, Patience und Monologen |
+| Coaching | Strengths, Weaknesses, Risks und Coaching-Daten pro Mitglied |
+| Script | Skriptnutzung, Coverage und Abweichungsmuster |
+
+### KI-Narrative Insights
+
+Jeder Dashboard-Tab kann eine geschriebene Narrative auf Basis der aktuellen Daten erzeugen. Das fügt eine kurze AI-Zusammenfassung und Empfehlungsschicht über die Charts hinzu.
+
+Für Manager ist die Narrative nützlich bei der Vorbereitung von Coaching-Reviews oder Team-Updates. Für Reps hilft sie, Dashboard-Trends in eine konkrete nächste Action zu übersetzen.
+
+## Verwandte Seiten
+
+<Columns cols={3}>
+  <Card title="Close-AI-Übersicht" href="/close-ai/overview" icon="monitor" cta="Seite öffnen" />
+  <Card title="Prompt-Presets" href="/close-ai/prompts" icon="edit" cta="Prompts verwalten" />
+  <Card title="Skript-Editor" href="/close-ai/script-editor" icon="git-branch" cta="Skripte prüfen" />
+</Columns>

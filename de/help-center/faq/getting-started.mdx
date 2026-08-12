@@ -1,0 +1,125 @@
+---
+title: FAQ zum Einstieg
+description: Finde schnelle Antworten auf häufige Fragen zur Talkturo-Einrichtung, einschließlich Assistenten, Telefonnummern, Credits, Kampagnen und Integrationen.
+---
+
+## Häufige Fragen zum Einstieg
+
+Nutze diese Antworten, um deinen ersten Talkturo-Workspace, Assistenten, deine Telefonnummer und deine Kampagne zu starten — ohne zu raten, welche Seite oder welchen API-Endpunkt du brauchst.
+
+<ExpandableGroup>
+  <Expandable title="Wie erstelle ich meinen ersten KI-Sprachassistenten?" default-open="true">
+
+  Erstelle deinen ersten Assistenten im Dashboard auf der Seite **Assistenten**. Klicke auf **Neuer Assistent**, wähle eine Vorlage und schließe den 7-stufigen Einrichtungsassistenten ab.
+
+  Talkturo stellt diese Startvorlagen bereit:
+
+  - **Outbound Setter** für Buchungs- und Qualifizierungsanrufe
+  - **Inbound Support** für eingehende Support-Gespräche
+  - **Follow-up** für Outreach nach Anrufen oder Leads
+  - **Custom** zum Erstellen einer eigenen Konfiguration von Grund auf
+
+  Wenn du Automatisierung bevorzugst, erstelle einen Assistenten über die API mit einer `POST`-Anfrage an `/api/assistants` und übergib `accountSlug`, `name` und `templateId` im Request-Body.
+
+  ```bash
+  curl -X POST "https://api.talkturo.com/api/assistants" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "accountSlug": "acme-sales",
+      "name": "North America Outbound Assistant",
+      "templateId": "outbound-setter"
+    }'
+  ```
+
+  Nach Abschluss der Einrichtung erscheint dein neuer Assistent in der Liste **Assistenten** und ist bereit für die Zuweisung einer Telefonnummer, Tests oder den Einsatz in Kampagnen.
+
+  </Expandable>
+
+  <Expandable title="Wie erhalte ich eine Telefonnummer?">
+
+  Hole dir eine Nummer im Dashboard auf der Seite **Telefonnummern**, indem du verfügbare Nummern suchst und die gewünschte kaufst. Weise die Nummer danach einem Assistenten für eingehende oder ausgehende Nutzung zu.
+
+  Du kannst Nummern auch über die API bereitstellen, wenn dein Workflow automatisiert ist. Neue Nummern auf verwalteten Accounts enthalten eine 14-tägige kostenlose Testphase, aber aktive Nummern verbrauchen danach weiterhin monatliche Credits, sobald die Abrechnung greift.
+
+  <Callout kind="info">
+
+  Telefonnummern sind eine kostenpflichtige Ressource. Halte genug Credits in deinem Workspace, um Serviceunterbrechungen zu vermeiden.
+
+  </Callout>
+
+  </Expandable>
+
+  <Expandable title="Wie viele kostenlose Credits erhalte ich?">
+
+  Jeder neue Workspace erhält bei der Erstellung **10 kostenlose Credits**. Du kannst diese Credits nutzen, um Assistenten zu testen, Anrufe zu tätigen und dein Setup zu validieren, bevor du Guthaben auflädst.
+
+  Talkturo verbraucht Credits pro Minute basierend auf den Diensten, die während eines Anrufs genutzt werden. Die Nutzung kann Speech-to-Text, Sprachmodellverarbeitung, Text-to-Speech und Telefoniekosten umfassen — die Gesamtverbrennung hängt also von der Konfiguration deines Assistenten ab.
+
+  </Expandable>
+
+  <Expandable title="Was ist der Unterschied zwischen Standard- und Realtime-Modus?">
+
+  Der **Standard-Modus** verwendet getrennte Komponenten für Speech-to-Text, Sprachmodell und Text-to-Speech. Nutze diesen Modus, wenn du mehr Kontrolle über jede Schicht des Voice-Stacks brauchst, einschließlich Modellauswahl und Konfiguration.
+
+  Der **Realtime-Modus** verwendet ein einzelnes Speech-to-Speech-Modell wie OpenAI Realtime oder Google Gemini Live. Nutze diesen Modus, wenn niedrigere Latenz wichtiger ist als feingranulare Kontrolle über die Komponenten.
+
+  | Modus | Funktionsweise | Am besten geeignet für |
+  | --- | --- | --- |
+  | Standard | Getrennte STT-, LLM- und TTS-Dienste | Flexible Konfigurationen und tiefere Abstimmung |
+  | Realtime | Ein Speech-to-Speech-Modell | Schnellere Turn-Antworten und niedrigere Latenz |
+
+  </Expandable>
+
+  <Expandable title="Kann ich Kontakte in großen Mengen importieren?">
+
+  Ja. Nutze den CSV-Import auf der Seite **CRM-Kontakte**, um Kontakte in großen Mengen hochzuladen und jede CSV-Spalte vor dem Importstart dem richtigen Talkturo-Kontaktfeld zuzuordnen.
+
+  Wenn du Kontakte programmatisch importierst, sende eine `POST`-Anfrage an `/api/crm/contacts/import`. Der Massenimport eignet sich gut für die Kampagneneinschreibung, Lead-Follow-up und wiederkehrende Listensynchronisationen aus deinem bestehenden CRM.
+
+  ```bash
+  curl -X POST "https://api.talkturo.com/api/crm/contacts/import" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "accountSlug": "acme-sales",
+      "fileUrl": "https://storage.acmecrm.com/exports/q3-leads.csv"
+    }'
+  ```
+
+  Nach Abschluss des Imports erscheinen die Kontakte auf der Seite **CRM-Kontakte** und können in Kampagnen eingeschrieben werden.
+
+  </Expandable>
+
+  <Expandable title="Wie starte ich eine ausgehende Kampagne?">
+
+  Erstelle zuerst eine Kampagne und verknüpfe sie mit einem Assistenten, der für ausgehende Anrufe aktiviert ist. Schreibe dann Kontakte ein, konfiguriere deine erlaubten Anruffenster, prüfe die Wiederholungseinstellungen und starte die Kampagne, wenn die Liste bereit ist.
+
+  Sobald die Kampagne live ist, überwache den Fortschritt im Echtzeit-Dashboard. Du kannst aktive Anrufe, abgeschlossene Anrufe, Wiederholungen und den Kampagnenstatus verfolgen, ohne den Workspace zu verlassen.
+
+  </Expandable>
+
+  <Expandable title="Was passiert, wenn während einer Kampagne die Credits ausgehen?">
+
+  Kampagnen werden automatisch pausiert, wenn die Workspace-Credits unter **1.0** fallen. So werden keine neuen Anrufe gestartet, wenn das Kontoguthaben die Anrufaktivität nicht mehr tragen kann.
+
+  Wenn die Credits zu niedrig bleiben, können Telefonnummern ebenfalls gesperrt werden. Lade Credits manuell auf oder aktiviere Auto-Reload, damit Kampagnen ohne unerwartete Pausen weiterlaufen können.
+
+  <Callout kind="alert">
+
+  Wenn du ausgehende Kampagnen mit hohem Volumen ausführst, aktiviere Auto-Reload vor dem Start. Auto-Reload verringert das Risiko von Pausen mitten in der Kampagne durch niedriges Guthaben.
+
+  </Callout>
+
+  </Expandable>
+
+  <Expandable title="Wie verbinde ich meinen Assistenten mit externen Diensten?">
+
+  Verbinde Assistenten auf drei gängige Arten mit externen Systemen — je nachdem, wann die Integration laufen soll.
+
+  - **TurboFlow** für Workflow-Automatisierungen über externe Tools und interne Aktionen
+  - **Tool-Funktionen des Assistenten** für Echtzeit-Aktionen während laufender Anrufe
+  - **Event-Webhooks** für Benachrichtigungen nach dem Anruf und nachgelagerte Verarbeitung
+
+  Nutze TurboFlow, wenn du mehrstufige Automatisierung willst, Tool-Funktionen des Assistenten, wenn der Assistent während eines Gesprächs handeln muss, und Webhooks, wenn ein anderes System nach Abschluss eines Anrufs oder Ereignisses reagieren soll.
+
+  </Expandable>
+</ExpandableGroup>

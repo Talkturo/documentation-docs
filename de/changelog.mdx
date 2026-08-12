@@ -1,0 +1,161 @@
+---
+title: Changelog
+description: >-
+  Versionshistorie mit aktuellen Updates, neuen Features und wichtigen
+  Änderungen an der Talkturo-Plattform.
+---
+## Aktuelle Updates
+
+Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
+
+<Update label="2026-08-11" description="v2.2.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Panel für Transkriptionseinstellungen** — Konfiguriere direkt im Assistenteneditor, wie dein KI-Assistent die Sprache der Anrufenden verarbeitet. Füge bis zu 100 benutzerdefinierte Keyterms hinzu (Namen, Produktnamen, Schreibweisen), aktiviere Smart Formatting, Profanitätsfilter, Redaktion sensibler Daten, GDPR-Training-Opt-out, Speaker Diarization sowie anbieterspezifische Optionen für Deepgram und AssemblyAI. Siehe [Features](/features).
+  - **Deutsche Lokalisierung der Transkriptionseinstellungen** — Alle Labels, Hilfetexte und Beschreibungen der Transkriptionseinstellungen sind jetzt vollständig auf Deutsch übersetzt.
+  - **Telefonnummernkauf über zwei Carrier** — Workspaces können jetzt gleichzeitig Telefonnummern von zwei Talkturo-Carriern sowie vom eigenen verbundenen Twilio-Account kaufen und nutzen. Siehe [Schnellstart](/quickstart).
+
+  ## Verbesserungen
+
+  - **Validierung beim Veröffentlichen von Workflows** — Beim Veröffentlichen eines Workflows werden jetzt fehlende Pflichtfelder vor dem Speichern geprüft, mit klaren Fehlermeldungen statt stiller Fehler während Live-Anrufen. Siehe [Integrationen](/integrations).
+  - **Admin-Verifizierungsliste zeigt Stadt** — Die Admin-Seite Verifications zeigt jetzt die Stadt neben dem Land an, sodass eingereichte Dokumente leichter dem richtigen Vorwahlgebiet zugeordnet werden können.
+
+  ## Bugfixes
+
+  - **Answering-Machine-Detection bei Outbound** — Behoben: Die Erkennung lief auf Ringback-Audio statt auf dem tatsächlich angenommenen Anruf und klassifizierte bei allen ausgehenden Anrufen Voicemail vs. Live-Antwort falsch. Siehe [Fehlerbehebung Anrufqualität](/help-center/troubleshooting/call-quality).
+  - **Workflow-Tool-Definitionen entsprechen jetzt dem Editor** — Der Tool-Name und die Parameter, die der Sprachagent registriert, stimmen jetzt exakt mit dem Editor überein, sodass prompt-autorisierte Tool-Aufrufe zuverlässig funktionieren. Siehe [Integrationen](/integrations).
+  - **Fehlgeschlagene Workflow-Trigger sind jetzt sichtbar** — Abgelehnte Workflow-Trigger erzeugen jetzt einen fehlgeschlagenen Run-Eintrag mit Begründung und erscheinen in der Runs-Ansicht, statt still zu verschwinden.
+  - **Transkriptionseinstellungen bleiben über Aktionen erhalten** — Einstellungen gehen nicht mehr verloren beim Wechsel zwischen Modellen desselben Anbieters, bei Nutzung des Standardanbieters oder beim Klonen eines Assistenten.
+  - **City-Level-Verifizierung erzwungen** — Telefonnummernkäufe in Ländern mit Compliance-Gate erzwingen jetzt die City-Level-Verifizierung mit klarer Fehlermeldung und verhindern stille Kauffehler.
+  - **Abgelaufene Carrier-Verifizierungen erkannt** — Abgelaufene Carrier-Freigaben werden jetzt erkannt und automatisch neu bewertet, sodass stille Kaufablehnungen verhindert werden.
+  - **Workflow-Funktionskarten zeigen aktuellen Namen** — Funktionskarten im Assistenteneditor zeigen jetzt den aktuellen Workflow-Namen statt eines veralteten Snapshots vom Zeitpunkt der ersten Anbindung.
+</Update>
+
+<Update label="2024-11-15" description="v2.1.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - Unterstützung für benutzerdefinierte Voice-Modelle in KI-Assistenten hinzugefügt — ermöglicht gebrandete Spracherlebnisse für Kampagnen.
+  - Echtzeit-Analytics-Dashboard zur Überwachung von Live-Telefonmetriken wie Dauer und Sentiment eingeführt.
+
+  ## Verbesserungen
+
+  - CRM-Integration mit Massenimport von Kontakten aus CSV-Dateien verbessert.
+  - Kampagnenplanung mit zeitzonenbewussten Timing-Optionen optimiert.
+
+  ## Bugfixes
+
+  - Intermittierende Audio-Latenzprobleme bei ausgehenden Anrufen mit hohem Volumen behoben.
+  - Fehler beim Rendern von Prompt-Vorlagen in der Assistenten-Konfigurations-UI behoben.
+</Update>
+
+<Update label="2024-10-20" description="v2.0.0" tags={["feature","breaking"]}>
+  ## Neue Features
+
+  - Outbound-Kampagnen-Builder mit A/B-Testing für Voice-Scripts gestartet.
+  - Function Calling in Assistenten für dynamische CRM-Lookups während Anrufen hinzugefügt.
+
+  ## Breaking Changes
+
+  - API-Authentifizierung aktualisiert: JWT-Tokens statt API-Keys erforderlich. Migriere mit der Anleitung unten.
+  - Legacy-Voice-Endpunkte als veraltet markiert; nutze Pfade unter `/v2/voice`.
+
+  ## Verbesserungen
+
+  - Genauigkeit der Anruftranskription mit neuen Speech-to-Text-Modellen um 15 % verbessert.
+</Update>
+
+<Update label="2024-09-10" description="v1.5.0" tags={["feature","bugfix"]}>
+  ## Neue Features
+
+  - Unternehmensdatensätze im CRM für bessere Kontaktororganisation integriert.
+  - Webhook-Benachrichtigungen für Ereignisse zum Anrufabschluss aktiviert.
+
+  ## Bugfixes
+
+  - Überschneidungen in der Kampagnenplanung behoben.
+  - Abstürze der Desktop-App unter macOS bei langen Sitzungen behoben.
+</Update>
+
+## Migrationsleitfaden
+
+Bei Upgrades mit Breaking Changes folge diesen Schritten, um deine Talkturo-Integration nahtlos zu aktualisieren.
+
+<Steps>
+  <Step title="SDK-Version aktualisieren" icon="package" title-type="p">
+    Installiere das neueste SDK auf allen Plattformen.
+
+    <CodeGroup show-lines="true">
+      ```bash
+      npm install @talkturo/sdk@2.1.0
+      ```
+
+      ```bash
+      yarn add @talkturo/sdk@2.1.0
+      ```
+
+      ```bash
+      pip install talkturo-sdk==2.1.0
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="API-Keys durch JWT ersetzen" icon="key" title-type="p">
+    Generiere JWT-Tokens über den neuen Auth-Endpunkt.
+
+    ```bash
+    curl -X POST https://api.example.com/v2/auth/token \
+      -H "Content-Type: application/json" \
+      -d '{"client_id": "YOUR_CLIENT_ID", "client_secret": "YOUR_CLIENT_SECRET"}'
+    ```
+
+    Aktualisiere deine Anfragen:
+
+    <ParamField header="Authorization" param-type="string" required="true" deprecated="false" show-location="true">
+      Bearer `{YOUR_JWT_TOKEN}`
+    </ParamField>
+  </Step>
+
+  <Step title="Aktualisierte Endpunkte testen" icon="play" title-type="p">
+    Verifiziere Voice-Konfigurationen mit den neuen Pfaden.
+
+    <Callout kind="tip" collapsed="false">
+      Führe End-to-End-Tests auf Staging durch, bevor du in Produktion gehst.
+    </Callout>
+  </Step>
+</Steps>
+
+## Kommende Roadmap
+
+Verfolge die kommenden Prioritäten für die Voice-AI-Features von Talkturo.
+
+<Board uid="76ab45fc-0379-4eed-b6b0-357eb70e8c0e" title="Q4 2024 Roadmap">
+  <BoardColumn title="Geplant" uid="2ecd5da3-b597-4c61-b90c-11febaf598d2" color="0" icon="calendar">
+    <BoardCard title="Mehrsprachige Sprachunterstützung" uid="848cefb5-ed3b-4582-9b31-4d76a62e5482" description="5+ Sprachen für globale Kampagnen hinzufügen" icon="globe" due-date="2024-12-15" />
+
+    <BoardCard title="Erweiterte Analytics" uid="23501c7e-2978-44f9-86be-af89c74e6ab1" description="Prädiktive Insights aus Anrufdaten" icon="bar-chart-3" />
+  </BoardColumn>
+
+  <BoardColumn title="In Bearbeitung" uid="a47152e7-08fa-457a-bd99-747c55837463" color="1" icon="loader-2">
+    <BoardCard title="Routing eingehender Anrufe" uid="3dc0b3a5-8433-4022-8943-2d68d8b02b74" description="KI-gestützte Anrufverteilung" icon="phone" author="Engineering Team" />
+  </BoardColumn>
+
+  <BoardColumn title="Abgeschlossen" uid="0c56ac3f-70b9-4101-885a-ac661efc507a" color="2" icon="check-circle">
+    <BoardCard title="Webhook v2" uid="480b02cc-9deb-4601-aa3a-8d89a21bd6f7" description="Erweiterte Event-Payloads" created-at="2024-11-01" />
+  </BoardColumn>
+</Board>
+
+## Weiter erkunden
+
+<Columns cols="2">
+  <Card title="API-Referenz" href="/api-reference/overview" icon="code" horizontal="false">
+    Detaillierte Endpunkte für Sprachagenten und Kampagnen.
+  </Card>
+
+  <Card title="Schlüsselkonzepte" href="/key-concepts" icon="book-open" horizontal="false">
+    Verstehe zentrale Talkturo-Begriffe und die Architektur.
+  </Card>
+</Columns>
+
+<Callout kind="info" collapsed="false">
+  Abonniere unseren Changelog-RSS-Feed oder tritt der Support-Mailingliste unter [info@talkturo.ai](mailto:info@talkturo.ai) bei, um sofort benachrichtigt zu werden.
+</Callout>

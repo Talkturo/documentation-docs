@@ -332,6 +332,8 @@ Verwende den CSV-Import, wenn du eine große Liste von Kontakten auf einmal hinz
 
 ## Kontakte suchen und filtern
 
+Verwende Filter, um große Kontaktlisten einzugrenzen, bevor du Kontakte bearbeitest, exportierst oder in Kampagnen anmeldest.
+
 | Filter | Typ | Verhalten |
 |---|---|---|
 | `teamId` | Query-Parameter | Begrenzt Ergebnisse auf ein Team |
@@ -378,9 +380,13 @@ curl -G "https://app.talkturo.com/api/crm/contacts" \
 ```
 </Response>
 
-Die Suche verwendet Groß-/Kleinschreibung-unabhängige Übereinstimmung für Namens-, E-Mail- und Telefonnummernfelder. Die Paginierung verwendet `limit` und `offset`.
+Die Suche verwendet Groß-/Kleinschreibung-unabhängige Übereinstimmung für Namens-, E-Mail- und Telefonnummernfelder. Die Paginierung verwendet `limit` und `offset`, wodurch sich inkrementelle Sync-Jobs leicht aufbauen oder große Ergebnismengen im Dashboard durchblättern lassen.
 
 ## Bestehende Kontakte verwalten
+
+Nachdem ein Kontakt existiert, kannst du den vollständigen Datensatz abrufen, CRM-Daten aktualisieren oder den Kontakt entfernen, sofern keine aktive Kampagne davon abhängt.
+
+### Kontakt-Endpunkte
 
 | Endpunkt | Methode | Rückgabe |
 |---|---|---|
@@ -392,6 +398,8 @@ Die Suche verwendet Groß-/Kleinschreibung-unabhängige Übereinstimmung für Na
 ### Einen Kontaktdatensatz anzeigen
 
 `GET /api/crm/contacts/[id]` gibt den Kontakt zusammen mit zugehörigem CRM-Kontext zurück. Verwende das, wenn du einen vollständigen Datensatz für Agent-Tools, interne Dashboards oder Synchronisierungslogik benötigst.
+
+Die Detailansicht enthält zugehörige Aktivitäten, Opportunities und den Kampagnenverlauf. Dieser Verlauf hilft dir zu verstehen, was bei früheren Anrufen passiert ist und ob ein Kontakt bereits Teil einer laufenden Outreach-Maßnahme ist.
 
 ### Einen Kontakt aktualisieren
 
@@ -468,15 +476,21 @@ Do not call-Kontakte sind vom Wählvorgang in Kampagnen ausgeschlossen. Wenn ein
 
 </Callout>
 
+Der DNC-Status ist nützlich für Compliance, manuelle Unterdrückung und die Kontrolle der Lead-Qualität. Du kannst ihn in einzelnen Kontaktdatensätzen aktualisieren und per Filter prüfen, welche Kontakte aktuell unterdrückt sind.
+
 ## Kampagnenanmeldung und Verlauf
 
-Kontakte können Kampagnen beitreten, wenn du sie erstellst, oder später über die Seite für Kampagnenkontakte. Die Priorität steuert die Reihenfolge des Wählvorgangs, wobei höhere Werte früher gewählt werden. Der Kampagnenverlauf erscheint in der Detailansicht des Kontakts.
+Kontakte können Kampagnen beitreten, wenn du sie erstellst, oder später über die Seite für Kampagnenkontakte. Die Priorität steuert die Reihenfolge des Wählvorgangs, wobei höhere Werte früher gewählt werden.
+
+Der Kampagnenverlauf erscheint in der Detailansicht des Kontakts. Nutze diesen Verlauf, um zu prüfen, ob ein Kontakt in die Warteschlange gestellt, übersprungen, kontaktiert oder von früherem Outreach verarbeitet wurde.
 
 ## KI-Datenextraktion und Aktivitätsprotokollierung
 
 Talkturo kann strukturierte Daten aus Anruftranskripten extrahieren und sie zurück in den Kontaktdatensatz schreiben. Dazu gehören Standard-CRM-Felder und `customFields`, sodass Assistenten Informationen erfassen können, ohne dass von Anfang an ein vollständig starres Schema erforderlich ist.
 
-Jede extrahierte Aktualisierung ist mit einer CRM-Aktivität verknüpft. Kontaktdatensätze können protokollierte Anrufaktivitäten mit Aktivitätstyp, Betreff und Ergebnis enthalten.
+Jede extrahierte Aktualisierung ist mit einer CRM-Aktivität verknüpft. Kontaktdatensätze können protokollierte Anrufaktivitäten mit Aktivitätstyp, Betreff und Ergebnis enthalten, wodurch dein Team nachvollziehen kann, was passiert ist und warum Felder geändert wurden.
+
+Ein vollständiger Kontaktdatensatz wird mit der Zeit wertvoller. Während Assistenten mehr Anrufe verarbeiten, bilden extrahierte Daten, Kampagnenverlauf und zugehörige Opportunities einen klareren Datensatz für Sales- und Support-Teams.
 
 ## Verwandte Seiten
 

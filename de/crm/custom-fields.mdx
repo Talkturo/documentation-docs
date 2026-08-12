@@ -11,6 +11,8 @@ Diese Werte fließen in den Rest von Talkturo ein. Du kannst benutzerdefinierte 
 
 ## Feldtypen
 
+Wähle einen Feldtyp basierend auf der Art des Werts, den du speichern möchtest.
+
 | Typ | Verwende ihn für |
 |---|---|
 | `text` | Freitextwerte |
@@ -21,33 +23,47 @@ Diese Werte fließen in den Rest von Talkturo ein. Du kannst benutzerdefinierte 
 
 ## Benutzerdefinierte Felder erstellen und verwalten
 
+Erstelle benutzerdefinierte Felder im Dashboard oder verwalte sie über die API.
+
 <Steps>
   <Step title="Benutzerdefinierte Felder im Dashboard öffnen" icon="settings">
-  Gehe zu **Workspace Settings** -> **CRM** -> **Custom Fields**.
+
+  Gehe zu **Workspace Settings** → **CRM** → **Custom Fields**.
+
   Erstelle ein Feld entweder für das Kontakt-Schema oder das Unternehmen-Schema, je nachdem, wo die Daten gespeichert werden sollen.
+
   </Step>
   <Step title="Das Feld definieren" icon="edit">
+
   Jedes benutzerdefinierte Feld enthält diese Eigenschaften:
+
   <ParamField body="name" param-type="string" required="true" show-location="false">
   Der Anzeigename, den dein Team im CRM sieht.
   </ParamField>
+
   <ParamField body="key" param-type="string" required="true" show-location="false">
   Die eindeutige Feldkennung, die in Variablen und Integrationen verwendet wird. Verwende einen stabilen Schlüssel wie `product_interest` oder `account_tier`.
   </ParamField>
+
   <ParamField body="type" param-type="text | number | date | select | boolean" required="true" show-location="false">
   Der Werttyp des Felds.
   </ParamField>
+
   <ParamField body="options" param-type="string[]" required="false" show-location="false">
   Die Liste der erlaubten Werte für `select`-Felder.
   </ParamField>
+
   </Step>
   <Step title="Felder mit der API verwalten" icon="code">
+
   Verwende diese Endpunkte, um benutzerdefinierte Felder aufzulisten, zu erstellen, zu aktualisieren und zu löschen.
+
   <Request tabs="cURL" default-tab="1">
   ```bash
   curl -X GET "https://api.talkturo.com/api/crm/custom-fields" \
     -H "Authorization: Bearer tk_test_example_9xmk7q2r"
   ```
+
   ```bash
   curl -X POST "https://api.talkturo.com/api/crm/custom-fields" \
     -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
@@ -59,6 +75,7 @@ Diese Werte fließen in den Rest von Talkturo ein. Du kannst benutzerdefinierte 
       "options": ["Voice AI", "CRM", "Analytics"]
     }'
   ```
+
   ```bash
   curl -X PUT "https://api.talkturo.com/api/crm/custom-fields/cf_a1b2c3d4" \
     -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
@@ -70,32 +87,54 @@ Diese Werte fließen in den Rest von Talkturo ein. Du kannst benutzerdefinierte 
       "options": ["Starter", "Growth", "Enterprise"]
     }'
   ```
+
   ```bash
   curl -X DELETE "https://api.talkturo.com/api/crm/custom-fields/cf_a1b2c3d4" \
     -H "Authorization: Bearer tk_test_example_9xmk7q2r"
   ```
   </Request>
+
   Der Collection-Endpunkt ist `/api/crm/custom-fields`. Einzelne Felder verwenden `/api/crm/custom-fields/[id]`.
+
   </Step>
 </Steps>
 
 ## Benutzerdefinierte Felder in Assistent-Prompts verwenden
 
-Assistent-Prompts können Werte benutzerdefinierter Felder sowohl aus Kontakten als auch aus Unternehmen lesen.
-- Benutzerdefinierte Felder für Kontakte: `{{contact.custom.key}}`
-- Benutzerdefinierte Felder für Unternehmen: `{{company.custom.key}}`
+Assistent-Prompts können Werte benutzerdefinierter Felder sowohl aus Kontakten als auch aus Unternehmen lesen. So kannst du das Agent-Verhalten mit CRM-Daten anpassen, die spezifisch für deinen Workspace sind.
 
-Öffne den Tab **Prompt** und verwende den CRM Variable Picker mit Strg+Leertaste, um verfügbare Variablen einzufügen.
+Verwende diese Variablenmuster in Prompts:
+
+- **Benutzerdefinierte Felder für Kontakte** — `{{contact.custom.key}}`
+- **Benutzerdefinierte Felder für Unternehmen** — `{{company.custom.key}}`
+
+Zum Beispiel:
+
+- `{{contact.custom.product_interest}}`
+- `{{company.custom.account_tier}}`
+
+Öffne den Tab **Prompt** und verwende den CRM Variable Picker mit <kbd>Ctrl</kbd> + <kbd>Space</kbd>, um verfügbare Variablen einzufügen, ohne sie manuell einzutippen.
 
 ## KI benutzerdefinierte Felder nach Anrufen ausfüllen lassen
 
 <Callout kind="info">
 Die KI-Analyse von Anrufen kann strukturierte Werte aus Transkripten extrahieren und sie in passende benutzerdefinierte Felder von Kontakten und Unternehmen schreiben.
+
+Das reduziert manuelle Dateneingabe und hält CRM-Datensätze nach jedem Anruf aktuell.
 </Callout>
+
+Die Extraktion funktioniert am besten, wenn deine Feldnamen und Schlüssel klar zu den Informationen passen, die erfasst werden sollen. Felder wie `product_interest`, `employee_count` oder `account_tier` lassen sich beispielsweise zuverlässiger zuordnen als vage Bezeichnungen.
 
 ## Benutzerdefinierte Felder in Kampagnen verwenden
 
-Benutzerdefinierte Felder bestimmen auch, wer in eine Kampagne aufgenommen wird. Filtere Zielgruppenlisten nach Werten benutzerdefinierter Felder.
+Benutzerdefinierte Felder bestimmen auch, wer in eine Kampagne aufgenommen wird. Filtere Zielgruppenlisten nach Werten benutzerdefinierter Felder, um die richtigen Kontakte und Unternehmen für jeden Workflow anzusprechen.
+
+Das ist nützlich für Segmentierungen wie:
+
+- Kontakte mit Interesse an einer bestimmten Produktlinie
+- Unternehmen in einem bestimmten Account-Tier
+- Datensätze über oder unter einem Schwellenwert für die Mitarbeiterzahl
+- Leads mit einem qualifizierenden Wahr- oder Falsch-Flag
 
 ## Verwandte Seiten
 

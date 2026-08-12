@@ -13,7 +13,7 @@ Einige Felder ändern sich abhängig vom ausgewählten Modus, Provider oder akti
 
 </Callout>
 
-## Prompt tab
+## Prompt-Tab
 
 Der Prompt-Tab legt fest, was der Assistent zuerst sagt und wie er sich im weiteren Verlauf des Anrufs verhalten soll. Beide Prompt-Felder unterstützen CRM-Variablen, sodass du Anrufe mit Kampagnen-, Kontakt- und Unternehmensdaten personalisieren kannst.
 
@@ -78,7 +78,7 @@ Verwende benutzerdefinierte Feldvariablen, wenn dein CRM konto- oder kundenspezi
 | --- | --- |
 | **AI Improve** | Sendet den aktuellen Prompt an `/api/improve-prompt` und gibt eine verbesserte Version zurück |
 | **AI Translate** | Übersetzt den Prompt in eine unterstützte Sprache |
-| **Template selector** | Ersetzt die aktuelle Vorlagenauswahl durch `B2B SaaS Sales Qualify (Outbound)` oder `No Template` |
+| **Vorlagenauswahl** | Ersetzt die aktuelle Vorlagenauswahl durch `B2B SaaS Sales Qualify (Outbound)` oder `No Template` |
 
 ### Unterstützte Übersetzungssprachen
 
@@ -100,12 +100,12 @@ AI Translate unterstützt diese 15 Sprachen:
 - Chinesisch
 - Koreanisch
 
-## Model tab
+## Model-Tab
 
 Der Model-Tab steuert den LLM-Provider, das Modell und die Generierungseinstellungen. Die verfügbaren Felder ändern sich abhängig davon, ob der Assistent im Standard-Modus oder im Realtime-Modus läuft.
 
 <Tabs>
-  <Tab title="Standard mode" icon="settings">
+  <Tab title="Standard-Modus" icon="settings">
 
   Der Standard-Modus trennt die Pipeline für Sprachmodell, Transkription und Text-to-Speech. Er bietet die größte Auswahl an Providern und die meisten Feinabstimmungsoptionen.
 
@@ -151,7 +151,7 @@ Der Model-Tab steuert den LLM-Provider, das Modell und die Generierungseinstellu
   | `cerebras` | Cerebras |
 
   </Tab>
-  <Tab title="Realtime mode" icon="zap">
+  <Tab title="Realtime-Modus" icon="zap">
 
   Der Realtime-Modus kombiniert Sprechen und Modellantwort in einem Streaming-Ablauf mit niedriger Latenz. Er unterstützt weniger Provider, ist aber für Live-Gespräche optimiert.
 
@@ -191,7 +191,7 @@ Die Konfiguration der Stimme verhält sich je nach Modus unterschiedlich. Im Rea
 
 </Callout>
 
-## Voice tab
+## Voice-Tab
 
 Der Voice-Tab ist nur im Standard-Modus verfügbar. Er steuert die Auswahl des TTS-Providers, die Identität der Stimme, den Sprechstil, die Wiedergabegeschwindigkeit und synthetische Hintergrundgeräusche.
 
@@ -245,9 +245,9 @@ Multiplikator für die Sprechgeschwindigkeit. Bereich `0.5` bis `2.0`, Schrittwe
 | --- | --- | --- |
 | `off` | Keine Geräuschunterdrückung | Nein |
 | `nc` | Standard-Geräuschunterdrückung | Nein |
-| `bvc` | Background Voice Cancellation | Ja |
+| `bvc` | Unterdrückung von Hintergrundstimmen (Background Voice Cancellation) | Ja |
 
-## Transcriptor tab
+## Transcriptor-Tab
 
 Der Transcriptor-Tab ist nur im Standard-Modus verfügbar. Er steuert den STT-Provider, das Erkennungsmodell, die Sprache und providerspezifische Streaming-Einstellungen.
 
@@ -299,7 +299,7 @@ Füge Unternehmensnamen, Produktnamen, Namen von Wettbewerbern und Branchenbegri
 
 </Callout>
 
-## Telephony tab
+## Telephony-Tab
 
 Der Telephony-Tab steuert die Zuweisung von Telefonnummern, Anrufberechtigungen, Testanrufe, Compliance-Wiedergabe und das Verhalten bei Voicemail.
 
@@ -379,7 +379,7 @@ Prüfe Compliance- und Voicemail-Texte, bevor du ausgehende Kampagnen aktivierst
 
 </Callout>
 
-## Functions tab
+## Functions-Tab
 
 Der Functions-Tab verbindet aufrufbare Tools mit dem Assistenten. Mit diesen Tools kann der Assistent Anrufe beenden, Anrufer weiterleiten, Meetings planen, Automatisierungen auslösen oder externe Systeme aufrufen.
 
@@ -454,9 +454,9 @@ Veröffentlichte TurboFlow-Workflows, die als aufrufbare Tools angehängt sind.
 | Custom Webhook | Mehrere | Jeder Webhook hat eine eigene Konfiguration |
 | TurboFlow Workflows | Mehrere | Veröffentlichten Flows anhängen |
 
-## Knowledge Base tab
+## Knowledge-Base-Tab
 
-Der Knowledge-Base-Tab verbindet verarbeitete Dokumente aus der Knowledge Base deines Workspace mit dem Assistenten. Angehangene Dateien stehen während Anrufen für Retrieval zur Verfügung.
+Der Knowledge-Base-Tab verbindet verarbeitete Dokumente aus der Wissensdatenbank deines Workspace mit dem Assistenten. Angehängte Dateien stehen während Anrufen für Retrieval zur Verfügung.
 
 ### Knowledge-Base-Felder
 
@@ -487,11 +487,11 @@ Eine Datei ist erst verwendbar, nachdem sie in Chunks und Embeddings verarbeitet
 | Im UI angezeigtes Feld | Bedeutung |
 | --- | --- |
 | Status | Ob die Datei einsatzbereit ist |
-| Chunk count | Anzahl der indexierten Chunks |
-| Character count | Größe des Quelltexts |
-| Attachment state | Ob das Dokument aktuell an den Assistenten angehängt ist |
+| Chunk-Anzahl | Anzahl der indexierten Chunks |
+| Zeichenanzahl | Größe des Quelltexts |
+| Anhangsstatus | Ob das Dokument aktuell an den Assistenten angehängt ist |
 
-## Analysis tab
+## Analysis-Tab
 
 Der Analysis-Tab legt fest, was Talkturo nach jedem Anruf extrahieren und auswerten soll. Verwende ihn, um strukturierte Felder zu erfassen, Ergebnisse zu klassifizieren, Leads zu bewerten und festzulegen, ob der Anruf erfolgreich war.
 
@@ -521,7 +521,7 @@ Halte jeden Extraktions-Prompt auf genau eine Ausgabe fokussiert. Kleinere Promp
 
 </Expandable>
 
-## Webhooks tab
+## Webhooks-Tab
 
 Der Webhooks-Tab sendet Ereignisse aus dem Lebenszyklus von Anrufen an deine Systeme. Konfiguriere die Ziel-URL, wähle aus, welche Ereignisse gesendet werden sollen, und nutze den integrierten Testablauf, bevor du einen Webhook für produktiven Traffic aktivierst.
 
@@ -557,7 +557,7 @@ Führe nach Änderungen an URL, Secret oder Ereignisauswahl einen Test-Webhook a
 
 </Callout>
 
-## Email Summary tab
+## Email-Summary-Tab
 
 Der Email-Summary-Tab sendet automatisch eine Anrufzusammenfassung, nachdem ein Anruf abgeschlossen wurde. Verwende ihn, wenn eine menschliche Ansprechperson, eine Führungskraft oder ein gemeinsames Postfach eine Kopie jeder abgeschlossenen Anrufzusammenfassung erhalten soll.
 
@@ -583,7 +583,7 @@ Wenn aktiviert, werden Zusammenfassungen nach Abschluss des Anrufs automatisch g
 
 Nicht jeder Tab ist in jedem Assistentenmodus verfügbar. Nutze diese Matrix, wenn du wissen musst, wo sich eine Einstellung befindet.
 
-| Tab | Standard mode | Realtime mode |
+| Tab | Standard-Modus | Realtime-Modus |
 | --- | --- | --- |
 | Prompt | Ja | Ja |
 | Model | Ja | Ja |

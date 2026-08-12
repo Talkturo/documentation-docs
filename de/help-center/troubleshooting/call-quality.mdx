@@ -1,0 +1,144 @@
+---
+title: Probleme mit der Anrufqualität von Sprachagenten
+description: Diagnostiziere roboterhafte Audioqualität, langsame Antworten, abgebrochene Anrufe und Transkriptprobleme mit gezielten Fixes in den Talkturo-Spracheinstellungen und -Protokollen.
+---
+
+## Symptome
+
+Probleme mit der Anrufqualität treten meist in wenigen wiederkehrenden Mustern auf. Ordne zuerst zu, was du hörst oder siehst, und springe dann zum passenden Abschnitt unten.
+
+- Antworten des Assistenten klingen roboterhaft oder unnatürlich
+- Anrufer-Audio hat Rauschen, Zischen oder Hintergrundgeräusche
+- Der Assistent braucht zu lange zum Antworten
+- Anrufe brechen ab oder enden unerwartet
+- Die Transkriptgenauigkeit ist bei Namen, Akronymen oder domänenspezifischen Begriffen schlecht
+- Die Voicemail-Erkennung verhält sich unerwartet
+
+<Callout kind="info">
+
+Die meisten Probleme mit der Anrufqualität entstehen durch die Konfiguration, nicht durch einen Plattformausfall. Prüfe zuerst die Voice-, STT- und Telefonie-Einstellungen des Assistenten und nutze dann die Anrufprotokolle, um zu bestätigen, wo Latenz oder Anrufbeendigung entstanden sind.
+
+</Callout>
+
+## Nach Symptom beheben
+
+<ExpandableGroup>
+  <Expandable title="Antworten des Assistenten klingen roboterhaft oder unnatürlich" default-open="true">
+
+  Beginne im Tab **Voice** der Assistenteneinstellungen. Die schnellste Verbesserung kommt meist vom Wechsel des Text-to-Speech-Anbieters oder Voice-Modells, nicht vom Umschreiben von Prompts.
+
+  Prüfe diese Einstellungen der Reihe nach:
+
+  - **TTS-Anbieter** — wechsle zwischen Cartesia, ElevenLabs und Inworld, um die Natürlichkeit zu vergleichen.
+  - **Geschwindigkeit** — wenn die Sprache gehetzt oder gedehnt klingt, passe die Geschwindigkeitseinstellung an. Der unterstützte Bereich ist `0.5` bis `2.0`, der Standardwert ist `1.0`.
+  - **Voice-Modell oder Voice-ID** — manche Stimmen handhaben Tempo, Betonung und Aussprache besser als andere.
+  - **Rauschunterdrückung** — aktiviere `bvc` für Background Voice Cancellation oder `nc` für Standard-Rauschunterdrückung. Vermeide `off`, sofern du nicht die Rohqualität des Inputs testest.
+
+  Wenn nur bestimmte Phrasen falsch klingen, teste zuerst eine andere Stimme, bevor du den Prompt änderst. Probleme mit der Stimmqualität kommen oft vom Synthesemodell, nicht von der Gesprächslogik.
+
+  </Expandable>
+
+  <Expandable title="Anrufer-Audio hat Rauschen oder Hintergrundgeräusche">
+
+  Hintergrundgeräusche kommen meist entweder von Ambiente-Einstellungen oder deaktivierter Rauschunterdrückung. Behebe das, bevor du tiefer suchst.
+
+  Prüfe diese Einstellungen im Tab **Voice**:
+
+  - **Hintergrund-Ambiente** — setze dies auf `none`, wenn du keine Ambiente-Audio in den Anruf mischen willst.
+  - **Ambiente-Lautstärke** — senke den Lautstärkeregler, wenn Ambiente vorhanden, aber zu laut ist. Der Bereich ist `0` bis `1`, der Standardwert ist `0.8`.
+  - **Modus der Rauschunterdrückung** — stelle sicher, dass der Modus nicht auf `off` steht. Nutze standardmäßig `bvc`, oder `nc`, wenn du Standard-Unterdrückung willst.
+
+  Wenn Anrufende melden, dass dein Assistent schwer zu verstehen ist, prüfe die Ambiente-Lautstärke, bevor du die Stimme selbst änderst. Laute Ambiente kann eine gute Stimme undeutlich wirken lassen.
+
+  </Expandable>
+
+  <Expandable title="Der Assistent braucht zu lange zum Antworten">
+
+  Hohe Latenz kommt meist von der Modellwahl, den Einstellungen der Voice-Pipeline oder dem Modus des Assistenten. Reduziere zuerst die Zeit in jeder Stufe der Antwort-Pipeline.
+
+  Probiere diese Änderungen:
+
+  - **Wechsle in den Realtime-Modus**, wenn du schnelleres Turn-Taking brauchst.
+  - Im Realtime-Modus teste **`gpt-realtime-mini`** statt **`gpt-realtime`**, wenn Antwortgeschwindigkeit wichtiger ist als maximale Modellqualität.
+  - **Nutze einen schnelleren LLM-Anbieter oder ein schnelleres Modell**, wenn dein aktuelles Modell starke Antworten liefert, aber lange Verzögerungen verursacht.
+  - **Prüfe die Anrufprotokolle**, um zu erkennen, wo Zeit verbraucht wird.
+
+  In den Anrufprotokollen prüfe Latenzmetriken wie:
+
+  - **P50-Antwortzeit** für typische Antworten
+  - **P95-Antwortzeit** für langsame Ausreißer
+  - **EOU-Latenz** für die Erkennung des Äußerungsendes
+  - **LLM-Latenz** für die Modellgenerierungszeit
+  - **TTS-Latenz** für die Sprachsynthesezeit
+
+  Wenn nur ein kleiner Anteil der Anrufe langsam ist, ist P95 das beste Signal. Wenn sich jeder Anruf langsam anfühlt, vergleiche EOU-, LLM- und TTS-Latenzen, um den Engpass zu finden.
+
+  </Expandable>
+
+  <Expandable title="Die Transkriptgenauigkeit ist bei bestimmten Begriffen schlecht">
+
+  Transkriptprobleme entstehen meist durch die Wahl des STT-Modells, fehlende Keyterms oder eine Sprachabweichung. Behebe die Erkennungsqualität, bevor du mit Prompt-Logik kompensierst.
+
+  Prüfe diese Einstellungen:
+
+  - **Keyterms** — füge Produktnamen, Akronyme, Eigennamen und branchenspezifisches Vokabular hinzu.
+  - **STT-Modell** — probiere ein anderes Speech-to-Text-Modell, z. B. Deepgram Nova-3, wenn du bessere Erkennungsgenauigkeit brauchst.
+  - **STT-Sprache** — stelle sicher, dass die konfigurierte Sprache der Sprache des Anrufenden entspricht.
+  - **Erweiterte STT-Optionen** — prüfe Endpointing und VAD-Empfindlichkeit, wenn Sprache abgeschnitten oder falsch zusammengefügt wird.
+
+  Keyterms helfen am meisten, wenn das Transkript auf konsistente Weise falsch ist. Wenn der Assistent denselben Firmennamen oder Fachbegriff wiederholt verfehlt, füge diesen Begriff explizit hinzu.
+
+  </Expandable>
+
+  <Expandable title="Anrufe brechen ab oder enden unerwartet">
+
+  Unerwartete Anrufenden entstehen meist durch die Assistentenkonfiguration, die Telefonie-Einrichtung oder den Account-Status. Prüfe die Endbedingung, bevor du von einem Verbindungsfehler ausgehst.
+
+  Prüfe diese Bereiche:
+
+  - **Einstellungen der End-Call-Funktion** — stelle sicher, dass Trigger-Phrasen nicht zu breit oder in normalen Gesprächen zu leicht treffbar sind.
+  - **Telefonie-Einstellungen** — verifiziere, dass die Telefonnummer noch aktiv und korrekt zugewiesen ist.
+  - **Workspace-Credits** — Kampagnen werden automatisch pausiert, wenn die Credits unter `1.0` fallen.
+  - **Anrufprotokolle** — prüfe das Feld **ended reason**, um zu sehen, was den Anruf beendet hat.
+
+  <Callout kind="alert">
+
+  Wenn Anrufe während aktiver Kampagnen stoppen, prüfe sofort die Workspace-Credits. Niedrige Credits können ausgehende Aktivität pausieren, selbst wenn die Assistentenkonfiguration korrekt aussieht.
+
+  </Callout>
+
+  Wenn der ended reason auf Assistentenlogik hinweist, grenze deine End-Call-Trigger ein. Wenn der ended reason auf Account- oder Telefonie-Status hinweist, behebe zuerst die Zuweisung oder das Abrechnungsproblem.
+
+  </Expandable>
+
+  <Expandable title="Die Voicemail-Erkennung funktioniert nicht wie erwartet">
+
+  Das Voicemail-Verhalten hängt von drei Einstellungen ab: ob die Erkennung aktiviert ist, welche Aktion ausgeführt werden soll und welche Nachricht hinterlassen wird.
+
+  Prüfe Folgendes:
+
+  - **Voicemail-Erkennung** — verifiziere, dass sie aktiviert ist. Der Standardwert ist `true`.
+  - **Voicemail-Aktion** — bestätige, ob der Assistent `leave_message` oder `hangup` ausführen soll.
+  - **Text der Voicemail-Nachricht** — prüfe den Nachrichteninhalt auf fehlenden oder falschen Text.
+
+  Wenn der Assistent auflegt, obwohl du eine Nachricht erwartet hast, prüfe zuerst die Voicemail-Aktion. Wenn er eine schlechte Nachricht hinterlässt, prüfe den Voicemail-Text, bevor du das Erkennungsverhalten änderst.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Was du in den Anrufprotokollen prüfen solltest
+
+Anrufprotokolle helfen dir zu bestätigen, ob das Problem von der Spracherkennung, der Modelllatenz, der Sprachsynthese oder der Anrufbeendigungslogik kommt.
+
+Nutze Anrufprotokolle, um diese Fragen zu beantworten:
+
+- Welche Stufe ist langsam: **EOU**, **LLM** oder **TTS**
+- Ob hohe Latenz alle Anrufe oder nur Ausreißer betrifft, über **P50** und **P95**
+- Warum der Anruf endete, indem du das Feld **ended reason** prüfst
+- Ob Transkriptfehler auf bestimmte Begriffe beschränkt sind oder über den gesamten Anruf auftreten
+
+<Callout kind="tip">
+
+Wenn sich ein Symptom mit einem anderen überschneidet, behebe zuerst den frühesten Punkt in der Pipeline. Beispielsweise können schlechte Transkripte den Assistenten langsam oder falsch antworten lassen, selbst wenn deine Voice-Einstellungen in Ordnung sind.
+
+</Callout>

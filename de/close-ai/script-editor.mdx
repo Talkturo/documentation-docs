@@ -1,0 +1,226 @@
+---
+title: Skript-Editor
+description: Erstelle verzweigte Anrufskripte für Close AI mit einem visuellen Node-basierten Editor, proaktiven Prompts, Vorlagen und Import-Tools.
+---
+
+## Baue Skripte visuell
+
+Der Skript-Editor lässt dich einen Live-Anruf als verzweigten Flow abbilden, statt ein langes lineares Skript zu schreiben. Jeder Abschnitt wird zu einem Node auf dem Canvas, jeder Zweig definiert, wann das Gespräch als Nächstes weitergehen soll, und proaktive Prompts helfen Close AI, Reps während des Anrufs zu führen.
+
+Sales-Enablement-Teams nutzen den Editor in der Regel, um eine Sales Motion in einen wiederholbaren Pfad zu verwandeln: Opening, Qualification, Objection Handling, Booking und Follow-up. Manager können danach in der Session-Analyse prüfen, wie konsistent Reps das Skript abgedeckt haben.
+
+<Callout kind="info">
+
+Abschnitte, die als `script` markiert sind, zählen während Anrufen zur Coverage-Analyse. Abschnitte, die als `info` markiert sind, bleiben als Referenz verfügbar, beeinflussen die Coverage aber nicht.
+
+</Callout>
+
+## Erstelle ein Skript von Anfang bis Ende
+
+<Steps>
+  <Step title="Wähle ein bestehendes Skript oder erstelle ein neues" icon="plus">
+
+  Nutze die Skript-Tabs oben auf der Seite, um zwischen Workspace-Skripten zu wechseln. Klicke auf **New Script**, um von Grund auf zu starten, oder öffne eine Standardvorlage und wähle **Copy to Edit**, um sie in deinen Workspace zu forken.
+
+  </Step>
+  <Step title="Füge die wichtigsten Gesprächsabschnitte hinzu" icon="git-branch">
+
+  Klicke auf **Add Section**, um die Kernteile des Anrufablaufs zu erstellen, etwa Intro, Discovery, Pricing und Close. Ziehe Nodes in ein Layout, das dazu passt, wie dein Team natürlich durch das Gespräch geht.
+
+  </Step>
+  <Step title="Verbinde Abschnitte mit Conditions" icon="arrow-right">
+
+  Ziehe Zweige zwischen Nodes, um zu definieren, was als Nächstes passiert. Füge jedem Zweig eine Condition hinzu, damit Reps und Manager erkennen können, wann das Skript in diese Richtung gehen soll.
+
+  Eine nützliche Condition sieht aus wie `if the prospect asks about pricing` oder `if budget is confirmed`.
+
+  </Step>
+  <Step title="Füge bei Bedarf nur-referenzierende Guidance hinzu" icon="info">
+
+  Nutze **Add Info** für unterstützendes Material, das während des Anrufs sichtbar bleiben soll, ohne als erforderlicher Skriptabschnitt zu zählen. Teams nutzen Info-Nodes oft für Competitor Notes, Pricing-Erinnerungen oder rechtliche Formulierungen.
+
+  </Step>
+  <Step title="Setze proaktive Prompts" icon="zap">
+
+  Füge unter dem Canvas Prompts hinzu, die Close AI sagen, wann rechtzeitige Guidance angezeigt werden soll. Prompts eignen sich gut für Momente wie Pricing Objections, Stille nach einer Schlüssel-Frage oder Booking Hesitation.
+
+  </Step>
+  <Step title="Prüfe, speichere und aktiviere das Skript" icon="check-circle">
+
+  Führe **Check Script** aus, um Zweige ohne Conditions zu finden, und klicke dann auf **Save**. Wenn das Skript für den Live-Einsatz bereit ist, aktiviere **Active**, damit die Desktop-App ihm während Gesprächen folgt.
+
+  </Step>
+</Steps>
+
+<Callout kind="alert">
+
+Nur ein Skript kann gleichzeitig aktiv sein. Wenn du **Active** einschaltest, wird dieses Skript als Live-Skript markiert, dem Close AI während Anrufen folgt.
+
+</Callout>
+
+## Verstehe die Skriptstruktur
+
+Jedes Skript hat zwei Teile: **sections** und **prompts**. Sections definieren den sichtbaren Anrufablauf auf dem Canvas, während Prompts proaktive Guidance definieren, die während eines Live-Gesprächs ausgelöst werden kann.
+
+Ein Abschnitt enthält die folgenden Felder:
+
+- `id` — eindeutige Abschnittskennung
+- `name` — Label, das auf dem Node angezeigt wird
+- `type` — `script` oder `info`
+- `content` — was der Rep sagen oder referenzieren soll
+- `position` — die Node-Position auf dem Canvas
+- `next` — die Liste der Zweige zu anderen Abschnitten
+
+Zweige leben in `next`. Jeder Zweig zeigt auf einen anderen Abschnitt und kann eine Condition enthalten, die erklärt, wann der Flow dorthin wechseln soll.
+
+## Nutze den richtigen Abschnittstyp
+
+Wähle den Abschnittstyp danach aus, ob der Inhalt zur Script Coverage zählen soll.
+
+| Typ | Wie er erscheint | Nutze ihn für |
+| --- | --- | --- |
+| `script` | Nummerierter Node | Erforderliche Talking Points, die du während Anrufen tracken möchtest |
+| `info` | Blauer gestrichelter Node | Nur-referenzierende Guidance, die nicht zur Coverage zählen soll |
+
+Ein gängiges Muster ist, den Haupt-Talk-Track als `script`-Abschnitte zu halten und unterstützende Notizen als `info`-Abschnitte nahe dem relevanten Teil des Flows hinzuzufügen.
+
+## Arbeite mit den Canvas-Controls
+
+Der Canvas gibt dir die Controls, die du brauchst, um ein Skript schnell zu erstellen und neu zu organisieren.
+
+- **Add Section** — erstellt einen neuen getrackten Skript-Node
+- **Add Info** — erstellt einen nur-referenzierenden Node
+- **Auto-Arrange** — stapelt Nodes vertikal mit festem Abstand
+- **Zoom- und Fit-Controls** — helfen dir, Details zu prüfen oder die Canvas-Ansicht zurückzusetzen
+
+Auto-Arrange ist nützlich, nachdem du ein Skript importiert oder mehrere Nodes auf einmal hinzugefügt hast. Es ändert deine Skriptlogik nicht; es verschiebt nur Nodes auf dem Canvas.
+
+## Bearbeite Nodes im Inspector
+
+Wenn du einen Node auswählst, lässt dich der Inspector rechts den Abschnitt aktualisieren, ohne den Canvas zu verlassen.
+
+- **Name** — benennt den Abschnitt um
+- **Type toggle** — wechselt zwischen `script` und `info`
+- **Content** — schreibe, was der Rep sagen oder referenzieren soll
+- **Delete section** — entfernt den Node
+
+Verwende kurze, schnell erfassbare Namen für Abschnitte, damit sich Reps während eines Live-Anrufs schnell orientieren können. Lege die vollständige Guidance in das Content-Feld.
+
+## Definiere Branch-Conditions klar
+
+Wenn du einen Zweig zwischen zwei Nodes auswählst, lässt dich der Branch-Inspector steuern, wie das Gespräch weitergehen soll.
+
+- **Condition** — beschreibe, wann das Skript diesem Zweig folgen soll
+- **Delete branch** — entfernt die Verbindung
+
+Gute Branch-Conditions sind spezifisch und beobachtbar. Zum Beispiel:
+
+- `if the prospect asks about pricing`
+- `if the prospect is not the decision maker`
+- `if the prospect agrees to book a follow-up`
+
+<Callout kind="alert">
+
+Zweige ohne Condition werden gestrichelt rot hervorgehoben und von **Check Script** markiert. Verwende Conditions auf jedem Zweig, damit der Flow leichter zu prüfen, zu pflegen und dagegen zu coachen ist.
+
+</Callout>
+
+## Verwalte das Skript über den Header
+
+Die Header-Controls betreffen das gesamte Skript, nicht nur den ausgewählten Node.
+
+| Control | Was es macht |
+| --- | --- |
+| Name input | Benennt das aktuelle Skript um |
+| Active switch | Markiert dieses als Live-Skript, dem die Desktop-App folgt |
+| Published switch | Macht das Skript im Admin-Modus published |
+| Check Script | Hebt Zweige ohne Conditions hervor |
+| Save | Speichert deine Änderungen dauerhaft |
+| Delete | Entfernt das aktuelle Skript |
+
+Verwende **Check Script** vor dem Speichern, wenn du neue Zweige hinzugefügt oder den Flow neu angeordnet hast. Das ist der schnellste Weg, unvollständige Entscheidungspfade zu finden.
+
+## Füge proaktive Prompts hinzu
+
+Das Panel für proaktive Prompts sitzt unter dem Canvas und gibt Close AI zusätzliche Guidance, die während des Anrufs angezeigt werden kann. Jeder Prompt enthält:
+
+- **Enabled** — schaltet den Prompt ein oder aus
+- **Trigger** — definiert, wann der Prompt auslösen soll
+- **Text** — definiert, was Close AI vorschlagen soll
+- **Delete** — entfernt den Prompt
+
+Prompts funktionieren am besten, wenn sie eng und situativ sind. Statt einer breiten Erinnerung erstelle mehrere Prompts für unterschiedliche Momente wie Pricing Pressure, Timeline Objections oder Booking Hesitation.
+
+## Starte mit Standardvorlagen
+
+Standardvorlagen sind globale Skripte, die von einem Admin verwaltet werden und im Workspace als schreibgeschützte Optionen angezeigt werden. Sie helfen Teams, von einer bewährten Struktur zu starten, statt jedes Skript von Grund auf zu bauen.
+
+Verfügbare Vorlagenkategorien umfassen:
+
+- outbound setter
+- appointment booking
+- upsell
+
+Wenn eine Vorlage dem nahekommt, was du brauchst, nutze **Copy to Edit**. Das erstellt eine Workspace-Version, die du ändern kannst, ohne die Originalvorlage zu verändern.
+
+## Importiere oder exportiere Skripte
+
+Wenn du bereits ein Skript in einem anderen Format hast, importiere es, statt es von Hand neu aufzubauen.
+
+### Import aus Rohtext mit AI
+
+Füge ein Rohskript mit mindestens 20 Zeichen in den AI-Import-Dialog ein. Close AI parst den Text in Abschnitte, Zweige und Prompts und lädt das Ergebnis zur Prüfung auf den Canvas, bevor du es speicherst.
+
+Dieser Weg funktioniert gut, wenn dein Team ein Skript in einem Dokument, einer Tabelle oder einer Notes-App hat und es schnell in einen nutzbaren Flow verwandeln möchte.
+
+### Import aus JSON
+
+Lade eine `.talkturo.json`-Datei hoch, um einen versionierten Skript-Export zu laden. Nach dem Upload wähle, ob du:
+
+- **Create New Script**
+- **Overwrite Current**
+
+Import regeneriert IDs, um Kollisionen mit bestehenden Nodes und Zweigen zu vermeiden.
+
+### Export nach JSON
+
+Nutze **Export**, um das aktuelle Skript als `.talkturo.json`-Datei herunterzuladen. Export ist nützlich für Backups, Reviews und das Verschieben von Skripten zwischen Workspaces.
+
+## Verwalte mehrere Skripte
+
+Teams halten oft separate Skripte für unterschiedliche Motions, Segmente oder Offer-Typen. Der Editor unterstützt diesen Workflow direkt.
+
+- **Script tabs** lassen dich zwischen Workspace-Skripten wechseln
+- **New Script** erstellt ein weiteres Skript im Workspace
+- **Active** bestimmt, welchem Skript Close AI live folgt
+
+Ein praktisches Setup könnte ein Skript für Cold Outbound, eines für gebuchte Demos und eines für Expansion Calls umfassen. Markiere nur das Skript als aktiv, dem deine Reps gerade folgen sollen.
+
+## Baue Skripte, aus denen sich leicht coachen lässt
+
+Die besten Skripte sind während eines Gesprächs leicht zu folgen und danach leicht zu prüfen. Einige Gewohnheiten machen einen großen Unterschied:
+
+- Halte jeden Abschnitt auf eine Phase des Gesprächs fokussiert
+- Benenne Abschnitte nach dem Ziel des Reps, nicht mit einem vagen Label
+- Verwende Branch-Conditions, die ein reales Prospect-Signal beschreiben
+- Reserviere `info`-Nodes für Material, das hilft, aber nicht zur Coverage zählen soll
+- Füge proaktive Prompts für Momente hinzu, in denen Reps häufig zögern oder den nächsten Schritt verpassen
+
+Coverage-Analyse wird nützlicher, wenn das Skript widerspiegelt, wie Anrufe tatsächlich ablaufen. Wenn der Flow zu theoretisch ist, erhalten Manager nach der Session schwächere Coaching-Signale.
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+  <Card
+    title="Close-AI-Übersicht"
+    href="/close-ai/overview"
+    icon="book-open"
+    cta="Übersicht öffnen"
+  />
+  <Card
+    title="Sessions"
+    href="/close-ai/sessions"
+    icon="monitor"
+    cta="Sessions prüfen"
+  />
+</Columns>

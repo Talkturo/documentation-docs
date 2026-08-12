@@ -76,7 +76,7 @@ Nachgelagerte Nodes auf dem nicht passenden Zweig werden übersprungen. Wenn ein
 
 ## Node-Typen
 
-TurboFlow gruppiert Nodes in drei Kategorien.
+TurboFlow gruppiert Nodes in drei Kategorien. Jede Kategorie erfüllt eine andere Rolle im Flow.
 
 <Columns cols={3}>
   <Card title="Trigger-Nodes" href="/turboflow/triggers-actions" icon="zap" cta="Trigger-Details anzeigen">
@@ -92,23 +92,35 @@ TurboFlow gruppiert Nodes in drei Kategorien.
 
 ### Trigger-Nodes
 
+Trigger-Nodes starten den Flow und liefern den initialen Input-Payload.
+
 - **`webhook_trigger`** — universeller Einstiegspunkt für externe Anfragen und Tool-Aufrufe des Assistenten
 - **Integration-Trigger** — ereignisbasierte Trigger für verbundene Dienste wie Cal.com, Calendly, Slack und Meta
 
+Der `webhook_trigger`-Node ist die flexibelste Option. Er kann externe Payloads empfangen und auch als aufrufbare Schnittstelle dienen, wenn du einen veröffentlichten Flow an einen Assistenten anhängst.
+
 ### Action-Nodes
 
+Action-Nodes erledigen die Arbeit, nachdem der Flow gestartet wurde.
+
 - **HTTP request** — externe APIs aufrufen
-- **Upsert CRM Contact** — einen Kontakt erstellen oder aktualisieren
+- **Upsert CRM Contact** — einen Kontakt-Datensatz erstellen oder aktualisieren
 - **Call Contact** — einen ausgehenden Kontaktanruf starten
-- **Format Output** — Daten für nachgelagerte Schritte aufbereiten
+- **Format Output** — Daten formen, die der Flow zurückgibt
+
+Action-Nodes nutzen in der Regel Daten aus früheren Nodes und erzeugen strukturierte Ausgaben für spätere Schritte. Diese Ausgabe steht dann Ausdrücken im restlichen Graphen zur Verfügung.
 
 ### Logic-Nodes
 
+Logic-Nodes steuern, welchem Pfad der Flow folgt.
+
 - **Condition** — If- oder Else-Verzweigung mit Vergleichsoperatoren ausführen
+
+Eine Condition wertet einen Ausdruck aus und leitet die Ausführung auf den True- oder False-Pfad. So leitest du neue Leads weiter, gehst mit fehlenden Daten um oder führst je nach Ereignistyp unterschiedliche Actions aus.
 
 ## Integrationen und Verbindungen
 
-TurboFlow verwendet Verbindungen auf Workspace-Ebene für OAuth-basierte Integrationen.
+TurboFlow verwendet Verbindungen auf Workspace-Ebene für OAuth-basierte Integrationen. Du verwaltest diese Verbindungen im Connections Manager und wählst sie dann in Nodes aus, die Zugriff auf externe Dienste benötigen.
 
 <Columns cols={3}>
   <Card title="Cal.com" href="/integrations" icon="calendar" cta="Integrationen anzeigen">
@@ -131,13 +143,36 @@ TurboFlow verwendet Verbindungen auf Workspace-Ebene für OAuth-basierte Integra
   </Card>
 </Columns>
 
+### So werden Verbindungen verwendet
+
+Eine Verbindung speichert die Autorisierung, die TurboFlow braucht, um in deinem Namen zu handeln. Nodes referenzieren diese gespeicherte Verbindung, statt dass du jedes Mal Zugangsdaten eingeben musst.
+
+Das hält Flows wartbarer. Wenn sich ein Integrations-Token ändert, aktualisierst du die Verbindung einmal auf Workspace-Ebene, anstatt jeden Flow zu bearbeiten, der sie nutzt.
+
+<Callout kind="info">
+
+Integration-Trigger hängen von einer aktiven Verbindung ab. Wenn das verbundene Konto entfernt wird oder die Autorisierung abläuft, können verwandte Flows keine Daten empfangen oder senden, bis die Verbindung wiederhergestellt ist.
+
+</Callout>
+
 ## Erstelle mit Robert AI Assistant
 
 Robert ist der AI-Assistent, der in den Workflow-Builder integriert ist. Du beschreibst die Automatisierung in natürlicher Sprache, und Robert hilft dir, diese Anforderung in Flow-Schritte zu übersetzen.
 
+Robert kann:
+
+- vorschlagen, welche Tools und Nodes du verwenden sollst
+- erwartete Parameter erklären
+- eine Flow-Struktur vorschlagen
+- dabei helfen, einen bestehenden Workflow zu verfeinern
+
+Das ist besonders nützlich, wenn du das gewünschte Ergebnis kennst, aber nicht jeden Node manuell konfigurieren möchtest. Robert hilft, den Flow schneller zusammenzusetzen. Anschließend kannst du das Ergebnis auf dem Canvas prüfen und anpassen, bevor du ihn veröffentlichst.
+
 ## Bewahre Zugangsdaten im Secrets Manager auf
 
 Secrets Manager speichert verschlüsselte Zugangsdaten auf Workspace-Ebene. TurboFlow verwendet diese Secrets für HTTP request-Nodes und Integrationsverbindungen.
+
+Speichere API-Schlüssel, Tokens und ähnliche Zugangsdaten im Secrets Manager, anstatt sie fest in Node-Einstellungen zu hinterlegen. So bleiben sensible Werte außerhalb der Flow-Definitionen, und die Rotation von Zugangsdaten wird einfacher.
 
 <Callout kind="alert">
 
@@ -147,15 +182,23 @@ Platziere keine rohen API-Schlüssel direkt in Ausdrücken oder Node-Textfeldern
 
 ## Hänge Flows an Assistenten an
 
-Veröffentlichte Flows können als aufrufbare Tools an Assistenten angehängt werden.
+Veröffentlichte Flows können als aufrufbare Tools an Assistenten angehängt werden. So kann ein AI-Assistent während einer Live-Unterhaltung Automatisierung auslösen und das Ergebnis sofort nutzen.
+
+### So funktionieren Tool-Aufrufe des Assistenten
+
+Wenn du einen veröffentlichten Flow an einen Assistenten anhängst, wird der `webhook_trigger` des Flows zu einem vom LLM aufrufbaren Tool. Das Tool stellt einen definierten Namen, eine Beschreibung und einen Parametersatz bereit, den der Assistent während einer Unterhaltung nutzen kann.
+
+Wenn der Assistent dieses Tool aufruft, führt TurboFlow den Workflow aus und gibt das Ergebnis an den Assistenten zurück. Dieses Ergebnis kann dann genutzt werden, um eine Frage zu beantworten, ein System zu aktualisieren oder die Unterhaltung mit frischen Daten fortzusetzen.
 
 <Callout kind="success">
 
-Verwende mit Assistenten verbundene Flows, wenn der Assistent in Echtzeit Daten abrufen oder eine Action ausführen muss.
+Verwende mit Assistenten verbundene Flows, wenn der Assistent in Echtzeit Daten abrufen oder eine Action ausführen muss, etwa einen CRM-Kontakt zu erstellen oder eine Follow-up-Nachricht zu senden.
 
 </Callout>
 
 ## Kenne die Flow-Limits
+
+TurboFlow erzwingt Graph- und Ausführungslimits, damit Workflows vorhersagbar und sicher ausführbar bleiben.
 
 | Limit | Wert |
 |---|---:|
@@ -164,10 +207,18 @@ Verwende mit Assistenten verbundene Flows, wenn der Assistent in Echtzeit Daten 
 | Maximale Schleifeniterationen | 100 |
 | Maximale Graph-Tiefe | 50 |
 
+Diese Limits sind besonders wichtig, wenn du große verzweigte Automatisierungen baust oder einen einzelnen Flow für viele verwandte Aufgaben wiederverwendest. Wenn ein Workflow schwer nachvollziehbar wird, teile ihn in kleinere Flows mit klareren Verantwortlichkeiten auf.
+
 ## Verwandte Seiten
 
 <Columns cols={3}>
-  <Card title="Trigger und Actions" href="/turboflow/triggers-actions" icon="code" cta="Referenz öffnen" />
-  <Card title="Integrationen" href="/integrations" icon="cloud" cta="Verbindungen verwalten" />
-  <Card title="Assistenten-Konfiguration" href="/assistants/configuration" icon="settings" cta="Assistenten konfigurieren" />
+  <Card title="Trigger und Actions" href="/turboflow/triggers-actions" icon="code" cta="Referenz öffnen">
+    Prüfe verfügbare Trigger-, Action- und Logic-Nodes im Detail.
+  </Card>
+  <Card title="Integrationen" href="/integrations" icon="cloud" cta="Verbindungen verwalten">
+    Verbinde externe Dienste und konfiguriere Workspace-Integrationen.
+  </Card>
+  <Card title="Assistenten-Konfiguration" href="/assistants/configuration" icon="settings" cta="Assistenten konfigurieren">
+    Hänge veröffentlichte Flows als aufrufbare Tools für den Live-Einsatz von Assistenten an.
+  </Card>
 </Columns>

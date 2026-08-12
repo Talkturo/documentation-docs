@@ -1,0 +1,255 @@
+---
+title: Integrationen
+description: Verbinde Talkturo mit Scheduling-, CRM-, Messaging-, Telefonie-, Billing- und KI-Anbietern, um Anrufe zu automatisieren und Daten zwischen Systemen zu bewegen.
+---
+
+## Verbinde Talkturo mit dem Rest deines Stacks
+
+Talkturo integriert sich auf fünf unterschiedliche Arten mit externen Systemen: Workflow-Integrationen in TurboFlow, aufrufbare Tools in Assistenten, ausgehende Event-Webhooks, Anbieterauswahl für KI und Telefonie sowie Billing-Anbieter. Welche Option du nutzt, hängt davon ab, wo die Integration laufen soll und was sie tun muss.
+
+<Columns cols={3}>
+  <Card title="TurboFlow-Integrationen" icon="zap" href="#turboflow-integrationen">
+    Verbinde OAuth-basierte Apps im Workflow-Builder für Trigger und Aktionen.
+  </Card>
+  <Card title="Assistent-Tools" icon="code" href="#assistent-tool-funktionen">
+    Lass Assistenten während Gesprächen Termine buchen, Automatisierungen auslösen, APIs aufrufen und Workflows ausführen.
+  </Card>
+  <Card title="Event-Webhooks" icon="arrow-right" href="#assistent-event-webhooks">
+    Sende Ereignisse aus dem Anruflebenszyklus von jedem Assistenten an deine eigenen Systeme.
+  </Card>
+</Columns>
+
+<Callout kind="info">
+  Konfiguriere Workflow-Integrationen in TurboFlow, Assistent-Tools im Tab Functions des Assistenten und die Zustellung von Anrufereignissen im Tab Webhooks des Assistenten. Das sind getrennte Funktionen und werden in unterschiedlichen Teilen von Talkturo verwaltet.
+</Callout>
+
+## TurboFlow-Integrationen
+
+TurboFlow verwaltet OAuth-basierte App-Verbindungen für Workflow-Trigger und -Aktionen. Nutze diese Integrationen, wenn Talkturo auf externe Ereignisse reagieren oder Daten als Teil eines automatisierten Flows in ein anderes System schreiben soll.
+
+### Unterstützte TurboFlow-Apps
+
+| Integration | Verbindungstyp | Trigger | Aktionen |
+| --- | --- | --- | --- |
+| Cal.com | OAuth | Buchung erstellt, storniert, neu geplant | Scheduling-Aktionen |
+| Calendly | OAuth | Invitee erstellt, storniert | Scheduling-Aktionen |
+| Gmail | OAuth | Keine | E-Mail senden |
+| HubSpot | OAuth | Keine | Kontakte erstellen, Deals erstellen |
+| Slack | OAuth | Nachrichten, App-Mentions, Reaktionen, Dateifreigaben | Nachrichten senden |
+| Meta for Facebook and Instagram | OAuth | Neuer Lead aus Lead Ads | Keine |
+
+### Wann du TurboFlow verwenden solltest
+
+Verwende TurboFlow, wenn die Integration in einen Automatisierungsflow gehört und nicht in ein Live-Gespräch. Das passt zu ereignisgesteuerter Arbeit wie dem Routing neuer Leads, dem Erstellen von CRM-Datensätzen nach einem Trigger oder dem Senden von Follow-up-Benachrichtigungen in einen Team-Kanal.
+
+### Integrationsdetails
+
+#### Cal.com
+
+Cal.com unterstützt buchungsbasierte Trigger und Scheduling-Aktionen in TurboFlow. Nutze es, wenn Workflows auf Änderungen im Terminlebenszyklus reagieren oder Scheduling-Schritte als Teil einer größeren Automatisierung erstellen sollen.
+
+#### Calendly
+
+Calendly unterstützt Invitee-Ereignis-Trigger und Scheduling-Aktionen. Es deckt den üblichen Scheduling-Flow ab, bei dem eine Buchung in Calendly einen Workflow starten oder ein Workflow Scheduling-Aktivitäten erstellen oder verwalten soll.
+
+#### Gmail
+
+Gmail steht über OAuth für Aktionen zum Senden von E-Mails zur Verfügung. Nutze es, wenn ein Workflow Bestätigungsmails, interne Alerts oder Follow-up-Nachrichten senden soll.
+
+#### HubSpot
+
+HubSpot unterstützt OAuth-basierte Aktionen zum Erstellen von Kontakten und Deals. Das ist die richtige Option, wenn Workflow-Daten ohne individuelle API-Arbeit zu CRM-Datensätzen werden sollen.
+
+#### Slack
+
+Slack unterstützt sowohl Trigger als auch Aktionen. Ein Workflow kann aus Slack-Aktivitäten wie Nachrichten, App-Mentions, Reaktionen oder Dateifreigaben starten und auch Nachrichten zurück in Slack senden.
+
+#### Meta for Facebook and Instagram
+
+Meta-Integrationen unterstützen Lead-Ad-Trigger für neue Leads von Facebook und Instagram. Nutze sie, um Ad-Leads direkt in Workflows für Qualifizierung, Routing oder nachgelagerte CRM-Updates zu übernehmen.
+
+## Assistent-Tool-Funktionen
+
+Assistent-Tool-Funktionen laufen im Kontext eines Gesprächs. Nutze sie, wenn der Assistent während des Gesprächs mit einem Anrufer eine Aktion ausführen, Daten abrufen oder Arbeit an ein anderes System übergeben muss.
+
+<Callout kind="tip">
+  Wähle Assistent-Tools für Aufgaben in Echtzeit-Gesprächen. Wähle TurboFlow-Integrationen für Hintergrundautomatisierung, die von einem Trigger startet oder nach dem Anruf weiterläuft.
+</Callout>
+
+### Verfügbare Assistent-Tools
+
+| Tool | Was es tut | Typische Nutzung |
+| --- | --- | --- |
+| Cal.com | Buchungen planen, abrufen, stornieren und Verfügbarkeit prüfen | Termine während eines Anrufs buchen oder verwalten |
+| Zapier | Zapier-Automatisierungen auslösen | Anrufergebnisse an Tausende externe Apps übergeben |
+| Custom Webhooks | Externe API-Endpunkte während eines Gesprächs aufrufen | Interne Systeme abfragen oder proprietäre Workflows auslösen |
+| TurboFlow Workflows | Einen veröffentlichten Workflow als LLM-aufrufbares Tool anbinden | Einen strukturierten Flow aus einem Assistenten heraus wiederverwenden |
+
+### Assistent-Tools konfigurieren
+
+Öffne den Assistenten, den du aktualisieren möchtest, und verwende den Tab Functions, um die für diesen Assistenten verfügbaren Tools hinzuzufügen und zu verwalten.
+
+<Steps>
+  <Step title="Den Assistenten öffnen" icon="users">
+
+  Gehe zu dem Assistenten, den du konfigurieren möchtest, und öffne seinen Tab **Functions**.
+
+  </Step>
+  <Step title="Den Tool-Typ hinzufügen" icon="plus">
+
+  Wähle die Integration oder das Tool, das der Assistent während Gesprächen aufrufen soll.
+
+  </Step>
+  <Step title="Zugriff und Verhalten konfigurieren" icon="settings">
+
+  Verbinde den externen Dienst, falls das Tool das erfordert, und definiere dann, wie der Assistent die Funktion nutzen soll.
+
+  </Step>
+  <Step title="Den Gesprächspfad testen" icon="check-circle">
+
+  Führe einen Testanruf oder eine Assistent-Sitzung aus und bestätige, dass das Tool zum richtigen Zeitpunkt mit dem erwarteten Ergebnis ausgelöst wird.
+
+  </Step>
+</Steps>
+
+### Cal.com-Assistent-Funktionen
+
+Cal.com-Funktionen sind direkt in Assistenten verfügbar. Sie unterstützen vier Kernoperationen:
+
+- **Buchungen planen** während eines Live-Gesprächs
+- **Buchungen abrufen**, um bestehende Termine zu prüfen
+- **Buchungen stornieren**, wenn ein Anrufer Pläne ändern muss
+- **Verfügbarkeit prüfen**, bevor einem Anrufer Zeiten angeboten werden
+
+Diese Integration ist nützlich, wenn der Assistent wie ein Scheduling-Koordinator agiert und sofortigen Buchungskontext benötigt.
+
+### Zapier-Assistent-Funktion
+
+Zapier lässt einen Assistenten nachgelagerte Automatisierungen aus einem Anruf auslösen. Nutze es, wenn das Anrufergebnis Arbeit in einem anderen System anstoßen soll, ohne für jedes Ziel eine direkte Custom-Integration zu bauen.
+
+### Custom-Webhook-Funktionen
+
+Custom Webhooks lassen einen Assistenten während eines Gesprächs externe API-Endpunkte aufrufen. Jeder Assistent kann mehrere Custom-Webhook-Tools haben, was diese Option für interne Systeme, proprietäre Dienste oder APIs nützlich macht, die von keiner integrierten Integration abgedeckt werden.
+
+<Callout kind="alert">
+  Custom-Webhook-Funktionen laufen während Live-Gesprächen. Stelle sicher, dass der externe Endpunkt zuverlässig und schnell genug antwortet für die Anruferfahrung, die du liefern möchtest.
+</Callout>
+
+### TurboFlow-Workflows als Tools
+
+Ein veröffentlichter TurboFlow-Workflow kann als aufrufbares Tool für einen Assistenten angebunden werden. Das ist nützlich, wenn der Assistent einen strukturierten Prozess an einen wiederverwendbaren Workflow delegieren soll, statt die gesamte Logik direkt im Prompt oder in den Tool-Anweisungen zu hinterlegen.
+
+## Assistent-Event-Webhooks
+
+Assistent-Event-Webhooks senden Anrufereignisse von Talkturo an deine externen Systeme. Konfiguriere sie pro Assistent im Tab **Webhooks**, wenn nachgelagerte Systeme auf Anrufaktivitäten reagieren sollen.
+
+### Unterstützte Webhook-Ereignisse
+
+| Ereignis | Wann es ausgelöst wird | Übliches Ziel |
+| --- | --- | --- |
+| `call.started` | Ein Anruf beginnt | Logging, Live-Dashboards, Benachrichtigungen |
+| `call.ended` | Ein Anruf endet | CRM-Updates, Analytics-Pipelines, Automatisierungen nach dem Anruf |
+| `call.transcribed` | Ein Transkript wird verfügbar | QA-Review, Zusammenfassung, Speicherung, Suchindexierung |
+
+### Webhook-Sicherheit
+
+Talkturo signiert Webhook-Anfragen mit einer HMAC-Signatur, damit dein Server prüfen kann, dass das Ereignis von Talkturo stammt.
+
+<ParamField header="X-Talkturo-Signature" param-type="string" required="true">
+  HMAC-Signatur, die mit Assistent-Event-Webhooks mitgeliefert wird. Prüfe die Signatur beim Empfang, bevor du die Payload verarbeitest.
+</ParamField>
+
+### Wann Webhooks statt Tools verwendet werden sollten
+
+Verwende einen Webhook, wenn Talkturo dein System benachrichtigen soll, nachdem ein Ereignis eingetreten ist. Verwende eine Tool-Funktion, wenn der Assistent dein System während des Gesprächs aufrufen und das Ergebnis sofort nutzen muss.
+
+## KI-Anbieter-Integrationen
+
+Jeder Assistent kann mit getrennten Anbietern für Sprache, Speech-to-Text und Text-to-Speech konfiguriert werden. So kannst du Qualität, Latenz, Stimmeigenschaften und Modellverhalten für den jeweiligen Use Case abstimmen.
+
+### LLM-Anbieter
+
+| Anbieter |
+| --- |
+| OpenAI |
+| Google Gemini |
+| DeepSeek |
+| Qwen |
+| Kimi |
+| Anthropic |
+| Cerebras |
+| Talkturo Fast |
+
+### Speech-to-Text-Anbieter
+
+| Anbieter |
+| --- |
+| Deepgram |
+| AssemblyAI |
+| Cartesia |
+| ElevenLabs |
+| Inworld |
+
+### Text-to-Speech-Anbieter
+
+| Anbieter |
+| --- |
+| Cartesia |
+| ElevenLabs |
+| Inworld |
+| OpenAI |
+| DashScope |
+| Kugel |
+
+<Callout kind="info">
+  KI-Anbieter werden pro Assistent ausgewählt. Die beste Kombination hängt von deinem Latenzziel, der Sprachabdeckung, den Stimmanforderungen und dem Modellverhalten ab.
+</Callout>
+
+## Telefonie-Integrationen
+
+Talkturo unterstützt Telefonie-Anbieter für Telefonnummern und SIP-Konnektivität.
+
+### Unterstützte Telefonie-Anbieter
+
+| Anbieter | Rolle |
+| --- | --- |
+| Telnyx | Primärer Anbieter für den Kauf von Telefonnummern und SIP-Trunking |
+| Twilio | Sekundärer Anbieter für den Kauf von Telefonnummern und SIP-Trunking |
+
+Nutze Telefonie-Integrationen, wenn du Nummern bereitstellen, SIP-Infrastruktur anbinden oder Anrufe über dein bevorzugtes Anbieter-Setup routen musst.
+
+## Billing-Integrationen
+
+Talkturo verwendet externe Billing-Anbieter für Abonnements und Zahlungsabwicklung.
+
+### Unterstützte Billing-Anbieter
+
+| Anbieter | Rolle |
+| --- | --- |
+| Stripe | Primärer Zahlungsanbieter |
+| Lemon Squeezy | Legacy-Alternative |
+
+Wenn du Account-Zahlungen verwaltest oder das Billing-Verhalten prüfst, ist Stripe in aktuellen Setups der Standardanbieter.
+
+## Den richtigen Integrationspfad wählen
+
+Der schnellste Weg, die richtige Funktion zu wählen, beginnt damit, wo die Aktion stattfindet.
+
+- **Verwende TurboFlow-Integrationen**, wenn eine per OAuth verbundene App Workflow-Aktionen auslösen oder empfangen soll.
+- **Verwende Assistent-Tools**, wenn der Assistent während eines Anrufs etwas tun muss.
+- **Verwende Assistent-Webhooks**, wenn dein System Anrufereignisse erhalten soll, nachdem sie eingetreten sind.
+- **Verwende Anbieter-Integrationen**, wenn du Modell-, Stimme-, Transkriptions-, Telefonie- oder Billing-Infrastruktur konfigurierst.
+
+## Verwandte Seiten
+
+<Columns cols={3}>
+  <Card title="TurboFlow-Übersicht" href="/turboflow/overview" icon="zap">
+    Sieh, wie Workflow-Trigger, Aktionen und verbundene Apps zusammenspielen.
+  </Card>
+  <Card title="Assistent-Konfiguration" href="/assistants/configuration" icon="settings">
+    Konfiguriere Funktionen, Anbieter und Assistent-Verhalten an einem Ort.
+  </Card>
+  <Card title="Telefonie" href="/telephony" icon="phone">
+    Richte Telefonnummern, Anbieter-Routing und SIP-Konnektivität ein.
+  </Card>
+</Columns>

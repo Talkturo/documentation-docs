@@ -136,6 +136,8 @@ Erstelle Unternehmen auf der CRM-Unternehmensseite im Dashboard oder über die A
 
 ### Unternehmen filtern und suchen
 
+Die Unternehmensliste unterstützt diese Query-Parameter.
+
 <ParamField query="teamId" param-type="string" required="false">
 Begrenzt die Ergebnisse auf ein Team.
 </ParamField>
@@ -158,6 +160,8 @@ Anzahl der Datensätze, die übersprungen werden, bevor Ergebnisse zurückgegebe
 
 ### Ein Unternehmen aktualisieren oder löschen
 
+Aktualisiere Unternehmensdetails, wenn sich Account-Informationen ändern. Lösche ein Unternehmen nur, wenn du den Datensatz oder den verknüpften Kontaktkontext nicht mehr benötigst.
+
 <Callout kind="alert">
 Das Löschen eines Unternehmens entfernt den Unternehmensdatensatz. Prüfe verknüpfte Kontakte, bevor du ihn löschst.
 </Callout>
@@ -166,14 +170,18 @@ Das Löschen eines Unternehmens entfernt den Unternehmensdatensatz. Prüfe verkn
 
 Jeder Kontakt muss mit einem Unternehmen verknüpft sein. Dadurch ist der Unternehmensdatensatz die gemeinsame Single Source of Truth für Account-Daten, während Kontakte personenbezogene Details speichern.
 
-- Ein Unternehmen kann viele Kontakte haben
-- Jeder Kontakt gehört zu genau einem Unternehmen
-- Unternehmenslisten zeigen die Anzahl der Kontakte an
-- Die Unternehmenssuche findet Übereinstimmungen in Name oder Website
+Diese Beziehung funktioniert in eine Richtung:
+
+- **Ein Unternehmen kann viele Kontakte haben**
+- **Jeder Kontakt gehört zu genau einem Unternehmen**
+- **Unternehmenslisten zeigen die Anzahl der Kontakte an**
+- **Die Unternehmenssuche findet Übereinstimmungen in Name oder Website**
+
+Wenn du die mit einem Account verknüpften Personen prüfen möchtest, öffne die Unternehmens-Detailansicht oder rufe `GET /api/crm/companies/[id]/contacts` auf.
 
 ## Unternehmensdaten in Anrufen verwenden
 
-Assistent-Prompts können direkt auf Unternehmensfelder verweisen.
+Assistent-Prompts können direkt auf Unternehmensfelder verweisen. Verwende diese Variablen, um Skripte, Begrüßungen und den Umgang mit Einwänden zu personalisieren.
 
 | Variable | Beschreibung |
 |---|---|
@@ -186,7 +194,7 @@ Assistent-Prompts können direkt auf Unternehmensfelder verweisen.
 | `{{company.country}}` | Land des Unternehmens |
 | `{{company.custom.key}}` | Wert eines benutzerdefinierten Felds des Unternehmens |
 
-Ersetze bei benutzerdefinierten Feldern `key` durch den Schlüssel des benutzerdefinierten Felds, den du in deinem Workspace erstellt hast.
+Ersetze bei benutzerdefinierten Feldern `key` durch den Schlüssel des benutzerdefinierten Felds, den du in deinem Workspace erstellt hast. Verwende zum Beispiel `{{company.custom.account_tier}}`, um auf ein Feld `account_tier` zu verweisen.
 
 ## Verwandte Seiten
 

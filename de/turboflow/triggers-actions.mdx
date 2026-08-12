@@ -1,0 +1,653 @@
+---
+title: TurboFlow Trigger und Actions
+description: Referenz für jeden TurboFlow-Trigger-, Action- und Logic-Node inklusive Feldtypen, Optionen, Ausgaben und Ausdrucksnutzung.
+---
+
+## Baue Workflows mit Trigger-, Action- und Logic-Nodes
+
+TurboFlow-Workflows beginnen mit einem Trigger, laufen durch eine oder mehrere Actions und verzweigen mit Logic-Nodes. Diese Referenz dokumentiert jeden verfügbaren Node-Typ, die genauen Konfigurationsfelder, die jeder Node akzeptiert, und die Ausgabe, die jeder Node nachgelagerten Nodes bereitstellt.
+
+<Callout kind="info">
+
+Verwende Ausdrücke in jedem konfigurierbaren Feld, um Werte aus früheren Nodes zu lesen. Setze Referenzen in `{{ }}`-Syntax, zum Beispiel `{{trigger.body.email}}` oder `{{talkturo_upsert_contact.contact_id}}`.
+
+</Callout>
+
+## So fließen Node-Ausgaben durch einen Workflow
+
+Jeder Node fügt sein Ergebnis unter seiner Node-ID zum Workflow-Kontext hinzu. Nachgelagerte Nodes können diese Werte mit Ausdrücken referenzieren. So kannst du Trigger-Payloads in Actions übergeben, Action-Ergebnisse wiederverwenden und anhand von Logic-Ergebnissen verzweigen.
+
+```mermaid
+graph TD
+  A[Trigger receives payload] --> B[Action uses trigger data]
+  B --> C[Condition evaluates result]
+  C -->|true| D[Action on true path]
+  C -->|false| E[Action on false path]
+  D --> F[Format output]
+  E --> F
+```
+
+### Ausdruckssyntax
+
+Ausdrücke verwenden doppelte geschweifte Klammern um einen Pfad. Der Pfad beginnt in der Regel mit einer Node-ID, gefolgt von dem Ausgabefeld, das du lesen möchtest.
+
+<Request tabs="Examples" show-lines="true">
+
+```json
+{
+  "email": "{{trigger.body.email}}",
+  "contactId": "{{talkturo_upsert_contact.contact_id}}",
+  "httpStatus": "{{http_request.status}}",
+  "responseBody": "{{http_request.body}}",
+  "matched": "{{condition.result}}"
+}
+```
+
+</Request>
+
+<Callout kind="tip">
+
+Der Ausdrucks-Picker zeigt Werte, die von vorgelagerten Nodes verfügbar sind. Wenn ein Wert dort nicht erscheint, kann der aktuelle Node noch nicht darauf zugreifen.
+
+</Callout>
+
+### Häufige Ausdrucksbeispiele
+
+| Ausdruck | Liest |
+|---|---|
+| `{{trigger.body.email}}` | Ein eingehendes Webhook-Feld namens `email` |
+| `{{trigger.body.context.call_id}}` | Voice-Kontext, der an einen Tool-Aufruf angehängt ist |
+| `{{http_request.body.status}}` | Ein verschachteltes Feld innerhalb eines HTTP-Response-Bodys |
+| `{{talkturo_upsert_contact.contact_id}}` | Die CRM-Kontakt-ID, die von der Upsert-Action zurückgegeben wurde |
+| `{{condition.result}}` | Das boolesche Ergebnis eines Condition-Nodes |
+
+## Trigger-Nodes
+
+Trigger starten einen Workflow. Jeder Flow verwendet einen Trigger als Einstiegspunkt, und einige Trigger verifizieren außerdem eingehende Ereignisse aus externen Integrationen.
+
+### webhook_trigger
+
+`webhook_trigger` ist der universelle Einstiegspunkt für jeden Flow. Er unterstützt direkte externe Webhooks und optional die Freigabe als Voice-Tool für AI-Assistenten.
+
+#### Was dieser Trigger macht
+
+- **Externer Webhook-Empfänger** — jedes externe System kann eine `POST`-Anfrage an die Trigger-URL des Flows senden.
+- **Voice-Tool** — wenn `voice_tool.exposed` aktiviert ist, wird derselbe Trigger als aufrufbares Tool für Sprachassistenten registriert.
+
+#### Konfigurationsfelder
+
+<ParamField body="voice_tool.exposed" param-type="boolean" required="true" show-location="false">
+
+Ob der Trigger für Sprachassistenten als aufrufbares Tool sichtbar ist.
+
+</ParamField>
+
+<ParamField body="voice_tool.tool_name" param-type="string" show-location="false">
+
+Tool-Name, den das LLM aufruft. Verwende Snake Case und halte den Namen bei 64 Zeichen oder weniger, zum Beispiel `book_calendly_meeting`.
+
+</ParamField>
+
+<ParamField body="voice_tool.tool_description" param-type="string" show-location="false">
+
+Beschreibung in natürlicher Sprache, die dem LLM angezeigt wird. Die Länge muss zwischen 10 und 1024 Zeichen liegen.
+
+</ParamField>
+
+<ParamField body="voice_tool.parameters" param-type="ParameterDef[]" show-location="false">
+
+Typisierte Eingabeparameter, die dem LLM bereitgestellt werden, wenn der Trigger als Voice-Tool dient.
+
+</ParamField>
+
+#### ParameterDef-Felder
+
+Verwende ein `ParameterDef`-Objekt für jeden Tool-Parameter.
+
+<ParamField body="name" param-type="string" required="true" show-location="false">
+
+Parametername in Snake Case.
+
+</ParamField>
+
+<ParamField body="type" param-type="string" required="true" enum="string,number,boolean,array,object" show-location="false">
+
+Parametertyp. Unterstützte Werte sind `string`, `number`, `boolean`, `array` und `object`.
+
+</ParamField>
+
+<ParamField body="description" param-type="string" show-location="false">
+
+Hinweis, der dem LLM angezeigt wird. Maximale Länge sind 500 Zeichen.
+
+</ParamField>
+
+<ParamField body="source" param-type="string" required="true" enum="ai,static" show-location="false">
+
+Woher der Parameterwert kommt. Verwende `ai`, wenn das LLM den Wert erzeugen soll, oder `static`, wenn der Parameter immer einen festen `static_value` verwendet.
+
+</ParamField>
+
+<ParamField body="required" param-type="boolean" show-location="false">
+
+Ob das LLM diesen Parameter bereitstellen muss. Verwende dieses Feld nur, wenn `source` den Wert `ai` hat.
+
+</ParamField>
+
+<ParamField body="static_value" param-type="unknown" show-location="false">
+
+Fest codierter Wert, der verwendet wird, wenn `source` den Wert `static` hat.
+
+</ParamField>
+
+<ParamField body="items" param-type="object" show-location="false">
+
+JSON-Schema-Hinweis für die Struktur von Array-Elementen. Verwende dies, wenn `type` den Wert `array` hat.
+
+</ParamField>
+
+<ParamField body="properties" param-type="object" show-location="false">
+
+JSON-Schema-Hinweis für die Objektform. Verwende dies, wenn `type` den Wert `object` hat.
+
+</ParamField>
+
+#### Ausgabefelder
+
+Nachgelagerte Nodes können eingehende Trigger-Daten aus `trigger.body` lesen.
+
+<ResponseField name="body" field-type="object" required="true">
+
+Der geparste eingehende Request-Body.
+
+</ResponseField>
+
+<ResponseField name="body.context" field-type="object">
+
+Voice-Call-Kontext, wenn der Trigger als Voice-Tool läuft. Häufige Felder sind `call_id`, `contact_id` und `assistant_id`.
+
+</ResponseField>
+
+<ResponseField name="body.<param_name>" field-type="unknown">
+
+Ein Feld für jedes eingehende Webhook-Feld oder jeden Tool-Parameter.
+
+</ResponseField>
+
+<Callout kind="info">
+
+Wenn du einen Webhook-Trigger als Voice-Tool freigibst, kommen die Tool-Eingaben weiterhin über `trigger.body` an. Lies sie mit Ausdrücken wie `{{trigger.body.meeting_type}}`.
+
+</Callout>
+
+#### Beispielkonfiguration für ein Voice-Tool
+
+```json
+{
+  "voice_tool": {
+    "exposed": true,
+    "tool_name": "book_calendly_meeting",
+    "tool_description": "Books a meeting for the caller and returns the booking result",
+    "parameters": [
+      {
+        "name": "full_name",
+        "type": "string",
+        "description": "Caller full name",
+        "source": "ai",
+        "required": true
+      },
+      {
+        "name": "email",
+        "type": "string",
+        "description": "Best email address for the meeting invite",
+        "source": "ai",
+        "required": true
+      },
+      {
+        "name": "meeting_type",
+        "type": "string",
+        "description": "Meeting type to book",
+        "source": "static",
+        "static_value": "demo_call"
+      }
+    ]
+  }
+}
+```
+
+### Integration-Trigger
+
+Integration-Trigger starten einen Workflow aus verifizierten Ereignissen, die von externen Systemen gesendet werden.
+
+#### Unterstützte Integration-Trigger
+
+| Integration | Trigger-ID | Ereignisse | Verifizierung |
+|---|---|---|---|
+| Cal.com | `booking_events` | `BOOKING_CREATED`, `BOOKING_RESCHEDULED`, `BOOKING_CANCELLED`, `BOOKING_REJECTED`, `BOOKING_REQUESTED` | HMAC-SHA256 über `X-Cal-Signature-256` |
+| Calendly | `invitee_events` | `invitee.created`, `invitee.canceled` | HMAC-SHA256 über `Calendly-Webhook-Signature` |
+| Slack | `event_received` | `message`, `app_mention`, `reaction_added`, `reaction_removed`, `channel_created`, `member_joined_channel`, `member_left_channel`, `file_shared` | Slack Signing Secret |
+| Meta | `lead_received` | `leadgen` | HMAC über `X-Hub-Signature-256` mit `META_APP_SECRET` |
+
+#### Meta-Trigger-Konfiguration
+
+Verwende diese Felder, wenn du den Meta-Lead-Trigger konfigurierst.
+
+<ParamField body="page_id" param-type="string" required="true" show-location="false">
+
+Meta-Page-ID, der das Lead-Formular-Webhook gehört.
+
+</ParamField>
+
+<ParamField body="form_id" param-type="string" show-location="false">
+
+Optionaler Formularfilter. Wenn gesetzt, akzeptiert der Trigger nur Ereignisse für das angegebene Formular.
+
+</ParamField>
+
+## Action-Nodes
+
+Actions führen Arbeit aus, nachdem ein Trigger ausgelöst wurde. Sie können externe APIs aufrufen, CRM-Daten erstellen oder aktualisieren, ausgehende Anrufe starten oder die finale Antwort des Workflows formen.
+
+### http_request
+
+`http_request` sendet eine HTTP-Anfrage an jede erreichbare URL und stellt die vollständige Response nachgelagerten Nodes zur Verfügung.
+
+#### Konfigurationsfelder
+
+<ParamField body="url" param-type="url" required="true" show-location="false">
+
+Ziel-URL für die Anfrage.
+
+</ParamField>
+
+<ParamField body="method" param-type="string" required="true" enum="GET,POST,PUT,PATCH,DELETE" show-location="false">
+
+HTTP-Methode. Standard ist `POST`.
+
+</ParamField>
+
+<ParamField body="headers" param-type="json" show-location="false">
+
+Zusätzliche Request-Header.
+
+</ParamField>
+
+<ParamField body="body" param-type="unknown" show-location="false">
+
+Request-Body. TurboFlow JSON-kodiert den Wert automatisch.
+
+</ParamField>
+
+<ParamField body="timeout_seconds" param-type="number" show-location="false">
+
+Request-Timeout in Sekunden. Zulässiger Bereich ist 1 bis 60. Standard ist `30`.
+
+</ParamField>
+
+#### Ausgabefelder
+
+<ResponseField name="status" field-type="number" required="true">
+
+HTTP-Statuscode, den der Zielserver zurückgegeben hat.
+
+</ResponseField>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+
+`true`, wenn der Response-Status im 2xx-Bereich liegt.
+
+</ResponseField>
+
+<ResponseField name="body" field-type="unknown">
+
+Geparster JSON-Response-Body, wenn die Response JSON ist, andernfalls Rohtext.
+
+</ResponseField>
+
+<ResponseField name="headers" field-type="json">
+
+Response-Header.
+
+</ResponseField>
+
+#### Beispielkonfiguration
+
+```json
+{
+  "url": "https://api.acmecrm.com/v1/leads",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer dkai_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "email": "{{trigger.body.email}}",
+    "name": "{{trigger.body.full_name}}"
+  },
+  "timeout_seconds": 30
+}
+```
+
+### talkturo_upsert_contact
+
+`talkturo_upsert_contact` erstellt oder aktualisiert einen CRM-Kontakt. Der Abgleich erfolgt zuerst über die Telefonnummer, danach über die E-Mail.
+
+#### Konfigurationsfelder
+
+<ParamField body="first_name" param-type="string" required="true" show-location="false">
+
+Vorname oder vollständiger Name des Kontakts.
+
+</ParamField>
+
+<ParamField body="last_name" param-type="string" show-location="false">
+
+Nachname des Kontakts.
+
+</ParamField>
+
+<ParamField body="phone" param-type="string" show-location="false">
+
+Telefonnummer für den Kontakt. Die Plattform normalisiert diesen Wert auf E.164.
+
+</ParamField>
+
+<ParamField body="email" param-type="string" show-location="false">
+
+E-Mail-Adresse für den Kontakt.
+
+</ParamField>
+
+<ParamField body="source" param-type="string" enum="manual,import,campaign,inbound_call,web_form,referral,other" show-location="false">
+
+Wert für die Kontaktquelle.
+
+</ParamField>
+
+<ParamField body="company_id" param-type="string" show-location="false">
+
+Talkturo-Unternehmens-ID.
+
+</ParamField>
+
+<ParamField body="tags" param-type="string[]" show-location="false">
+
+Liste von Tags, die auf den Kontakt angewendet werden sollen.
+
+</ParamField>
+
+#### Ausgabefelder
+
+<ResponseField name="contact_id" field-type="string" required="true">
+
+Talkturo-Kontakt-ID.
+
+</ResponseField>
+
+<ResponseField name="created" field-type="boolean" required="true">
+
+`true`, wenn die Action einen neuen Kontakt erstellt hat. `false`, wenn sie einen bestehenden Kontakt aktualisiert hat.
+
+</ResponseField>
+
+#### Beispielkonfiguration
+
+```json
+{
+  "first_name": "{{trigger.body.first_name}}",
+  "last_name": "{{trigger.body.last_name}}",
+  "phone": "{{trigger.body.phone}}",
+  "email": "{{trigger.body.email}}",
+  "source": "web_form",
+  "tags": [
+    "demo-request",
+    "priority-lead"
+  ]
+}
+```
+
+### talkturo_call_contact
+
+`talkturo_call_contact` startet einen ausgehenden AI-Anruf über eine Kampagne.
+
+#### Konfigurationsfelder
+
+<ParamField body="contact_id" param-type="string" required="true" show-location="false">
+
+Talkturo-Kontakt-ID, die angerufen werden soll.
+
+</ParamField>
+
+<ParamField body="campaign_id" param-type="string" required="true" show-location="false">
+
+Kampagnen-ID, die Assistenten, Caller-ID und Wiederholungsregeln bereitstellt.
+
+</ParamField>
+
+<ParamField body="timing_mode" param-type="string" enum="immediate,delay,schedule" show-location="false">
+
+Wann der Anruf platziert werden soll. Standard ist `immediate`.
+
+</ParamField>
+
+<ParamField body="delay_minutes" param-type="number" show-location="false">
+
+Minuten Wartezeit vor dem Anruf, wenn `timing_mode` den Wert `delay` hat. Zulässiger Bereich ist 0 bis 43200.
+
+</ParamField>
+
+<ParamField body="scheduled_at" param-type="string" show-location="false">
+
+Absoluter Anrufzeitpunkt im ISO-8601-Format, wenn `timing_mode` den Wert `schedule` hat.
+
+</ParamField>
+
+#### Ausgabefelder
+
+<ResponseField name="campaign_contact_id" field-type="string" required="true">
+
+Kampagnen-Kontakt-Datensatz-ID, die für den ausgehenden Anruf erstellt oder verwendet wurde.
+
+</ResponseField>
+
+<ResponseField name="call_id" field-type="string | null">
+
+Anruf-ID, wenn der Anruf sofort erstellt wird, oder `null`, wenn noch kein Live-Anrufdatensatz existiert.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+
+Aktueller Request-Status für den ausgehenden Anruf.
+
+</ResponseField>
+
+<Callout kind="info">
+
+Setze `delay_minutes` nur für den Modus `delay` und `scheduled_at` nur für den Modus `schedule`. TurboFlow erlaubt weiterhin Ausdrücke in beiden Feldern, was hilft, wenn die Anrufzeit aus vorgelagerten Daten kommt.
+
+</Callout>
+
+#### Beispielkonfiguration
+
+```json
+{
+  "contact_id": "{{talkturo_upsert_contact.contact_id}}",
+  "campaign_id": "cmp_7af42c1d9e",
+  "timing_mode": "schedule",
+  "scheduled_at": "{{trigger.body.follow_up_time}}"
+}
+```
+
+### format_output
+
+`format_output` formt das JSON-Objekt, das der Workflow an den Sprachassistenten zurückgibt.
+
+#### Konfigurationsfelder
+
+<ParamField body="mode" param-type="string" enum="fields,json" show-location="false">
+
+Ausgabemodus. Standard ist `fields`.
+
+</ParamField>
+
+<ParamField body="fields" param-type="array" show-location="false">
+
+Liste der Ausgabezeilen im Modus `fields`. Jede Zeile enthält einen `key` und einen `value`, und jede Zeile wird zu einem Top-Level-Schlüssel im zurückgegebenen Objekt.
+
+</ParamField>
+
+<ParamField body="template" param-type="unknown" show-location="false">
+
+Vollständiges zurückgegebenes Objekt im Modus `json`.
+
+</ParamField>
+
+#### Ausgabefelder
+
+<ResponseField name="output" field-type="object" required="true">
+
+Benutzerdefiniertes Objekt, das im Modus `fields` erstellt oder im Modus `json` direkt aus `template` zurückgegeben wird.
+
+</ResponseField>
+
+#### Beispielkonfiguration
+
+<Tabs>
+  <Tab title="Fields-Modus" icon="settings">
+
+```json
+{
+  "mode": "fields",
+  "fields": [
+    {
+      "key": "contact_id",
+      "value": "{{talkturo_upsert_contact.contact_id}}"
+    },
+    {
+      "key": "created",
+      "value": "{{talkturo_upsert_contact.created}}"
+    },
+    {
+      "key": "message",
+      "value": "Contact saved and ready for follow-up"
+    }
+  ]
+}
+```
+
+  </Tab>
+  <Tab title="JSON-Modus" icon="code">
+
+```json
+{
+  "mode": "json",
+  "template": {
+    "contact": {
+      "id": "{{talkturo_upsert_contact.contact_id}}",
+      "created": "{{talkturo_upsert_contact.created}}"
+    },
+    "source": "{{trigger.body.source}}"
+  }
+}
+```
+
+  </Tab>
+</Tabs>
+
+## Logic-Nodes
+
+Logic-Nodes steuern, welchem Pfad der Workflow als Nächstes folgt.
+
+### condition
+
+`condition` wertet zwei Operanden aus und leitet den Workflow über den `true`- oder `false`-Handle weiter.
+
+#### Konfigurationsfelder
+
+<ParamField body="left" param-type="unknown" required="true" show-location="false">
+
+Linker Operand. Das kann ein Literalwert oder ein Ausdruck sein.
+
+</ParamField>
+
+<ParamField body="operator" param-type="string" required="true" show-location="false">
+
+Vergleichsoperator. Standard ist `eq`.
+
+</ParamField>
+
+<ParamField body="right" param-type="unknown" show-location="false">
+
+Rechter Operand. Dieses Feld wird bei unären Operatoren ignoriert. Aktuell unterstützte Operatoren sind binär.
+
+</ParamField>
+
+#### Operatoren
+
+| Operator | Typ | Beschreibung |
+|---|---|---|
+| `eq` | binär | Lose Gleichheit |
+| `neq` | binär | Ungleich |
+| `gt` | binär numerisch | Größer als |
+| `gte` | binär numerisch | Größer als oder gleich |
+| `lt` | binär numerisch | Kleiner als |
+| `lte` | binär numerisch | Kleiner als oder gleich |
+| `contains` | binär string | Zeichenkette enthält Teilstring |
+| `starts_with` | binär string | Zeichenkette beginnt mit |
+| `ends_with` | binär string | Zeichenkette endet mit |
+
+#### Ausgabefelder
+
+<ResponseField name="result" field-type="boolean" required="true">
+
+Boolesches Ergebnis der Condition-Auswertung.
+
+</ResponseField>
+
+#### Beispielkonfiguration
+
+```json
+{
+  "left": "{{http_request.status}}",
+  "operator": "gte",
+  "right": 200
+}
+```
+
+<Callout kind="tip">
+
+Ein Condition-Node funktioniert in der Regel am besten, wenn `left` und `right` bereits auf denselben Typ normalisiert sind. Vergleiche zum Beispiel Zahlen mit Zahlen und Zeichenketten mit Zeichenketten.
+
+</Callout>
+
+## Node-Referenz nach Zweck
+
+Verwende diese Tabelle, um schnell den richtigen Node auszuwählen.
+
+| Ziel | Node-Typ |
+|---|---|
+| Beliebigen eingehenden Payload empfangen oder ein Voice-Tool freigeben | `webhook_trigger` |
+| Einen Flow aus Cal.com, Calendly, Slack oder Meta starten | Integration-Trigger |
+| Eine externe API aufrufen | `http_request` |
+| Einen CRM-Kontakt erstellen oder aktualisieren | `talkturo_upsert_contact` |
+| Einen ausgehenden AI-Anruf starten | `talkturo_call_contact` |
+| Einen benutzerdefinierten JSON-Payload zurückgeben | `format_output` |
+| Anhand von Workflow-Daten verzweigen | `condition` |
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+  <Card
+    title="TurboFlow-Übersicht"
+    href="/turboflow/overview"
+    icon="book-open"
+    cta="Übersicht lesen"
+  />
+  <Card
+    title="Integrationen"
+    href="/integrations"
+    icon="plug"
+    cta="Integrationen durchsuchen"
+  />
+</Columns>

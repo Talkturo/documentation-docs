@@ -1,85 +1,85 @@
 ---
-title: Schnellstart
-description: Erstelle einen Assistenten, kaufe eine Telefonnummer und führe deinen ersten Talkturo-Testanruf über das Dashboard oder die API durch.
+title: Quickstart
+description: Erstellen Sie einen Assistenten, kaufen Sie eine Telefonnummer und führen Sie Ihren ersten Talkturo-Testanruf über Dashboard oder API durch.
 ---
 
 ## Voraussetzungen
 
 <Callout kind="info">
 
-Bevor du beginnst, stelle sicher, dass du Folgendes hast:
+Bevor Sie starten, stellen Sie sicher, dass Sie Folgendes haben:
 
 - Ein Talkturo-Konto
 - Zugriff auf das Talkturo-Dashboard unter `https://app.talkturo.ai`
-- Einen API-Schlüssel, wenn du die API verwenden möchtest
-- Eine Kreditkarte, wenn du eine Telefonnummer über dein enthaltenes Guthaben hinaus kaufen möchtest
+- Einen API-Schlüssel, wenn Sie die API nutzen möchten
+- Eine Kreditkarte, wenn Sie eine Telefonnummer über Ihre enthaltenen Credits hinaus kaufen möchten
 
-Neue Workspaces starten mit 10 kostenlosen Guthaben, sodass du die erste Einrichtung abschließen kannst, bevor du mehr ausgibst.
+Neue Workspaces starten mit 10 kostenlosen Credits, sodass Sie das initiale Setup abschließen können, bevor Sie sich zu größeren Ausgaben verpflichten.
 
 </Callout>
 
-Mit Talkturo kannst du einen KI-Sprachassistenten erstellen, eine Telefonnummer verbinden und einen Live-Anruf in einem einzigen Einrichtungsablauf testen. Die folgenden Schritte zeigen den schnellsten Weg zu einem funktionierenden Assistenten.
+Talkturo ermöglicht es Ihnen, einen KI-Voice-Assistenten zu erstellen, eine Telefonnummer zu verbinden und einen Live-Anruf in einem einzigen Setup-Flow zu testen. Die folgenden Schritte zeigen den schnellsten Weg zu einem funktionierenden Assistenten.
 
-## Erstelle und verifiziere dein Konto
+## Konto erstellen und verifizieren
 
-Erstelle zuerst deinen Workspace und generiere dann einen API-Schlüssel, wenn du die Einrichtung automatisieren möchtest.
+Erstellen Sie zuerst Ihren Workspace und generieren Sie anschließend einen API-Schlüssel, wenn Sie das Setup automatisieren möchten.
 
 <Steps>
-  <Step title="Registriere dich bei Talkturo">
+  <Step title="Bei Talkturo registrieren">
 
-    Öffne `https://app.talkturo.ai/signup` und erstelle dein Konto.
+    Öffnen Sie `https://app.talkturo.ai/signup` und erstellen Sie Ihr Konto.
 
-    Wenn die Registrierung erfolgreich ist, erstellt Talkturo deinen Workspace und schreibt automatisch 10 kostenlose Guthaben gut.
-
-  </Step>
-  <Step title="Verifiziere deine E-Mail-Adresse">
-
-    Öffne die Verifizierungs-E-Mail von Talkturo und bestätige deine Adresse.
-
-    Nach der Verifizierung kannst du dich im Dashboard anmelden und auf deine Workspace-Einstellungen zugreifen.
+    Nach erfolgreicher Registrierung erstellt Talkturo Ihren Workspace und schreibt automatisch 10 kostenlose Credits gut.
 
   </Step>
-  <Step title="Erstelle einen API-Schlüssel">
+  <Step title="E-Mail verifizieren">
 
-    Öffne im Dashboard deine Kontoeinstellungen und generiere einen API-Schlüssel.
+    Öffnen Sie die Verifizierungs-E-Mail von Talkturo und bestätigen Sie Ihre Adresse.
 
-    Talkturo-API-Schlüssel verwenden das Format `tk_live_...` für Live-Umgebungen und `tk_test_...` für Testumgebungen. Kopiere den Schlüssel, wenn Talkturo ihn anzeigt. Du verwendest ihn im Header `Authorization` als `Bearer tk_test_example_9xmk7q2r`.
+    Nach der Verifizierung können Sie sich im Dashboard anmelden und auf Ihre Workspace-Einstellungen zugreifen.
+
+  </Step>
+  <Step title="API-Schlüssel erstellen">
+
+    Öffnen Sie im Dashboard Ihre Kontoeinstellungen und generieren Sie einen API-Schlüssel.
+
+    Talkturo-API-Schlüssel verwenden das Format `tk_live_...` für Live-Umgebungen und `tk_test_...` für Testumgebungen. Kopieren Sie den Schlüssel, wenn Talkturo ihn anzeigt. Sie verwenden ihn im `Authorization`-Header als `Bearer tk_test_example_9xmk7q2r`.
 
   </Step>
 </Steps>
 
-## Erstelle deinen ersten KI-Assistenten
+## Ihren ersten KI-Assistenten erstellen
 
-Erstelle deinen ersten Assistenten über den geführten Assistenten oder mit einer einzelnen API-Anfrage. Beide Wege erstellen denselben zugrunde liegenden Assistenten-Datensatz.
+Erstellen Sie Ihren ersten Assistenten über den geführten Wizard oder mit einer einzelnen API-Anfrage. Beide Wege erzeugen denselben zugrunde liegenden Assistenten-Datensatz.
 
 <Tabs>
   <Tab title="Dashboard" icon="monitor">
 
-    Das Dashboard führt dich durch einen 7-stufigen Einrichtungsablauf:
+    Das Dashboard führt Sie durch einen 7-stufigen Setup-Flow:
 
-    1. **Assistent konfigurieren** — Wähle eine Vorlage und gib deinem Assistenten einen Namen.
-    2. **Unternehmensinformationen** — Füge den Geschäftskontext hinzu, den der Assistent in Gesprächen verwenden soll.
-    3. **Telefonnummer** — Suche nach einer Nummer oder verbinde eine Nummer.
-    4. **Unternehmen** — Definiere das Unternehmen, das der Assistent repräsentiert.
-    5. **Kontakte** — Füge Kontakte hinzu oder importiere sie, wenn du ausgehende Anrufe planst.
-    6. **Kampagne** — Konfiguriere bei Bedarf eine ausgehende Kampagne.
-    7. **Abschließen** — Prüfe die Einrichtung und schließe sie ab.
+    1. **Configure Assistant** — wählen Sie eine Vorlage und benennen Sie Ihren Assistenten.
+    2. **Business Info** — fügen Sie den Geschäftskontext hinzu, den der Assistent in Gesprächen nutzen soll.
+    3. **Phone Number** — suchen Sie nach einer Nummer oder verbinden Sie eine.
+    4. **Company** — definieren Sie das Unternehmen, das der Assistent vertritt.
+    5. **Contacts** — fügen Sie Kontakte hinzu oder importieren Sie sie, wenn Sie ausgehende Anrufe planen.
+    6. **Campaign** — konfigurieren Sie bei Bedarf eine ausgehende Kampagne.
+    7. **Complete** — prüfen Sie das Setup und schließen Sie es ab.
 
-    Starte unter `https://app.talkturo.ai/assistants` und klicke auf **New Assistant**.
+    Starten Sie unter `https://app.talkturo.ai/assistants` und klicken Sie auf **New Assistant**.
 
-    Wähle eine dieser Vorlagen:
+    Wählen Sie eine dieser Vorlagen:
 
     - **Outbound Setter**
     - **Inbound Support**
     - **Follow-up**
     - **Custom**
 
-    Wenn der Assistent erstellt ist, zeigt Talkturo ihn in deiner Assistentenliste an und öffnet den Editor, damit du die Einrichtung fortsetzen kannst.
+    Nach dem Erstellen zeigt Talkturo den Assistenten in Ihrer Assistentenliste und öffnet den Editor, damit Sie das Setup fortsetzen können.
 
   </Tab>
   <Tab title="API" icon="code">
 
-    Sende eine `POST`-Anfrage an `/api/assistants`, um den Assistenten direkt zu erstellen.
+    Senden Sie eine `POST`-Anfrage an `/api/assistants`, um den Assistenten direkt zu erstellen.
 
     <CodeGroup tabs="cURL,JavaScript">
       ```bash
@@ -113,25 +113,25 @@ Erstelle deinen ersten Assistenten über den geführten Assistenten oder mit ein
 
     </CodeGroup>
 
-    Verwende diese Anfragefelder:
+    Verwenden Sie diese Request-Felder:
 
     - `accountSlug` — erforderlicher Workspace-Slug
     - `name` — erforderlicher Assistentenname
-    - `templateId` — optionale Vorlagenkennung, standardmäßig `custom`
+    - `templateId` — optionale Vorlagenkennung, Standard ist `custom`
 
-    Eine erfolgreiche Anfrage gibt den neuen Assistenten-Datensatz zurück. Behalte die Assistenten-ID, da du sie beim Zuweisen von Telefonnummern brauchst.
+    Eine erfolgreiche Anfrage gibt den neuen Assistenten-Datensatz zurück. Bewahren Sie die Assistenten-ID auf, denn Sie benötigen sie beim Zuweisen von Telefonnummern.
 
   </Tab>
 </Tabs>
 
-## Kaufe und weise eine Telefonnummer zu
+## Telefonnummer kaufen und zuweisen
 
-Suche zuerst nach einer Nummer, kaufe sie dann und verbinde sie mit deinem Assistenten.
+Suchen Sie zuerst nach einer Nummer, kaufen Sie sie anschließend und verbinden Sie sie mit Ihrem Assistenten.
 
 <Steps>
-  <Step title="Suche nach einer Telefonnummer" icon="search">
+  <Step title="Nach einer Telefonnummer suchen" icon="search">
 
-    Verwende den Telefonnummern-Ablauf im Dashboard oder rufe die Such-API auf, um verfügbare Nummern zu finden.
+    Nutzen Sie den Telefonnummern-Flow im Dashboard oder rufen Sie die Search-API auf, um verfügbare Nummern zu finden.
 
     <CodeGroup tabs="cURL,JavaScript">
       ```bash
@@ -167,12 +167,12 @@ Suche zuerst nach einer Nummer, kaufe sie dann und verbinde sie mit deinem Assis
 
     </CodeGroup>
 
-    Wenn die Suche erfolgreich ist, gibt Talkturo eine Liste verfügbarer Nummern zurück. Wähle einen Wert aus der Antwort für den Kaufschritt aus.
+    Bei erfolgreicher Suche gibt Talkturo eine Liste verfügbarer Nummern zurück. Wählen Sie einen Wert aus der Antwort für den Kaufschritt.
 
   </Step>
-  <Step title="Kaufe die Nummer" icon="phone">
+  <Step title="Nummer kaufen" icon="phone">
 
-    Kaufe die ausgewählte Nummer für deinen Workspace.
+    Kaufen Sie die ausgewählte Nummer für Ihren Workspace.
 
     <CodeGroup tabs="cURL,JavaScript">
       ```bash
@@ -204,12 +204,12 @@ Suche zuerst nach einer Nummer, kaufe sie dann und verbinde sie mit deinem Assis
 
     </CodeGroup>
 
-    Nach dem Kauf erscheint die Nummer in deinem Telefonnummern-Bestand des Workspaces.
+    Nach dem Kauf erscheint die Nummer im Telefonnummern-Inventar Ihres Workspace.
 
   </Step>
-  <Step title="Weise die Nummer deinem Assistenten zu" icon="link">
+  <Step title="Nummer Ihrem Assistenten zuweisen" icon="link">
 
-    Verbinde die gekaufte Nummer mit deinem Assistenten und aktiviere die Anrufverarbeitung.
+    Verbinden Sie die gekaufte Nummer mit Ihrem Assistenten und aktivieren Sie die Anrufverarbeitung.
 
     <CodeGroup tabs="cURL,JavaScript">
       ```bash
@@ -245,38 +245,38 @@ Suche zuerst nach einer Nummer, kaufe sie dann und verbinde sie mit deinem Assis
 
     </CodeGroup>
 
-    Wenn dieser Schritt erfolgreich ist, kann der Assistent eingehende Anrufe auf der zugewiesenen Nummer annehmen und ausgehende Anrufe tätigen, wenn du ausgehende Telefonie aktiviert hast.
+    Wenn dieser Schritt erfolgreich ist, kann der Assistent eingehende Anrufe auf der zugewiesenen Nummer entgegennehmen und ausgehende Anrufe tätigen, sofern Sie die ausgehende Telefonie aktiviert haben.
 
   </Step>
 </Steps>
 
-## Teste deinen ersten Anruf
+## Ihren ersten Anruf testen
 
-Verwende die integrierten Testanruf-Tools, nachdem die Nummer zugewiesen wurde.
+Nutzen Sie die integrierten Testanruf-Tools, nachdem die Nummer zugewiesen wurde.
 
 <Callout kind="tip">
 
-Öffne deinen Assistenten im Dashboard und gehe dann zum Tab **Telephony**, um einen Testanruf zu starten.
+Öffnen Sie Ihren Assistenten im Dashboard und gehen Sie dann zum Tab **Telephony**, um einen Testanruf zu starten.
 
-Für einen eingehenden Test rufst du die Nummer an, die du dem Assistenten zugewiesen hast. Für einen ausgehenden Test verwendest du die Testanruf-Steuerung im Assistenten-Editor. Ein erfolgreicher Test verbindet den Anruf und leitet das Audio an den Assistenten weiter, den du gerade konfiguriert hast.
+Für einen Inbound-Test rufen Sie die dem Assistenten zugewiesene Nummer von Ihrem Telefon aus an. Für einen Outbound-Test nutzen Sie die Testanruf-Steuerung im Assistenten-Editor. Ein erfolgreicher Test verbindet den Anruf und leitet Audio über den soeben konfigurierten Assistenten.
 
 </Callout>
 
 ## Nächste Schritte
 
-Sobald dein erster Anruf funktioniert, kannst du die Einrichtung mit Kampagnen, CRM-Daten und Assistenten-Konfiguration erweitern.
+Sobald Ihr erster Anruf funktioniert, erweitern Sie das Setup mit Kampagnen, CRM-Daten und Assistenten-Konfiguration.
 
 <Columns cols={2}>
-  <Card title="KI-Assistenten" icon="monitor" href="/assistants/overview">
-    Passe das Verhalten des Assistenten, Vorlagen und Telephony-Einstellungen an.
+  <Card title="AI Assistants" icon="monitor" href="/assistants/overview">
+    Passen Sie Assistentenverhalten, Vorlagen und Telefonie-Einstellungen an.
   </Card>
-  <Card title="Kampagnen" icon="bar-chart" href="/campaigns/overview">
-    Starte ausgehende Workflows und verwalte Anrufaktivitäten in größerem Umfang.
+  <Card title="Campaigns" icon="bar-chart" href="/campaigns/overview">
+    Starten Sie ausgehende Workflows und verwalten Sie Anrufaktivität im großen Maßstab.
   </Card>
-  <Card title="CRM-Integration" icon="users" href="/crm/contacts">
-    Füge Kontakte und Unternehmensdaten hinzu, die deine Assistenten in Anrufen verwenden können.
+  <Card title="CRM Integration" icon="users" href="/crm/contacts">
+    Fügen Sie Kontakte und Unternehmensdaten hinzu, die Ihre Assistenten in Anrufen nutzen können.
   </Card>
-  <Card title="Funktionen" icon="book-open" href="/features">
-    Entdecke die wichtigsten Plattformfunktionen, bevor du mit der erweiterten Einrichtung fortfährst.
+  <Card title="Features" icon="book-open" href="/features">
+    Erkunden Sie die zentralen Plattformfunktionen, bevor Sie mit dem fortgeschrittenen Setup fortfahren.
   </Card>
 </Columns>
