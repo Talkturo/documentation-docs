@@ -1,0 +1,238 @@
+---
+title: API Overview
+description: Get started with the Talkturo REST API — base URL, authentication, response format, rate limits, and available endpoint groups.
+---
+
+## Build on the Talkturo API
+
+Build integrations and automations on top of Talkturo's voice AI platform with a REST API for assistants, telephony, phone numbers, credits, CRM data, workflows, and account management. Use this page to understand the API's core conventions and find the endpoint group you need.
+
+<Callout kind="info">
+
+Send all API requests to `https://api.talkturo.com/api`.
+
+</Callout>
+
+## Authenticate requests
+
+Talkturo supports three authentication methods. Most external integrations should use API keys, while browser and desktop clients use platform-specific authentication flows.
+
+<Tabs>
+  <Tab title="API keys" icon="key">
+
+Use a bearer token that starts with `tk_live_` or `tk_test_` to authenticate server-to-server requests. API keys support scopes and have a default rate limit of 1000 requests per hour.
+
+See [Authentication](/en/api-reference/authentication) for header format, scope behavior, and security guidance.
+
+  </Tab>
+  <Tab title="Session cookies" icon="lock">
+
+The Talkturo web app uses authenticated session cookies for browser-based requests. This method is intended for first-party web sessions, not external backend integrations.
+
+See [Authentication](/en/api-reference/authentication) for when session-based authentication applies.
+
+  </Tab>
+  <Tab title="JWT bearer tokens" icon="monitor">
+
+The desktop app uses bearer JWT tokens for authenticated API access. This flow is specific to desktop clients that authenticate through Talkturo user sessions.
+
+See [Authentication](/en/api-reference/authentication) and [Desktop Auth](/en/api-reference/desktop) for details.
+
+  </Tab>
+</Tabs>
+
+## Understand the response format
+
+Most endpoints return JSON in a consistent envelope so you can handle success and failure predictably across the API. Successful responses return a `success` flag and response data, while failed responses return a `success` flag and error details.
+
+<Request tabs="Success,Error" show-lines="true">
+```json
+{
+  "success": true,
+  "data": {
+    "id": "ast_9f3d2c11",
+    "name": "Inbound Support Assistant"
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Unauthorized"
+}
+```
+</Request>
+
+### Handle HTTP status codes
+
+Talkturo uses standard HTTP status codes in addition to the JSON response body. Check the status code first, then inspect the response envelope for details your application can log or surface.
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Request succeeded |
+| `201` | Resource created |
+| `400` | Bad request |
+| `401` | Unauthorized |
+| `402` | Insufficient credits |
+| `403` | Forbidden |
+| `404` | Not found |
+| `500` | Server error |
+
+## Plan for rate limits
+
+API keys are limited to 1000 requests per hour by default. If you build background jobs, retries, or bulk syncs, add backoff and retry handling so your integration degrades gracefully when it reaches the limit.
+
+## Browse endpoint groups
+
+Start with the group that matches the resource or workflow you need to integrate. Each reference page documents endpoints, authentication requirements, and request or response details for that area of the API.
+
+<Columns cols={2}>
+  <Card
+    title="Authentication"
+    href="/en/api-reference/authentication"
+    icon="lock"
+    cta="Open reference"
+  >
+    Learn how to authenticate requests with API keys, session cookies, and JWT bearer tokens.
+  </Card>
+
+  <Card
+    title="API Keys"
+    href="/en/api-reference/api-keys"
+    icon="shield"
+    cta="Open reference"
+  >
+    Create, list, update, test, and revoke API keys for account-level access.
+  </Card>
+
+  <Card
+    title="Assistants"
+    href="/en/api-reference/assistants"
+    icon="users"
+    cta="Open reference"
+  >
+    Create, update, clone, and delete voice assistants and manage assistant configuration.
+  </Card>
+
+  <Card
+    title="Telephony"
+    href="/en/api-reference/telephony"
+    icon="phone"
+    cta="Open reference"
+  >
+    Configure inbound and outbound calling, telephony settings, and test calls for assistants.
+  </Card>
+
+  <Card
+    title="Phone Numbers"
+    href="/en/api-reference/phone-numbers"
+    icon="hash"
+    cta="Open reference"
+  >
+    Search, purchase, retrieve, and release phone numbers used with Talkturo telephony.
+  </Card>
+
+  <Card
+    title="Credits"
+    href="/en/api-reference/credits"
+    icon="bar-chart"
+    cta="Open reference"
+  >
+    Check balances, deduct usage credits, manage auto-reload, and start checkout flows.
+  </Card>
+
+  <Card
+    title="Billing"
+    href="/en/api-reference/billing"
+    icon="database"
+    cta="Open reference"
+  >
+    Work with invoices and billing-related endpoints, including webhook-driven payment flows.
+  </Card>
+
+  <Card
+    title="CRM Contacts"
+    href="/en/api-reference/crm-contacts"
+    icon="users"
+    cta="Open reference"
+  >
+    List, create, update, delete, and import contact records for CRM workflows.
+  </Card>
+
+  <Card
+    title="CRM Companies"
+    href="/en/api-reference/crm-companies"
+    icon="folder"
+    cta="Open reference"
+  >
+    Manage company records and view contacts associated with each company.
+  </Card>
+
+  <Card
+    title="CRM Opportunities"
+    href="/en/api-reference/crm-opportunities"
+    icon="rocket"
+    cta="Open reference"
+  >
+    Create and manage opportunities used in pipeline and revenue workflows.
+  </Card>
+
+  <Card
+    title="CRM Custom Fields"
+    href="/en/api-reference/crm-custom-fields"
+    icon="settings"
+    cta="Open reference"
+  >
+    Define and manage custom CRM fields for contacts, companies, and related records.
+  </Card>
+
+  <Card
+    title="CRM Campaigns"
+    href="/en/api-reference/crm-campaigns"
+    icon="play-circle"
+    cta="Open reference"
+  >
+    Manage outbound campaigns, campaign contacts, dashboards, and campaign run actions.
+  </Card>
+
+  <Card
+    title="TurboFlow"
+    href="/en/api-reference/turboflow"
+    icon="zap"
+    cta="Open reference"
+  >
+    Build and run workflow automations, triggers, integrations, secrets, and AI-assisted flow tools.
+  </Card>
+
+  <Card
+    title="Webhooks"
+    href="/en/api-reference/webhooks"
+    icon="upload"
+    cta="Open reference"
+  >
+    Receive event callbacks and work with inbound webhook endpoints across the platform.
+  </Card>
+
+  <Card
+    title="Desktop Auth"
+    href="/en/api-reference/desktop"
+    icon="monitor"
+    cta="Open reference"
+  >
+    Authenticate desktop clients with JWT bearer tokens and desktop-specific auth routes.
+  </Card>
+
+  <Card
+    title="Knowledge Base"
+    href="/en/api-reference/knowledge-base"
+    icon="book-open"
+    cta="Open reference"
+  >
+    Upload, list, and remove assistant knowledge base files used to ground responses.
+  </Card>
+</Columns>
+
+## Start with the most common integration path
+
+Most external developers begin with API keys, then move into assistants, telephony, or CRM endpoints depending on the product they are building. If you are setting up a new integration, read [Authentication](/en/api-reference/authentication) first, then continue to the resource-specific reference page for your use case.

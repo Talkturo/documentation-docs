@@ -1,0 +1,304 @@
+---
+title: CRM-Unternehmen
+description: >-
+  Unternehmen im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen —
+  Organisationsdatensätze mit benutzerdefinierten Feldern und Kontaktzuordnungen
+  verwalten.
+---
+## Unternehmen im CRM verwalten
+
+Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge aktualisieren, löschen und die zugeordneten Kontakte eines Unternehmens abfragen.
+
+Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung.
+
+<Callout kind="info" collapsed="false">
+  Die Listenansicht unterstützt Seitennummerierung und Suche. Die Detailendpunkte arbeiten mit der Unternehmens-ID aus dem CRM.
+</Callout>
+
+## Endpunktübersicht
+
+| Methode  | Pfad                               | Zweck                                 |
+| -------- | ---------------------------------- | ------------------------------------- |
+| `GET`    | `/api/crm/companies`               | Unternehmen auflisten                 |
+| `POST`   | `/api/crm/companies`               | Unternehmen erstellen                 |
+| `GET`    | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen         |
+| `PATCH`  | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             |
+| `DELETE` | `/api/crm/companies/{id}`          | Unternehmen löschen                   |
+| `GET`    | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten |
+
+## Unternehmen auflisten
+
+Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise abzurufen oder mit einer Suchanfrage zu filtern.
+
+<Request show-lines="true">
+  ```bash
+  curl -X GET "https://api.talkturo.local/api/crm/companies?page=1&limit=20&search=Acme" \
+    -H "Cookie: sb-session=example_session_token"
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "success": true,
+    "companies": [
+      {
+        "id": "cmp_9f2c7a1d",
+        "name": "Acme Industrial Group",
+        "website": "https://acme-industrial.com",
+        "industry": "Manufacturing"
+      },
+      {
+        "id": "cmp_2b7d1e4a",
+        "name": "Acme Logistics GmbH",
+        "website": "https://acme-logistics.de",
+        "industry": "Logistics"
+      }
+    ],
+    "total": 42,
+    "page": 1
+  }
+  ```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="page" param-type="integer" required="false" deprecated="false" show-location="true">
+  Die Seitennummer der Ergebnisliste.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false" deprecated="false" show-location="true">
+  Die maximale Anzahl der zurückgegebenen Unternehmen pro Seite.
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false" deprecated="false" show-location="true">
+  Filtert die Liste nach einem Suchbegriff.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+  Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="companies" field-type="array" required="true" deprecated="false">
+  Liste der gefundenen Unternehmensdatensätze.
+</ResponseField>
+
+<ResponseField name="companies[].id" field-type="string" required="true" deprecated="false">
+  Eindeutige ID des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].name" field-type="string" required="true" deprecated="false">
+  Name des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].website" field-type="string" required="false" deprecated="false">
+  Webadresse des Unternehmens, falls hinterlegt.
+</ResponseField>
+
+<ResponseField name="companies[].industry" field-type="string" required="false" deprecated="false">
+  Branche des Unternehmens, falls hinterlegt.
+</ResponseField>
+
+<ResponseField name="total" field-type="integer" required="true" deprecated="false">
+  Gesamtzahl der Treffer über alle Seiten hinweg.
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true" deprecated="false">
+  Die aktuelle Ergebnisseite.
+</ResponseField>
+
+## Unternehmen erstellen
+
+Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CRM anzulegen.
+
+<Request show-lines="true">
+  ```bash
+  curl -X POST "https://api.talkturo.local/api/crm/companies" \
+    -H "Content-Type: application/json" \
+    -H "Cookie: sb-session=example_session_token" \
+    -d '{
+      "name": "Northwind Health Partners",
+      "website": "https://northwind-health.com",
+      "industry": "Healthcare",
+      "phone": "+49 30 55550123",
+      "address": "Friedrichstraße 120, 10117 Berlin"
+    }'
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "success": true,
+    "company": {
+      "id": "cmp_c4a91e7b",
+      "name": "Northwind Health Partners",
+      "website": "https://northwind-health.com",
+      "industry": "Healthcare",
+      "phone": "+49 30 55550123",
+      "address": "Friedrichstraße 120, 10117 Berlin"
+    }
+  }
+  ```
+</Response>
+
+### Request-Body
+
+<ParamField body="name" param-type="string" required="true" deprecated="false" show-location="true">
+  Name des Unternehmens.
+</ParamField>
+
+<ParamField body="website" param-type="string" required="false" deprecated="false" show-location="true">
+  Webadresse des Unternehmens.
+</ParamField>
+
+<ParamField body="industry" param-type="string" required="false" deprecated="false" show-location="true">
+  Branche oder Marktsegment des Unternehmens.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
+  Telefonnummer des Unternehmens.
+</ParamField>
+
+<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
+  Postanschrift oder Geschäftsadresse des Unternehmens.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+  Gibt an, ob das Unternehmen erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="company" field-type="object" required="true" deprecated="false">
+  Der neu angelegte Unternehmensdatensatz.
+</ResponseField>
+
+<ResponseField name="company.id" field-type="string" required="true" deprecated="false">
+  Eindeutige ID des neuen Unternehmens.
+</ResponseField>
+
+<Callout kind="tip" collapsed="false">
+  Wenn Sie Unternehmensdatensätze später mit Kontakten oder Opportunities verknüpfen möchten, speichern Sie die zurückgegebene `company.id` direkt nach dem Erstellen.
+</Callout>
+
+## Einzelnes Unternehmen abrufen
+
+Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdatensatz anhand seiner ID abzurufen.
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true" deprecated="false" show-location="true">
+  Eindeutige ID des Unternehmens.
+</ParamField>
+
+### Antwortstruktur
+
+<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+  Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="company" field-type="object" required="true" deprecated="false">
+  Der angeforderte Unternehmensdatensatz.
+</ResponseField>
+
+<ResponseField name="company.id" field-type="string" required="true" deprecated="false">
+  Eindeutige ID des Unternehmens.
+</ResponseField>
+
+## Unternehmen aktualisieren
+
+Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehmens zu ändern. Der Endpunkt gibt den aktualisierten Datensatz zurück.
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true" deprecated="false" show-location="true">
+  Eindeutige ID des zu aktualisierenden Unternehmens.
+</ParamField>
+
+### Aktualisierbare Felder
+
+<ParamField body="name" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierter Unternehmensname.
+</ParamField>
+
+<ParamField body="website" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Webadresse.
+</ParamField>
+
+<ParamField body="industry" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Branchenangabe.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Telefonnummer.
+</ParamField>
+
+<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Geschäftsadresse.
+</ParamField>
+
+### Antwortstruktur
+
+<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+  Gibt an, ob die Aktualisierung erfolgreich war.
+</ResponseField>
+
+<ResponseField name="company" field-type="object" required="true" deprecated="false">
+  Der aktualisierte Unternehmensdatensatz.
+</ResponseField>
+
+## Unternehmen löschen
+
+Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz aus dem CRM zu entfernen.
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true" deprecated="false" show-location="true">
+  Eindeutige ID des zu löschenden Unternehmens.
+</ParamField>
+
+### Antwortstruktur
+
+<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+  Gibt an, ob der Datensatz erfolgreich gelöscht wurde.
+</ResponseField>
+
+<Callout kind="alert" collapsed="false">
+  Das Löschen eines Unternehmens ist als Operation destruktiv. Prüfen Sie vor dem Entfernen, ob nachgelagerte Prozesse oder verknüpfte Datensätze die Unternehmens-ID noch verwenden.
+</Callout>
+
+## Kontakte eines Unternehmens auflisten
+
+Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen, die einem Unternehmen zugeordnet sind.
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true" deprecated="false" show-location="true">
+  Eindeutige ID des Unternehmens.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+  Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="contacts" field-type="array" required="true" deprecated="false">
+  Liste der dem Unternehmen zugeordneten Kontakte.
+</ResponseField>
+
+## Verwandte Ressourcen
+
+<Columns cols="2">
+  <Card title="CRM-Kontakte" href="/de/api-reference/crm-contacts" icon="users" cta="Zur Referenz" horizontal="false">
+
+  </Card>
+
+  <Card title="CRM-Opportunities" href="/de/api-reference/crm-opportunities" icon="bar-chart" cta="Zur Referenz" horizontal="false">
+
+  </Card>
+</Columns>
+

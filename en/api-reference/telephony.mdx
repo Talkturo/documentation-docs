@@ -1,0 +1,315 @@
+---
+title: Telephony
+description: Configure inbound and outbound telephony, assign phone numbers, run test calls, and manage compliance templates for voice assistants via the Talkturo API.
+---
+
+## Telephony endpoints
+
+Manage an assistant's calling configuration, attached phone numbers, outbound test calls, and compliance templates from the telephony API. All telephony routes are scoped to a single assistant and require an authenticated browser session.
+
+<Callout kind="info">
+
+All endpoints on this page require **session cookie authentication**. Send requests from an authenticated Talkturo session. These routes are available under `/api/assistants/[assistantId]/telephony/`.
+
+</Callout>
+
+### Base path
+
+`/api/assistants/[assistantId]/telephony`
+
+### Endpoint summary
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/assistants/[assistantId]/telephony/test-call` | Start a test outbound SIP call |
+| `GET` `POST` | `/api/assistants/[assistantId]/telephony/inbound` | Read or configure inbound telephony |
+| `GET` `POST` | `/api/assistants/[assistantId]/telephony/outbound` | Read or configure outbound telephony |
+| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/settings` | Read or update full telephony settings |
+| `GET` `POST` | `/api/assistants/[assistantId]/telephony/phone-numbers` | List or manage phone numbers attached to the assistant |
+| `POST` | `/api/assistants/[assistantId]/telephony/assign-phone-numbers` | Assign phone numbers to the assistant |
+| `GET` | `/api/assistants/[assistantId]/telephony/compliance-templates` | List available compliance templates |
+
+## POST test-call
+
+Start a test outbound call from a phone number already assigned to the assistant. The endpoint creates a room, dispatches the agent, and then creates the outbound SIP participant.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Assistant UUID.
+
+</ParamField>
+
+### Request body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Account slug used to validate account membership and resolve the billing context for the call.
+
+</ParamField>
+
+<ParamField body="fromNumber" param-type="string" required="true">
+
+The outbound phone number the assistant should call from. The number must be active and already assigned to the assistant.
+
+</ParamField>
+
+<ParamField body="toNumber" param-type="string" required="true">
+
+The destination phone number to dial for the test call.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/test-call" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=rt_example_93kmd8pz" \
+  --data '{
+    "accountSlug": "acme-sales",
+    "fromNumber": "+14155550120",
+    "toNumber": "+14155550199"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/test-call",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=rt_example_93kmd8pz"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      fromNumber: "+14155550120",
+      toNumber: "+14155550199"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,402" default-tab="1">
+```json
+{
+  "success": true,
+  "roomName": "assistant-6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190-test-call-9d2a7e4b",
+  "sipCallId": "sip_7f3db90ac44e",
+  "message": "Test call initiated successfully"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Insufficient credits"
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the test call was created successfully.
+
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+
+LiveKit room name created for the call session.
+
+</ResponseField>
+
+<ResponseField name="sipCallId" field-type="string" required="true">
+
+Identifier for the outbound SIP call participant.
+
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+
+Human-readable status message describing the result.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+`POST /telephony/test-call` performs a credit pre-flight check before creating the call. If the account balance is below `MIN_CREDITS_TO_RUN_OUTBOUND`, the API returns `402` and does not create the room or SIP participant.
+
+</Callout>
+
+### Validation rules
+
+The test call endpoint rejects requests unless all of the following are true:
+
+- Outbound calling is enabled for the assistant.
+- The assistant has a valid `livekit_outbound_trunk_id`.
+- `fromNumber` is active.
+- `fromNumber` is assigned to the assistant.
+- The authenticated user has access to the account identified by `accountSlug`.
+
+### Execution flow
+
+When the request passes validation, Talkturo runs the call setup in this order:
+
+1. Create a LiveKit room.
+2. Dispatch the assistant agent into the room.
+3. Create the outbound SIP participant.
+
+If the request succeeds, the response includes both the room name and SIP call identifier.
+
+## GET and POST inbound
+
+Use the inbound endpoint to read or configure inbound telephony for an assistant. The exact response shape and accepted POST body fields depend on the assistant's telephony configuration in your workspace.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Assistant UUID.
+
+</ParamField>
+
+### Methods
+
+- **`GET`** — returns the current inbound telephony configuration.
+- **`POST`** — creates or updates inbound telephony configuration for the assistant.
+
+### Expected behavior
+
+Use this endpoint when you need to control how an assistant handles incoming calls. Typical workflows include enabling inbound handling, attaching numbers intended to receive calls, and storing inbound-specific settings.
+
+## GET and POST outbound
+
+Use the outbound endpoint to read or configure outbound telephony for an assistant. This endpoint controls the assistant state required for making calls, including the outbound configuration used by the test-call route.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Assistant UUID.
+
+</ParamField>
+
+### Methods
+
+- **`GET`** — returns the current outbound telephony configuration.
+- **`POST`** — creates or updates outbound telephony configuration for the assistant.
+
+### Expected behavior
+
+Use this endpoint before initiating outbound calls. A valid outbound setup is a prerequisite for `POST /telephony/test-call`, which verifies outbound enablement and trunk configuration before dialing.
+
+## GET and PATCH settings
+
+Read or update the assistant's full telephony settings from a single endpoint. Use `GET` to retrieve the current settings object and `PATCH` to update only the fields you want to change.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Assistant UUID.
+
+</ParamField>
+
+### Methods
+
+- **`GET`** — returns full telephony settings for the assistant.
+- **`PATCH`** — updates telephony settings for the assistant.
+
+### Expected behavior
+
+Use the settings endpoint when you need the full telephony configuration rather than inbound-only or outbound-only values. `PATCH` is the right choice for partial updates because it avoids replacing the entire settings object.
+
+## GET and POST phone-numbers
+
+List or manage the phone numbers attached to an assistant. Use this endpoint to inspect the assistant's current telephony inventory before assigning numbers or placing outbound test calls.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Assistant UUID.
+
+</ParamField>
+
+### Methods
+
+- **`GET`** — returns phone numbers attached to the assistant.
+- **`POST`** — manages phone numbers for the assistant.
+
+### Expected behavior
+
+Use the `GET` method to confirm that a number is already attached before using it as `fromNumber` in a test call. The `POST` method is available for phone-number management flows tied to the assistant.
+
+## POST assign-phone-numbers
+
+Assign one or more phone numbers to an assistant. Use this endpoint when numbers already exist in the account and need to be attached to a specific assistant for inbound or outbound use.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Assistant UUID.
+
+</ParamField>
+
+### Expected behavior
+
+Call this route after provisioning or selecting numbers elsewhere in the account. Once a number is assigned and active, you can use it in assistant telephony workflows such as inbound routing and outbound test calls.
+
+## GET compliance-templates
+
+Return the compliance templates available for telephony configuration. Use this endpoint when your phone-number or carrier workflow requires a predefined compliance template.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Assistant UUID.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="templates" field-type="array">
+
+List of available compliance templates for the assistant's telephony context.
+
+</ResponseField>
+
+### Expected behavior
+
+Fetch compliance templates before presenting telephony compliance choices in your application. This keeps your UI aligned with the templates currently available in Talkturo.
+
+## Common integration notes
+
+A successful telephony integration usually follows this order:
+
+1. Configure inbound or outbound settings for the assistant.
+2. Attach or assign the phone numbers the assistant will use.
+3. Fetch compliance templates if your setup requires regulated number provisioning.
+4. Run a test outbound call to verify the assistant, number assignment, and trunk configuration together.
+
+### Common failure cases
+
+- **`401` or `403`** — the request was sent without a valid authenticated session or without access to the target account.
+- **`402`** — the account does not have enough credits to run an outbound test call.
+- **Validation failure on test-call** — outbound telephony is disabled, the outbound trunk is missing or invalid, or `fromNumber` is not active and assigned to the assistant.
+
+## Related telephony context
+
+Talkturo also exposes an account-level session-auth endpoint outside the assistant telephony namespace:
+
+- `GET /api/assistant-phone-numbers` — lists phone numbers attached to an assistant across the account.
+
+Use the assistant-scoped telephony routes on this page for configuration changes tied to one assistant. Use the account-level listing route when you need a broader lookup across the account.

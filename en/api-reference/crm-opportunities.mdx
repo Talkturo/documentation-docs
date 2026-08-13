@@ -1,0 +1,426 @@
+---
+title: CRM Opportunities
+description: Create, list, update, and delete sales opportunities in the Talkturo CRM — track deal value, stage, associated contacts and companies, and expected close dates.
+---
+
+## Manage CRM opportunities
+
+Use the CRM Opportunities endpoints to track deals, pipeline stage, associated contacts or companies, and expected close dates from your Talkturo account.
+
+<Callout kind="info">
+
+All CRM Opportunities endpoints require an authenticated **session cookie**. These endpoints do not accept API key authentication.
+
+</Callout>
+
+### Endpoints at a glance
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/crm/opportunities` | List opportunities with pagination and filters |
+| `POST` | `/api/crm/opportunities` | Create a new opportunity |
+| `GET` | `/api/crm/opportunities/{id}` | Retrieve one opportunity by ID |
+| `PATCH` | `/api/crm/opportunities/{id}` | Update an existing opportunity |
+| `DELETE` | `/api/crm/opportunities/{id}` | Delete an opportunity |
+
+## List opportunities
+
+Retrieve a paginated list of opportunities and narrow the results by search term, contact, or company.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/opportunities?page=1&limit=25&search=renewal&companyId=cmp_7f3d21a9" \
+  -H "Cookie: sb-access-token=example_session_cookie"
+```
+
+```javascript
+const params = new URLSearchParams({
+  page: "1",
+  limit: "25",
+  search: "renewal",
+  companyId: "cmp_7f3d21a9"
+});
+
+const response = await fetch(`/api/crm/opportunities?${params}`, {
+  method: "GET",
+  credentials: "include"
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "opportunities": [
+    {
+      "id": "opp_2d91c6f4",
+      "title": "Q3 Platform Renewal",
+      "value": 24000,
+      "stage": "proposal",
+      "contact_id": "cnt_91b4a2e7",
+      "company_id": "cmp_7f3d21a9",
+      "expected_close_date": "2026-09-30"
+    }
+  ],
+  "total": 1,
+  "page": 1
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="page" param-type="integer" required="false">
+Page number to return. The response includes the current page in the `page` field.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of opportunities to return per page.
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false">
+Search term used to filter opportunities.
+</ParamField>
+
+<ParamField query="contactId" param-type="string" required="false">
+Return only opportunities associated with the specified contact.
+</ParamField>
+
+<ParamField query="companyId" param-type="string" required="false">
+Return only opportunities associated with the specified company.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="opportunities" field-type="array" required="true">
+Array of opportunity records for the current page.
+</ResponseField>
+
+<ResponseField name="opportunities[].id" field-type="string" required="true">
+Unique identifier for the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].title" field-type="string" required="true">
+Opportunity title.
+</ResponseField>
+
+<ResponseField name="opportunities[].value" field-type="number" required="false">
+Monetary value associated with the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].stage" field-type="string" required="false">
+Current pipeline stage for the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].contact_id" field-type="string" required="false">
+ID of the related contact, if one is associated.
+</ResponseField>
+
+<ResponseField name="opportunities[].company_id" field-type="string" required="false">
+ID of the related company, if one is associated.
+</ResponseField>
+
+<ResponseField name="total" field-type="integer" required="true">
+Total number of matching opportunities across all pages.
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true">
+Current page number returned by the API.
+</ResponseField>
+
+## Create opportunity
+
+Create a new sales opportunity with a required title and optional deal metadata.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/opportunities" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=example_session_cookie" \
+  -d '{
+    "title": "Enterprise Expansion - Northwind Health",
+    "value": 48000,
+    "stage": "qualified",
+    "contact_id": "cnt_91b4a2e7",
+    "company_id": "cmp_7f3d21a9",
+    "expected_close_date": "2026-10-15"
+  }'
+```
+
+```javascript
+const response = await fetch("/api/crm/opportunities", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    title: "Enterprise Expansion - Northwind Health",
+    value: 48000,
+    stage: "qualified",
+    contact_id: "cnt_91b4a2e7",
+    company_id: "cmp_7f3d21a9",
+    expected_close_date: "2026-10-15"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "opportunity": {
+    "id": "opp_6c52a1ef",
+    "title": "Enterprise Expansion - Northwind Health",
+    "value": 48000,
+    "stage": "qualified",
+    "contact_id": "cnt_91b4a2e7",
+    "company_id": "cmp_7f3d21a9",
+    "expected_close_date": "2026-10-15"
+  }
+}
+```
+</Response>
+
+### Request body
+
+<ParamField body="title" param-type="string" required="true">
+Name of the opportunity.
+</ParamField>
+
+<ParamField body="value" param-type="number" required="false">
+Monetary value of the opportunity.
+</ParamField>
+
+<ParamField body="stage" param-type="string" required="false">
+Pipeline stage to assign when the opportunity is created.
+</ParamField>
+
+<ParamField body="contact_id" param-type="string" required="false">
+Related contact ID.
+</ParamField>
+
+<ParamField body="company_id" param-type="string" required="false">
+Related company ID.
+</ParamField>
+
+<ParamField body="expected_close_date" param-type="string" required="false">
+Expected close date for the opportunity.
+</ParamField>
+
+<Callout kind="info">
+
+The create endpoint also accepts additional custom fields in the request body. Include those fields alongside the standard opportunity properties.
+
+</Callout>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the opportunity is created successfully.
+</ResponseField>
+
+<ResponseField name="opportunity" field-type="object" required="true">
+The newly created opportunity record.
+</ResponseField>
+
+<ResponseField name="opportunity.id" field-type="string" required="true">
+Unique identifier for the new opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.title" field-type="string" required="true">
+Opportunity title.
+</ResponseField>
+
+<ResponseField name="opportunity.value" field-type="number" required="false">
+Monetary value stored for the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.stage" field-type="string" required="false">
+Current pipeline stage.
+</ResponseField>
+
+<ResponseField name="opportunity.contact_id" field-type="string" required="false">
+Related contact ID, if provided.
+</ResponseField>
+
+<ResponseField name="opportunity.company_id" field-type="string" required="false">
+Related company ID, if provided.
+</ResponseField>
+
+<ResponseField name="opportunity.expected_close_date" field-type="string" required="false">
+Expected close date, if provided.
+</ResponseField>
+
+## Get opportunity
+
+Retrieve a single opportunity by its ID.
+
+### Path parameter
+
+<ParamField path="id" param-type="string" required="true">
+Unique opportunity identifier. The endpoint expects an opportunity ID in the path.
+</ParamField>
+
+### Response shape
+
+A successful response returns the standard envelope below:
+
+```json
+{
+  "success": true,
+  "opportunity": {
+    "id": "opp_6c52a1ef",
+    "title": "Enterprise Expansion - Northwind Health",
+    "value": 48000,
+    "stage": "qualified",
+    "contact_id": "cnt_91b4a2e7",
+    "company_id": "cmp_7f3d21a9",
+    "expected_close_date": "2026-10-15"
+  }
+}
+```
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the opportunity is found.
+</ResponseField>
+
+<ResponseField name="opportunity" field-type="object" required="true">
+The requested opportunity record.
+</ResponseField>
+
+## Update opportunity
+
+Update one or more fields on an existing opportunity.
+
+### Path parameter
+
+<ParamField path="id" param-type="string" required="true">
+Unique opportunity identifier.
+</ParamField>
+
+### Request body
+
+<ParamField body="title" param-type="string" required="false">
+Updated title for the opportunity.
+</ParamField>
+
+<ParamField body="value" param-type="number" required="false">
+Updated monetary value.
+</ParamField>
+
+<ParamField body="stage" param-type="string" required="false">
+Updated pipeline stage.
+</ParamField>
+
+<ParamField body="contact_id" param-type="string" required="false">
+Updated related contact ID.
+</ParamField>
+
+<ParamField body="company_id" param-type="string" required="false">
+Updated related company ID.
+</ParamField>
+
+<ParamField body="expected_close_date" param-type="string" required="false">
+Updated expected close date.
+</ParamField>
+
+### Response shape
+
+The update endpoint returns the same envelope as the create and get endpoints:
+
+```json
+{
+  "success": true,
+  "opportunity": {
+    "id": "opp_6c52a1ef",
+    "title": "Enterprise Expansion - Northwind Health",
+    "value": 52000,
+    "stage": "proposal",
+    "contact_id": "cnt_91b4a2e7",
+    "company_id": "cmp_7f3d21a9",
+    "expected_close_date": "2026-10-31"
+  }
+}
+```
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the update succeeds.
+</ResponseField>
+
+<ResponseField name="opportunity" field-type="object" required="true">
+The updated opportunity record.
+</ResponseField>
+
+## Delete opportunity
+
+Delete an opportunity by ID.
+
+### Path parameter
+
+<ParamField path="id" param-type="string" required="true">
+Unique opportunity identifier.
+</ParamField>
+
+### Response shape
+
+A successful delete returns a confirmation message.
+
+```json
+{
+  "success": true,
+  "message": "Opportunity deleted successfully"
+}
+```
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the delete succeeds.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Human-readable confirmation that the opportunity was deleted.
+</ResponseField>
+
+## Common opportunity fields
+
+The opportunity object returned by list, create, get, and update endpoints includes the same core CRM fields.
+
+<ResponseField name="id" field-type="string" required="true">
+Unique identifier for the opportunity.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Opportunity title.
+</ResponseField>
+
+<ResponseField name="value" field-type="number" required="false">
+Monetary value associated with the deal.
+</ResponseField>
+
+<ResponseField name="stage" field-type="string" required="false">
+Current stage in your sales pipeline.
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string" required="false">
+Associated contact ID.
+</ResponseField>
+
+<ResponseField name="company_id" field-type="string" required="false">
+Associated company ID.
+</ResponseField>
+
+<ResponseField name="expected_close_date" field-type="string" required="false">
+Expected date the opportunity will close.
+</ResponseField>

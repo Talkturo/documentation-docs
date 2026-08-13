@@ -1,0 +1,424 @@
+---
+title: Assistenten
+description: Erstellen, aktualisieren, klonen, löschen und verwalten Sie KI-Sprachassistenten über die Talkturo REST-API — konfigurieren Sie Prompts, Stimmen, Modelle und Telefonieeinstellungen.
+---
+
+## Assistenten verwalten
+
+Erstellen Sie Assistenten, aktualisieren Sie ihre Konfiguration, klonen Sie bestehende Setups, löschen Sie nicht mehr benötigte Assistenten und rufen Sie Nutzungsdaten für Reporting oder operative Prüfungen ab.
+
+Alle Assistant-Endpunkte unterstützen Dual-Authentifizierung über `withApiAuth`. Authentifizieren Sie sich entweder mit einem Talkturo-API-Schlüssel oder mit einem authentifizierten Session-Cookie.
+
+Basispfad: `/api/assistants`
+
+## Endpunktübersicht
+
+| Methode | Pfad | Beschreibung |
+| --- | --- | --- |
+| `POST` | `/api/assistants` | Erstellt einen neuen Assistenten |
+| `PATCH` | `/api/assistants/{assistantId}` | Aktualisiert die Konfiguration eines vorhandenen Assistenten |
+| `DELETE` | `/api/assistants/{assistantId}` | Löscht einen Assistenten |
+| `POST` | `/api/assistants/{assistantId}/clone` | Klont einen vorhandenen Assistenten |
+| `GET` | `/api/assistants/{assistantId}/usage-stats` | Ruft Nutzungsstatistiken für einen Assistenten ab |
+
+## Einen Assistenten erstellen
+
+Erstellen Sie einen Assistenten mit einem Kontoslug und einem Namen. Optional können Sie auch eine Vorlage angeben, um den Assistententyp beim Anlegen zu setzen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "name": "Inbound Qualification Assistant",
+    "templateId": "tmpl_voice_inbound"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountSlug: "acme-sales",
+    name: "Inbound Qualification Assistant",
+    templateId: "tmpl_voice_inbound"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e",
+    "account_slug": "acme-sales",
+    "name": "Inbound Qualification Assistant",
+    "type": "tmpl_voice_inbound",
+    "created_at": "2025-01-14T10:22:31.000Z",
+    "updated_at": "2025-01-14T10:22:31.000Z"
+  }
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Slug des Kontos, in dem der Assistent erstellt wird.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+Der Anzeigename des Assistenten.
+</ParamField>
+
+<ParamField body="templateId" param-type="string" required="false">
+Optionale Vorlagen-ID. Wenn angegeben, setzt Talkturo den Assistententyp aus dieser Vorlage.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Das neu erstellte Assistant-Objekt.
+</ResponseField>
+
+<ResponseField name="assistant.id" field-type="string" required="true">
+Die eindeutige Kennung des Assistenten.
+</ResponseField>
+
+<ResponseField name="assistant.account_slug" field-type="string" required="true">
+Der Kontoslug, dem der Assistent gehört.
+</ResponseField>
+
+<ResponseField name="assistant.name" field-type="string" required="true">
+Der Name des Assistenten.
+</ResponseField>
+
+<ResponseField name="assistant.type" field-type="string" required="true">
+Der Typ des Assistenten. Beim Erstellen wird dieser aus `templateId` abgeleitet, wenn eine Vorlage übergeben wurde.
+</ResponseField>
+
+<ResponseField name="assistant.created_at" field-type="string" required="true">
+Zeitstempel der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="assistant.updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+## Einen Assistenten aktualisieren
+
+Aktualisieren Sie einen vorhandenen Assistenten, indem Sie seine Kennung im Pfad und die zu ändernden Felder im Request-Body übergeben. Der Endpunkt akzeptiert `accountSlug` optional und validiert `transcriptor_options` gegen den gewählten Provider und das Modell, bevor Änderungen gespeichert werden.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PATCH "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "name": "Inbound Qualification Assistant v2",
+    "voice": "alloy",
+    "model": "gpt-4o-realtime",
+    "transcriptor_options": {
+      "provider": "deepgram",
+      "model": "nova-2"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e", {
+  method: "PATCH",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountSlug: "acme-sales",
+    name: "Inbound Qualification Assistant v2",
+    voice: "alloy",
+    model: "gpt-4o-realtime",
+    transcriptor_options: {
+      provider: "deepgram",
+      model: "nova-2"
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e",
+    "account_slug": "acme-sales",
+    "name": "Inbound Qualification Assistant v2",
+    "type": "tmpl_voice_inbound",
+    "created_at": "2025-01-14T10:22:31.000Z",
+    "updated_at": "2025-01-14T11:04:09.000Z"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des zu aktualisierenden Assistenten.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="accountSlug" param-type="string" required="false">
+Optionaler Kontoslug. Geben Sie ihn an, wenn Ihre Integration das Zielkonto explizit festlegen soll.
+</ParamField>
+
+<ParamField body="...assistant fields" param-type="object" required="false">
+Beliebige Assistant-Felder, die aktualisiert werden sollen. Der Endpunkt akzeptiert partielle Updates.
+</ParamField>
+
+<ParamField body="transcriptor_options" param-type="object" required="false">
+Optionale Transkriptionskonfiguration. Talkturo validiert diese Konfiguration gegen den ausgewählten Provider und das Modell, bevor die Aktualisierung gespeichert wird.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Das aktualisierte Assistant-Objekt.
+</ResponseField>
+
+## Einen Assistenten löschen
+
+Löschen Sie einen Assistenten dauerhaft über seine Kennung. Der Endpunkt prüft, ob der Assistent dem authentifizierten Konto gehört, bevor der Löschvorgang ausgeführt wird.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X DELETE "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e", {
+  method: "DELETE",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "message": "Assistant deleted successfully"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des zu löschenden Assistenten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Bestätigung, dass der Assistent erfolgreich gelöscht wurde.
+</ResponseField>
+
+## Einen Assistenten klonen
+
+Klonen Sie einen vorhandenen Assistenten, um schnell eine neue Konfiguration auf Basis eines bestehenden Setups zu erstellen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/clone" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/clone", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "2f850d8a-a9d5-4906-af87-8c9838ab7d5d",
+    "name": "Inbound Qualification Assistant Copy",
+    "created_at": "2025-01-14T11:10:42.000Z",
+    "updated_at": "2025-01-14T11:10:42.000Z"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des zu klonenden Assistenten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Das neu geklonte Assistant-Objekt.
+</ResponseField>
+
+<ResponseField name="assistant.id" field-type="string" required="true">
+Die eindeutige Kennung des geklonten Assistenten.
+</ResponseField>
+
+<ResponseField name="assistant.name" field-type="string" required="true">
+Der Name des geklonten Assistenten.
+</ResponseField>
+
+<ResponseField name="assistant.created_at" field-type="string" required="true">
+Zeitstempel der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="assistant.updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+## Nutzungsstatistiken abrufen
+
+Rufen Sie aggregierte Nutzungsdaten für einen einzelnen Assistenten ab, um Aufrufe, Gesprächsminuten und den Zeitpunkt des letzten Anrufs zu prüfen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/usage-stats" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/usage-stats", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "stats": {
+    "total_calls": 148,
+    "total_minutes": 523,
+    "last_call_at": "2025-01-14T09:48:12.000Z"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Nutzungsstatistiken Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="stats" field-type="object" required="true">
+Aggregierte Nutzungswerte für den Assistenten.
+</ResponseField>
+
+<ResponseField name="stats.total_calls" field-type="number" required="true">
+Die Gesamtzahl der Anrufe, die diesem Assistenten zugeordnet sind.
+</ResponseField>
+
+<ResponseField name="stats.total_minutes" field-type="number" required="true">
+Die Gesamtzahl der Gesprächsminuten für diesen Assistenten.
+</ResponseField>
+
+<ResponseField name="stats.last_call_at" field-type="string" required="true">
+Zeitstempel des letzten Anrufs im ISO-8601-Format.
+</ResponseField>
+
+## Gemeinsame Antwortstruktur
+
+Die Assistant-Endpunkte verwenden eine konsistente Antwortform mit einem `success`-Flag und einem ressourcenspezifischen Payload.
+
+<Response tabs="Success,Delete success">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e",
+    "account_slug": "acme-sales",
+    "name": "Inbound Qualification Assistant",
+    "type": "tmpl_voice_inbound",
+    "created_at": "2025-01-14T10:22:31.000Z",
+    "updated_at": "2025-01-14T10:22:31.000Z"
+  }
+}
+```
+
+```json
+{
+  "success": true,
+  "message": "Assistant deleted successfully"
+}
+```
+</Response>
+
+<Callout kind="info">
+Einzelne Endpunkte geben unterschiedliche Payload-Schlüssel zurück, zum Beispiel `assistant`, `stats` oder `message`. Prüfen Sie die Antwortform des jeweiligen Endpunkts, wenn Sie Ihren Client implementieren.
+</Callout>

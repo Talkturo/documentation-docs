@@ -1,0 +1,408 @@
+---
+title: Phone Numbers
+description: Search, purchase, retrieve, and release phone numbers for Talkturo telephony, plus carrier webhook endpoints for KYC and compliance status updates.
+---
+
+## Manage phone numbers
+
+Use the phone number endpoints to search carrier inventory, provision numbers to an account, inspect an existing number, and release numbers you no longer need. This page also documents the carrier webhook endpoints Talkturo uses to keep KYC and compliance status in sync.
+
+<Callout kind="info">
+
+All phone number endpoints require an authenticated session cookie unless noted otherwise. The two webhook endpoints are exceptions because carriers call them directly.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/phone-numbers/search` | Session cookie | Search available numbers from the carrier |
+| `POST` | `/api/phone-numbers/purchase` | Session cookie | Purchase and provision a phone number |
+| `GET` | `/api/phone-numbers/{id}` | Session cookie | Retrieve a specific phone number |
+| `DELETE` | `/api/phone-numbers/{id}` | Session cookie | Release a phone number |
+| `POST` | `/api/phone-numbers/telnyx-webhook` | Carrier signature | Receive Telnyx KYC status updates |
+| `POST` | `/api/phone-numbers/twilio-webhook` | None | Receive Twilio bundle status callbacks |
+
+## Search available phone numbers
+
+Search returns numbers currently available from the configured carrier, filtered by location and feature requirements.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -G "https://app.talkturo.com/api/phone-numbers/search" \
+  -H "Cookie: sb-session=sb-session-example-a92k3m" \
+  --data-urlencode "countryCode=US" \
+  --data-urlencode "areaCode=415" \
+  --data-urlencode "features=sms,voice"
+```
+
+```javascript
+const params = new URLSearchParams({
+  countryCode: "US",
+  areaCode: "415",
+  features: "sms,voice"
+});
+
+const response = await fetch(
+  `https://app.talkturo.com/api/phone-numbers/search?${params.toString()}`,
+  {
+    method: "GET",
+    credentials: "include"
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "numbers": [
+    {
+      "phoneNumber": "+14155550182",
+      "country": "US",
+      "type": "local",
+      "cost": "1.00",
+      "features": ["sms", "voice"]
+    },
+    {
+      "phoneNumber": "+14155550347",
+      "country": "US",
+      "type": "local",
+      "cost": "1.00",
+      "features": ["voice"]
+    }
+  ]
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="areaCode" param-type="string" required="false">
+Filter results to a local area code. Support depends on the carrier and country.
+</ParamField>
+
+<ParamField query="countryCode" param-type="string" required="false">
+Filter results by country. Use a carrier-supported country code such as `US`.
+</ParamField>
+
+<ParamField query="phoneNumberPattern" param-type="string" required="false">
+Match numbers against a pattern supported by the carrier. Use this when you want vanity-style or partially constrained numbers.
+</ParamField>
+
+<ParamField query="features" param-type="string" required="false">
+Filter by required number capabilities. Available values depend on the carrier. Pass carrier-specific feature names as a comma-separated string in the request URL.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the search request succeeds.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+List of available numbers returned by the carrier after filters are applied.
+</ResponseField>
+
+<ResponseField name="numbers[].phoneNumber" field-type="string" required="true">
+The purchasable phone number in E.164 format when provided by the carrier.
+</ResponseField>
+
+<ResponseField name="numbers[].country" field-type="string" required="false">
+Country associated with the returned number.
+</ResponseField>
+
+<ResponseField name="numbers[].type" field-type="string" required="false">
+Carrier number type, such as `local`.
+</ResponseField>
+
+<ResponseField name="numbers[].cost" field-type="string" required="false">
+Recurring or quoted provisioning cost returned by the carrier.
+</ResponseField>
+
+<ResponseField name="numbers[].features" field-type="array" required="false">
+Capabilities available on the number, such as `sms` or `voice`.
+</ResponseField>
+
+## Purchase a phone number
+
+Purchase provisions a number to an account. The request body always includes the selected phone number and account slug, and may include additional carrier-specific fields.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/phone-numbers/purchase" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=sb-session-example-a92k3m" \
+  -d '{
+    "phoneNumber": "+14155550182",
+    "accountSlug": "acme-sales",
+    "bundleId": "BU7d2c9f4e18a2"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/phone-numbers/purchase", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    phoneNumber: "+14155550182",
+    accountSlug: "acme-sales",
+    bundleId: "BU7d2c9f4e18a2"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "phoneNumber": {
+    "id": "pn_7c9c4f2a61d1",
+    "phoneNumber": "+14155550182",
+    "status": "active",
+    "accountSlug": "acme-sales"
+  }
+}
+```
+</Response>
+
+### Request body
+
+<ParamField body="phoneNumber" param-type="string" required="true">
+The phone number to provision. Pass the exact value returned by the search endpoint.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Slug of the account that will own the purchased number.
+</ParamField>
+
+<ParamField body="carrier-specific fields" param-type="object" required="false">
+Additional fields required by the carrier or compliance workflow. The accepted shape depends on the carrier handling the purchase request.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when provisioning succeeds.
+</ResponseField>
+
+<ResponseField name="phoneNumber" field-type="object" required="true">
+The newly provisioned phone number record.
+</ResponseField>
+
+<ResponseField name="phoneNumber.id" field-type="string" required="true">
+Talkturo identifier for the phone number record.
+</ResponseField>
+
+<ResponseField name="phoneNumber.phoneNumber" field-type="string" required="true">
+Provisioned phone number value.
+</ResponseField>
+
+<ResponseField name="phoneNumber.status" field-type="string" required="false">
+Current lifecycle status for the number, such as `active`.
+</ResponseField>
+
+### Provisioning notes
+
+Carrier requirements vary by country, number type, and regulatory flow. If the carrier requires compliance data, include those fields in the same purchase request body.
+
+## Retrieve a phone number
+
+Retrieve a single phone number record by its Talkturo identifier.
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Unique phone number identifier.
+</ParamField>
+
+### Example response
+
+```json
+{
+  "success": true,
+  "phoneNumber": {
+    "id": "pn_7c9c4f2a61d1",
+    "phoneNumber": "+14155550182",
+    "status": "active"
+  }
+}
+```
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the record is found and the request succeeds.
+</ResponseField>
+
+<ResponseField name="phoneNumber" field-type="object" required="true">
+Phone number record associated with the requested identifier.
+</ResponseField>
+
+<ResponseField name="phoneNumber.id" field-type="string" required="true">
+Unique identifier for the phone number record.
+</ResponseField>
+
+<ResponseField name="phoneNumber.phoneNumber" field-type="string" required="true">
+Stored phone number value.
+</ResponseField>
+
+<ResponseField name="phoneNumber.status" field-type="string" required="false">
+Current status of the number in Talkturo.
+</ResponseField>
+
+## Release a phone number
+
+Release removes a provisioned number so it is no longer assigned to your account. Use this endpoint when you no longer need the number.
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Unique phone number identifier to release.
+</ParamField>
+
+### Example response
+
+```json
+{
+  "success": true,
+  "message": "Phone number released"
+}
+```
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the release request succeeds.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Human-readable confirmation that the number was released.
+</ResponseField>
+
+## Telnyx webhook
+
+Telnyx calls this endpoint when KYC or requirement group status changes. Talkturo verifies the request signature, extracts the `requirement_group_id`, and updates the matching compliance request.
+
+<Callout kind="alert">
+
+This endpoint requires ED25519 signature verification using the `TELNYX_PUBLIC_KEY` environment variable. If the public key is not configured, the endpoint returns `503`. If signature verification fails, the endpoint returns `400`.
+
+</Callout>
+
+### Endpoint behavior
+
+- **Method:** `POST`
+- **Path:** `/api/phone-numbers/telnyx-webhook`
+- **Authentication:** Telnyx ED25519 signature verification
+- **Body format:** Raw JSON body from Telnyx
+- **Retry behavior:** After successful verification and processing, the endpoint always returns `200` to prevent carrier retries
+
+### Request body
+
+<ParamField body="Telnyx event payload" param-type="object" required="true">
+Raw Telnyx event JSON. Talkturo reads the raw request body to verify the signature before parsing the payload.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="received" field-type="boolean" required="true">
+Returns `true` after Talkturo accepts the webhook request for processing.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="false">
+Current requirement group or compliance status after synchronization.
+</ResponseField>
+
+<ResponseField name="updated" field-type="boolean" required="false">
+Indicates whether Talkturo updated a matching compliance record.
+</ResponseField>
+
+<ResponseField name="matchedRequest" field-type="boolean" required="false">
+Indicates whether the webhook matched an existing compliance request in Talkturo.
+</ResponseField>
+
+## Twilio webhook
+
+Twilio calls this endpoint when bundle status changes. Talkturo does not trust the posted status value directly and instead re-fetches the current bundle status from Twilio before updating internal records.
+
+<Callout kind="info">
+
+This endpoint does not require a signature header. For security, Talkturo reads `BundleSID`, `BundleSid`, or `bundle_sid` from the form-encoded payload and verifies the current state by querying Twilio directly.
+
+</Callout>
+
+### Endpoint behavior
+
+- **Method:** `POST`
+- **Path:** `/api/phone-numbers/twilio-webhook`
+- **Authentication:** None
+- **Body format:** Form-encoded callback payload
+- **Retry behavior:** The endpoint always returns `200` to prevent Twilio retries
+
+### Request body
+
+<ParamField body="BundleSID" param-type="string" required="false">
+Twilio bundle identifier. The endpoint also accepts `BundleSid` and `bundle_sid`.
+</ParamField>
+
+<ParamField body="BundleSid" param-type="string" required="false">
+Alternative Twilio field name for the bundle identifier.
+</ParamField>
+
+<ParamField body="bundle_sid" param-type="string" required="false">
+Lowercase variant of the Twilio bundle identifier field.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="received" field-type="boolean" required="true">
+Returns `true` after Talkturo accepts the callback.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="false">
+Bundle status retrieved directly from Twilio.
+</ResponseField>
+
+<ResponseField name="matchedRequest" field-type="boolean" required="false">
+Indicates whether the callback matched an existing compliance request in Talkturo.
+</ResponseField>
+
+## Common response patterns
+
+Most phone number endpoints return a success envelope around the resource payload.
+
+### Success envelope
+
+```json
+{
+  "success": true
+}
+```
+
+### Webhook acknowledgement envelope
+
+```json
+{
+  "received": true
+}
+```
+
+## Related API areas
+
+<Columns cols={2}>
+  <Card title="Assistant phone numbers" href="/en/api-reference/assistant-phone-numbers" icon="phone" cta="View endpoint" />
+  <Card title="Assistants" href="/en/api-reference/assistants" icon="users" cta="View endpoints" />
+</Columns>

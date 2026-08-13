@@ -1,0 +1,42 @@
+---
+title: API-Übersicht
+description: Starten Sie mit der Talkturo REST-API — Basis-URL, Authentifizierung, Antwortformat, Ratenlimits und verfügbare Endpunktgruppen.
+---
+
+## Entwickeln Sie auf der Talkturo API
+
+Erstellen Sie Integrationen und Automatisierungen auf Basis der Voice-AI-Plattform von Talkturo mit einer REST-API für Assistenten, Telefonie, Telefonnummern, Guthaben, CRM-Daten, Workflows und Kontoverwaltung. Auf dieser Seite lernen Sie die grundlegenden API-Konventionen kennen und finden die Endpunktgruppe, die Sie benötigen.
+
+<Callout kind="info">
+
+Senden Sie alle API-Anfragen an `https://api.talkturo.com/api`.
+
+</Callout>
+
+## Authentifizieren Sie Anfragen
+
+Talkturo unterstützt drei Authentifizierungsmethoden. Die meisten externen Integrationen sollten API-Schlüssel verwenden, während Browser- und Desktop-Clients plattformspezifische Authentifizierungsabläufe nutzen.
+
+<Tabs>
+  <Tab title="API-Schlüssel" icon="key">
+
+Verwenden Sie ein Bearer-Token, das mit `tk_live_` oder `tk_test_` beginnt, um Server-zu-Server-Anfragen zu authentifizieren. API-Schlüssel unterstützen Scopes und haben standardmäßig ein Ratenlimit von 1000 Anfragen pro Stunde.
+
+Unter [Authentifizierung](/de/api-reference/authentication) finden Sie das Header-Format, das Verhalten von Scopes und Sicherheitshinweise.
+
+  </Tab>
+  <Tab title="Sitzungs-Cookies" icon="lock">
+
+Die Talkturo-Web-App verwendet authentifizierte Sitzungs-Cookies für browserbasierte Anfragen. Diese Methode ist für Web-Sitzungen der eigenen Anwendung vorgesehen, nicht für externe Backend-Integrationen.
+
+Unter [Authentifizierung](/de/api-reference/authentication) erfahren Sie, wann sitzungsbasierte Authentifizierung zum Einsatz kommt.
+
+  </Tab>
+  <Tab title="JWT-Bearer-Token" icon="monitor">
+
+Die Desktop-App verwendet Bearer-JWT-Token für authentifizierten API-Zugriff. Dieser Ablauf ist speziell für Desktop-Clients gedacht, die sich über Talkturo-Benutzersitzungen authentifizieren.
+
+Weitere Informationen finden Sie unter [Authentifizierung](/de/api-reference/authentication) und [Desktop-Authentifizierung](/de/api-reference/desktop).
+
+  </Tab>
+</Tabs>

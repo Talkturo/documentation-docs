@@ -1,0 +1,255 @@
+---
+title: CRM Custom Fields
+description: Create, list, update, and delete custom fields on contacts, companies, and opportunities in the Talkturo CRM — extend records with text, number, date, select, and boolean field types.
+---
+
+## Manage CRM custom fields
+
+Custom fields let you extend Talkturo CRM records with data that does not fit the default schema. Use these endpoints to define fields for **contacts**, **companies**, and **opportunities**, then read, update, or remove those definitions later.
+
+<Callout kind="info">
+
+All CRM custom field endpoints require **session cookie authentication**. These endpoints do not accept API keys.
+
+</Callout>
+
+## Endpoints at a glance
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/crm/custom-fields` | List all custom fields |
+| `POST` | `/api/crm/custom-fields` | Create a custom field |
+| `GET` | `/api/crm/custom-fields/{id}` | Get one custom field by ID |
+| `PATCH` | `/api/crm/custom-fields/{id}` | Update a custom field |
+| `DELETE` | `/api/crm/custom-fields/{id}` | Delete a custom field |
+
+## Field types and entity types
+
+Use one of the supported field types when you create a custom field:
+
+- **`text`** — freeform string values
+- **`number`** — numeric values
+- **`date`** — date values
+- **`select`** — one value from a defined list of options
+- **`boolean`** — true or false values
+
+Attach each custom field to one CRM entity type:
+
+- **`contact`**
+- **`company`**
+- **`opportunity`**
+
+If you create a `select` field, include `options` in the request body.
+
+## List custom fields
+
+Returns the custom fields available in your CRM.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/custom-fields" \
+  -H "Cookie: sb-access-token=sb_session_example_f84k2m"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "fields": [
+    {
+      "id": "8bb0cf7b-6f0e-45e3-8f40-c0d6dc4c9a11",
+      "name": "Lead source",
+      "type": "select",
+      "entity_type": "contact",
+      "options": [
+        "Website",
+        "Referral",
+        "Conference"
+      ]
+    },
+    {
+      "id": "1cf4bc3d-cad3-4d8b-8a4f-5c5c33bc3a86",
+      "name": "Renewal date",
+      "type": "date",
+      "entity_type": "company"
+    }
+  ]
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="fields" field-type="array" required="true">
+Array of custom field definitions.
+</ResponseField>
+
+## Create a custom field
+
+Creates a new custom field definition for a contact, company, or opportunity.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/custom-fields" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=sb_session_example_f84k2m" \
+  -d '{
+    "name": "Customer tier",
+    "type": "select",
+    "entity_type": "company",
+    "options": ["Starter", "Growth", "Enterprise"]
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "field": {
+    "id": "ec607f3e-77c8-45e7-a58d-62b8d09c4d5d",
+    "name": "Customer tier",
+    "type": "select",
+    "entity_type": "company",
+    "options": [
+      "Starter",
+      "Growth",
+      "Enterprise"
+    ]
+  }
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="name" param-type="string" required="true">
+Field label shown in the CRM.
+</ParamField>
+
+<ParamField body="type" param-type="string" required="true" enum="text,number,date,select,boolean">
+Custom field type.
+</ParamField>
+
+<ParamField body="entity_type" param-type="string" required="true" enum="contact,company,opportunity">
+CRM record type that this field applies to.
+</ParamField>
+
+<ParamField body="options" param-type="array" required="false">
+List of allowed values for `select` fields. Omit `options` for other field types.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true` when the field is created successfully.
+</ResponseField>
+
+<ResponseField name="field" field-type="object" required="true">
+The newly created custom field definition, including its `id`.
+</ResponseField>
+
+## Get a custom field
+
+Returns one custom field definition by ID.
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the custom field.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true` when the field exists and the request succeeds.
+</ResponseField>
+
+<ResponseField name="field" field-type="object" required="true">
+The requested custom field definition.
+</ResponseField>
+
+## Update a custom field
+
+Updates an existing custom field. You can change the field name, options, and other editable properties supported by the endpoint.
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the custom field to update.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="name" param-type="string" required="false">
+Updated field label.
+</ParamField>
+
+<ParamField body="options" param-type="array" required="false">
+Updated list of allowed values for a `select` field.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true` when the update succeeds.
+</ResponseField>
+
+<ResponseField name="field" field-type="object" required="true">
+The updated custom field definition.
+</ResponseField>
+
+## Delete a custom field
+
+Deletes a custom field definition by ID.
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the custom field to delete.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true` when the field is deleted successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Confirmation message returned by the API after deletion.
+</ResponseField>
+
+## Custom field object
+
+The API returns a custom field object in list, create, get, and update responses.
+
+<ResponseField name="id" field-type="string" required="true">
+Unique identifier for the custom field.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Display name of the field.
+</ResponseField>
+
+<ResponseField name="type" field-type="string" required="true">
+Field type. One of `text`, `number`, `date`, `select`, or `boolean`.
+</ResponseField>
+
+<ResponseField name="entity_type" field-type="string" required="true">
+CRM entity this field applies to. One of `contact`, `company`, or `opportunity`.
+</ResponseField>
+
+<ResponseField name="options" field-type="array" required="false">
+Allowed values for `select` fields. This field is only relevant when `type` is `select`.
+</ResponseField>
+
+## Usage notes
+
+Choose the field type carefully before you create it. A `select` field requires predefined options, while other field types store single values without an options list.
+
+Use the entity type to keep field definitions scoped to the right records. A field created for `contact` records does not apply to `company` or `opportunity` records.

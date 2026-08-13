@@ -1,0 +1,470 @@
+---
+title: Credits
+description: Check credit balances, deduct usage credits, create checkout sessions, manage auto-reload, and retrieve transaction history through the Talkturo API.
+---
+
+## Credits endpoints
+
+Use the credits API to read an account balance, record usage deductions, and start credit purchases through Stripe. The balance, deduction, and checkout endpoints support dual authentication, while account management endpoints for auto-reload and history use session authentication.
+
+<Callout kind="info">
+
+**Authentication**
+- `GET /api/credits`
+- `POST /api/credits`
+- `POST /api/credits/checkout`
+
+These endpoints use dual authentication. Authenticate with either an API key or a signed-in session cookie.
+
+The following endpoints require a session-authenticated browser request:
+- `GET` and `POST` `/api/credits/auto-reload`
+- `POST` `/api/credits/claim-grants`
+- `GET` `/api/credits/plans`
+- `GET` `/api/credits/statement`
+- `GET` `/api/credits/transactions`
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/credits` | API key or session | Get the current credit balance for an account |
+| `POST` | `/api/credits` | API key or session | Deduct credits for usage tracking |
+| `POST` | `/api/credits/checkout` | API key or session | Create an embedded Stripe checkout session for a credit purchase |
+| `GET` | `/api/credits/auto-reload` | Session | Get auto-reload settings |
+| `POST` | `/api/credits/auto-reload` | Session | Update auto-reload settings |
+| `POST` | `/api/credits/claim-grants` | Session | Claim pending credit grants |
+| `GET` | `/api/credits/plans` | Session | List available credit purchase plans |
+| `GET` | `/api/credits/statement` | Session | Get credit statement history |
+| `GET` | `/api/credits/transactions` | Session | Get credit transaction history |
+
+## Get credits balance
+
+Read the current balance for an account with `GET /api/credits`. If you omit `accountId`, the API uses the authenticated account from the request context.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/credits?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/credits?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "credits": {
+    "id": "c8b74c77-8f54-4f72-bfc6-2dc0db7d6f0b",
+    "account_id": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+    "credits": 18420,
+    "total_purchased": 25000,
+    "total_used": 6580,
+    "auto_reload_enabled": true,
+    "auto_reload_threshold": 5000,
+    "auto_reload_amount_usd": 199
+  }
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="false">
+
+Account UUID to read. If you omit `accountId`, the endpoint falls back to the authenticated account.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the request succeeds.
+
+</ResponseField>
+
+<ResponseField name="credits" field-type="object" required="true">
+
+Current credit record for the account. If the account does not already have a credits record, the API creates one before returning the response.
+
+</ResponseField>
+
+<ResponseField name="credits.id" field-type="string" required="true">
+
+Unique identifier for the credits record.
+
+</ResponseField>
+
+<ResponseField name="credits.account_id" field-type="string" required="true">
+
+Account UUID that owns the credits balance.
+
+</ResponseField>
+
+<ResponseField name="credits.credits" field-type="number" required="true">
+
+Current available credit balance.
+
+</ResponseField>
+
+<ResponseField name="credits.total_purchased" field-type="number" required="true">
+
+Total credits purchased for the account.
+
+</ResponseField>
+
+<ResponseField name="credits.total_used" field-type="number" required="true">
+
+Total credits deducted from the account.
+
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_enabled" field-type="boolean" required="true">
+
+Whether automatic credit reloading is enabled.
+
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_threshold" field-type="number" required="true">
+
+Balance threshold that can trigger auto-reload after a deduction.
+
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_amount_usd" field-type="number" required="true">
+
+Dollar amount charged when auto-reload runs.
+
+</ResponseField>
+
+## Deduct credits
+
+Record usage and decrement an account balance with `POST /api/credits`. This endpoint calls the `deduct_credits()` database function and returns the updated balance.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/credits" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+    "amount": 320,
+    "description": "Outbound call usage for campaign cmp_7d2fa19c",
+    "metadata": {
+      "assistantId": "0b760e0d-4b10-4ee8-9c8b-89f02d0a9149",
+      "campaignId": "cmp_7d2fa19c",
+      "minutes": 4.8
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+  },
+  body: JSON.stringify({
+    accountId: "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+    amount: 320,
+    description: "Outbound call usage for campaign cmp_7d2fa19c",
+    metadata: {
+      assistantId: "0b760e0d-4b10-4ee8-9c8b-89f02d0a9149",
+      campaignId: "cmp_7d2fa19c",
+      minutes: 4.8,
+    },
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,402" default-tab="1">
+```json
+{
+  "success": true,
+  "transactionId": "txn_credits_4aa92d1f6d10",
+  "balance": 18100,
+  "autoReloadTriggered": false
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Insufficient credits"
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Account UUID to charge.
+
+</ParamField>
+
+<ParamField body="amount" param-type="number" required="true">
+
+Number of credits to deduct.
+
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+
+Human-readable description of the usage event or billing reason.
+
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+
+Structured metadata stored with the transaction. Use this field to attach internal identifiers such as assistant, campaign, call, or workflow IDs.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the deduction succeeds.
+
+</ResponseField>
+
+<ResponseField name="transactionId" field-type="string" required="true">
+
+Identifier for the credits transaction created by the deduction.
+
+</ResponseField>
+
+<ResponseField name="balance" field-type="number" required="true">
+
+Remaining credit balance after the deduction completes.
+
+</ResponseField>
+
+<ResponseField name="autoReloadTriggered" field-type="boolean" required="true">
+
+Whether the deduction triggered an automatic reload because the updated balance fell below the configured threshold.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+A deduction returns HTTP `402` when the account does not have enough credits to cover `amount`. Handle this response before retrying usage actions that would create duplicate charges in your application.
+
+</Callout>
+
+### Auto-reload behavior after a deduction
+
+If auto-reload is enabled and the remaining balance drops below `auto_reload_threshold`, the API attempts to trigger a reload after the deduction succeeds. The deduction response still returns immediately with `autoReloadTriggered` so your application can decide whether to notify the account owner or pause high-cost actions until the balance refreshes.
+
+## Create a checkout session
+
+Start a credit purchase with `POST /api/credits/checkout`. Use either a predefined `planId` or a custom purchase amount and credit quantity.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/credits/checkout" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+    "accountSlug": "acme-sales",
+    "planId": "credits_growth_500"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/checkout", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+  },
+  body: JSON.stringify({
+    accountId: "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+    accountSlug: "acme-sales",
+    planId: "credits_growth_500",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "checkoutToken": "seti_example_4c0f6b0a2a594f0b8f5d1e5d",
+  "sessionId": "cs_test_b1b8ac39f2f54ceaa55d4e9b2f13",
+  "credits": 50000,
+  "amount": 499
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Account UUID that will receive the purchased credits.
+
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Account slug used to associate the checkout session with the correct account.
+
+</ParamField>
+
+<ParamField body="planId" param-type="string" required="false">
+
+Predefined credit purchase plan to buy. Provide `planId` or provide both `customAmount` and `customCredits`.
+
+</ParamField>
+
+<ParamField body="customAmount" param-type="number" required="false">
+
+Custom purchase amount in USD. Custom purchases require both `customAmount` and `customCredits`, and `customAmount` must be at least `99`.
+
+</ParamField>
+
+<ParamField body="customCredits" param-type="number" required="false">
+
+Number of credits to grant for a custom purchase amount.
+
+</ParamField>
+
+<ParamField body="customerId" param-type="string" required="false">
+
+Existing Stripe customer ID to attach to the checkout session.
+
+</ParamField>
+
+<ParamField body="customerEmail" param-type="string" required="false">
+
+Customer email address for the Stripe checkout session.
+
+</ParamField>
+
+<ParamField body="toltReferral" param-type="string" required="false">
+
+Referral identifier forwarded with the checkout request when present.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the checkout session is created.
+
+</ResponseField>
+
+<ResponseField name="checkoutToken" field-type="string" required="true">
+
+Client secret for the embedded Stripe checkout session.
+
+</ResponseField>
+
+<ResponseField name="sessionId" field-type="string" required="true">
+
+Stripe Checkout session identifier.
+
+</ResponseField>
+
+<ResponseField name="credits" field-type="number" required="true">
+
+Number of credits that the purchase will add after payment succeeds.
+
+</ResponseField>
+
+<ResponseField name="amount" field-type="number" required="true">
+
+Purchase amount returned by the API.
+
+</ResponseField>
+
+### Purchase rules
+
+- Provide `planId`, or provide both `customAmount` and `customCredits`.
+- Custom purchases must have a minimum `customAmount` of `99`.
+- The endpoint creates an embedded Stripe Checkout session and returns a client secret in `checkoutToken`.
+
+## Session-authenticated credits endpoints
+
+Use the following endpoints from a signed-in browser session when you need account-level credits management and history screens.
+
+### Get or update auto-reload
+
+`GET /api/credits/auto-reload` reads the current auto-reload settings. `POST /api/credits/auto-reload` updates those settings for the signed-in account.
+
+<ParamField body="auto_reload_enabled" param-type="boolean" required="false" show-location="false">
+
+Whether automatic reloading is enabled when the balance falls below the threshold.
+
+</ParamField>
+
+<ParamField body="auto_reload_threshold" param-type="number" required="false" show-location="false">
+
+Balance threshold that qualifies the account for auto-reload.
+
+</ParamField>
+
+<ParamField body="auto_reload_amount_usd" param-type="number" required="false" show-location="false">
+
+Dollar amount to charge when auto-reload runs.
+
+</ParamField>
+
+### Claim pending grants
+
+`POST /api/credits/claim-grants` applies any pending credit grants to the signed-in account. Use this endpoint after account actions that provision promotional or manual credits.
+
+### List available plans
+
+`GET /api/credits/plans` returns the purchase plans available to the signed-in account. Use it to populate a billing UI before calling checkout.
+
+### Get statement history
+
+`GET /api/credits/statement` returns statement-style credit history for the signed-in account. Use it when you need a chronological ledger view.
+
+### Get transaction history
+
+`GET /api/credits/transactions` returns transaction-level credit history for the signed-in account. Use it when you need detailed usage and purchase records.
+
+## Common integration patterns
+
+Developers usually combine these endpoints in a short billing loop:
+
+- Read the current balance before starting a high-cost action.
+- Deduct credits when usage is confirmed.
+- Handle HTTP `402` by pausing work and prompting for a purchase flow.
+- Create a checkout session when the user needs to buy more credits.
+- Refresh the balance after purchase completion or auto-reload.
+
+## Related billing flow
+
+Credits deductions and checkout creation cover the API side of usage billing. The actual credit grant happens after payment succeeds through Stripe webhook processing, so a successful checkout session does not change the balance until payment completion is recorded.

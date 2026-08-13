@@ -1,0 +1,353 @@
+---
+title: CRM-Kampagnen
+description: Ausgehende Anrufkampagnen über die Talkturo-CRM-API erstellen, verwalten und ausführen — Kontakte hinzufügen, Echtzeit-Dashboard-Statistiken überwachen, Kampagnen starten und stoppen sowie Anrufprotokolle und KI-Einblicke abrufen.
+---
+
+## CRM-Kampagnen für ausgehende Anrufe verwalten
+
+Mit den CRM-Kampagnen-Endpunkten erstellen und steuern Sie ausgehende Anrufkampagnen in Talkturo. Sie können Kampagnen anlegen, Kontakte zuordnen, eine Kampagne starten oder stoppen und den aktuellen Fortschritt über Dashboard-Statistiken verfolgen.
+
+Alle Endpunkte in diesem Bereich verwenden Sitzungsauthentifizierung. Rufen Sie diese API daher aus einer angemeldeten Talkturo-Sitzung heraus auf.
+
+<Callout kind="info">
+
+Die Kampagnen-API deckt den Kampagnenablauf selbst ab. Für verfügbare Outbound-Assistenten, Anrufprotokolle und KI-Einblicke stehen separate CRM-Endpunkte bereit, die in der Übersicht unten mit aufgeführt sind.
+
+</Callout>
+
+## Endpunktübersicht
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/crm/campaigns` | Kampagnen auflisten |
+| `POST` | `/api/crm/campaigns` | Kampagne erstellen |
+| `GET` | `/api/crm/campaigns/[id]` | Kampagne abrufen |
+| `PATCH` | `/api/crm/campaigns/[id]` | Kampagne aktualisieren |
+| `DELETE` | `/api/crm/campaigns/[id]` | Kampagne löschen |
+| `GET` | `/api/crm/campaigns/[id]/contacts` | Kontakte einer Kampagne auflisten |
+| `POST` | `/api/crm/campaigns/[id]/contacts` | Kontakte zu einer Kampagne hinzufügen |
+| `GET` | `/api/crm/campaigns/[id]/dashboard` | Echtzeit-Statistiken einer Kampagne abrufen |
+| `POST` | `/api/crm/campaigns/[id]/run` | Kampagne starten oder stoppen |
+| `GET` | `/api/crm/outbound-assistants` | Für Outbound verfügbare Assistenten auflisten |
+| `GET` | `/api/crm/calls` | Anrufprotokolle auflisten |
+| `GET` | `/api/crm/intelligence` | KI-Einblicke abrufen |
+
+## Kampagne erstellen
+
+Erstellen Sie eine Kampagne mit einem Namen und optional mit einem zugewiesenen Assistenten oder einem Zeitplan.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_token" \
+  -d '{
+    "name": "Q3 Renewal Outreach",
+    "assistant_id": "asst_7f3d2c91",
+    "schedule": {
+      "timezone": "Europe/Berlin",
+      "days": ["monday", "tuesday", "wednesday"],
+      "start_time": "09:00",
+      "end_time": "17:00"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/campaigns", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    name: "Q3 Renewal Outreach",
+    assistant_id: "asst_7f3d2c91",
+    schedule: {
+      timezone: "Europe/Berlin",
+      days: ["monday", "tuesday", "wednesday"],
+      start_time: "09:00",
+      end_time: "17:00"
+    }
+  })
+});
+
+const campaign = await response.json();
+console.log(campaign);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "id": "cmp_2d9a4c71",
+  "name": "Q3 Renewal Outreach",
+  "assistant_id": "asst_7f3d2c91",
+  "schedule": {
+    "timezone": "Europe/Berlin",
+    "days": ["monday", "tuesday", "wednesday"],
+    "start_time": "09:00",
+    "end_time": "17:00"
+  }
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="name" param-type="string" required="true">
+Name der Kampagne.
+</ParamField>
+
+<ParamField body="assistant_id" param-type="string" required="false">
+ID des Assistenten, der die ausgehenden Anrufe für diese Kampagne ausführen soll.
+</ParamField>
+
+<ParamField body="schedule" param-type="object" required="false">
+Optionaler Zeitplan für die Kampagne. Die genaue Objektstruktur ist implementierungsabhängig; übergeben Sie ein JSON-Objekt mit den gewünschten Planungswerten.
+</ParamField>
+
+### Antwort
+
+<ResponseField name="id" field-type="string">
+Eindeutige ID der erstellten Kampagne.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+Name der Kampagne.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string">
+ID des zugewiesenen Outbound-Assistenten, falls gesetzt.
+</ResponseField>
+
+<ResponseField name="schedule" field-type="object">
+Gespeicherte Planungseinstellungen der Kampagne, falls übermittelt.
+</ResponseField>
+
+<Callout kind="tip">
+
+Wenn Sie eine Kampagne direkt nach der Erstellung ausführen möchten, weisen Sie zuerst einen passenden Outbound-Assistenten zu und fügen Sie anschließend Kontakte hinzu. Danach kann der Endpunkt zum Starten der Kampagne den Lauf anstoßen.
+
+</Callout>
+
+## Kampagne starten oder stoppen
+
+Mit dem Run-Endpunkt steuern Sie den Laufstatus einer vorhandenen Kampagne. Senden Sie `start`, um die Kampagne zu starten, oder `stop`, um sie anzuhalten.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/run" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_token" \
+  -d '{
+    "action": "start"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/run", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    action: "start"
+  })
+});
+
+const result = await response.json();
+console.log(result);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "status": "running"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+ID der Kampagne, die Sie starten oder stoppen möchten.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="action" param-type="string" required="true" enum="start,stop">
+Legt fest, ob die Kampagne gestartet oder gestoppt wird.
+</ParamField>
+
+### Antwort
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Aktion erfolgreich ausgeführt wurde.
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+Aktueller Status der Kampagne nach der Aktion.
+</ResponseField>
+
+## Echtzeit-Dashboard-Statistiken abrufen
+
+Das Kampagnen-Dashboard liefert einen kompakten Überblick über den aktuellen Fortschritt. Sie erhalten Zähler für alle Anrufe sowie für beantwortete, fehlgeschlagene und laufende Anrufe.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/dashboard" \
+  -H "Cookie: sb-session=example_session_token"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/dashboard", {
+  credentials: "include"
+});
+
+const dashboard = await response.json();
+console.log(dashboard);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "total_calls": 148,
+  "answered": 96,
+  "failed": 27,
+  "in_progress": 5
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+ID der Kampagne, deren Dashboard-Daten Sie abrufen möchten.
+</ParamField>
+
+### Antwort
+
+<ResponseField name="total_calls" field-type="number">
+Gesamtzahl der zur Kampagne erfassten oder ausgeführten Anrufe.
+</ResponseField>
+
+<ResponseField name="answered" field-type="number">
+Anzahl beantworteter Anrufe.
+</ResponseField>
+
+<ResponseField name="failed" field-type="number">
+Anzahl fehlgeschlagener Anrufe.
+</ResponseField>
+
+<ResponseField name="in_progress" field-type="number">
+Anzahl aktuell laufender Anrufe.
+</ResponseField>
+
+## Kampagnenkontakte auflisten
+
+Rufen Sie die einer Kampagne zugeordneten Kontakte über den Kontakt-Endpunkt der Kampagne ab. Dieser Endpunkt unterstützt außerdem `POST`, um zusätzliche Kontakte zu einer vorhandenen Kampagne hinzuzufügen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/contacts" \
+  -H "Cookie: sb-session=example_session_token"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/contacts", {
+  credentials: "include"
+});
+
+const contacts = await response.json();
+console.log(contacts);
+```
+</Request>
+
+<Response tabs="200">
+```json
+[
+  {
+    "id": "cnt_5ce91a20",
+    "first_name": "Maya",
+    "last_name": "Schneider",
+    "phone": "+493012345678",
+    "email": "maya.schneider@northstar-industries.com"
+  },
+  {
+    "id": "cnt_88db41ef",
+    "first_name": "Jonas",
+    "last_name": "Weber",
+    "phone": "+498912345678",
+    "email": "jonas.weber@helios-logistik.de"
+  }
+]
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+ID der Kampagne, deren Kontakte Sie abrufen möchten.
+</ParamField>
+
+### Antwortsfelder
+
+<ResponseField name="id" field-type="string">
+Eindeutige ID des Kontakts.
+</ResponseField>
+
+<ResponseField name="first_name" field-type="string">
+Vorname des Kontakts.
+</ResponseField>
+
+<ResponseField name="last_name" field-type="string">
+Nachname des Kontakts.
+</ResponseField>
+
+<ResponseField name="phone" field-type="string">
+Telefonnummer des Kontakts.
+</ResponseField>
+
+<ResponseField name="email" field-type="string">
+E-Mail-Adresse des Kontakts, falls vorhanden.
+</ResponseField>
+
+<Callout kind="info">
+
+Nutzen Sie `POST /api/crm/campaigns/[id]/contacts`, um Kontakte derselben Kampagne hinzuzufügen. Für die Verwaltung einzelner Kontakte selbst stehen die CRM-Kontakt-Endpunkte unter `/api/crm/contacts` bereit.
+
+</Callout>
+
+## Verwandte Endpunkte
+
+<Columns cols={2}>
+  <Card
+    title="CRM-Kontakte"
+    href="/de/api-reference/crm-contacts"
+    icon="users"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="CRM-Benutzerdefinierte Felder"
+    href="/de/api-reference/crm-custom-fields"
+    icon="settings"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="Outbound-Assistenten"
+    href="/de/api-reference/outbound-assistants"
+    icon="phone"
+    cta="Endpunkt ansehen"
+  />
+  <Card
+    title="Anrufprotokolle und KI-Einblicke"
+    href="/de/api-reference/crm-calls-and-intelligence"
+    icon="bar-chart"
+    cta="Mehr erfahren"
+  />
+</Columns>

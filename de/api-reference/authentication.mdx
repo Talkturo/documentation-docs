@@ -1,0 +1,115 @@
+---
+title: Authentifizierung
+description: Authentifizieren Sie API-Anfragen mit API-Schlüsseln, Sitzungs-Cookies oder JWT-Bearer-Token — lernen Sie Scopes, Dual-Auth-Modus und das Testen Ihrer Anmeldeinformationen kennen.
+---
+
+## Anfragen authentifizieren
+
+Authentifizieren Sie jede Talkturo-API-Anfrage mit einer von drei Methoden: **API-Schlüsseln**, **Sitzungs-Cookies** oder **JWT-Bearer-Token**. Die meisten externen Integrationen verwenden API-Schlüssel im `Authorization`-Header, browserbasierte Anfragen können auf das authentifizierte Sitzungs-Cookie zurückgreifen, und Anfragen aus der Desktop-App verwenden ein von Supabase ausgestelltes Bearer-Token.
+
+### Authentifizierungsmethoden auf einen Blick
+
+| Methode | Am besten geeignet für | So senden Sie sie |
+| --- | --- | --- |
+| API-Schlüssel | Server-zu-Server-Integrationen und externe Apps | `Authorization: Bearer tk_live_...` oder `Authorization: Bearer tk_test_...` |
+| Sitzungs-Cookie | Anfragen aus der Talkturo-Web-App | Automatisches httpOnly-Cookie |
+| JWT-Bearer-Token | Anfragen aus der Desktop-App | `Authorization: Bearer eyJhbGciOi...` |
+
+## Authentifizierung mit API-Schlüsseln
+
+Senden Sie Ihren API-Schlüssel im `Authorization`-Header als Bearer-Token. Talkturo akzeptiert Schlüssel sowohl in Live- als auch in Testumgebungen und verwendet dafür die Präfixe `tk_live_` und `tk_test_`.
+
+Talkturo validiert API-Schlüssel, indem der übermittelte Schlüssel gehasht und über die Datenbankfunktion `validate_api_key()` nachgeschlagen wird. Wenn der Schlüssel gültig, aktiv, nicht abgelaufen ist und den erforderlichen Scope hat, wird die Anfrage ausgeführt und die Nutzung protokolliert.
+
+### Format von API-Schlüsseln
+
+API-Schlüssel verwenden eines dieser Präfixe:
+
+- **`tk_live_`** — Schlüssel für die Live-Umgebung
+- **`tk_test_`** — Schlüssel für die Testumgebung
+
+Ein Schlüssel wird nur einmal zurückgegeben, wenn Sie ihn erstellen. Talkturo speichert nur einen SHA-256-Hash des vollständigen Schlüssels, daher können Sie den Klartextwert später nicht erneut abrufen.
+
+## Scope-System
+
+Scopes steuern, welche Operationen ein API-Schlüssel ausführen darf. Ein Schlüssel kann alles erlauben, einen Namespace verwandter Operationen oder einen bestimmten Berechtigungs-String.
+
+<ParamField body="*" param-type="string" required="false" show-location="false">
+
+Erlaubt alle Operationen.
+
+</ParamField>
+
+<ParamField body="namespace:*" param-type="string" required="false" show-location="false">
+
+Erlaubt alle Operationen innerhalb eines Namespace, zum Beispiel `assistants:*`.
+
+</ParamField>
+
+<ParamField body="specific.permission" param-type="string" required="false" show-location="false">
+
+Erlaubt genau eine bestimmte Berechtigung.
+
+</ParamField>
+
+## Dual-Auth-Modus
+
+Einige Talkturo-API-Routen unterstützen sowohl API-Schlüssel als auch authentifizierte Browser-Sitzungen. Diese Routen verwenden den Wrapper `withApiAuth`.
+
+Im Dual-Auth-Modus versucht Talkturo zuerst die Authentifizierung per API-Schlüssel. Wenn kein gültiger API-Schlüssel vorhanden ist, greift Talkturo auf das aktuelle Sitzungs-Cookie zurück.
+
+Dieses Verhalten ermöglicht, dass derselbe Endpunkt sowohl für externe Integrationen als auch für Anfragen aus der Talkturo-Web-App funktioniert. Routen wie Assistant- und Credits-Endpunkte verwenden dieses Muster.
+
+## Authentifizierung mit Sitzungs-Cookies
+
+Die Authentifizierung mit Sitzungs-Cookies ist der Standard-Browser-Flow für die Talkturo-Web-App. Nachdem sich ein Benutzer angemeldet hat, speichert Supabase die authentifizierte Sitzung in einem httpOnly-Cookie, und Browser-Anfragen an sitzungsgeschützte Routen verwenden dieses Cookie automatisch.
+
+Verwenden Sie Sitzungs-Cookies, wenn Ihr Code im Kontext der Web-App ausgeführt wird. Für externe Integrationen verwenden Sie stattdessen API-Schlüssel.
+
+## Authentifizierung mit JWT-Bearer-Token
+
+Routen der Desktop-App akzeptieren ein Supabase-Access-Token im `Authorization`-Header. Talkturo validiert das Token, indem für das vorgelegte Bearer-Token `supabase.auth.getUser()` aufgerufen wird.
+
+Desktop-Routen unterstützen außerdem Cross-Origin-Anfragen und verarbeiten `OPTIONS`-Preflight-Anfragen. Verwenden Sie diese Methode nur für Desktop-App-Flows, die bereits Supabase-Benutzersitzungen verwalten.
+
+## Authentifizierung testen
+
+Rufen Sie `GET /api/test-api-key` auf, um zu bestätigen, dass Ihre Anmeldeinformationen gültig sind und von Talkturo akzeptiert werden. Dieser Endpunkt verwendet denselben Authentifizierungs-Flow wie andere Routen mit API-Schlüssel-Unterstützung.
+
+Eine erfolgreiche Antwort bestätigt, dass der Schlüssel aktiv, nicht abgelaufen und durch die Scope-Prüfung zugelassen ist. Wenn die Anfrage fehlschlägt, prüfen Sie das Format des Bearer-Tokens, das Umgebungspräfix des Schlüssels, den Schlüsselstatus und die Scope-Konfiguration.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/test-api-key" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/test-api-key", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer tk_test_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,401" default-tab="1">
+```json
+{
+  "success": true,
+  "message": "API key is valid",
+  "authType": "api_key"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid API key"
+}
+```
+</Response>
