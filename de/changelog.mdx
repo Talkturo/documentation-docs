@@ -11,14 +11,14 @@ Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von T
 <Update label="2026-08-12" description="v2.3.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
-  - **Guthaben und Profilmenü auf mobil** — Dein Guthabenstand und das Profilmenü sind jetzt in der mobilen Top-Bar erreichbar, sodass du Guthaben prüfen und dein Konto verwalten kannst, ohne auf den Desktop zu wechseln. Siehe [Abrechnung](/billing).
-  - **Telnyx-City-Level-Verifizierung erzwungen** — Telefonnummernkäufe über Telnyx erzwingen jetzt die City-Level-Verifizierung, analog zum Schutz, den Twilio bereits bietet. Das verhindert den Kauf von Nummern in Städten, für die du nicht verifiziert bist. Siehe [Telefonie](/telephony).
+  - **Guthaben und Profilmenü auf mobil** — Dein Guthabenstand und das Profilmenü sind jetzt in der mobilen Top-Bar erreichbar, sodass du Guthaben prüfen und dein Konto verwalten kannst, ohne auf den Desktop zu wechseln. Siehe [Abrechnung](/de/billing).
+  - **Telnyx-City-Level-Verifizierung erzwungen** — Telefonnummernkäufe über Telnyx erzwingen jetzt die City-Level-Verifizierung, analog zum Schutz, den Twilio bereits bietet. Das verhindert den Kauf von Nummern in Städten, für die du nicht verifiziert bist. Siehe [Telefonie](/de/telephony).
 
   ## Verbesserungen
 
-  - **Compliance-Stadtauswahl neu gestaltet** — Bei der Beantragung einer regulatorischen Verifizierung musst du jetzt explizit eine Stadt auswählen oder eingeben. Ein neuer Hinweis erklärt, dass die Freigabe nur für diese Stadt gilt — nicht für das gesamte Land. Siehe [Telefonie](/telephony).
+  - **Compliance-Stadtauswahl neu gestaltet** — Bei der Beantragung einer regulatorischen Verifizierung musst du jetzt explizit eine Stadt auswählen oder eingeben. Ein neuer Hinweis erklärt, dass die Freigabe nur für diese Stadt gilt — nicht für das gesamte Land. Siehe [Telefonie](/de/telephony).
   - **Admin-Kontosuche verbessert** — Die Admin-Kontosuche findet jetzt Name, E-Mail und Workspace-Slug unabhängig von Groß-/Kleinschreibung, sodass sich Konten schneller finden lassen.
-  - **Abgelaufene Telnyx-Verifizierungen erkannt** — Abgelaufene Carrier-Freigaben für Telnyx werden jetzt automatisch erkannt und neu bewertet, damit das Kauf-Gate über die Zeit korrekt bleibt. Siehe [Telefonie](/telephony).
+  - **Abgelaufene Telnyx-Verifizierungen erkannt** — Abgelaufene Carrier-Freigaben für Telnyx werden jetzt automatisch erkannt und neu bewertet, damit das Kauf-Gate über die Zeit korrekt bleibt. Siehe [Telefonie](/de/telephony).
 
   ## Bugfixes
 
@@ -31,19 +31,19 @@ Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von T
 <Update label="2026-08-11" description="v2.2.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
-  - **Panel für Transkriptionseinstellungen** — Konfiguriere direkt im Assistenteneditor, wie dein KI-Assistent die Sprache der Anrufenden verarbeitet. Füge bis zu 100 benutzerdefinierte Keyterms hinzu (Namen, Produktnamen, Schreibweisen), aktiviere Smart Formatting, Profanitätsfilter, Redaktion sensibler Daten, GDPR-Training-Opt-out, Speaker Diarization sowie anbieterspezifische Optionen für Deepgram und AssemblyAI. Siehe [Features](/features).
+  - **Panel für Transkriptionseinstellungen** — Konfiguriere direkt im Assistenteneditor, wie dein KI-Assistent die Sprache der Anrufenden verarbeitet. Füge bis zu 100 benutzerdefinierte Keyterms hinzu (Namen, Produktnamen, Schreibweisen), aktiviere Smart Formatting, Profanitätsfilter, Redaktion sensibler Daten, GDPR-Training-Opt-out, Speaker Diarization sowie anbieterspezifische Optionen für Deepgram und AssemblyAI. Siehe [Features](/de/features).
   - **Deutsche Lokalisierung der Transkriptionseinstellungen** — Alle Labels, Hilfetexte und Beschreibungen der Transkriptionseinstellungen sind jetzt vollständig auf Deutsch übersetzt.
-  - **Telefonnummernkauf über zwei Carrier** — Workspaces können jetzt gleichzeitig Telefonnummern von zwei Talkturo-Carriern sowie vom eigenen verbundenen Twilio-Account kaufen und nutzen. Siehe [Schnellstart](/quickstart).
+  - **Telefonnummernkauf über zwei Carrier** — Workspaces können jetzt gleichzeitig Telefonnummern von zwei Talkturo-Carriern sowie vom eigenen verbundenen Twilio-Account kaufen und nutzen. Siehe [Schnellstart](/de/quickstart).
 
   ## Verbesserungen
 
-  - **Validierung beim Veröffentlichen von Workflows** — Beim Veröffentlichen eines Workflows werden jetzt fehlende Pflichtfelder vor dem Speichern geprüft, mit klaren Fehlermeldungen statt stiller Fehler während Live-Anrufen. Siehe [Integrationen](/integrations).
+  - **Validierung beim Veröffentlichen von Workflows** — Beim Veröffentlichen eines Workflows werden jetzt fehlende Pflichtfelder vor dem Speichern geprüft, mit klaren Fehlermeldungen statt stiller Fehler während Live-Anrufen. Siehe [Integrationen](/de/integrations).
   - **Admin-Verifizierungsliste zeigt Stadt** — Die Admin-Seite Verifications zeigt jetzt die Stadt neben dem Land an, sodass eingereichte Dokumente leichter dem richtigen Vorwahlgebiet zugeordnet werden können.
 
   ## Bugfixes
 
-  - **Answering-Machine-Detection bei Outbound** — Behoben: Die Erkennung lief auf Ringback-Audio statt auf dem tatsächlich angenommenen Anruf und klassifizierte bei allen ausgehenden Anrufen Voicemail vs. Live-Antwort falsch. Siehe [Fehlerbehebung Anrufqualität](/help-center/troubleshooting/call-quality).
-  - **Workflow-Tool-Definitionen entsprechen jetzt dem Editor** — Der Tool-Name und die Parameter, die der Sprachagent registriert, stimmen jetzt exakt mit dem Editor überein, sodass prompt-autorisierte Tool-Aufrufe zuverlässig funktionieren. Siehe [Integrationen](/integrations).
+  - **Answering-Machine-Detection bei Outbound** — Behoben: Die Erkennung lief auf Ringback-Audio statt auf dem tatsächlich angenommenen Anruf und klassifizierte bei allen ausgehenden Anrufen Voicemail vs. Live-Antwort falsch. Siehe [Fehlerbehebung Anrufqualität](/de/help-center/troubleshooting/call-quality).
+  - **Workflow-Tool-Definitionen entsprechen jetzt dem Editor** — Der Tool-Name und die Parameter, die der Sprachagent registriert, stimmen jetzt exakt mit dem Editor überein, sodass prompt-autorisierte Tool-Aufrufe zuverlässig funktionieren. Siehe [Integrationen](/de/integrations).
   - **Fehlgeschlagene Workflow-Trigger sind jetzt sichtbar** — Abgelehnte Workflow-Trigger erzeugen jetzt einen fehlgeschlagenen Run-Eintrag mit Begründung und erscheinen in der Runs-Ansicht, statt still zu verschwinden.
   - **Transkriptionseinstellungen bleiben über Aktionen erhalten** — Einstellungen gehen nicht mehr verloren beim Wechsel zwischen Modellen desselben Anbieters, bei Nutzung des Standardanbieters oder beim Klonen eines Assistenten.
   - **City-Level-Verifizierung erzwungen** — Telefonnummernkäufe in Ländern mit Compliance-Gate erzwingen jetzt die City-Level-Verifizierung mit klarer Fehlermeldung und verhindern stille Kauffehler.
@@ -167,11 +167,11 @@ Verfolge die kommenden Prioritäten für die Voice-AI-Features von Talkturo.
 ## Weiter erkunden
 
 <Columns cols="2">
-  <Card title="API-Referenz" href="/api-reference/overview" icon="code" horizontal="false">
+  <Card title="API-Referenz" href="/de/api-reference/overview" icon="code" horizontal="false">
     Detaillierte Endpunkte für Sprachagenten und Kampagnen.
   </Card>
 
-  <Card title="Schlüsselkonzepte" href="/key-concepts" icon="book-open" horizontal="false">
+  <Card title="Schlüsselkonzepte" href="/de/key-concepts" icon="book-open" horizontal="false">
     Verstehe zentrale Talkturo-Begriffe und die Architektur.
   </Card>
 </Columns>

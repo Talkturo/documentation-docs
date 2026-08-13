@@ -11,14 +11,14 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
 <Update label="2026-08-12" description="v2.3.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
-  - **Credits and profile menu on mobile** — Your credit balance and profile menu are now accessible from the mobile top bar, so you can check credits and manage your account without switching to desktop. See [Billing](/billing).
-  - **Telnyx city-level verification enforcement** — Telnyx phone number purchases now enforce city-level regulatory verification, matching the protection Twilio already provides. This prevents buying numbers in cities you aren't verified for. See [Telephony](/telephony).
+  - **Credits and profile menu on mobile** — Your credit balance and profile menu are now accessible from the mobile top bar, so you can check credits and manage your account without switching to desktop. See [Billing](/en/billing).
+  - **Telnyx city-level verification enforcement** — Telnyx phone number purchases now enforce city-level regulatory verification, matching the protection Twilio already provides. This prevents buying numbers in cities you aren't verified for. See [Telephony](/en/telephony).
 
   ## Improvements
 
-  - **Compliance city selector redesigned** — When requesting regulatory verification, you must now explicitly select or enter your city. A new note explains that approval covers only that city — not the entire country. See [Telephony](/telephony).
+  - **Compliance city selector redesigned** — When requesting regulatory verification, you must now explicitly select or enter your city. A new note explains that approval covers only that city — not the entire country. See [Telephony](/en/telephony).
   - **Admin account search improved** — Admin account search now matches name, email, and workspace slug, case-insensitively, making it faster to locate the right account.
-  - **Expired Telnyx verifications detected** — Expired carrier approvals for Telnyx are now automatically detected and re-evaluated, keeping the purchase gate accurate over time. See [Telephony](/telephony).
+  - **Expired Telnyx verifications detected** — Expired carrier approvals for Telnyx are now automatically detected and re-evaluated, keeping the purchase gate accurate over time. See [Telephony](/en/telephony).
 
   ## Bug Fixes
 
@@ -31,19 +31,19 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
 <Update label="2026-08-11" description="v2.2.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
-  - **Transcription Settings panel** — Configure how your AI assistant processes caller speech directly in the assistant editor. Add up to 100 custom keyterms (names, product names, spellings), enable smart formatting, profanity filtering, sensitive-data redaction, GDPR training opt-out, speaker diarization, and provider-specific options for Deepgram and AssemblyAI. See [Features](/features).
+  - **Transcription Settings panel** — Configure how your AI assistant processes caller speech directly in the assistant editor. Add up to 100 custom keyterms (names, product names, spellings), enable smart formatting, profanity filtering, sensitive-data redaction, GDPR training opt-out, speaker diarization, and provider-specific options for Deepgram and AssemblyAI. See [Features](/en/features).
   - **German localization for transcription settings** — All transcription setting labels, help texts, and descriptions are now fully translated into German.
-  - **Dual-carrier phone number purchasing** — Workspaces can now buy and use phone numbers from two Talkturo carriers at the same time, plus their own connected Twilio account. See [Quickstart](/quickstart).
+  - **Dual-carrier phone number purchasing** — Workspaces can now buy and use phone numbers from two Talkturo carriers at the same time, plus their own connected Twilio account. See [Quickstart](/en/quickstart).
 
   ## Improvements
 
-  - **Workflow publish validation** — Publishing a workflow now checks for missing required fields before saving, with clear error messages instead of silent failures during live calls. See [Integrations](/integrations).
+  - **Workflow publish validation** — Publishing a workflow now checks for missing required fields before saving, with clear error messages instead of silent failures during live calls. See [Integrations](/en/integrations).
   - **Admin verification list shows city** — The admin Verifications page now displays the city alongside the country, making it easier to match submitted documents to the correct dialing area.
 
   ## Bug Fixes
 
-  - **Outbound answering-machine detection** — Fixed an issue where detection ran on ringback audio instead of the actual answered call, causing incorrect voicemail vs. live-answer classification on all outbound calls. See [Call Quality Troubleshooting](/help-center/troubleshooting/call-quality).
-  - **Workflow tool definitions now match the editor** — The tool name and parameters the voice agent registers now exactly match what you see in the editor, so prompt-authored tool calls work reliably. See [Integrations](/integrations).
+  - **Outbound answering-machine detection** — Fixed an issue where detection ran on ringback audio instead of the actual answered call, causing incorrect voicemail vs. live-answer classification on all outbound calls. See [Call Quality Troubleshooting](/en/help-center/troubleshooting/call-quality).
+  - **Workflow tool definitions now match the editor** — The tool name and parameters the voice agent registers now exactly match what you see in the editor, so prompt-authored tool calls work reliably. See [Integrations](/en/integrations).
   - **Failed workflow triggers now visible** — Rejected workflow triggers now create a failed run record with the reason, so they appear in the Runs view instead of silently disappearing.
   - **Transcription settings preserved across actions** — Settings are no longer lost when switching models within the same provider, when using the default provider, or when cloning an assistant.
   - **City-level verification enforcement** — Phone number purchases in compliance-gated countries now enforce city-level verification with a clear error message, preventing silent purchase failures.
@@ -167,11 +167,11 @@ Track upcoming priorities for Talkturo's voice AI features.
 ## Explore Further
 
 <Columns cols="2">
-  <Card title="API Reference" href="/api-reference/overview" icon="code" horizontal="false">
+  <Card title="API Reference" href="/en/api-reference/overview" icon="code" horizontal="false">
     Detailed endpoints for voice agents and campaigns.
   </Card>
 
-  <Card title="Key Concepts" href="/key-concepts" icon="book-open" horizontal="false">
+  <Card title="Key Concepts" href="/en/key-concepts" icon="book-open" horizontal="false">
     Understand core Talkturo terminology and architecture.
   </Card>
 </Columns>
