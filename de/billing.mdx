@@ -42,23 +42,6 @@ Weil Guthaben anteilige Beträge unterstützen, führen kurze Anrufe und Teilmin
 
 </Callout>
 
-## Vergleiche Abonnements
-
-Pläne definieren dein monatliches Basispaket. Die in einem Plan enthaltenen Guthaben werden monatlich erneuert, während gekaufte Aufladungsguthaben getrennt von der Preisgestaltung des Plans verwaltet werden.
-
-| Plan       | Monatlicher Preis     | Enthaltene monatliche Guthaben | Enthält                                  |
-| ---------- | --------------------- | ------------------------------ | ---------------------------------------- |
-| Free       | 0 $/Monat             | 10                             | Öffentliche Projekte, unbegrenzte Mitwirkende |
-| Pro        | Standardmäßig 100 $/Monat | 400                        | Alle Funktionen von Free                 |
-| Business   | Standardmäßig 200 $/Monat | 400                        | Alle Funktionen von Pro, SSO, interne Veröffentlichung |
-| Enterprise | Individuelle Preise   | Individuell                    | Dedizierter Support, individuelle Verbindungen |
-
-<Callout kind="info" collapsed="false">
-
-Die Preise für Pro und Business werden dynamisch festgelegt und können von den hier gezeigten Standardbeträgen abweichen.
-
-</Callout>
-
 ## Füge Guthaben-Aufladungen hinzu
 
 Aufladungen erhöhen dein verfügbares Nutzungsguthaben über die im Abonnement enthaltenen Guthaben hinaus. Diesen Betrag nutzt du während Voice-Aktivitäten.
@@ -69,8 +52,6 @@ Aufladungen erhöhen dein verfügbares Nutzungsguthaben über die im Abonnement 
 | Pro-Paket             | 349 $       | 698                                                            |
 | Business-Paket        | 499 $       | 998                                                            |
 | Individuelles Guthaben | Mindestens 99 $ | Jeder Betrag über dem Mindestwert, umgerechnet zum aktuellen Kurs |
-
-Bonus-Guthaben können gelten, wenn du über Zahlungslinks für Agents kaufst. In diesen Fällen kann Talkturo bis zu **20 % zusätzliche Guthaben** zusätzlich zur Standardumrechnung hinzufügen.
 
 ## Sieh, wie Anrufe Guthaben verbrauchen
 
@@ -89,27 +70,6 @@ Die Kosten eines Anrufs hängen von den Komponenten ab, die dein Assistant verwe
 ### Realtime-Modus
 
 Der Realtime-Modus verwendet einen **einzigen Preis pro Minute** statt separater Positionen für Speech-to-Text, LLM und Text-to-Speech. Das vereinfacht die Abrechnung, wenn dein Assistant auf einem Realtime-Stack läuft.
-
-### Beispiel für die Kostenberechnung
-
-Eine typische Schätzung verwendet diese Annahmen pro Gesprächsminute:
-
-- **TTS-Ausgabe:** 750 Zeichen pro Minute
-- **LLM-Eingabe:** 600 Prompt-Tokens pro Minute
-- **LLM-Ausgabe:** 400 Completion-Tokens pro Minute
-
-Mit einem Standard-Stack wie **Deepgram STT + OpenAI LLM + Cartesia TTS + Telnyx Telephony** liegen die gemischten Kosten bei ungefähr **0.21 Guthaben pro Minute**.
-
-Das bedeutet:
-
-| Anrufdauer | Ungefähre Kosten |
-| ---------- | ---------------- |
-| 1 Minute   | 0.21 Guthaben    |
-| 5 Minuten  | 1.05 Guthaben    |
-| 10 Minuten | 2.1 Guthaben     |
-| 30 Minuten | 6.3 Guthaben     |
-
-Diese Werte sind Schätzungen, keine feste Garantie. Die tatsächlichen Kosten ändern sich je nach Anrufdauer, Sprechgeschwindigkeit, Token-Nutzung, erzeugtem Sprachvolumen, Telephony-Routing und danach, ob du den Standard- oder Realtime-Modus verwendest.
 
 <Callout kind="info" collapsed="false">
 
@@ -173,14 +133,11 @@ Wenn dein Team sowohl Desktop-Coaching als auch Voice-Agents nutzt, plane diese 
 
 Stripe ist der primäre Abrechnungsanbieter für Talkturo. Gespeicherte Karten werden für Käufe und Auto-Reload verwendet, und Rechnungen sind als herunterladbare PDFs verfügbar.
 
-Talkturo unterstützt in einigen Abrechnungsabläufen auch Lemon Squeezy als ältere Alternative. Wenn dein Workspace diesen älteren Weg verwendet, kannst du eine andere Kaufabwicklung sehen als bei Stripe-basierten Abläufen.
-
 ### Was du erwarten kannst
 
 - **Gespeicherte Karten** unterstützen automatische Reloads
 - **Stripe-Rechnungen** liefern einen Abrechnungsnachweis für Käufe
 - **PDF-Rechnungen** stehen zum Download bereit
-- **Ältere Lemon-Squeezy-Abläufe** können in älteren Setups weiterhin erscheinen
 
 ## Fordere Guthaben-Zuschüsse an
 

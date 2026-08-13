@@ -39,21 +39,6 @@ Talkturo uses a base exchange rate of **$1 USD = 2 credits**. That exchange rate
   Because credits support fractional amounts, small calls and partial minutes do not overcharge your workspace. You pay for the underlying usage pattern, not a rounded bundle.
 </Callout>
 
-## Compare subscription plans
-
-Plans define your monthly base package. Credits included in a plan refresh monthly, while purchased top-up credits are separate from plan pricing.
-
-| Plan       | Monthly price      | Included monthly credits | Includes                                 |
-| ---------- | ------------------ | ------------------------ | ---------------------------------------- |
-| Free       | $0/month           | 10                       | Public projects, unlimited collaborators |
-| Pro        | $100/month default | 400                      | All Free features                        |
-| Business   | $200/month default | 400                      | All Pro features, SSO, internal publish  |
-| Enterprise | Custom pricing     | Custom                   | Dedicated support, custom connections    |
-
-<Callout kind="info" collapsed="false">
-  Pro and Business pricing is dynamically set and may vary from the default amounts shown here.
-</Callout>
-
 ## Add credit top-ups
 
 Top-ups increase your available usage balance beyond the credits included in your subscription. This is the amount you draw down during voice activity.
@@ -64,8 +49,6 @@ Top-ups increase your available usage balance beyond the credits included in you
 | Pro Pack      | $349        | 698                                                         |
 | Business Pack | $499        | 998                                                         |
 | Custom top-up | Minimum $99 | Any amount above the minimum, converted at the current rate |
-
-Bonus credits may apply when you buy through agent payment links. In those cases, Talkturo can add up to **20% extra credits** on top of the standard conversion.
 
 ## See how calls consume credits
 
@@ -84,27 +67,6 @@ Call cost depends on the components your assistant uses. Standard voice pipeline
 ### Realtime mode
 
 Realtime mode uses a **single per-minute rate** instead of separate Speech-to-Text, LLM, and Text-to-Speech line items. That makes billing simpler when your assistant runs on a realtime stack.
-
-### Example cost calculation
-
-A typical estimate uses these assumptions per minute of conversation:
-
-- **TTS output:** 750 characters per minute
-- **LLM input:** 600 prompt tokens per minute
-- **LLM output:** 400 completion tokens per minute
-
-With a standard stack such as **Deepgram STT + OpenAI LLM + Cartesia TTS + Telnyx telephony**, the blended cost is approximately **0.21 credits per minute**.
-
-That means:
-
-| Call length | Approximate cost |
-| ----------- | ---------------- |
-| 1 minute    | 0.21 credits     |
-| 5 minutes   | 1.05 credits     |
-| 10 minutes  | 2.1 credits      |
-| 30 minutes  | 6.3 credits      |
-
-These figures are estimates, not a fixed guarantee. Actual cost changes with call duration, speaking rate, token usage, generated speech volume, telephony routing, and whether you use standard or realtime mode.
 
 <Callout kind="info" collapsed="false">
   A call with heavier model output or longer assistant responses consumes more LLM tokens and TTS characters, so two calls with the same duration may cost different amounts.
@@ -164,14 +126,11 @@ If your team uses both desktop coaching and voice agents, manage these as separa
 
 Stripe is the primary billing provider for Talkturo. Saved cards are used for purchases and auto-reload, and invoices are available as downloadable PDFs.
 
-Talkturo also supports Lemon Squeezy as a legacy alternative in some billing flows. If your workspace uses that older path, you may see different purchase handling than Stripe-based billing.
-
 ### What you can expect
 
 - **Saved cards** support automatic reloads
 - **Stripe invoices** provide a billing record for purchases
 - **PDF invoices** are available for download
-- **Legacy Lemon Squeezy flows** may still appear for older setups
 
 ## Claim credit grants
 
