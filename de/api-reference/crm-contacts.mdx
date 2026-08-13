@@ -1,0 +1,435 @@
+---
+title: CRM-Kontakte
+description: Kontakte erstellen, auflisten, aktualisieren, löschen und importieren im Talkturo-CRM — Kundendaten mit Filterung, Paginierung und benutzerdefinierten Feldern verwalten.
+---
+
+## CRM-Kontakte im Talkturo-CRM verwalten
+
+Mit den CRM-Kontakt-Endpunkten verwalten Sie Ihre Kontaktdaten zentral im Talkturo-CRM. Sie können Kontakte auflisten, einzelne Datensätze anlegen, bestehende Kontakte aktualisieren, löschen und größere Datenmengen gesammelt importieren.
+
+Alle Endpunkte in diesem Bereich sind für browserbasierte Sitzungen ausgelegt. Wenn Sie mit diesen Routen arbeiten, muss die Anfrage eine gültige Session-Cookie-Authentifizierung enthalten.
+
+<Callout kind="info">
+
+Diese Endpunkte akzeptieren laut Implementierung **nur Session-Authentifizierung**. API-Keys oder Bearer-Token sind für CRM-Kontakte nicht vorgesehen.
+
+</Callout>
+
+## Endpunktübersicht
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/crm/contacts` | Kontakte auflisten |
+| `POST` | `/api/crm/contacts` | Kontakt erstellen |
+| `GET` | `/api/crm/contacts/{id}` | Einzelnen Kontakt abrufen |
+| `PATCH` | `/api/crm/contacts/{id}` | Kontakt aktualisieren |
+| `DELETE` | `/api/crm/contacts/{id}` | Kontakt löschen |
+| `POST` | `/api/crm/contacts/import` | Kontakte gesammelt importieren |
+
+## Kontakte auflisten
+
+Rufen Sie `GET /api/crm/contacts` auf, um Kontakte seitenweise abzurufen und die Ergebnismenge nach Suchbegriff, Unternehmen oder Kampagne zu filtern.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/contacts?page=1&limit=25&search=Jane&companyId=cmp_42&campaignId=camp_17" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "contacts": [
+    {
+      "id": "ctc_8f3a21",
+      "first_name": "Jane",
+      "last_name": "Chen",
+      "email": "jane.chen@northstar.io",
+      "phone": "+14155550189",
+      "company_id": "cmp_42"
+    }
+  ],
+  "total": 1,
+  "page": 1
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="page" param-type="integer" required="false">
+Seitennummer der Ergebnisliste.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximale Anzahl von Kontakten pro Seite.
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false">
+Freitextsuche für Kontakte.
+</ParamField>
+
+<ParamField query="companyId" param-type="string" required="false">
+Filtert Kontakte nach einer bestimmten Unternehmens-ID.
+</ParamField>
+
+<ParamField query="campaignId" param-type="string" required="false">
+Filtert Kontakte nach einer bestimmten Kampagnen-ID.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet eine erfolgreiche Anfrage.
+</ResponseField>
+
+<ResponseField name="contacts" field-type="array" required="true">
+Liste der gefundenen Kontakte für die angeforderte Seite.
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige ID des Kontakts.
+</ResponseField>
+
+<ResponseField name="first_name" field-type="string" required="true">
+Vorname des Kontakts.
+</ResponseField>
+
+<ResponseField name="last_name" field-type="string" required="true">
+Nachname des Kontakts.
+</ResponseField>
+
+<ResponseField name="email" field-type="string" required="false">
+E-Mail-Adresse des Kontakts, sofern vorhanden.
+</ResponseField>
+
+<ResponseField name="phone" field-type="string" required="false">
+Telefonnummer des Kontakts, sofern vorhanden.
+</ResponseField>
+
+<ResponseField name="company_id" field-type="string" required="false">
+ID des zugeordneten Unternehmens, sofern gesetzt.
+</ResponseField>
+
+<ResponseField name="total" field-type="integer" required="true">
+Gesamtzahl aller Treffer über alle Seiten hinweg.
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true">
+Aktuelle Seite der Antwort.
+</ResponseField>
+
+## Kontakt erstellen
+
+Rufen Sie `POST /api/crm/contacts` auf, um einen neuen Kontakt im CRM anzulegen.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/contacts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_cookie" \
+  -d '{
+    "first_name": "Jane",
+    "last_name": "Chen",
+    "email": "jane.chen@northstar.io",
+    "phone": "+14155550189",
+    "company_id": "cmp_42"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "contact": {
+    "id": "ctc_8f3a21",
+    "first_name": "Jane",
+    "last_name": "Chen",
+    "email": "jane.chen@northstar.io",
+    "phone": "+14155550189",
+    "company_id": "cmp_42"
+  }
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="first_name" param-type="string" required="true">
+Vorname des Kontakts.
+</ParamField>
+
+<ParamField body="last_name" param-type="string" required="true">
+Nachname des Kontakts.
+</ParamField>
+
+<ParamField body="email" param-type="string" required="false">
+E-Mail-Adresse des Kontakts.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false">
+Telefonnummer des Kontakts.
+</ParamField>
+
+<ParamField body="company_id" param-type="string" required="false">
+ID des Unternehmens, dem Sie den Kontakt zuordnen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet eine erfolgreiche Erstellung.
+</ResponseField>
+
+<ResponseField name="contact" field-type="object" required="true">
+Neu angelegter Kontaktdatensatz.
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige ID des neu angelegten Kontakts.
+</ResponseField>
+
+<ResponseField name="first_name" field-type="string" required="true">
+Vorname des Kontakts.
+</ResponseField>
+
+<ResponseField name="last_name" field-type="string" required="true">
+Nachname des Kontakts.
+</ResponseField>
+
+<ResponseField name="email" field-type="string" required="false">
+E-Mail-Adresse des Kontakts, sofern übergeben.
+</ResponseField>
+
+<ResponseField name="phone" field-type="string" required="false">
+Telefonnummer des Kontakts, sofern übergeben.
+</ResponseField>
+
+<ResponseField name="company_id" field-type="string" required="false">
+ID des verknüpften Unternehmens, sofern gesetzt.
+</ResponseField>
+
+## Einzelnen Kontakt abrufen
+
+Rufen Sie `GET /api/crm/contacts/{id}` auf, um einen einzelnen Kontakt anhand seiner ID zu laden.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/contacts/ctc_8f3a21" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "contact": {
+    "id": "ctc_8f3a21",
+    "first_name": "Jane",
+    "last_name": "Chen",
+    "email": "jane.chen@northstar.io",
+    "phone": "+14155550189",
+    "company_id": "cmp_42"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige ID des Kontakts, den Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet eine erfolgreiche Anfrage.
+</ResponseField>
+
+<ResponseField name="contact" field-type="object" required="true">
+Der angeforderte Kontakt.
+</ResponseField>
+
+## Kontakt aktualisieren
+
+Rufen Sie `PATCH /api/crm/contacts/{id}` auf, um einen bestehenden Kontakt teilweise zu aktualisieren. Sie können nur die Felder senden, die sich ändern sollen.
+
+<Request>
+```bash
+curl -X PATCH "https://app.talkturo.com/api/crm/contacts/ctc_8f3a21" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_cookie" \
+  -d '{
+    "phone": "+14155550190",
+    "company_id": "cmp_84"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "contact": {
+    "id": "ctc_8f3a21",
+    "first_name": "Jane",
+    "last_name": "Chen",
+    "email": "jane.chen@northstar.io",
+    "phone": "+14155550190",
+    "company_id": "cmp_84"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige ID des Kontakts, den Sie aktualisieren möchten.
+</ParamField>
+
+### Aktualisierbare Felder
+
+<ParamField body="first_name" param-type="string" required="false">
+Aktualisierter Vorname des Kontakts.
+</ParamField>
+
+<ParamField body="last_name" param-type="string" required="false">
+Aktualisierter Nachname des Kontakts.
+</ParamField>
+
+<ParamField body="email" param-type="string" required="false">
+Aktualisierte E-Mail-Adresse.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false">
+Aktualisierte Telefonnummer.
+</ParamField>
+
+<ParamField body="company_id" param-type="string" required="false">
+Aktualisierte Unternehmenszuordnung.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet eine erfolgreiche Aktualisierung.
+</ResponseField>
+
+<ResponseField name="contact" field-type="object" required="true">
+Der aktualisierte Kontaktdatensatz.
+</ResponseField>
+
+## Kontakt löschen
+
+Rufen Sie `DELETE /api/crm/contacts/{id}` auf, um einen Kontakt dauerhaft zu entfernen.
+
+<Request>
+```bash
+curl -X DELETE "https://app.talkturo.com/api/crm/contacts/ctc_8f3a21" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige ID des Kontakts, den Sie löschen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet eine erfolgreiche Löschung.
+</ResponseField>
+
+## Kontakte gesammelt importieren
+
+Rufen Sie `POST /api/crm/contacts/import` auf, um viele Kontakte in einer Anfrage zu importieren. Der Endpunkt akzeptiert einen Body im Format `contacts: [...]` oder einen CSV-basierten Import, abhängig von Ihrem Import-Workflow.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/contacts/import" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_cookie" \
+  -d '{
+    "contacts": [
+      {
+        "first_name": "Jane",
+        "last_name": "Chen",
+        "email": "jane.chen@northstar.io",
+        "phone": "+14155550189",
+        "company_id": "cmp_42"
+      },
+      {
+        "first_name": "Marcus",
+        "last_name": "Rivera",
+        "email": "marcus.rivera@northstar.io",
+        "phone": "+14155550192",
+        "company_id": "cmp_42"
+      }
+    ]
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "imported": 2,
+  "failed": 0,
+  "errors": []
+}
+```
+</Response>
+
+<Callout kind="info">
+
+Der Import-Endpunkt unterstützt laut Implementierung sowohl strukturierte JSON-Daten als auch CSV-Importe. Die Antwort enthält die Anzahl erfolgreich importierter Kontakte, fehlgeschlagener Einträge und gegebenenfalls eine Fehlerliste.
+
+</Callout>
+
+### Request-Body
+
+<ParamField body="contacts" param-type="array" required="false">
+Liste von Kontakten für den JSON-Import.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet einen erfolgreich verarbeiteten Importaufruf.
+</ResponseField>
+
+<ResponseField name="imported" field-type="integer" required="true">
+Anzahl der erfolgreich importierten Kontakte.
+</ResponseField>
+
+<ResponseField name="failed" field-type="integer" required="true">
+Anzahl der Kontakte, die nicht importiert werden konnten.
+</ResponseField>
+
+<ResponseField name="errors" field-type="array" required="true">
+Liste der Importfehler, sofern einzelne Einträge fehlschlagen.
+</ResponseField>
+
+## Verwandte Inhalte
+
+<Columns cols={2}>
+  <Card title="CRM-Unternehmen" href="/de/api-reference/crm-companies" icon="database" cta="Zur Referenz" />
+  <Card title="CRM-Kampagnen" href="/de/api-reference/crm-campaigns" icon="bar-chart" cta="Zur Referenz" />
+</Columns>

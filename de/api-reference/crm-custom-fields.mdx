@@ -1,0 +1,315 @@
+---
+title: CRM-Benutzerdefinierte Felder
+description: Benutzerdefinierte Felder für Kontakte, Unternehmen und Opportunities im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen — Datensätze mit Text-, Zahlen-, Datums-, Auswahl- und Boolean-Feldtypen erweitern.
+---
+
+## CRM-Datensätze mit benutzerdefinierten Feldern erweitern
+
+Benutzerdefinierte Felder ergänzen Kontakte, Unternehmen und Opportunities um eigene Datenpunkte, die in Ihrem CRM-Workflow fehlen. Über diese Endpunkte listen Sie vorhandene Felder auf, legen neue Felder an, rufen einzelne Felder ab, aktualisieren deren Namen oder Auswahloptionen und löschen nicht mehr benötigte Felder.
+
+Alle Endpunkte in diesem Bereich verwenden Session-Authentifizierung. Die Antworten folgen durchgängig dem Muster `success: true` und liefern je nach Operation entweder `fields`, `field` oder nur eine Erfolgsbestätigung zurück.
+
+<Callout kind="info">
+
+Benutzerdefinierte Felder unterstützen die Feldtypen `text`, `number`, `date`, `select` und `boolean`. Das Feld `options` verwenden Sie nur für den Typ `select`.
+
+</Callout>
+
+## Endpunkte im Überblick
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/crm/custom-fields` | Alle benutzerdefinierten Felder auflisten |
+| `POST` | `/api/crm/custom-fields` | Ein neues benutzerdefiniertes Feld erstellen |
+| `GET` | `/api/crm/custom-fields/[id]` | Ein benutzerdefiniertes Feld anhand seiner ID abrufen |
+| `PATCH` | `/api/crm/custom-fields/[id]` | Name oder Auswahloptionen eines Felds aktualisieren |
+| `DELETE` | `/api/crm/custom-fields/[id]` | Ein benutzerdefiniertes Feld löschen |
+
+## GET /api/crm/custom-fields
+
+Rufen Sie alle benutzerdefinierten Felder ab, die in Ihrem CRM verfügbar sind. Die Antwort enthält eine Liste mit Feld-ID, Name, Typ und zugehörigem Entitätstyp.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/crm/custom-fields" \
+  -H "Cookie: sb-access-token=example_session_token_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "fields": [
+    {
+      "id": "cf_8d3a2f91",
+      "name": "Industry Segment",
+      "type": "select",
+      "entity_type": "company"
+    },
+    {
+      "id": "cf_3b7c4e20",
+      "name": "Renewal Date",
+      "type": "date",
+      "entity_type": "opportunity"
+    }
+  ]
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich verarbeitet wurde.
+</ResponseField>
+
+<ResponseField name="fields" field-type="array" required="true">
+Enthält alle benutzerdefinierten Felder, die für Ihr CRM verfügbar sind.
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung des benutzerdefinierten Felds.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Anzeigename des Felds.
+</ResponseField>
+
+<ResponseField name="type" field-type="string" required="true">
+Feldtyp des benutzerdefinierten Felds.
+</ResponseField>
+
+<ResponseField name="entity_type" field-type="string" required="true">
+CRM-Entität, für die das Feld gilt. Mögliche Werte sind `contact`, `company` und `opportunity`.
+</ResponseField>
+
+## POST /api/crm/custom-fields
+
+Erstellen Sie ein neues benutzerdefiniertes Feld für Kontakte, Unternehmen oder Opportunities. Für Auswahlfelder übergeben Sie zusätzlich eine Liste von Optionen.
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/custom-fields" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=example_session_token_9xmk7q2r" \
+  -d '{
+    "name": "Lead Source",
+    "type": "select",
+    "entity_type": "contact",
+    "options": ["Referral", "Website", "Partner"]
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "field": {
+    "id": "cf_b5f29410",
+    "name": "Lead Source",
+    "type": "select",
+    "entity_type": "contact",
+    "options": ["Referral", "Website", "Partner"]
+  }
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="name" param-type="string" required="true">
+Name des benutzerdefinierten Felds, wie er im CRM angezeigt wird.
+</ParamField>
+
+<ParamField body="type" param-type="string" required="true" enum="text,number,date,select,boolean">
+Definiert den Feldtyp. Verwenden Sie `options` nur, wenn `type` den Wert `select` hat.
+</ParamField>
+
+<ParamField body="entity_type" param-type="string" required="true" enum="contact,company,opportunity">
+Legt fest, für welche CRM-Entität das Feld verfügbar ist.
+</ParamField>
+
+<ParamField body="options" param-type="array" required="false">
+Liste der auswählbaren Werte für Felder vom Typ `select`.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob das Feld erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="field" field-type="object" required="true">
+Enthält das neu erstellte benutzerdefinierte Feld.
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung des neu erstellten Felds.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Anzeigename des Felds.
+</ResponseField>
+
+<ResponseField name="type" field-type="string" required="true">
+Feldtyp des benutzerdefinierten Felds.
+</ResponseField>
+
+<ResponseField name="entity_type" field-type="string" required="true">
+CRM-Entität, für die das Feld erstellt wurde.
+</ResponseField>
+
+## GET /api/crm/custom-fields/[id]
+
+Rufen Sie ein einzelnes benutzerdefiniertes Feld über seine ID ab. Dieser Endpunkt eignet sich, wenn Sie vor einer Bearbeitung oder Löschung den aktuellen Zustand prüfen möchten.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/crm/custom-fields/cf_b5f29410" \
+  -H "Cookie: sb-access-token=example_session_token_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "field": {
+    "id": "cf_b5f29410",
+    "name": "Lead Source",
+    "type": "select",
+    "entity_type": "contact",
+    "options": ["Referral", "Website", "Partner"]
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige Kennung des benutzerdefinierten Felds.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="field" field-type="object" required="true">
+Enthält das angeforderte benutzerdefinierte Feld.
+</ResponseField>
+
+## PATCH /api/crm/custom-fields/[id]
+
+Aktualisieren Sie den Namen eines Felds oder die Auswahloptionen eines vorhandenen Auswahlfelds. Andere Feldeigenschaften werden von diesem Endpunkt nicht dokumentiert.
+
+<Request>
+```bash
+curl -X PATCH "https://api.talkturo.com/api/crm/custom-fields/cf_b5f29410" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=example_session_token_9xmk7q2r" \
+  -d '{
+    "name": "Primary Lead Source",
+    "options": ["Referral", "Website", "Partner", "Event"]
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "field": {
+    "id": "cf_b5f29410",
+    "name": "Primary Lead Source",
+    "type": "select",
+    "entity_type": "contact",
+    "options": ["Referral", "Website", "Partner", "Event"]
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige Kennung des zu aktualisierenden Felds.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="name" param-type="string" required="false">
+Neuer Anzeigename des benutzerdefinierten Felds.
+</ParamField>
+
+<ParamField body="options" param-type="array" required="false">
+Aktualisierte Auswahlwerte für ein Feld vom Typ `select`.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob das Feld erfolgreich aktualisiert wurde.
+</ResponseField>
+
+<ResponseField name="field" field-type="object" required="true">
+Enthält das aktualisierte benutzerdefinierte Feld.
+</ResponseField>
+
+## DELETE /api/crm/custom-fields/[id]
+
+Löschen Sie ein benutzerdefiniertes Feld dauerhaft über seine ID. Die Antwort enthält nur die Erfolgsbestätigung.
+
+<Request>
+```bash
+curl -X DELETE "https://api.talkturo.com/api/crm/custom-fields/cf_b5f29410" \
+  -H "Cookie: sb-access-token=example_session_token_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige Kennung des zu löschenden Felds.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob das Feld erfolgreich gelöscht wurde.
+</ResponseField>
+
+## Verwandte Endpunkte
+
+<Columns cols={3}>
+  <Card
+    title="CRM-Kontakte"
+    href="/de/api-reference/crm-contacts"
+    icon="users"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="CRM-Unternehmen"
+    href="/de/api-reference/crm-companies"
+    icon="building"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="CRM-Opportunities"
+    href="/de/api-reference/crm-opportunities"
+    icon="bar-chart"
+    cta="Zur Referenz"
+  />
+</Columns>

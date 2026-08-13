@@ -1,0 +1,241 @@
+---
+title: Abrechnung
+description: Stripe-Abrechnungs-Webhooks verarbeiten, Rechnungen auflisten und die Guthaben-Auffüll-Strategiekaskade für Abonnements und Zahlungsereignisse verstehen.
+---
+
+## Billing-Endpunkte
+
+Die Billing-API verarbeitet Stripe-Ereignisse und stellt Rechnungsdaten für angemeldete Sitzungen bereit. Sie verwenden diese Endpunkte, um Zahlungen, Abonnements und Guthaben-Aufladungen konsistent mit dem Abrechnungszustand Ihres Kontos zu halten.
+
+<Callout kind="info">
+
+Die Abrechnungslogik verteilt Guthaben nicht nur für einmalige Käufe, sondern auch für wiederkehrende Zahlungen und abonnementsbezogene Ereignisse. Wenn Sie Guthabenbewegungen nachvollziehen möchten, lesen Sie zusätzlich die [Credits-Referenz](/de/api-reference/credits).
+
+</Callout>
+
+## POST `/api/billing/webhook`
+
+Dieser Endpunkt ist der zentrale Stripe-Webhook für Billing-Ereignisse. Stripe sendet Zahlungs-, Checkout- und Abonnementereignisse an diesen Endpunkt, und der Server verarbeitet sie nach Ereignistyp und Metadaten.
+
+<Callout kind="alert">
+
+Vertrauen Sie eingehenden Webhook-Anfragen nie ohne Signaturprüfung. Der Endpunkt erwartet den Header `stripe-signature` und verifiziert ihn serverseitig mit `STRIPE_WEBHOOK_SECRET`. Die Route antwortet immer mit HTTP `200`, auch wenn ein Ereignis intern nicht zu einer Guthabenänderung führt.
+
+</Callout>
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/billing/webhook" \
+  -H "Content-Type: application/json" \
+  -H "stripe-signature: t=1726074120,v1=9d4a7e8d3d27f2d1a3a42e0c4a1b7a70d0f5e8a0d8c2b6f9c4d1e2f3a4b5c6d7" \
+  -d '{
+    "id": "evt_1QwErTYx9KkLmNoP",
+    "object": "event",
+    "type": "invoice.paid",
+    "data": {
+      "object": {
+        "id": "in_1QwErTAbCdEfGhIj",
+        "object": "invoice",
+        "customer": "cus_R8mKx1nP4q2z",
+        "subscription": "sub_1QwErT7gHjKlMnOp",
+        "amount_paid": 9900,
+        "currency": "usd"
+      }
+    }
+  }'
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "received": true
+}
+```
+</Response>
+
+### Authentifizierung und Header
+
+Der Endpunkt verwendet keine Sitzungs- oder API-Key-Authentifizierung. Stattdessen akzeptiert er nur Anfragen, deren Stripe-Signatur erfolgreich geprüft werden kann.
+
+<ParamField header="stripe-signature" param-type="string" required="true">
+
+Von Stripe gesendete Signatur für die Webhook-Verifikation. Ohne gültige Signatur wird das Ereignis nicht als vertrauenswürdig behandelt.
+
+</ParamField>
+
+### Verarbeitete Ereignisse
+
+Die Webhook-Route verarbeitet mehrere Stripe-Ereignistypen. Je nach Ereignis aktualisiert sie Guthaben, Abonnementstatus oder billingbezogene Zuordnungen.
+
+| Ereignistyp | Typische Wirkung |
+| --- | --- |
+| `checkout.session.completed` | Verarbeitet Guthabenkäufe, Abonnementerstellung, Desktop-Seat-Top-ups oder das Speichern einer Zahlungsmethode |
+| `customer.subscription.updated` | Aktualisiert `account_plans`, kann Guthaben nachladen und Testnummern in reguläre Nummern überführen |
+| `customer.subscription.deleted` | Setzt das Konto auf den Free-Plan zurück |
+| `invoice.paid` | Lädt Guthaben für wiederkehrende Zahlungen über die Strategiekaskade auf |
+| `payment_intent.succeeded` | Verarbeitet einmalige Guthabenkäufe |
+
+<ExpandableGroup>
+<Expandable title="Besonderheiten bei Checkout-Sitzungen" default-open="false">
+
+Die Route behandelt auch Payment-Link-Checkouts ohne `client_reference_id`. Zusätzlich werden Agent-Payment-Links über `metadata.source` und Desktop-Seat-Top-ups über `metadata.kind` gesondert verarbeitet.
+
+</Expandable>
+
+<Expandable title="Antwortverhalten" default-open="false">
+
+Die Route gibt immer HTTP `200` zurück. Dieses Verhalten verhindert unnötige Wiederholungsversuche durch Stripe, auch wenn ein Ereignis intern keine Zustandsänderung auslöst.
+
+</Expandable>
+</ExpandableGroup>
+
+## Guthaben-Strategiekaskade
+
+Wenn ein Stripe-Ereignis eine Guthabenaufladung auslöst, ermittelt der Server die Anzahl der Credits nicht aus nur einer Quelle. Stattdessen läuft er eine feste Kaskade durch, bis eine passende Zuordnung gefunden wird.
+
+<Callout kind="info">
+
+Die Kaskade wird in dieser Reihenfolge ausgewertet: benutzerdefinierter Betrag, `planId` in den Metadaten, `variant_id`, Tabelle `stripe_price_mappings`, Stripe-Price-Metadaten, Fallback über den Betrag, Enterprise-Plan und zuletzt der Standard-Fallback `1 USD = 2 Credits`.
+
+</Callout>
+
+### Reihenfolge der Ermittlung
+
+| Priorität | Quelle | Beschreibung |
+| --- | --- | --- |
+| 1 | Benutzerdefinierter Betrag | Verwendet einen explizit gesetzten individuellen Guthabenwert |
+| 2 | `planId`-Metadaten | Leitet Credits aus der Plan-ID in den Stripe-Metadaten ab |
+| 3 | `variant_id` | Nutzt eine Variantenkennung aus den Zahlungsdaten |
+| 4 | `stripe_price_mappings` | Liest eine Zuordnung aus der Datenbanktabelle |
+| 5 | Stripe-Price-Metadaten | Verwendet Metadaten direkt am Stripe-Preis |
+| 6 | Betrags-Fallback | Leitet Credits aus dem gezahlten Betrag ab |
+| 7 | Enterprise-Plan | Nutzt die Enterprise-Zuordnung, wenn vorhanden |
+| 8 | Standard-Fallback | Rechnet mit `1 USD = 2 Credits` |
+
+### Relevante Antwortfelder nach erfolgreicher Verarbeitung
+
+Die genaue Webhook-Antwort ist bewusst knapp. Für Ihre Integration ist wichtiger, welche Billing-Felder intern von den Ereignissen beeinflusst werden.
+
+<ResponseField name="account_plans" field-type="object" required="false">
+
+Abonnementbezogener Kontozustand, der bei `customer.subscription.updated` und `customer.subscription.deleted` aktualisiert werden kann.
+
+</ResponseField>
+
+<ResponseField name="credits" field-type="integer" required="false">
+
+Neu berechneter oder aufgeladener Guthabenwert, der bei Guthabenkäufen und wiederkehrenden Zahlungen beeinflusst wird.
+
+</ResponseField>
+
+<ResponseField name="received" field-type="boolean" required="true">
+
+Signalisiert, dass der Webhook-Endpunkt die Anfrage entgegengenommen hat.
+
+</ResponseField>
+
+## GET `/api/billing/invoices`
+
+Dieser Endpunkt listet Rechnungen für die aktuelle angemeldete Sitzung auf. Er ist für Dashboard- oder Kontobereiche gedacht, in denen Sie vergangene Abrechnungen anzeigen möchten.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/billing/invoices" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.session_example_9xmk7q2r"
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "invoices": [
+    {
+      "id": "in_1QwErTAbCdEfGhIj",
+      "number": "9C4A2D11-0001",
+      "currency": "usd",
+      "amount_paid": 9900,
+      "status": "paid",
+      "hosted_invoice_url": "https://billing.stripe.com/invoice/acct_1AbCdEfGhIj/in_1QwErTAbCdEfGhIj",
+      "created": 1726074120
+    }
+  ]
+}
+```
+</Response>
+
+### Authentifizierung
+
+Der Endpunkt verwendet Sitzungsauthentifizierung. Sie müssen als angemeldeter Benutzer eine gültige Session mitsenden.
+
+<ParamField header="Cookie" param-type="string" required="true">
+
+Sitzungscookie der angemeldeten Benutzeranfrage. Ohne gültige Session erhalten Sie keinen Zugriff auf Rechnungsdaten.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="invoices" field-type="array" required="true">
+
+Liste der verfügbaren Rechnungen für die aktuelle Sitzung.
+
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+
+Eindeutige Stripe-Rechnungs-ID.
+
+</ResponseField>
+
+<ResponseField name="number" field-type="string" required="false">
+
+Von Stripe vergebene Rechnungsnummer.
+
+</ResponseField>
+
+<ResponseField name="currency" field-type="string" required="true">
+
+Währung der Rechnung, zum Beispiel `usd`.
+
+</ResponseField>
+
+<ResponseField name="amount_paid" field-type="integer" required="true">
+
+Bezahlter Betrag in der kleinsten Währungseinheit.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+
+Status der Rechnung, zum Beispiel `paid`.
+
+</ResponseField>
+
+<ResponseField name="hosted_invoice_url" field-type="string" required="false">
+
+Öffentliche Stripe-URL zur gehosteten Rechnung.
+
+</ResponseField>
+
+<ResponseField name="created" field-type="integer" required="true">
+
+Unix-Zeitstempel für die Erstellung der Rechnung.
+
+</ResponseField>
+
+## Endpunktübersicht
+
+Diese Übersicht fasst die verfügbaren Billing-Routen und ihre Authentifizierungsanforderungen zusammen.
+
+| Methode | Pfad | Authentifizierung | Zweck |
+| --- | --- | --- | --- |
+| `POST` | `/api/billing/webhook` | Stripe-Signaturprüfung | Verarbeitet Stripe-Webhooks für Zahlungen, Abonnements und Guthaben |
+| `GET` | `/api/billing/invoices` | Sitzung | Listet Rechnungen für den angemeldeten Benutzer auf |
+| `GET` | `/api/debug/billing` | Sitzung, Admin | Zeigt den Billing-Debug-Zustand an |
+
+## Verwandte Referenzen
+
+<Columns cols={1}>
+  <Card title="Credits API" href="/de/api-reference/credits" icon="database" cta="Zur Credits-Referenz" />
+</Columns>

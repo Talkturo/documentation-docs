@@ -1,0 +1,260 @@
+---
+title: Billing
+description: Handle Stripe billing webhooks, list invoices, and understand the credit recharge strategy cascade for subscription and payment events.
+---
+
+## Billing endpoints
+
+Use these endpoints to receive Stripe billing events, inspect invoice history, and troubleshoot billing state. The webhook endpoint is the source of truth for credits purchases, subscription changes, desktop seat top-ups, and payment-link flows.
+
+| Method | Path | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/billing/webhook` | Stripe signature verification | Process Stripe webhook events for subscriptions, invoices, credits, and payment flows |
+| `GET` | `/api/billing/invoices` | Session auth | List invoices for the current account |
+| `GET` | `/api/debug/billing` | Session auth, admin only | Inspect billing state for debugging |
+
+## POST /api/billing/webhook
+
+Stripe sends billing events to this endpoint. Talkturo verifies the `stripe-signature` header with `STRIPE_WEBHOOK_SECRET` before processing the payload.
+
+<Callout kind="alert">
+
+Only send raw Stripe webhook payloads to this endpoint. If your proxy, framework, or middleware modifies the request body before signature verification, signature validation fails and the event is rejected.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/billing/webhook" \
+  -H "Content-Type: application/json" \
+  -H "stripe-signature: t=1725624600,v1=8f3b53d5c0e5f9dfc44cb7ec9885f38baf3d66ea9c77f1a0dcb2b2f4c3be8f25" \
+  -d '{
+    "id": "evt_1Qx9Ab2Lk8fR3mN7pY4sT6uV",
+    "object": "event",
+    "type": "checkout.session.completed",
+    "data": {
+      "object": {
+        "id": "cs_test_b1m7Wq4sZ9k2Lx8nP3r5T6uV",
+        "object": "checkout.session",
+        "mode": "payment",
+        "client_reference_id": "acct_9f3c2b7d",
+        "customer": "cus_R8s2Kj3Lm5Np7Q",
+        "payment_status": "paid",
+        "metadata": {
+          "planId": "credits_500",
+          "customAmount": "250",
+          "customCredits": "500"
+        }
+      }
+    }
+  }'
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "received": true
+}
+```
+</Response>
+
+### Authentication and headers
+
+<ParamField header="stripe-signature" param-type="string" required="true">
+Stripe webhook signature header. Talkturo verifies this header with the `STRIPE_WEBHOOK_SECRET` value configured on the server.
+</ParamField>
+
+<ParamField body="type" param-type="string" required="true" show-location="false">
+Stripe event type. Talkturo branches billing logic based on the event name, such as `checkout.session.completed` or `invoice.paid`.
+</ParamField>
+
+<ParamField body="data.object" param-type="object" required="true" show-location="false">
+Event payload from Stripe. The exact shape depends on the event type and may include checkout session, subscription, invoice, or payment intent data.
+</ParamField>
+
+<ParamField body="data.object.metadata" param-type="object" required="false" show-location="false">
+Optional metadata used to resolve credits, plan mapping, agent payment-link handling, or desktop seat top-up behavior.
+</ParamField>
+
+### Event types
+
+The webhook processes all Stripe billing events through a single endpoint. Use the event type to understand which billing workflow Talkturo will run.
+
+<ExpandableGroup>
+<Expandable title="checkout.session.completed" default-open="true">
+
+Completes checkout-driven billing flows. This event can:
+
+- Credit a one-time credits purchase
+- Create a subscription
+- Apply a desktop seat top-up
+- Save a payment method
+- Process payment-link checkouts through `provisionPaymentLinkCheckout()`
+
+If the session metadata identifies an agent payment link, Talkturo routes the event through `provisionAgentPaymentLink()` instead of the standard checkout path.
+
+</Expandable>
+
+<Expandable title="customer.subscription.updated">
+
+Applies subscription changes to the account. This event:
+
+- Updates `account_plans`
+- Triggers credits recharge when applicable
+- Converts trial number state when the subscription changes
+
+Use this event as the primary signal for plan state changes after subscription creation, renewal, or quantity updates.
+
+</Expandable>
+
+<Expandable title="customer.subscription.deleted">
+
+Reverts the account to the free plan when a subscription ends or is canceled.
+
+</Expandable>
+
+<Expandable title="invoice.paid">
+
+Recharges credits after a paid invoice. This flow uses the credits strategy cascade to determine how many credits to provision for the paid amount or plan mapping.
+
+</Expandable>
+
+<Expandable title="payment_intent.succeeded">
+
+Credits one-time purchases tied directly to a successful payment intent.
+
+</Expandable>
+</ExpandableGroup>
+
+### Special handling paths
+
+Some Stripe events follow specialized billing logic instead of the default purchase or subscription path.
+
+<ExpandableGroup>
+<Expandable title="Payment-link checkouts">
+
+If a checkout session arrives without `client_reference_id`, Talkturo can still provision the purchase through `provisionPaymentLinkCheckout()`.
+
+</Expandable>
+
+<Expandable title="Agent payment links">
+
+If session metadata marks the payment source as an agent payment link, Talkturo uses `provisionAgentPaymentLink()`.
+
+</Expandable>
+
+<Expandable title="Desktop seat top-ups">
+
+If session metadata includes `kind` set to `desktop_seat`, Talkturo applies the purchase through `applyDesktopSeatTopupFromSession()`.
+
+</Expandable>
+</ExpandableGroup>
+
+### Credit recharge strategy cascade
+
+Talkturo resolves credits for recharge and payment events through a fallback chain. The system tries the most specific source first, then falls back until it finds a usable value.
+
+<Callout kind="info">
+
+Credits are resolved in this order: `custom amount` → `planId` metadata → `variant_id` → `stripe_price_mappings` table → Stripe Price metadata → amount fallback → enterprise plan → final fallback of `$1 = 2 credits`.
+
+</Callout>
+
+This cascade matters most for `invoice.paid`, but related checkout and payment flows can also rely on the same mapping logic. If you debug unexpected credit totals, inspect session or invoice metadata first before checking downstream mapping tables.
+
+### Response
+
+The webhook acknowledges successfully processed events with a `200` response.
+
+<ResponseField name="received" field-type="boolean" required="true">
+Returns `true` when the webhook request is accepted and acknowledged.
+</ResponseField>
+
+### Notes
+
+- External callers do not authenticate with a session or API key for this endpoint.
+- Internal trust comes from Stripe signature verification, not from the request origin alone.
+- Successful webhook handling returns `200` with `received: true`.
+
+## GET /api/billing/invoices
+
+List invoices for the authenticated session account.
+
+### Authentication
+
+This endpoint requires session authentication.
+
+### Response example
+
+<Request tabs="HTTP" default-tab="1">
+```bash
+curl "https://api.talkturo.com/api/billing/invoices" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.session_example"
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "invoices": [
+    {
+      "id": "in_1Qx9Nf2Lk8fR3mN7sA4dE6gH",
+      "status": "paid",
+      "currency": "usd",
+      "amount_due": 25000,
+      "amount_paid": 25000
+    }
+  ]
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the invoice list is fetched successfully.
+</ResponseField>
+
+<ResponseField name="invoices" field-type="array" required="true">
+Array of invoice objects for the authenticated account.
+</ResponseField>
+
+## GET /api/debug/billing
+
+Inspect billing state for debugging. This endpoint is intended for admin users and should not be used as a customer-facing billing integration endpoint.
+
+### Authentication
+
+This endpoint requires:
+
+- Session authentication
+- Admin access
+
+### What to use it for
+
+Use the debug endpoint when you need to verify billing state after webhook delivery, subscription changes, invoice payment, or credit provisioning. It is most useful during support investigations and internal billing diagnostics.
+
+### Response shape
+
+The repository context confirms this endpoint exists and requires admin session access, but it does not define a stable public response schema. Treat the payload as diagnostic output rather than a contract for external integrations.
+
+## Common integration guidance
+
+Billing integrations fail most often at the webhook boundary. Verify these points before debugging downstream credit logic:
+
+- Preserve the raw Stripe request body for signature verification.
+- Send the exact `stripe-signature` header that Stripe generated.
+- Include metadata consistently for plan, payment-link, or desktop seat workflows.
+- Check whether the event is a checkout session, subscription update, invoice payment, or payment intent before tracing billing behavior.
+- If credits look wrong, walk the recharge strategy cascade from metadata to fallback mapping.
+
+## Related billing behaviors
+
+Billing state often affects adjacent parts of the platform, especially credits purchases and subscription-backed recharges.
+
+<Columns cols={2}>
+  <Card title="Credits API" href="/api-reference/credits" icon="database" cta="View endpoint reference" />
+  <Card title="Authentication" href="/api-reference/authentication" icon="lock" cta="Review auth requirements" />
+</Columns>

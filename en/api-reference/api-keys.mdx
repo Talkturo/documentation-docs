@@ -1,0 +1,355 @@
+---
+title: API Keys
+description: Create, list, update, and revoke API keys for programmatic access to Talkturo — manage scopes, expiration, and key lifecycle through REST endpoints.
+---
+
+## API key management
+
+Manage API keys for a Talkturo account with REST endpoints that list keys, create new keys, update metadata, and revoke access. These endpoints return key metadata for existing keys and return the plaintext `fullKey` only when you create a new key.
+
+<Callout kind="info">
+
+Authenticate every request with a Bearer JWT and use an account member with the `owner` or `admin` role. These endpoints do not accept API key authentication.
+
+</Callout>
+
+### API key object
+
+The API returns the same metadata fields across list, create, and update operations.
+
+<ResponseField name="id" field-type="string" required="true">
+Unique API key ID.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Display name for the key.
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="false">
+Optional description for the key.
+</ResponseField>
+
+<ResponseField name="key_prefix" field-type="string" required="true">
+Non-secret prefix used to identify the key in the dashboard and API responses.
+</ResponseField>
+
+<ResponseField name="permissions" field-type="object" required="true">
+Permission settings for the key, including scopes and rate limit configuration.
+</ResponseField>
+
+<ResponseField name="last_used_at" field-type="string | null" required="true">
+Timestamp of the most recent successful use, or `null` if the key has never been used.
+</ResponseField>
+
+<ResponseField name="expires_at" field-type="string | null" required="true">
+Expiration timestamp, or `null` if the key does not expire.
+</ResponseField>
+
+<ResponseField name="is_active" field-type="boolean" required="true">
+Whether the key can still authenticate requests.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Timestamp when the key was created.
+</ResponseField>
+
+<ResponseField name="created_by" field-type="string" required="true">
+User ID of the account member who created the key.
+</ResponseField>
+
+### Key format and lifecycle
+
+New keys use the format `tk_{environment}_{random}` where `environment` is `live` or `test`. Talkturo stores a SHA-256 hash of the key and does not store the plaintext value.
+
+<Callout kind="alert">
+
+Copy and store `fullKey` when you create a key. Talkturo returns the plaintext key exactly once and cannot show it again later.
+
+</Callout>
+
+## List API keys
+
+Get all API keys for an account. The response includes metadata only and never includes plaintext keys.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/api-keys?accountSlug=acme-sales" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Accept: application/json"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "apiKeys": [
+    {
+      "id": "9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55",
+      "name": "Production CRM sync",
+      "description": "Sync contacts from the CRM integration service",
+      "key_prefix": "tk_live_a1b2c3d4",
+      "permissions": {
+        "scopes": ["*"],
+        "rate_limit_per_hour": 1000
+      },
+      "last_used_at": "2026-02-18T14:22:11.382Z",
+      "expires_at": "2026-08-01T00:00:00.000Z",
+      "is_active": true,
+      "created_at": "2026-01-15T09:41:03.120Z",
+      "created_by": "5b4b8a0e-ec8d-4f5d-85c9-d04e31ef7f4b"
+    },
+    {
+      "id": "cf0a39b7-fb48-4f72-a343-0fd628bc7b01",
+      "name": "Staging webhook worker",
+      "description": "Used by the staging event processor",
+      "key_prefix": "tk_test_7f8e9d0c",
+      "permissions": {
+        "scopes": ["assistants:read"],
+        "rate_limit_per_hour": 500
+      },
+      "last_used_at": null,
+      "expires_at": null,
+      "is_active": true,
+      "created_at": "2026-01-12T16:10:44.901Z",
+      "created_by": "5b4b8a0e-ec8d-4f5d-85c9-d04e31ef7f4b"
+    }
+  ]
+}
+```
+
+</Response>
+
+### Query parameters
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Account slug that owns the API keys to list.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="apiKeys" field-type="array" required="true">
+Array of API key objects for the specified account.
+</ResponseField>
+
+## Create API key
+
+Create a new API key for an account. The response includes the standard key metadata plus `fullKey`.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/api-keys" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "name": "Outbound automation",
+    "description": "Used by the outbound workflow runner",
+    "environment": "live",
+    "expiresInDays": 90,
+    "permissions": {
+      "scopes": ["*"],
+      "rate_limit_per_hour": 1000
+    }
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "apiKey": {
+    "id": "de334d7b-bdc1-452e-93ae-2f765db452b0",
+    "name": "Outbound automation",
+    "description": "Used by the outbound workflow runner",
+    "key_prefix": "tk_live_3fa4c9d1",
+    "permissions": {
+      "scopes": ["*"],
+      "rate_limit_per_hour": 1000
+    },
+    "last_used_at": null,
+    "expires_at": "2026-05-19T10:15:00.000Z",
+    "is_active": true,
+    "created_at": "2026-02-18T10:15:00.000Z",
+    "created_by": "5b4b8a0e-ec8d-4f5d-85c9-d04e31ef7f4b",
+    "fullKey": "tk_live_3fa4c9d1QvQhJ5rD2N8wYbP6mTzK1sF4xL9cA7uE0nR3yH6jM2"
+  }
+}
+```
+
+</Response>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Account slug that will own the new key.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+Display name for the key.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+Optional description that helps you identify the key later.
+</ParamField>
+
+<ParamField body="environment" param-type="string" required="false" enum="live,test">
+Key environment. Defaults to `live`.
+</ParamField>
+
+<ParamField body="expiresInDays" param-type="number" required="false">
+Number of days until the key expires. Omit this field to create a key without an expiration date.
+</ParamField>
+
+<ParamField body="permissions" param-type="object" required="false">
+Permission object for the new key. Defaults to `scopes: ["*"]` and `rate_limit_per_hour: 1000`.
+</ParamField>
+
+<ParamField body="permissions.scopes" param-type="array<string>" required="false">
+Allowed scopes for the key. The default value is `["*"]`.
+</ParamField>
+
+<ParamField body="permissions.rate_limit_per_hour" param-type="number" required="false">
+Maximum number of requests the key can make per hour. The default value is `1000`.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="apiKey" field-type="object" required="true">
+Created API key object.
+</ResponseField>
+
+<ResponseField name="apiKey.fullKey" field-type="string" required="true">
+Plaintext API key. Talkturo returns this field once at creation time and never returns it again.
+</ResponseField>
+
+## Update API key
+
+Update mutable fields on an existing API key. This endpoint changes display metadata or active status and does not rotate the key value.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X PATCH "https://api.talkturo.com/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "name": "Production CRM sync v2",
+    "description": "Updated integration worker",
+    "isActive": false
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "apiKey": {
+    "id": "9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55",
+    "name": "Production CRM sync v2",
+    "description": "Updated integration worker",
+    "key_prefix": "tk_live_a1b2c3d4",
+    "permissions": {
+      "scopes": ["*"],
+      "rate_limit_per_hour": 1000
+    },
+    "last_used_at": "2026-02-18T14:22:11.382Z",
+    "expires_at": "2026-08-01T00:00:00.000Z",
+    "is_active": false,
+    "created_at": "2026-01-15T09:41:03.120Z",
+    "created_by": "5b4b8a0e-ec8d-4f5d-85c9-d04e31ef7f4b"
+  }
+}
+```
+
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the API key to update.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="name" param-type="string" required="false">
+New display name for the key.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+New description for the key.
+</ParamField>
+
+<ParamField body="isActive" param-type="boolean" required="false">
+Set to `false` to disable the key or `true` to re-enable it.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="apiKey" field-type="object" required="true">
+Updated API key object.
+</ResponseField>
+
+## Revoke API key
+
+Delete an API key and immediately revoke its access. Use this endpoint when a key is no longer needed or you suspect it has been exposed.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X DELETE "https://api.talkturo.com/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Accept: application/json"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "message": "API key revoked successfully"
+}
+```
+
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the API key to revoke.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the revoke operation completed successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Human-readable status message for the revoke operation.
+</ResponseField>
+
+## Notes on permissions
+
+Permissions are stored as an object on each key. A typical payload includes `scopes` and `rate_limit_per_hour`.
+
+<ResponseField name="permissions.scopes" field-type="array<string>" required="true">
+List of scopes assigned to the key.
+</ResponseField>
+
+<ResponseField name="permissions.rate_limit_per_hour" field-type="number" required="true">
+Hourly request limit assigned to the key.
+</ResponseField>
+
+Keys can use wildcard scopes such as `*`, prefix wildcards such as `assistants:*`, or exact scope strings. Choose the narrowest scopes that match your integration.

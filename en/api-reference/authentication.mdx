@@ -1,0 +1,142 @@
+---
+title: Authentication
+description: Authenticate API requests with API keys, session cookies, or JWT bearer tokens — learn about scopes, dual-auth mode, and testing your credentials.
+---
+
+## Authenticate requests
+
+Authenticate every Talkturo API request with one of three methods: **API keys**, **session cookies**, or **JWT bearer tokens**. Most external integrations use API keys in the `Authorization` header, browser-based requests can rely on the authenticated session cookie, and desktop app requests use a bearer token issued by Supabase.
+
+### Authentication methods at a glance
+
+| Method | Best for | How to send it |
+| --- | --- | --- |
+| API key | Server-to-server integrations and external apps | `Authorization: Bearer tk_live_...` or `Authorization: Bearer tk_test_...` |
+| Session cookie | Requests made from the Talkturo web app | Automatic httpOnly cookie |
+| JWT bearer token | Desktop app requests | `Authorization: Bearer eyJhbGciOi...` |
+
+## API key authentication
+
+Send your API key in the `Authorization` header as a bearer token. Talkturo accepts keys in both live and test environments, using the prefixes `tk_live_` and `tk_test_`.
+
+<CodeGroup tabs="cURL">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/test-api-key" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8f4c1v6n3p7s2d5h8j1k4m6q9w2e5r8t1y4u7"
+```
+
+</CodeGroup>
+
+Talkturo validates API keys by hashing the submitted key and looking it up through the `validate_api_key()` database function. If the key is valid, active, not expired, and has the required scope, the request proceeds and usage is logged.
+
+<Callout kind="alert">
+
+Treat API keys like passwords. Store them in a secret manager or environment variable, send them only over HTTPS, and never expose them in client-side code, public repositories, or browser storage.
+
+</Callout>
+
+### API key format
+
+API keys use one of these prefixes:
+
+- **`tk_live_`** — live environment key
+- **`tk_test_`** — test environment key
+
+A key is returned only once when you create it. Talkturo stores only a SHA-256 hash of the full key, so you cannot retrieve the plaintext value later.
+
+## Scope system
+
+Scopes control which operations an API key can perform. A key can allow everything, a namespace of related operations, or a specific permission string.
+
+<ParamField body="*" param-type="scope string" required="false" show-location="false">
+
+Default full-access scope. Grants access to all endpoints that support API key authentication.
+
+</ParamField>
+
+<ParamField body="prefix:*" param-type="scope string" required="false" show-location="false">
+
+Wildcard prefix scope. Grants access to every scope that starts with the same prefix. For example, `assistants:*` matches assistant-related scopes in that namespace.
+
+</ParamField>
+
+<ParamField body="specific scope" param-type="scope string" required="false" show-location="false">
+
+Exact-match scope. Grants access only when the required scope string matches exactly.
+
+</ParamField>
+
+<ParamField body="rate_limit_per_hour" param-type="integer" required="false" show-location="false">
+
+Hourly request limit attached to the key permissions. Newly created keys default to `1000`.
+
+</ParamField>
+
+Talkturo checks scopes in this order: full wildcard, prefix wildcard, then exact match. Newly created API keys default to the `*` scope unless you set a narrower permission set.
+
+## Dual-auth mode
+
+Some Talkturo API routes support both API keys and authenticated browser sessions. These routes use the `withApiAuth` wrapper.
+
+<Callout kind="info">
+
+In dual-auth mode, Talkturo tries API key authentication first. If no valid API key is present, Talkturo falls back to the current session cookie.
+
+</Callout>
+
+This behavior lets the same endpoint work for external integrations and for requests made from the Talkturo web app. Routes such as assistant and credits endpoints use this pattern.
+
+## Session cookie authentication
+
+Session cookie authentication is the standard browser flow for the Talkturo web app. After a user signs in, Supabase stores the authenticated session in an httpOnly cookie, and browser requests to session-protected routes use that cookie automatically.
+
+Use session cookies when your code runs inside the web app context. For external integrations, use API keys instead.
+
+## JWT bearer token authentication
+
+Desktop app routes accept a Supabase access token in the `Authorization` header. Talkturo validates the token by calling `supabase.auth.getUser()` for the presented bearer token.
+
+<CodeGroup tabs="cURL">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/auth/sign-out" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.desktop_example_token"
+```
+
+</CodeGroup>
+
+Desktop routes also support cross-origin requests and handle `OPTIONS` preflight requests. Use this method only for desktop app flows that already manage Supabase user sessions.
+
+## Test authentication
+
+Call `GET /api/test-api-key` to confirm that your credentials are valid and accepted by Talkturo. This endpoint uses the same authentication flow as other API-key-enabled routes.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/test-api-key" \
+  -H "Authorization: Bearer tk_test_example_4f7a9c2d8m1q5r6s3t9v2w4x7y1z8b5n6p3k9h2j4u6"
+```
+
+</Request>
+
+<Response tabs="200,401" default-tab="1">
+
+```json
+{
+  "success": true,
+  "message": "Authentication succeeded"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid API key"
+}
+```
+
+</Response>
+
+A successful response confirms that the key is active, not expired, and allowed through scope validation. If the request fails, verify the bearer token format, key environment prefix, key status, and scope configuration.

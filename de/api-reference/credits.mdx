@@ -1,0 +1,356 @@
+---
+title: Guthaben
+description: Guthabenstände prüfen, Nutzungsguthaben abziehen, Checkout-Sitzungen erstellen, Auto-Reload verwalten und Transaktionsverlauf über die Talkturo-API abrufen.
+---
+
+## Guthaben für Ihr Konto verwalten
+
+Mit den Guthaben-Endpunkten prüfen Sie Ihren aktuellen Kontostand, ziehen Nutzungsguthaben ab, starten den Kauf zusätzlicher Credits und rufen verlaufsbezogene Daten ab. Die API deckt sowohl programmgesteuerte Nutzungsvorgänge als auch abrechnungsnahe Workflows wie Checkout und Auto-Reload ab.
+
+Ein Teil dieser Endpunkte verwendet Dual-Auth über `withApiAuth`. Sie können diese Endpunkte entweder mit einem API-Schlüssel oder mit einer bestehenden Sitzung aufrufen. Andere Endpunkte sind ausschließlich für authentifizierte Sitzungen verfügbar und eignen sich vor allem für Dashboard-nahe Abläufe.
+
+<Callout kind="info">
+
+Verwenden Sie für serverseitige Integrationen bevorzugt einen API-Schlüssel. Sitzungsgebundene Endpunkte setzen eine aktive Benutzeranmeldung voraus und sind nicht für generische Backend-Integrationen gedacht.
+
+</Callout>
+
+## Endpunkte im Überblick
+
+| Methode | Pfad | Authentifizierung | Zweck |
+| --- | --- | --- | --- |
+| `GET` | `/api/credits` | API-Schlüssel oder Sitzung | Aktuellen Guthabenstand eines Kontos abrufen |
+| `POST` | `/api/credits` | API-Schlüssel oder Sitzung | Guthaben für Nutzungsvorgänge abziehen |
+| `POST` | `/api/credits/checkout` | API-Schlüssel oder Sitzung | Stripe-Checkout für den Guthabenkauf erstellen |
+| `GET` | `/api/credits/auto-reload` | Nur Sitzung | Auto-Reload-Konfiguration abrufen |
+| `POST` | `/api/credits/auto-reload` | Nur Sitzung | Auto-Reload-Konfiguration speichern |
+| `POST` | `/api/credits/claim-grants` | Nur Sitzung | Verfügbare Grants beanspruchen |
+| `GET` | `/api/credits/plans` | Nur Sitzung | Verfügbare Guthabenpläne abrufen |
+| `GET` | `/api/credits/statement` | Nur Sitzung | Guthabenauszug abrufen |
+| `GET` | `/api/credits/transactions` | Nur Sitzung | Transaktionsverlauf abrufen |
+
+## Guthabenstand abrufen
+
+Rufen Sie den aktuellen Guthabenstand eines Kontos mit `GET /api/credits` ab. Wenn für das angegebene Konto noch kein Guthabeneintrag existiert, erstellt der Endpunkt ihn automatisch.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/credits?accountId=acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/credits?accountId=acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "credits": {
+    "id": "cred_4a8d6f12",
+    "account_id": "acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931",
+    "credits": 18420,
+    "total_purchased": 25000,
+    "total_used": 6580,
+    "auto_reload_enabled": true,
+    "auto_reload_threshold": 2000,
+    "auto_reload_amount_usd": 199
+  }
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="accountId" param-type="string" required="false">
+Die Konto-ID, deren Guthaben Sie abrufen möchten. Wenn Sie diesen Parameter weglassen, verwendet der Endpunkt die `accountId` aus dem authentifizierten Kontext.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich verarbeitet wurde.
+</ResponseField>
+
+<ResponseField name="credits" field-type="object" required="true">
+Das Guthabenobjekt für das angefragte Konto.
+</ResponseField>
+
+<ResponseField name="credits.id" field-type="string" required="true">
+Die eindeutige ID des Guthabeneintrags.
+</ResponseField>
+
+<ResponseField name="credits.account_id" field-type="string" required="true">
+Die ID des Kontos, zu dem der Guthabeneintrag gehört.
+</ResponseField>
+
+<ResponseField name="credits.credits" field-type="number" required="true">
+Der aktuell verfügbare Guthabenstand.
+</ResponseField>
+
+<ResponseField name="credits.total_purchased" field-type="number" required="true">
+Die insgesamt gekaufte Guthabenmenge.
+</ResponseField>
+
+<ResponseField name="credits.total_used" field-type="number" required="true">
+Die insgesamt verbrauchte Guthabenmenge.
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_enabled" field-type="boolean" required="true">
+Gibt an, ob automatisches Nachladen für das Konto aktiviert ist.
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_threshold" field-type="number" required="true">
+Der Schwellenwert, unter dem ein Auto-Reload ausgelöst werden kann.
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_amount_usd" field-type="number" required="true">
+Der in US-Dollar konfigurierte Nachladebetrag für Auto-Reload.
+</ResponseField>
+
+## Guthaben abziehen
+
+Verwenden Sie `POST /api/credits`, um Guthaben für Nutzungsvorgänge zu verbuchen. Der Endpunkt führt die Abbuchung serverseitig aus und gibt den aktualisierten Saldo sowie Informationen zu einem möglichen Auto-Reload zurück.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/credits" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931",
+    "amount": 120,
+    "description": "Outbound call usage",
+    "metadata": {
+      "assistantId": "asst_b83bde21",
+      "callId": "call_91fd2e74"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountId: "acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931",
+    amount: 120,
+    description: "Outbound call usage",
+    metadata: {
+      assistantId: "asst_b83bde21",
+      callId: "call_91fd2e74"
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,402" default-tab="1">
+```json
+{
+  "success": true,
+  "transactionId": "txn_6c1f3ab9",
+  "balance": 18300,
+  "autoReloadTriggered": false
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Insufficient credits"
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="accountId" param-type="string" required="true">
+Die ID des Kontos, von dem Guthaben abgezogen werden soll.
+</ParamField>
+
+<ParamField body="amount" param-type="number" required="true">
+Die abzuziehende Guthabenmenge.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+Eine optionale Beschreibung des Nutzungsvorgangs, die in der Transaktion gespeichert werden kann.
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+Optionale strukturierte Zusatzdaten zum Vorgang, zum Beispiel Referenzen auf Anrufe, Assistenten oder interne Nutzungs-IDs.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Abbuchung erfolgreich war.
+</ResponseField>
+
+<ResponseField name="transactionId" field-type="string" required="true">
+Die ID der erzeugten Guthabentransaktion.
+</ResponseField>
+
+<ResponseField name="balance" field-type="number" required="true">
+Der verbleibende Guthabenstand nach der Abbuchung.
+</ResponseField>
+
+<ResponseField name="autoReloadTriggered" field-type="boolean" required="true">
+Gibt an, ob die Abbuchung ein automatisches Nachladen ausgelöst hat.
+</ResponseField>
+
+<Callout kind="alert">
+
+Wenn das Konto nicht über ausreichend Guthaben verfügt, antwortet der Endpunkt mit HTTP-Status `402`. Planen Sie diesen Fall in Ihrer Integration explizit ein, bevor Sie nachgelagerte Nutzungsvorgänge als erfolgreich markieren.
+
+</Callout>
+
+## Checkout für Guthabenkauf erstellen
+
+Erstellen Sie mit `POST /api/credits/checkout` eine Stripe-Checkout-Sitzung für den Kauf zusätzlicher Credits. Sie übergeben entweder eine `planId` oder ein benutzerdefiniertes Paar aus Betrag und Guthabenmenge.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/credits/checkout" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931",
+    "accountSlug": "acme-sales",
+    "planId": "credits_growth_199",
+    "customerEmail": "finance@acme-sales.com"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/checkout", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountId: "acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931",
+    accountSlug: "acme-sales",
+    planId: "credits_growth_199",
+    customerEmail: "finance@acme-sales.com"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "checkoutToken": "seti_example_7b34f2c8",
+  "sessionId": "cs_test_b1a92c7d5e",
+  "credits": 20000,
+  "amount": 199
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="accountId" param-type="string" required="true">
+Die ID des Kontos, für das die Checkout-Sitzung erstellt wird.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Slug des Kontos. Der Endpunkt verwendet ihn für die Zuordnung des Kaufs.
+</ParamField>
+
+<ParamField body="planId" param-type="string" required="false">
+Die ID eines vordefinierten Guthabenplans. Geben Sie entweder `planId` oder die Kombination aus `customAmount` und `customCredits` an.
+</ParamField>
+
+<ParamField body="customAmount" param-type="number" required="false">
+Ein benutzerdefinierter Betrag in US-Dollar. Bei benutzerdefinierten Käufen beträgt das Minimum `99`.
+</ParamField>
+
+<ParamField body="customCredits" param-type="number" required="false">
+Die Guthabenmenge, die mit einem benutzerdefinierten Betrag gekauft werden soll.
+</ParamField>
+
+<ParamField body="customerId" param-type="string" required="false">
+Eine optionale Stripe-Kunden-ID, wenn der Kauf einem bestehenden Kunden zugeordnet werden soll.
+</ParamField>
+
+<ParamField body="customerEmail" param-type="string" required="false">
+Eine optionale E-Mail-Adresse für den Stripe-Checkout.
+</ParamField>
+
+<ParamField body="toltReferral" param-type="string" required="false">
+Eine optionale Referral-Kennung, die beim Checkout mitgegeben wird.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Checkout-Sitzung erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="checkoutToken" field-type="string" required="true">
+Das vom Checkout zurückgegebene Token für die initiale Einbettung oder Weiterverarbeitung.
+</ResponseField>
+
+<ResponseField name="sessionId" field-type="string" required="true">
+Die ID der erzeugten Stripe-Checkout-Sitzung.
+</ResponseField>
+
+<ResponseField name="credits" field-type="number" required="true">
+Die Guthabenmenge, die mit diesem Kauf verbunden ist.
+</ResponseField>
+
+<ResponseField name="amount" field-type="number" required="true">
+Der Kaufbetrag in US-Dollar.
+</ResponseField>
+
+<Callout kind="info">
+
+Für benutzerdefinierte Käufe müssen Sie `customAmount` und `customCredits` gemeinsam senden. Ein benutzerdefinierter Betrag unter `99` US-Dollar wird nicht akzeptiert.
+
+</Callout>
+
+## Nur für Sitzungen verfügbare Endpunkte
+
+Die folgenden Guthaben-Endpunkte unterstützen keinen API-Schlüssel. Rufen Sie sie nur aus einem angemeldeten Benutzerkontext auf.
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/credits/auto-reload` | Aktuelle Auto-Reload-Einstellungen abrufen |
+| `POST` | `/api/credits/auto-reload` | Auto-Reload-Einstellungen aktualisieren |
+| `POST` | `/api/credits/claim-grants` | Verfügbare Guthaben-Grants beanspruchen |
+| `GET` | `/api/credits/plans` | Verfügbare Guthabenpläne abrufen |
+| `GET` | `/api/credits/statement` | Guthabenauszug oder Verlauf abrufen |
+| `GET` | `/api/credits/transactions` | Einzelne Guthabentransaktionen abrufen |
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+  <Card title="API-Authentifizierung" href="/de/api-reference/authentication" icon="lock" cta="Zur Referenz" />
+  <Card title="Telefonnummern" href="/de/api-reference/phone-numbers" icon="phone" cta="Zur Referenz" />
+</Columns>

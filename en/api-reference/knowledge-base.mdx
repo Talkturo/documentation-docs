@@ -1,0 +1,338 @@
+---
+title: Knowledge Base
+description: Upload, list, and delete knowledge base files for AI voice assistants via the Talkturo API — manage documents that power retrieval-based answers during calls.
+---
+
+## Knowledge base endpoints
+
+Manage assistant-specific knowledge base files with session-authenticated endpoints under `/api/assistants/{assistantId}/knowledge-base`. Uploaded files are stored per assistant and processed for retrieval during calls.
+
+<Callout kind="info">
+
+These endpoints require an authenticated browser session. They do not use API key authentication.
+
+</Callout>
+
+<Callout kind="alert">
+
+Upload requests use `multipart/form-data` and must include a file field. File processing happens after upload, so a newly uploaded file may appear with a non-ready `status` before it becomes available for retrieval.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/assistants/{assistantId}/knowledge-base` | List knowledge base files for an assistant | Session cookie |
+| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Upload a knowledge base file | Session cookie |
+| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Delete a knowledge base file | Session cookie |
+| `GET` | `/api/assistants/{assistantId}/billing/estimate` | Get knowledge base processing cost estimate | Session cookie |
+| `GET` | `/api/kb` | Standalone knowledge base query endpoint, if enabled in your deployment | Check your deployment |
+
+## List knowledge base files
+
+Return all knowledge base files attached to an assistant.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
+  --cookie "sb-access-token=sb_example_session_token"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  {
+    method: "GET",
+    credentials: "include",
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "files": [
+    {
+      "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+      "filename": "acme-pricing-guide.pdf",
+      "size": 248193,
+      "type": "application/pdf",
+      "status": "processed",
+      "created_at": "2026-02-11T14:22:09.000Z"
+    },
+    {
+      "id": "4f6c291e-a60d-4ff3-9cb2-52e2b65f6b31",
+      "filename": "returns-policy.docx",
+      "size": 91344,
+      "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "status": "processing",
+      "created_at": "2026-02-11T14:24:51.000Z"
+    }
+  ]
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Assistant identifier. The returned file list is scoped to this assistant.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="files" field-type="array" required="true">
+List of knowledge base files attached to the assistant.
+</ResponseField>
+
+<ResponseField name="files[].id" field-type="uuid" required="true">
+Unique file identifier. Use this value when deleting a file.
+</ResponseField>
+
+<ResponseField name="files[].filename" field-type="string" required="true">
+Original uploaded filename.
+</ResponseField>
+
+<ResponseField name="files[].size" field-type="number" required="true">
+File size in bytes.
+</ResponseField>
+
+<ResponseField name="files[].type" field-type="string" required="true">
+Detected file MIME type.
+</ResponseField>
+
+<ResponseField name="files[].status" field-type="string" required="true">
+Processing state for the file. Use this field to determine whether the file is still being processed or is ready for retrieval use.
+</ResponseField>
+
+<ResponseField name="files[].created_at" field-type="string" required="true">
+Timestamp when the file was uploaded.
+</ResponseField>
+
+## Upload a knowledge base file
+
+Upload a file to an assistant's knowledge base with `multipart/form-data`.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
+  --cookie "sb-access-token=sb_example_session_token" \
+  --form "file=@./docs/acme-support-playbook.pdf"
+```
+
+```javascript
+const formData = new FormData();
+formData.append("file", fileInput.files[0]);
+
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "file": {
+    "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    "filename": "acme-support-playbook.pdf",
+    "size": 248193,
+    "type": "application/pdf",
+    "status": "processing",
+    "created_at": "2026-02-11T14:22:09.000Z"
+  }
+}
+```
+</Response>
+
+A successful upload confirms the file was accepted and queued for processing. Check the file `status` from the list endpoint if your workflow needs to wait until processing finishes.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Assistant identifier that will own the uploaded file.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="file" param-type="binary" required="true">
+The file to upload, sent as a `multipart/form-data` field.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the upload is accepted.
+</ResponseField>
+
+<ResponseField name="file" field-type="object" required="true">
+Metadata for the uploaded file.
+</ResponseField>
+
+<ResponseField name="file.id" field-type="uuid" required="true">
+Unique file identifier.
+</ResponseField>
+
+<ResponseField name="file.filename" field-type="string" required="true">
+Original uploaded filename.
+</ResponseField>
+
+<ResponseField name="file.size" field-type="number" required="true">
+File size in bytes.
+</ResponseField>
+
+<ResponseField name="file.type" field-type="string" required="true">
+Detected file MIME type.
+</ResponseField>
+
+<ResponseField name="file.status" field-type="string" required="true">
+Initial processing state after upload.
+</ResponseField>
+
+<ResponseField name="file.created_at" field-type="string" required="true">
+Timestamp when the file was created.
+</ResponseField>
+
+## Delete a knowledge base file
+
+Remove a file from an assistant's knowledge base.
+
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --cookie "sb-access-token=sb_example_session_token"
+```
+
+```json
+{
+  "success": true,
+  "message": "File deleted"
+}
+```
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Assistant identifier that owns the file.
+</ParamField>
+
+<ParamField path="fileId" param-type="uuid" required="true">
+Knowledge base file identifier to delete.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file is removed.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Human-readable deletion result.
+</ResponseField>
+
+## Get billing estimate
+
+Retrieve the billing estimate for knowledge base processing for an assistant.
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/billing/estimate" \
+  --cookie "sb-access-token=sb_example_session_token"
+```
+
+The response returns a success flag and an `estimate` object.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Assistant identifier used to calculate the estimate.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the estimate is available.
+</ResponseField>
+
+<ResponseField name="estimate" field-type="object" required="true">
+Billing estimate details for knowledge base processing. The object shape depends on the current billing implementation.
+</ResponseField>
+
+## Standalone knowledge base endpoint
+
+Some deployments may expose a separate `GET /api/kb` endpoint for standalone knowledge base queries.
+
+<Callout kind="info">
+
+The repository context for this page confirms assistant-scoped knowledge base management endpoints. It does not provide a verified request or response schema for `GET /api/kb`. Check your deployed API or internal route definitions before relying on this endpoint in production.
+
+</Callout>
+
+If `GET /api/kb` exists in your environment, treat it as separate from assistant file management. It is not a replacement for the upload, list, or delete endpoints documented above.
+
+## Typical workflow
+
+Use the knowledge base endpoints in this order when automating document management:
+
+<Steps>
+<Step title="Upload the file" icon="upload">
+
+Send a `POST` request with `multipart/form-data` to the assistant knowledge base endpoint.
+
+Success looks like a response with `success: true` and a `file` object.
+
+</Step>
+<Step title="Poll for processing status" icon="check-circle">
+
+Call `GET /api/assistants/{assistantId}/knowledge-base` and inspect each file's `status`.
+
+Your workflow can continue once the uploaded file appears in the list and its status indicates processing is complete.
+
+</Step>
+<Step title="Estimate processing cost when needed" icon="bar-chart">
+
+Call `GET /api/assistants/{assistantId}/billing/estimate` before or after upload if you need billing visibility for the assistant's knowledge base usage.
+
+Success looks like a response with `success: true` and an `estimate` object.
+
+</Step>
+<Step title="Remove outdated files" icon="trash">
+
+Delete files you no longer want the assistant to use by sending `DELETE /api/assistants/{assistantId}/knowledge-base/{fileId}`.
+
+A successful deletion returns `success: true` and a confirmation message.
+
+</Step>
+</Steps>
+
+## Related endpoints
+
+<Columns cols={2}>
+  <Card title="Tool configs" href="/en/api-reference/tool-configs" icon="settings" cta="View reference">
+  Knowledge base behavior may also interact with assistant tool configuration.
+  </Card>
+  <Card title="Assistants" href="/en/api-reference/assistants" icon="users" cta="View reference">
+  Manage the assistant resource that owns each knowledge base file.
+  </Card>
+</Columns>

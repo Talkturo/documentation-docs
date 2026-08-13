@@ -1,0 +1,305 @@
+---
+title: Telefonnummern
+description: Suchen, kaufen, abrufen und freigeben von Telefonnummern für Talkturo-Telefonie sowie Carrier-Webhook-Endpunkte für KYC- und Compliance-Statusaktualisierungen.
+---
+
+## Telefonnummern mit der Talkturo-Telefonie verwalten
+
+Mit den Endpunkten für Telefonnummern suchen Sie verfügbare Rufnummern, kaufen neue Nummern, rufen vorhandene Nummern ab, geben nicht mehr benötigte Nummern frei und verarbeiten Carrier-Webhooks für KYC- und Compliance-Statusänderungen. Diese Endpunkte decken den vollständigen Lebenszyklus einer Telefonnummer innerhalb der Talkturo-Telefonie ab.
+
+Für alle regulären Telefonnummern-Endpunkte ist eine authentifizierte Sitzung per Session-Cookie erforderlich. Die beiden Webhook-Endpunkte bilden die Ausnahme, da sie von externen Carriern aufgerufen werden.
+
+<Callout kind="info">
+
+Verwenden Sie diese Endpunkte für die Verwaltung von Telefonnummern in Ihrem Account. Wenn Sie Telefonnummern einem Assistant zuweisen oder allgemeine Telephony-Einstellungen verwalten möchten, siehe [Telephony](/de/api-reference/telephony).
+
+</Callout>
+
+## Authentifizierung
+
+Die folgenden Endpunkte erfordern Session-Cookie-Authentifizierung:
+
+- `GET /api/phone-numbers/search`
+- `POST /api/phone-numbers/purchase`
+- `GET /api/phone-numbers/{id}`
+- `DELETE /api/phone-numbers/{id}`
+
+Die folgenden Webhook-Endpunkte akzeptieren Anfragen von Carriern und verwenden kein Session-Cookie:
+
+- `POST /api/phone-numbers/telnyx-webhook`
+- `POST /api/phone-numbers/twilio-webhook`
+
+## Endpunktübersicht
+
+| Methode | Pfad | Authentifizierung | Zweck |
+| --- | --- | --- | --- |
+| `GET` | `/api/phone-numbers/search` | Session-Cookie | Verfügbare Telefonnummern beim Carrier suchen |
+| `POST` | `/api/phone-numbers/purchase` | Session-Cookie | Eine Telefonnummer kaufen und bereitstellen |
+| `GET` | `/api/phone-numbers/{id}` | Session-Cookie | Eine bestimmte Telefonnummer abrufen |
+| `DELETE` | `/api/phone-numbers/{id}` | Session-Cookie | Eine Telefonnummer freigeben |
+| `POST` | `/api/phone-numbers/telnyx-webhook` | ED25519-Signatur | KYC- und Compliance-Status von Telnyx verarbeiten |
+| `POST` | `/api/phone-numbers/twilio-webhook` | Keine direkte Signaturprüfung | Bundle-Status von Twilio verarbeiten |
+
+## Verfügbare Telefonnummern suchen
+
+Rufen Sie `GET /api/phone-numbers/search` auf, um freie Telefonnummern anhand von Region, Muster oder gewünschten Funktionen zu finden.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/phone-numbers/search?areaCode=415&countryCode=US&phoneNumberPattern=555&features=sms,voice" \
+  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "numbers": [
+    {
+      "phoneNumber": "+14155550188",
+      "countryCode": "US",
+      "areaCode": "415",
+      "features": [
+        "sms",
+        "voice"
+      ]
+    },
+    {
+      "phoneNumber": "+14155550199",
+      "countryCode": "US",
+      "areaCode": "415",
+      "features": [
+        "voice"
+      ]
+    }
+  ]
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="areaCode" param-type="string" required="false">
+Filtert verfügbare Nummern nach Vorwahl.
+</ParamField>
+
+<ParamField query="countryCode" param-type="string" required="false">
+Filtert verfügbare Nummern nach Ländercode.
+</ParamField>
+
+<ParamField query="phoneNumberPattern" param-type="string" required="false">
+Sucht nach Nummern, die ein bestimmtes Ziffernmuster enthalten.
+</ParamField>
+
+<ParamField query="features" param-type="string" required="false">
+Filtert nach gewünschten Funktionen. Der Endpunkt akzeptiert diesen Wert als Query-Parameter, um verfügbare Nummern nach Carrier-Funktionen einzugrenzen.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Suche erfolgreich war.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Liste der verfügbaren Telefonnummern, die den angegebenen Filtern entsprechen.
+</ResponseField>
+
+## Telefonnummer kaufen
+
+Rufen Sie `POST /api/phone-numbers/purchase` auf, um eine verfügbare Telefonnummer einem Account zuzuordnen und zu provisionieren.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -d '{
+    "phoneNumber": "+14155550188",
+    "accountSlug": "acme-support"
+  }'
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "phoneNumber": {
+    "id": "pn_2f6c9a41",
+    "phoneNumber": "+14155550188",
+    "accountSlug": "acme-support",
+    "status": "active"
+  }
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="phoneNumber" param-type="string" required="true">
+Die zu kaufende Telefonnummer im internationalen Format.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Slug des Accounts, dem die Telefonnummer zugeordnet werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob der Kauf erfolgreich war.
+</ResponseField>
+
+<ResponseField name="phoneNumber" field-type="object" required="true">
+Die bereitgestellte Telefonnummer mit den zugehörigen Metadaten.
+</ResponseField>
+
+## Telefonnummer abrufen
+
+Rufen Sie `GET /api/phone-numbers/{id}` auf, um die Details einer bestimmten Telefonnummer abzurufen.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
+  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "phoneNumber": {
+    "id": "pn_2f6c9a41",
+    "phoneNumber": "+14155550188",
+    "accountSlug": "acme-support",
+    "status": "active"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Die eindeutige Kennung der Telefonnummer.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Abfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="phoneNumber" field-type="object" required="true">
+Die Telefonnummer mit ihren gespeicherten Details.
+</ResponseField>
+
+## Telefonnummer freigeben
+
+Rufen Sie `DELETE /api/phone-numbers/{id}` auf, um eine Telefonnummer aus Ihrem Account freizugeben.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X DELETE "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
+  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Die eindeutige Kennung der freizugebenden Telefonnummer.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Telefonnummer erfolgreich freigegeben wurde.
+</ResponseField>
+
+## Telnyx-Webhook für KYC-Status
+
+`POST /api/phone-numbers/telnyx-webhook` verarbeitet Statusaktualisierungen von Telnyx für KYC- und Compliance-Prüfungen.
+
+<Callout kind="alert">
+
+Dieser Endpunkt prüft eine ED25519-Signatur gegen den konfigurierten öffentlichen Schlüssel aus `TELNYX_PUBLIC_KEY`. Wenn der Schlüssel nicht konfiguriert ist, antwortet der Endpunkt mit `503`. Bei ungültiger Signatur antwortet der Endpunkt mit `400`. Nach erfolgreicher Prüfung verarbeitet der Endpunkt das rohe Event-JSON, synchronisiert den Status der `requirement_group_id` und gibt anschließend immer `200` zurück, damit Telnyx keine Wiederholungsversuche startet.
+
+</Callout>
+
+<Request tabs="HTTP" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/phone-numbers/telnyx-webhook" \
+  -H "Content-Type: application/json" \
+  -H "Telnyx-Signature-Ed25519: 4f8f7f4f2fb1d5e8a03ef9b4df2ac7f1a0d75c2d6d1f2e8c9a3e7b5f4d2c1a9e" \
+  -H "Telnyx-Timestamp: 1731002201" \
+  -d '{
+    "data": {
+      "payload": {
+        "requirement_group_id": "rg_7c9a2b11"
+      }
+    }
+  }'
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "received": true,
+  "status": "approved",
+  "updated": true,
+  "matchedRequest": true
+}
+```
+</Response>
+
+## Twilio-Webhook für Bundle-Status
+
+`POST /api/phone-numbers/twilio-webhook` verarbeitet Statusaktualisierungen von Twilio für Compliance-Bundles.
+
+<Callout kind="info">
+
+Dieser Endpunkt vertraut dem eingehenden Statusfeld nicht direkt. Stattdessen liest er `BundleSID`, `BundleSid` oder `bundle_sid` aus dem Formular und ruft den tatsächlichen Status erneut über die Twilio-API ab. Der Endpunkt gibt danach immer `200` zurück, damit Twilio keine unnötigen Wiederholungsversuche sendet.
+
+</Callout>
+
+<Request tabs="HTTP" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/phone-numbers/twilio-webhook" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "BundleSID=BU7f3b0d9c5a1e44e6a8c2f11d9a7b3c4"
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "received": true,
+  "status": "in_review",
+  "matchedRequest": true
+}
+```
+</Response>
+
+## Verwandte Themen
+
+<Columns cols={1}>
+  <Card
+    title="Telephony"
+    href="/de/api-reference/telephony"
+    icon="phone"
+    cta="Zur API-Referenz"
+  />
+</Columns>

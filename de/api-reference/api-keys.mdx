@@ -1,0 +1,319 @@
+---
+title: API-Schlüssel
+description: Erstellen, auflisten, aktualisieren und widerrufen Sie API-Schlüssel für den programmatischen Zugriff auf Talkturo — verwalten Sie Scopes, Ablaufdaten und Schlüssel-Lebenszyklus über REST-Endpunkte.
+---
+
+## Verwaltung von API-Schlüsseln
+
+Verwalten Sie API-Schlüssel für ein Talkturo-Konto mit REST-Endpunkten, die Schlüssel auflisten, neue Schlüssel erstellen, Metadaten aktualisieren und Zugriff widerrufen. Diese Endpunkte geben Schlüssel-Metadaten für vorhandene Schlüssel zurück und liefern den Klartextwert `fullKey` nur dann, wenn Sie einen neuen Schlüssel erstellen.
+
+Authentifizieren Sie jede Anfrage mit einem Bearer-JWT und verwenden Sie ein Kontomitglied mit der Rolle Owner oder Admin. Diese Endpunkte akzeptieren keine Authentifizierung per API-Schlüssel.
+
+<Callout kind="info">
+
+API-Schlüssel werden gehasht gespeichert. Talkturo speichert nur einen SHA-256-Hash des vollständigen Schlüssels und kann den Klartextschlüssel nach der Erstellung nicht erneut anzeigen.
+
+</Callout>
+
+### API-Schlüsselobjekt
+
+Ein API-Schlüsselobjekt beschreibt einen einzelnen Schlüssel, seine Berechtigungen und seinen Lebenszyklusstatus.
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung des API-Schlüssels.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Anzeigename des API-Schlüssels.
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="false">
+Optionale Beschreibung, die den Verwendungszweck des Schlüssels erklärt.
+</ResponseField>
+
+<ResponseField name="key_prefix" field-type="string" required="true">
+Nicht sensibler Präfix des Schlüssels, der zur Identifikation angezeigt wird.
+</ResponseField>
+
+<ResponseField name="permissions" field-type="object" required="true">
+Berechtigungsobjekt für den Schlüssel, einschließlich `scopes` und `rate_limit_per_hour`.
+</ResponseField>
+
+<ResponseField name="last_used_at" field-type="string | null" required="false">
+Zeitstempel der letzten erfolgreichen Verwendung des Schlüssels im ISO-8601-Format. Der Wert ist `null`, wenn der Schlüssel noch nie verwendet wurde.
+</ResponseField>
+
+<ResponseField name="expires_at" field-type="string | null" required="false">
+Ablaufzeitpunkt des Schlüssels im ISO-8601-Format. Der Wert ist `null`, wenn der Schlüssel nicht abläuft.
+</ResponseField>
+
+<ResponseField name="is_active" field-type="boolean" required="true">
+Gibt an, ob der Schlüssel aktiv ist und für Anfragen verwendet werden kann.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt der Erstellung des Schlüssels im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="created_by" field-type="string" required="true">
+Kennung des Benutzers, der den Schlüssel erstellt hat.
+</ResponseField>
+
+### Schlüsselformat und Lebenszyklus
+
+Neue Schlüssel verwenden das Format `tk_{environment}_{random}`. Talkturo speichert einen SHA-256-Hash und speichert den Klartext nicht.
+
+`fullKey` wird nur einmal bei der Erstellung zurückgegeben. Wenn Sie diesen Wert verlieren, erstellen Sie einen neuen Schlüssel und widerrufen Sie den alten.
+
+## API-Schlüssel auflisten
+
+Rufen Sie die API-Schlüssel eines Kontos ab, um vorhandene Schlüssel, ihre Berechtigungen und ihren Status zu prüfen.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/api-keys?accountSlug=acme-sales" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.jwt"
+```
+</Request>
+
+<Response tabs="200,403">
+```json
+{
+  "apiKeys": [
+    {
+      "id": "key_01hxy9p4m6n2s8t4v7w1z3a5bc",
+      "name": "Production integrations",
+      "description": "Used by the CRM sync service",
+      "key_prefix": "tk_live_a1b2c3d4",
+      "permissions": {
+        "scopes": ["assistants:*"],
+        "rate_limit_per_hour": 1000
+      },
+      "last_used_at": "2025-01-14T09:22:11.000Z",
+      "expires_at": "2025-06-01T00:00:00.000Z",
+      "is_active": true,
+      "created_at": "2025-01-10T16:40:02.000Z",
+      "created_by": "usr_7f3c2d1a9b8e6f5d"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+</Response>
+
+### Abfrageparameter
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Slug des Kontos, dessen API-Schlüssel Sie auflisten möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="apiKeys" field-type="array" required="true">
+Liste der API-Schlüssel für das angegebene Konto.
+</ResponseField>
+
+## API-Schlüssel erstellen
+
+Erstellen Sie einen neuen API-Schlüssel, wenn Sie programmatischen Zugriff für eine Integration oder einen internen Dienst benötigen. Die Antwort enthält `fullKey` genau einmal.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/api-keys" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "name": "Staging workflow runner",
+    "description": "Used by the staging automation service",
+    "environment": "test",
+    "expiresInDays": 90,
+    "permissions": {
+      "scopes": ["assistants:*"],
+      "rate_limit_per_hour": 1000
+    }
+  }'
+```
+</Request>
+
+<Response tabs="201,403">
+```json
+{
+  "apiKey": {
+    "id": "key_01hxyb8r2m4q6s7t9v1w3z5acd",
+    "name": "Staging workflow runner",
+    "description": "Used by the staging automation service",
+    "key_prefix": "tk_test_a1b2c3d4",
+    "permissions": {
+      "scopes": ["assistants:*"],
+      "rate_limit_per_hour": 1000
+    },
+    "last_used_at": null,
+    "expires_at": "2025-04-15T00:00:00.000Z",
+    "is_active": true,
+    "created_at": "2025-01-15T11:05:42.000Z",
+    "created_by": "usr_7f3c2d1a9b8e6f5d",
+    "fullKey": "tk_test_a1b2c3d4kM7xQ2pL9rT5vN8yH3sJ6wF1uB4eC7dG0hK2mP"
+  }
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Slug des Kontos, für das der API-Schlüssel erstellt wird.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+Anzeigename für den neuen API-Schlüssel.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+Optionale Beschreibung, die erklärt, wofür der Schlüssel verwendet wird.
+</ParamField>
+
+<ParamField body="environment" param-type="string" required="false" enum="live,test">
+Zielumgebung für den Schlüssel. Wenn kein Wert angegeben wird, verwendet Talkturo den Standardwert `live`.
+</ParamField>
+
+<ParamField body="expiresInDays" param-type="number" required="false">
+Anzahl der Tage bis zum Ablauf des Schlüssels. Lassen Sie dieses Feld weg, wenn der Schlüssel nicht ablaufen soll.
+</ParamField>
+
+<ParamField body="permissions" param-type="object" required="false">
+Berechtigungen für den Schlüssel. Wenn kein Wert angegeben wird, verwendet Talkturo standardmäßig `scopes` mit `["*"]` und `rate_limit_per_hour` mit `1000`.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="apiKey" field-type="object" required="true">
+Metadaten des neu erstellten API-Schlüssels einschließlich `fullKey`.
+</ResponseField>
+
+<ResponseField name="apiKey.fullKey" field-type="string" required="true">
+Vollständiger Klartext-API-Schlüssel. Dieser Wert wird nur in der Erstellungsantwort zurückgegeben.
+</ResponseField>
+
+## API-Schlüssel aktualisieren
+
+Aktualisieren Sie den Namen, die Beschreibung oder den Aktivstatus eines vorhandenen API-Schlüssels, ohne einen neuen Schlüssel auszustellen.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X PATCH "https://api.talkturo.com/api/api-keys/key_01hxyb8r2m4q6s7t9v1w3z5acd" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Staging workflow runner v2",
+    "description": "Used by the updated staging automation service",
+    "isActive": true
+  }'
+```
+</Request>
+
+<Response tabs="200,404">
+```json
+{
+  "apiKey": {
+    "id": "key_01hxyb8r2m4q6s7t9v1w3z5acd",
+    "name": "Staging workflow runner v2",
+    "description": "Used by the updated staging automation service",
+    "key_prefix": "tk_test_a1b2c3d4",
+    "permissions": {
+      "scopes": ["assistants:*"],
+      "rate_limit_per_hour": 1000
+    },
+    "last_used_at": null,
+    "expires_at": "2025-04-15T00:00:00.000Z",
+    "is_active": true,
+    "created_at": "2025-01-15T11:05:42.000Z",
+    "created_by": "usr_7f3c2d1a9b8e6f5d"
+  }
+}
+```
+
+```json
+{
+  "error": "API key not found"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Kennung des API-Schlüssels, den Sie aktualisieren möchten.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="name" param-type="string" required="false">
+Neuer Anzeigename für den API-Schlüssel.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+Neue Beschreibung für den API-Schlüssel.
+</ParamField>
+
+<ParamField body="isActive" param-type="boolean" required="false">
+Setzen Sie diesen Wert auf `false`, um den Schlüssel zu deaktivieren, oder auf `true`, um ihn erneut zu aktivieren.
+</ParamField>
+
+## API-Schlüssel widerrufen
+
+Widerrufen Sie einen API-Schlüssel dauerhaft, wenn er nicht mehr benötigt wird oder kompromittiert wurde.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X DELETE "https://api.talkturo.com/api/api-keys/key_01hxyb8r2m4q6s7t9v1w3z5acd" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.jwt"
+```
+</Request>
+
+<Response tabs="200,404">
+```json
+{
+  "success": true,
+  "message": "API key revoked successfully"
+}
+```
+
+```json
+{
+  "error": "API key not found"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Kennung des API-Schlüssels, den Sie widerrufen möchten.
+</ParamField>
+
+## Hinweise zu Berechtigungen
+
+Berechtigungen steuern, was ein API-Schlüssel tun darf und wie häufig er verwendet werden kann. Jeder Schlüssel unterstützt `scopes` und `rate_limit_per_hour`.
+
+- **Wildcard-Scopes** — Verwenden Sie `*`, um alle verfügbaren Scopes zu erlauben.
+- **Präfix-Wildcards** — Verwenden Sie Werte wie `assistants:*`, um alle Scopes innerhalb eines Präfixes zu erlauben.
+- **Exakte Scopes** — Verwenden Sie vollständige Scope-Strings, wenn Sie den Zugriff auf bestimmte Aktionen beschränken möchten.
+- **Standardwerte** — Neue Schlüssel verwenden standardmäßig `scopes` mit `["*"]` und `rate_limit_per_hour` mit `1000`.
+
+<Callout kind="tip">
+
+Vergeben Sie den kleinstmöglichen Scope-Satz für jede Integration. Wenn ein Dienst nur Assistenten lesen oder schreiben muss, beschränken Sie den Schlüssel auf die benötigten Scopes, statt globalen Zugriff zu gewähren.
+
+</Callout>

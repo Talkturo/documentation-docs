@@ -1,0 +1,482 @@
+---
+title: Assistants
+description: Create, update, clone, delete, and manage AI voice assistants through the Talkturo REST API — configure prompts, voices, models, and telephony settings.
+---
+
+## Manage assistants
+
+Create assistants, update their configuration, clone existing setups, delete assistants you no longer need, and retrieve usage data for reporting or operational checks.
+
+<Callout kind="info">
+
+All assistant endpoints support dual authentication through `withApiAuth`. Authenticate with either a Talkturo API key or an authenticated session cookie.
+
+</Callout>
+
+### Base path
+
+All endpoints on this page are rooted at ` /api/assistants `.
+
+### Authentication
+
+Send your API key in the `Authorization` header as a bearer token.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "name": "Inbound Sales Assistant"
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
+    "name": "Inbound Sales Assistant"
+  }
+}
+```
+
+</Response>
+
+If you use session-based auth from the Talkturo app, the browser sends the session cookie automatically. External integrations usually use API keys.
+
+## Create an assistant
+
+Create a new assistant under an account by sending the account slug and assistant name. If you provide a template ID, Talkturo sets the assistant type from that template.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "name": "Inbound Sales Assistant",
+    "templateId": "tmpl_sales_inbound_v1"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountSlug: "acme-sales",
+    name: "Inbound Sales Assistant",
+    templateId: "tmpl_sales_inbound_v1"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.talkturo.com/api/assistants",
+    headers={
+        "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
+        "Content-Type": "application/json"
+    },
+    json={
+        "accountSlug": "acme-sales",
+        "name": "Inbound Sales Assistant",
+        "templateId": "tmpl_sales_inbound_v1"
+    }
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
+    "account_slug": "acme-sales",
+    "name": "Inbound Sales Assistant",
+    "type": "sales",
+    "created_at": "2025-02-18T14:22:31.114Z",
+    "updated_at": "2025-02-18T14:22:31.114Z"
+  }
+}
+```
+
+</Response>
+
+### Endpoint
+
+`POST /api/assistants`
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+The account slug that owns the assistant.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+The assistant name.
+</ParamField>
+
+<ParamField body="templateId" param-type="string" required="false">
+An optional template identifier. When present, Talkturo sets the assistant type from the template.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the assistant is created successfully.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+The newly created assistant record.
+</ResponseField>
+
+<ResponseField name="assistant.id" field-type="string" required="true">
+The assistant UUID.
+</ResponseField>
+
+<ResponseField name="assistant.name" field-type="string" required="true">
+The assistant name stored by Talkturo.
+</ResponseField>
+
+<ResponseField name="assistant.type" field-type="string" required="false">
+The assistant type derived from the template when `templateId` is provided.
+</ResponseField>
+
+Talkturo creates the assistant with default or null values for fields you do not provide at creation time. Update the assistant afterward to configure prompts, voices, models, or telephony settings.
+
+## Update an assistant
+
+Update an existing assistant by assistant ID. The update endpoint accepts `accountSlug` and any assistant fields supported by the backend.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X PATCH "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "name": "Inbound Sales Assistant v2",
+    "voice": "alloy",
+    "model": "gpt-4o-realtime"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
+  {
+    method: "PATCH",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      name: "Inbound Sales Assistant v2",
+      voice: "alloy",
+      model: "gpt-4o-realtime"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
+    "name": "Inbound Sales Assistant v2",
+    "voice": "alloy",
+    "model": "gpt-4o-realtime",
+    "updated_at": "2025-02-18T14:31:09.027Z"
+  }
+}
+```
+
+</Response>
+
+### Endpoint
+
+`PATCH /api/assistants/{assistantId}`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="false">
+The owning account slug. Include it when your integration scopes updates to a specific account context.
+</ParamField>
+
+<ParamField body="assistant fields" param-type="object" required="false">
+Any assistant fields accepted by the backend. Use this endpoint to update configuration such as prompts, voices, models, and telephony-related settings.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the assistant is updated successfully.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+The updated assistant record.
+</ResponseField>
+
+<Callout kind="info">
+
+If you send `transcriptor_options`, Talkturo validates those options against the selected provider and model before saving the update.
+
+</Callout>
+
+When the update succeeds, the response includes the saved assistant object. Use that object as the source of truth for the assistant's latest configuration.
+
+## Delete an assistant
+
+Delete an assistant permanently by ID. Talkturo checks ownership before removing the record.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X DELETE "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "message": "Assistant deleted successfully"
+}
+```
+
+</Response>
+
+### Endpoint
+
+`DELETE /api/assistants/{assistantId}`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID to delete.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the assistant is deleted successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+A confirmation message. The value is `Assistant deleted successfully`.
+</ResponseField>
+
+<Callout kind="alert">
+
+Deleting an assistant is irreversible. Remove it only after you confirm that no active workflows, phone numbers, or operational processes still depend on it.
+
+</Callout>
+
+## Clone an assistant
+
+Clone an existing assistant to duplicate its configuration into a new assistant record. Use cloning when you want a starting point for a variant instead of rebuilding settings manually.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "0f3f8bc6-5e95-4344-88d2-8e5660ec9bf1",
+    "name": "Inbound Sales Assistant Copy",
+    "created_at": "2025-02-18T14:39:12.442Z",
+    "updated_at": "2025-02-18T14:39:12.442Z"
+  }
+}
+```
+
+</Response>
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/clone`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID to clone.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the assistant is cloned successfully.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+The cloned assistant record.
+</ResponseField>
+
+<ResponseField name="assistant.id" field-type="string" required="true">
+The UUID assigned to the cloned assistant.
+</ResponseField>
+
+After cloning, update the new assistant if you need to change the name, prompts, or telephony configuration before using it in production.
+
+## Retrieve usage statistics
+
+Fetch usage data for a single assistant. Use this endpoint for monitoring, dashboards, or account-level reporting workflows.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats",
+  {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "stats": {
+    "total_calls": 148,
+    "total_minutes": 912,
+    "last_call_at": "2025-02-18T13:54:22.019Z"
+  }
+}
+```
+
+</Response>
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/usage-stats`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose usage statistics you want to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when usage statistics are returned successfully.
+</ResponseField>
+
+<ResponseField name="stats" field-type="object" required="true">
+An object containing usage data for the assistant.
+</ResponseField>
+
+The shape of `stats` depends on the usage data Talkturo returns for that assistant. Build your client to read the fields your reporting workflow requires and tolerate additional fields over time.
+
+## Common response shape
+
+All endpoints on this page return a top-level `success` field. Mutation endpoints also return either an `assistant` object or a `message`, depending on the operation.
+
+### Success fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="false">
+Returned by the create, update, and clone endpoints.
+</ResponseField>
+
+<ResponseField name="stats" field-type="object" required="false">
+Returned by the usage statistics endpoint.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="false">
+Returned by the delete endpoint.
+</ResponseField>
+
+## Endpoint summary
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | ` /api/assistants ` | Create an assistant |
+| `PATCH` | ` /api/assistants/{assistantId} ` | Update an assistant |
+| `DELETE` | ` /api/assistants/{assistantId} ` | Delete an assistant |
+| `POST` | ` /api/assistants/{assistantId}/clone ` | Clone an assistant |
+| `GET` | ` /api/assistants/{assistantId}/usage-stats ` | Retrieve usage statistics |

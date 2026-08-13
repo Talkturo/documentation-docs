@@ -1,0 +1,385 @@
+---
+title: CRM-Opportunities
+description: Verkaufsschancen im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen — Deal-Wert, Phase, zugehörige Kontakte und Unternehmen sowie erwartete Abschlusstermine verfolgen.
+---
+
+## CRM-Opportunities verwalten
+
+Verwalten Sie Verkaufschancen im Talkturo-CRM über Endpunkte zum Auflisten, Erstellen, Abrufen, Aktualisieren und Löschen. Jede Opportunity kann einen Titel, einen Wert, eine Phase sowie Verknüpfungen zu Kontakten und Unternehmen enthalten.
+
+<Callout kind="info">
+
+Alle CRM-Opportunity-Endpunkte verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Sitzung heraus.
+
+</Callout>
+
+## Endpunkte im Überblick
+
+| Methode | Pfad | Beschreibung |
+| --- | --- | --- |
+| `GET` | `/api/crm/opportunities` | Opportunities auflisten und nach Suchbegriff, Kontakt oder Unternehmen filtern |
+| `POST` | `/api/crm/opportunities` | Eine neue Opportunity erstellen |
+| `GET` | `/api/crm/opportunities/{id}` | Eine einzelne Opportunity abrufen |
+| `PATCH` | `/api/crm/opportunities/{id}` | Eine bestehende Opportunity aktualisieren |
+| `DELETE` | `/api/crm/opportunities/{id}` | Eine Opportunity löschen |
+
+## GET /api/crm/opportunities
+
+Rufen Sie eine paginierte Liste von Opportunities ab und filtern Sie die Ergebnisse nach Suchbegriff, Kontakt oder Unternehmen.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/crm/opportunities?page=1&limit=20&search=renewal&companyId=cmp_9f3k2m1a" \
+  -H "Cookie: sb-access-token=session_example_7fd82k"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "opportunities": [
+    {
+      "id": "opp_4b29d7e1",
+      "title": "Annual renewal - Acme GmbH",
+      "value": 24000,
+      "stage": "proposal",
+      "contact_id": "cnt_8c13fa20",
+      "company_id": "cmp_9f3k2m1a"
+    }
+  ],
+  "total": 1,
+  "page": 1
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="page" param-type="integer" required="false">
+Gibt die Ergebnisseite an. Wenn Sie keinen Wert senden, verwendet die API die Standardpagination des Endpunkts.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Begrenzt die Anzahl der zurückgegebenen Opportunities pro Seite.
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false">
+Filtert Opportunities nach einem Suchbegriff. Verwenden Sie diesen Parameter, um gezielt nach Titeln oder anderen durchsuchbaren Opportunity-Daten zu suchen.
+</ParamField>
+
+<ParamField query="contactId" param-type="string" required="false">
+Gibt nur Opportunities zurück, die mit der angegebenen Kontakt-ID verknüpft sind.
+</ParamField>
+
+<ParamField query="companyId" param-type="string" required="false">
+Gibt nur Opportunities zurück, die mit der angegebenen Unternehmens-ID verknüpft sind.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet, ob die Anfrage erfolgreich verarbeitet wurde.
+</ResponseField>
+
+<ResponseField name="opportunities" field-type="array" required="true">
+Enthält die Liste der gefundenen Opportunities für die angeforderte Seite.
+</ResponseField>
+
+<ResponseField name="opportunities[].id" field-type="string" required="true">
+Eindeutige ID der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].title" field-type="string" required="true">
+Titel oder Name der Verkaufschance.
+</ResponseField>
+
+<ResponseField name="opportunities[].value" field-type="number" required="false">
+Numerischer Wert der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].stage" field-type="string" required="false">
+Aktuelle Phase der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].contact_id" field-type="string" required="false">
+ID des verknüpften Kontakts, falls vorhanden.
+</ResponseField>
+
+<ResponseField name="opportunities[].company_id" field-type="string" required="false">
+ID des verknüpften Unternehmens, falls vorhanden.
+</ResponseField>
+
+<ResponseField name="total" field-type="integer" required="true">
+Gesamtzahl der Treffer über alle Seiten hinweg.
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true">
+Aktuelle Ergebnisseite in der Antwort.
+</ResponseField>
+
+## POST /api/crm/opportunities
+
+Erstellen Sie eine neue Opportunity mit Titel, Wert, Phase und optionalen Verknüpfungen zu Kontakt oder Unternehmen.
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/opportunities" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=session_example_7fd82k" \
+  -d '{
+    "title": "New expansion deal - Nordstern AG",
+    "value": 18500,
+    "stage": "qualification",
+    "contact_id": "cnt_28d91fa4",
+    "company_id": "cmp_44aa91d2",
+    "expected_close_date": "2025-10-15"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "opportunity": {
+    "id": "opp_91cd34ab",
+    "title": "New expansion deal - Nordstern AG",
+    "value": 18500,
+    "stage": "qualification",
+    "contact_id": "cnt_28d91fa4",
+    "company_id": "cmp_44aa91d2",
+    "expected_close_date": "2025-10-15"
+  }
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="title" param-type="string" required="true">
+Titel der Opportunity. Ohne diesen Wert kann die Opportunity nicht erstellt werden.
+</ParamField>
+
+<ParamField body="value" param-type="number" required="false">
+Monetärer Wert der Opportunity.
+</ParamField>
+
+<ParamField body="stage" param-type="string" required="false">
+Phase der Opportunity, zum Beispiel für Qualifizierung oder Angebot.
+</ParamField>
+
+<ParamField body="contact_id" param-type="string" required="false">
+ID eines Kontakts, der mit der Opportunity verknüpft werden soll.
+</ParamField>
+
+<ParamField body="company_id" param-type="string" required="false">
+ID eines Unternehmens, das mit der Opportunity verknüpft werden soll.
+</ParamField>
+
+<ParamField body="expected_close_date" param-type="string" required="false">
+Erwartetes Abschlussdatum der Opportunity.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet, ob die Opportunity erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="opportunity" field-type="object" required="true">
+Enthält die neu erstellte Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.id" field-type="string" required="true">
+Eindeutige ID der neuen Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.title" field-type="string" required="true">
+Titel der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.value" field-type="number" required="false">
+Gespeicherter Wert der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.stage" field-type="string" required="false">
+Gespeicherte Phase der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.contact_id" field-type="string" required="false">
+Verknüpfte Kontakt-ID.
+</ResponseField>
+
+<ResponseField name="opportunity.company_id" field-type="string" required="false">
+Verknüpfte Unternehmens-ID.
+</ResponseField>
+
+## GET /api/crm/opportunities/{id}
+
+Rufen Sie eine einzelne Opportunity anhand ihrer ID ab.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
+  -H "Cookie: sb-access-token=session_example_7fd82k"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "opportunity": {
+    "id": "opp_4b29d7e1",
+    "title": "Annual renewal - Acme GmbH",
+    "value": 24000,
+    "stage": "proposal",
+    "contact_id": "cnt_8c13fa20",
+    "company_id": "cmp_9f3k2m1a"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige ID der Opportunity, die Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet, ob die Opportunity erfolgreich geladen wurde.
+</ResponseField>
+
+<ResponseField name="opportunity" field-type="object" required="true">
+Enthält die angeforderte Opportunity.
+</ResponseField>
+
+<Callout kind="tip">
+
+Wenn Sie Opportunities in Listenansichten anzeigen, verwenden Sie zuerst den Listenendpunkt und rufen Sie den Detailendpunkt nur für gezielte Detailansichten auf.
+
+</Callout>
+
+## PATCH /api/crm/opportunities/{id}
+
+Aktualisieren Sie eine bestehende Opportunity anhand ihrer ID. Die Antwort enthält die aktualisierte Opportunity.
+
+<Request>
+```bash
+curl -X PATCH "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=session_example_7fd82k" \
+  -d '{
+    "stage": "negotiation",
+    "value": 26000,
+    "expected_close_date": "2025-11-01"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "opportunity": {
+    "id": "opp_4b29d7e1",
+    "title": "Annual renewal - Acme GmbH",
+    "value": 26000,
+    "stage": "negotiation",
+    "contact_id": "cnt_8c13fa20",
+    "company_id": "cmp_9f3k2m1a",
+    "expected_close_date": "2025-11-01"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige ID der Opportunity, die Sie aktualisieren möchten.
+</ParamField>
+
+### Aktualisierbare Felder
+
+<ParamField body="title" param-type="string" required="false">
+Aktualisiert den Titel der Opportunity.
+</ParamField>
+
+<ParamField body="value" param-type="number" required="false">
+Aktualisiert den monetären Wert der Opportunity.
+</ParamField>
+
+<ParamField body="stage" param-type="string" required="false">
+Aktualisiert die aktuelle Phase der Opportunity.
+</ParamField>
+
+<ParamField body="contact_id" param-type="string" required="false">
+Verknüpft die Opportunity mit einem anderen Kontakt oder aktualisiert die bestehende Zuordnung.
+</ParamField>
+
+<ParamField body="company_id" param-type="string" required="false">
+Verknüpft die Opportunity mit einem anderen Unternehmen oder aktualisiert die bestehende Zuordnung.
+</ParamField>
+
+<ParamField body="expected_close_date" param-type="string" required="false">
+Aktualisiert das erwartete Abschlussdatum.
+</ParamField>
+
+## DELETE /api/crm/opportunities/{id}
+
+Löschen Sie eine Opportunity dauerhaft anhand ihrer ID.
+
+<Request>
+```bash
+curl -X DELETE "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
+  -H "Cookie: sb-access-token=session_example_7fd82k"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige ID der Opportunity, die Sie löschen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Ist `true`, wenn die Opportunity erfolgreich gelöscht wurde.
+</ResponseField>
+
+<Callout kind="alert">
+
+Das Löschen ist dauerhaft. Stellen Sie sicher, dass die Opportunity nicht mehr für Berichte, Automatisierungen oder Vertriebsprozesse benötigt wird.
+
+</Callout>
+
+## Verwandte Endpunkte
+
+<Columns cols={2}>
+  <Card
+    title="CRM-Contacts"
+    href="/de/api-reference/crm-contacts"
+    icon="users"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="CRM-Companies"
+    href="/de/api-reference/crm-companies"
+    icon="database"
+    cta="Zur Referenz"
+  />
+</Columns>
