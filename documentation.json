@@ -217,7 +217,110 @@
             "icon": "code",
             "groups": [
               {
-                "group": "Endpoints",
+                "group": "Getting Started",
+                "icon": "rocket",
+                "pages": [
+                  {
+                    "title": "API Overview",
+                    "path": "en/api-reference/overview",
+                    "icon": "book"
+                  },
+                  {
+                    "title": "Authentication",
+                    "path": "en/api-reference/authentication",
+                    "icon": "lock"
+                  },
+                  {
+                    "title": "API Keys",
+                    "path": "en/api-reference/api-keys",
+                    "icon": "key"
+                  }
+                ]
+              },
+              {
+                "group": "Resources",
+                "icon": "box",
+                "pages": [
+                  {
+                    "title": "Assistants",
+                    "path": "en/api-reference/assistants",
+                    "icon": "bot"
+                  },
+                  {
+                    "title": "Phone Numbers",
+                    "path": "en/api-reference/phone-numbers",
+                    "icon": "phone"
+                  },
+                  {
+                    "title": "Telephony",
+                    "path": "en/api-reference/telephony",
+                    "icon": "phone-call"
+                  },
+                  {
+                    "title": "Knowledge Base",
+                    "path": "en/api-reference/knowledge-base",
+                    "icon": "database"
+                  },
+                  {
+                    "title": "Credits",
+                    "path": "en/api-reference/credits",
+                    "icon": "coins"
+                  },
+                  {
+                    "title": "Billing",
+                    "path": "en/api-reference/billing",
+                    "icon": "credit-card"
+                  },
+                  {
+                    "title": "TurboFlow",
+                    "path": "en/api-reference/turboflow",
+                    "icon": "workflow"
+                  },
+                  {
+                    "title": "Desktop Auth",
+                    "path": "en/api-reference/desktop",
+                    "icon": "monitor"
+                  },
+                  {
+                    "title": "Webhooks",
+                    "path": "en/api-reference/webhooks",
+                    "icon": "webhook"
+                  }
+                ]
+              },
+              {
+                "group": "CRM",
+                "icon": "users",
+                "pages": [
+                  {
+                    "title": "CRM Contacts",
+                    "path": "en/api-reference/crm-contacts",
+                    "icon": "user"
+                  },
+                  {
+                    "title": "CRM Companies",
+                    "path": "en/api-reference/crm-companies",
+                    "icon": "building"
+                  },
+                  {
+                    "title": "CRM Opportunities",
+                    "path": "en/api-reference/crm-opportunities",
+                    "icon": "target"
+                  },
+                  {
+                    "title": "CRM Campaigns",
+                    "path": "en/api-reference/crm-campaigns",
+                    "icon": "megaphone"
+                  },
+                  {
+                    "title": "CRM Custom Fields",
+                    "path": "en/api-reference/crm-custom-fields",
+                    "icon": "sliders"
+                  }
+                ]
+              },
+              {
+                "group": "OpenAPI",
                 "icon": "terminal",
                 "openapi": "en/api-reference/openapi.yaml",
                 "pages": []
@@ -484,7 +587,110 @@
             "icon": "code",
             "groups": [
               {
-                "group": "Endpunkte",
+                "group": "Erste Schritte",
+                "icon": "rocket",
+                "pages": [
+                  {
+                    "title": "API-Übersicht",
+                    "path": "de/api-reference/overview",
+                    "icon": "book"
+                  },
+                  {
+                    "title": "Authentifizierung",
+                    "path": "de/api-reference/authentication",
+                    "icon": "lock"
+                  },
+                  {
+                    "title": "API-Schlüssel",
+                    "path": "de/api-reference/api-keys",
+                    "icon": "key"
+                  }
+                ]
+              },
+              {
+                "group": "Ressourcen",
+                "icon": "box",
+                "pages": [
+                  {
+                    "title": "Assistenten",
+                    "path": "de/api-reference/assistants",
+                    "icon": "bot"
+                  },
+                  {
+                    "title": "Telefonnummern",
+                    "path": "de/api-reference/phone-numbers",
+                    "icon": "phone"
+                  },
+                  {
+                    "title": "Telefonie",
+                    "path": "de/api-reference/telephony",
+                    "icon": "phone-call"
+                  },
+                  {
+                    "title": "Wissensdatenbank",
+                    "path": "de/api-reference/knowledge-base",
+                    "icon": "database"
+                  },
+                  {
+                    "title": "Guthaben",
+                    "path": "de/api-reference/credits",
+                    "icon": "coins"
+                  },
+                  {
+                    "title": "Abrechnung",
+                    "path": "de/api-reference/billing",
+                    "icon": "credit-card"
+                  },
+                  {
+                    "title": "TurboFlow",
+                    "path": "de/api-reference/turboflow",
+                    "icon": "workflow"
+                  },
+                  {
+                    "title": "Desktop-Auth",
+                    "path": "de/api-reference/desktop",
+                    "icon": "monitor"
+                  },
+                  {
+                    "title": "Webhooks",
+                    "path": "de/api-reference/webhooks",
+                    "icon": "webhook"
+                  }
+                ]
+              },
+              {
+                "group": "CRM",
+                "icon": "users",
+                "pages": [
+                  {
+                    "title": "CRM-Kontakte",
+                    "path": "de/api-reference/crm-contacts",
+                    "icon": "user"
+                  },
+                  {
+                    "title": "CRM-Unternehmen",
+                    "path": "de/api-reference/crm-companies",
+                    "icon": "building"
+                  },
+                  {
+                    "title": "CRM-Opportunities",
+                    "path": "de/api-reference/crm-opportunities",
+                    "icon": "target"
+                  },
+                  {
+                    "title": "CRM-Kampagnen",
+                    "path": "de/api-reference/crm-campaigns",
+                    "icon": "megaphone"
+                  },
+                  {
+                    "title": "CRM-Benutzerdefinierte Felder",
+                    "path": "de/api-reference/crm-custom-fields",
+                    "icon": "sliders"
+                  }
+                ]
+              },
+              {
+                "group": "OpenAPI",
                 "icon": "terminal",
                 "openapi": "de/api-reference/openapi.yaml",
                 "pages": []

@@ -1,0 +1,497 @@
+---
+title: Webhooks
+description: Konfigurieren und empfangen Sie Talkturo-Webhooks für Billing-Events, Carrier-Compliance, Flow-Trigger, Provider-Integrationen und LiveKit-Token-Erzeugung — mit Signaturprüfung und Event-Typ-Referenz.
+---
+
+## Webhook-Endpunkte
+
+Talkturo sendet und empfängt Webhooks für Billing-Events, Carrier-Compliance-Updates, Flow-Trigger und Integrations-Events von Drittanbietern. Nutzen Sie diese Referenz, um jeden Endpunkt zu identifizieren, die Authentifizierung der Anfragen zu verstehen und die Form der wichtigsten Anfrage- und Antwortdaten zu prüfen.
+
+<Callout kind="info">
+
+Talkturo verwendet je nach Quellsystem unterschiedliche Sicherheitsmodelle für Webhook-Endpunkte. Stripe-Anfragen nutzen Signaturprüfung, Telnyx verwendet ED25519-Signaturen, Flow- und Provider-Webhooks nutzen HMAC-Secrets, und einige Carrier-Callbacks vermeiden Vertrauen in eingehende Payloads, indem der Status erneut beim Provider abgerufen wird.
+
+</Callout>
+
+## Webhook-Endpunktübersicht
+
+| Methode | Endpunkt | Zweck | Authentifizierung | Hinweise |
+| --- | --- | --- | --- | --- |
+| `POST` | `/api/billing/webhook` | Stripe-Billing-Events empfangen | `stripe-signature` verifiziert mit `STRIPE_WEBHOOK_SECRET` | Gibt immer `200` zurück |
+| `POST` | `/api/phone-numbers/telnyx-webhook` | Telnyx-KYC- und Compliance-Status-Updates empfangen | ED25519-Signatur verifiziert mit `TELNYX_PUBLIC_KEY` | Gibt `503` zurück, wenn der Schlüssel nicht konfiguriert ist, `400` bei ungültiger Signatur |
+| `POST` | `/api/phone-numbers/twilio-webhook` | Twilio-Bundle-Status-Callbacks empfangen | Keine | Ruft den Status erneut von der Twilio-API ab, statt dem geposteten Status zu vertrauen |
+| `POST` | `/api/flow/[flowId]/trigger` | Veröffentlichten Flow auslösen | HMAC in `X-Talkturo-Secret` | Unterstützt asynchrone und synchrone Ausführung |
+| `POST` | `/api/flow/integrations/webhooks/[provider]` | Provider-Webhooks empfangen | HMAC-Secret pro Webhook | Unterstützte Provider umfassen Cal.com, Calendly und Slack |
+| `GET` / `POST` | `/api/flow/integrations/webhooks/meta` | Meta-Lead-Events verifizieren und empfangen | HMAC mit `META_APP_SECRET` | Verarbeitet Meta- und Facebook-Lead-Ads |
+| `POST` | `/api/assistants/[assistantId]/webhooks/test` | Webhook-Zustellung für einen Assistenten testen | Sitzungsauthentifizierung | Für Zustellungstests, nicht für eingehende Drittanbieter-Webhooks |
+| `GET` | `/auth/token` | LiveKit-Token erzeugen und Agent dispatchen | Keine | Öffentlicher Token-Handler über Middleware |
+| `POST` | `/api/integrations/zapier` | Zapier-Integrationsanfragen empfangen | Endpunktspezifisches Integrationsverhalten | Wird vom Zapier-Integrationsflow verwendet |
+
+## Billing-Webhooks
+
+`POST /api/billing/webhook` empfängt Stripe-Events für abgeschlossene Checkouts, Änderungen im Abo-Lebenszyklus, Rechnungen und erfolgreiche Payment Intents. Talkturo verifiziert den Header `stripe-signature` mit `STRIPE_WEBHOOK_SECRET`, bevor das Event verarbeitet wird.
+
+<Callout kind="alert">
+
+Behandeln Sie eine Anfrage an `/api/billing/webhook` nicht als vertrauenswürdig, solange die Stripe-Signaturprüfung nicht erfolgreich ist. Die Signaturprüfung schützt den Endpunkt vor gefälschten Billing-Events.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/billing/webhook" \
+  -H "Content-Type: application/json" \
+  -H "stripe-signature: t=1731544800,v1=3f2f0f3816a9a9f5d9f5f8d91d2b1cc95fb08b19e92d7fbb7ebdf1fd4d6f2ab4" \
+  -d '{
+    "id": "evt_1QmYxL2eZvKYlo2C9r81AbCd",
+    "object": "event",
+    "type": "checkout.session.completed",
+    "data": {
+      "object": {
+        "id": "cs_test_b1N7x2rM8pQ4sK9t",
+        "object": "checkout.session",
+        "customer": "cus_R9h2mK7qX1tL0n",
+        "payment_status": "paid",
+        "metadata": {
+          "account_slug": "acme-sales",
+          "planId": "credits_1000"
+        }
+      }
+    }
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "received": true
+}
+```
+
+</Response>
+
+### Header
+
+<ParamField header="stripe-signature" param-type="string" required="true">
+
+Stripe-Anfragesignatur. Talkturo verifiziert diesen Header mit der Umgebungsvariable `STRIPE_WEBHOOK_SECRET`.
+
+</ParamField>
+
+### Stripe-Event-Typen
+
+<ExpandableGroup>
+  <Expandable title="checkout.session.completed">
+
+Verarbeitet abgeschlossene Checkout-Sessions. Dieses Event umfasst Credit-Käufe, Abo-Erstellung, Desktop-Seat-Top-ups und das Speichern von Zahlungsmethoden.
+
+  </Expandable>
+  <Expandable title="customer.subscription.updated">
+
+Aktualisiert den Abo-Status für das Konto. Dieses Event kann auch Credit-Recharge-Logik und die Umwandlung von Trial-Nummern auslösen.
+
+  </Expandable>
+  <Expandable title="customer.subscription.deleted">
+
+Setzt das Konto bei gelöschtem Abo auf den Free-Plan zurück.
+
+  </Expandable>
+  <Expandable title="invoice.paid">
+
+Verarbeitet bezahlte Rechnungen und wendet Credit-Recharge-Logik mit Talkturo-Billing-Mappings und Fallback-Strategien an.
+
+  </Expandable>
+  <Expandable title="payment_intent.succeeded">
+
+Verarbeitet erfolgreiche einmalige Payment Intents, einschließlich einiger Credit-Kauf-Flows.
+
+  </Expandable>
+</ExpandableGroup>
+
+### Antwortfelder
+
+<ResponseField name="received" field-type="boolean" required="true">
+
+Gibt `true` zurück, wenn Talkturo die Webhook-Anfrage akzeptiert. Der Endpunkt gibt nach der Verarbeitung der Anfrage immer HTTP `200` zurück.
+
+</ResponseField>
+
+## Carrier-Webhooks
+
+Carrier-Webhooks aktualisieren Compliance- und Bundle-Status von Telefonnummern. Telnyx und Twilio verwenden unterschiedliche Vertrauensmodelle — konfigurieren Sie jeden Endpunkt entsprechend dem Provider.
+
+### Telnyx-Compliance-Webhook
+
+`POST /api/phone-numbers/telnyx-webhook` empfängt Telnyx-KYC-Status-Events. Der Endpunkt verifiziert die ED25519-Signatur mit `TELNYX_PUBLIC_KEY`, benötigt Zugriff auf den rohen Request-Body und gibt nach der Verarbeitung `200` zurück, um unnötige Retries zu vermeiden.
+
+<Callout kind="alert">
+
+Wenn `TELNYX_PUBLIC_KEY` nicht konfiguriert ist, gibt Talkturo `503` zurück. Wenn die Signaturprüfung fehlschlägt, gibt Talkturo `400` zurück.
+
+</Callout>
+
+#### Antwortfelder
+
+<ResponseField name="received" field-type="boolean" required="true">
+
+Gibt `true` zurück, wenn Talkturo die Webhook-Anfrage akzeptiert.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="false">
+
+Carrier- oder Requirement-Group-Status, abgeleitet aus dem Telnyx-Event.
+
+</ResponseField>
+
+<ResponseField name="updated" field-type="boolean" required="false">
+
+Gibt an, ob Talkturo den internen Compliance-Status aktualisiert hat.
+
+</ResponseField>
+
+<ResponseField name="matchedRequest" field-type="boolean" required="false">
+
+Gibt an, ob das Event einer bekannten Compliance-Anfrage oder Requirement Group zugeordnet werden konnte.
+
+</ResponseField>
+
+### Twilio-Bundle-Webhook
+
+`POST /api/phone-numbers/twilio-webhook` empfängt Twilio-Bundle-Status-Callbacks. Der Endpunkt authentifiziert die eingehende Anfrage nicht direkt. Stattdessen liest er die Bundle-Kennung aus dem Payload und ruft den aktuellen Status erneut von Twilio ab, bevor Updates angewendet werden.
+
+#### Anfragefelder
+
+<ParamField body="BundleSID" param-type="string" required="false">
+
+Twilio-Bundle-Kennung. Der Endpunkt akzeptiert auch `BundleSid` und `bundle_sid`.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="received" field-type="boolean" required="true">
+
+Gibt `true` zurück, wenn Talkturo den Callback akzeptiert.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="false">
+
+Aktueller Bundle-Status, nachdem Talkturo den Status erneut von Twilio abgerufen hat.
+
+</ResponseField>
+
+<ResponseField name="matchedRequest" field-type="boolean" required="false">
+
+Gibt an, ob der Callback einer nachverfolgten Compliance-Anfrage zugeordnet werden konnte.
+
+</ResponseField>
+
+## Flow-Trigger-Webhooks
+
+`POST /api/flow/[flowId]/trigger` löst einen veröffentlichten Flow aus einem externen System oder einem Voice-Agenten aus. Der Endpunkt verifiziert einen SHA-256-HMAC des rohen Request-Bodys mit dem `trigger_secret` der Flow-Version, übergeben im Header `X-Talkturo-Secret`.
+
+<Callout kind="alert">
+
+Erzeugen Sie den HMAC aus dem exakten rohen Request-Body. Wenn sich der Body nach dem Signieren ändert, lehnt Talkturo die Anfrage ab.
+
+</Callout>
+
+### Pfadparameter
+
+<ParamField path="flowId" param-type="string" required="true">
+
+Eindeutige Kennung des auszulösenden Flows.
+
+</ParamField>
+
+### Header
+
+<ParamField header="X-Talkturo-Secret" param-type="string" required="true">
+
+HMAC-Signatur für den Request-Body. Talkturo validiert diesen Wert gegen das Trigger-Secret der veröffentlichten Flow-Version.
+
+</ParamField>
+
+### Query-Parameter
+
+<ParamField query="sync" param-type="boolean" required="false">
+
+Wenn auf `true` gesetzt, wartet Talkturo bis zu 30 Sekunden auf den Abschluss des Flows und gibt die Ausgabe inline zurück. Wenn weggelassen, führt Talkturo den Flow asynchron aus und gibt eine Run-ID mit HTTP `202` zurück.
+
+</ParamField>
+
+### Request-Body
+
+<ParamField body="params" param-type="object" required="true">
+
+Eingabewerte, die zur Laufzeit in den Flow übergeben werden.
+
+</ParamField>
+
+<ParamField body="context" param-type="object" required="false">
+
+Optionaler Ausführungskontext. Der Kontext kann assistentenbezogene Werte wie `assistant_id` enthalten.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="ok" field-type="boolean" required="true">
+
+Gibt an, ob Talkturo die Trigger-Anfrage angenommen oder abgeschlossen hat.
+
+</ResponseField>
+
+<ResponseField name="run_id" field-type="string" required="true">
+
+Eindeutige Kennung für den Flow-Lauf.
+
+</ResponseField>
+
+<ResponseField name="output" field-type="object" required="false">
+
+Flow-Ausgabe, die nur bei erfolgreicher synchroner Ausführung zurückgegeben wird.
+
+</ResponseField>
+
+<ResponseField name="error" field-type="string" required="false">
+
+Fehlermeldung bei fehlgeschlagener synchroner Ausführung.
+
+</ResponseField>
+
+<ResponseField name="failed_node" field-type="string" required="false">
+
+Kennung des Nodes, der während der synchronen Ausführung fehlgeschlagen ist.
+
+</ResponseField>
+
+<ResponseField name="partial_output" field-type="object" required="false">
+
+Teilweise Ausgabe, die vor dem Fehlschlagen eines synchronen Laufs erfasst wurde.
+
+</ResponseField>
+
+## Integrations-Provider-Webhooks
+
+`POST /api/flow/integrations/webhooks/[provider]` empfängt eingehende Events von unterstützten Providern und leitet sie in Talkturo-Flow-Integrationen weiter. Jeder Webhook verwendet ein eigenes HMAC-Secret.
+
+### Pfadparameter
+
+<ParamField path="provider" param-type="string" required="true">
+
+Provider-Name für den eingehenden Webhook. Unterstützte Provider umfassen `cal.com`, `calendly` und `slack`.
+
+</ParamField>
+
+### Header
+
+<ParamField header="X-Talkturo-Secret" param-type="string" required="true">
+
+HMAC-Signatur für den Provider-Webhook-Payload. Talkturo validiert den Payload gegen das für diesen Webhook konfigurierte Secret.
+
+</ParamField>
+
+### Antwortverhalten
+
+Der Endpunkt validiert das providerspezifische Secret, parst den Event-Payload und dispatcht das Event in den konfigurierten Integrationsflow. Antwort-Payloads hängen von Integration und Event-Pfad ab; bei Authentifizierungsfehlern findet keine Verarbeitung statt.
+
+## Meta- und Facebook-Webhooks
+
+`GET /api/flow/integrations/webhooks/meta` unterstützt die Webhook-Verifizierung, und `POST /api/flow/integrations/webhooks/meta` empfängt Lead-Ads-Events. Talkturo authentifiziert Anfragen mit einem HMAC, der aus `META_APP_SECRET` abgeleitet wird.
+
+### Anfragemethoden
+
+<ParamField query="hub.mode" param-type="string" required="false">
+
+Meta-Verifizierungsmodus bei der Webhook-Registrierung.
+
+</ParamField>
+
+<ParamField query="hub.verify_token" param-type="string" required="false">
+
+Verifizierungstoken-Wert, den Meta während der Endpunktvalidierung sendet.
+
+</ParamField>
+
+<ParamField query="hub.challenge" param-type="string" required="false">
+
+Challenge-String, den Talkturo bei erfolgreicher Verifizierung zurückgibt.
+
+</ParamField>
+
+### Header
+
+<ParamField header="X-Hub-Signature-256" param-type="string" required="false">
+
+Üblicher Meta-Signatur-Header zur Validierung des Request-Bodys gegen `META_APP_SECRET`.
+
+</ParamField>
+
+### Antwortverhalten
+
+Bei Verifizierungsanfragen gibt Talkturo den Challenge-Wert zurück, wenn die Validierung erfolgreich ist. Bei Event-Zustellungsanfragen validiert Talkturo den Payload und verarbeitet eingehende Meta- oder Facebook-Lead-Daten.
+
+## Assistenten-Webhook-Tests
+
+`POST /api/assistants/[assistantId]/webhooks/test` sendet eine Test-Webhook-Zustellung für eine Assistentenkonfiguration. Nutzen Sie diesen Endpunkt, um zu bestätigen, dass Ziel-URL, Header und Downstream-Empfänger wie erwartet funktionieren, bevor Sie die Produktionszustellung aktivieren.
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Eindeutige Kennung des Assistenten, dessen Webhook-Konfiguration Sie testen möchten.
+
+</ParamField>
+
+### Authentifizierung
+
+Dieser Endpunkt verwendet Sitzungsauthentifizierung. Er ist für authentifizierte Dashboard-Benutzer zum Testen der Assistenten-Webhook-Zustellung gedacht, nicht für Drittanbieter, die in Talkturo posten.
+
+## LiveKit-Token-Handler
+
+`GET /auth/token` erzeugt ein LiveKit-Access-Token, erstellt bei Bedarf einen Room und dispatcht einen Agent. Dieser Endpunkt ist öffentlich und wird über Middleware statt über eine Standard-API-Route bereitgestellt.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -G "https://api.talkturo.com/auth/token" \
+  --data-urlencode "mode=voice" \
+  --data-urlencode "room=sales-demo-room" \
+  --data-urlencode "assistant_id=ast_7c91e4f0" \
+  --data-urlencode "account_slug=acme-sales" \
+  --data-urlencode "visitor_name=Jane Chen" \
+  --data-urlencode "visitor_phone=+14155550182"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "identity": "visitor_9f2b6d1c",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.livekit.token",
+  "roomName": "sales-demo-room",
+  "agentName": "Acme Sales Assistant"
+}
+```
+
+</Response>
+
+### Query-Parameter
+
+<ParamField query="mode" param-type="string" required="false">
+
+Verbindungsmodus, den der Token-Handler verwendet.
+
+</ParamField>
+
+<ParamField query="room" param-type="string" required="false">
+
+Angeforderter LiveKit-Room-Name.
+
+</ParamField>
+
+<ParamField query="assistant_id" param-type="string" required="false">
+
+Assistentenkennung zur Auswahl und zum Dispatch des Agents.
+
+</ParamField>
+
+<ParamField query="account_id" param-type="string" required="false">
+
+Kontokennung, die der Anfrage zugeordnet ist.
+
+</ParamField>
+
+<ParamField query="account_slug" param-type="string" required="false">
+
+Account-Slug, der der Anfrage zugeordnet ist.
+
+</ParamField>
+
+<ParamField query="company_id" param-type="string" required="false">
+
+Unternehmenskennung, die dem Besucher oder der Sitzung zugeordnet ist.
+
+</ParamField>
+
+<ParamField query="visitor_name" param-type="string" required="false">
+
+Anzeigename des Besuchers, der der LiveKit-Identität zugeordnet ist.
+
+</ParamField>
+
+<ParamField query="visitor_phone" param-type="string" required="false">
+
+Telefonnummer des Besuchers, die der Sitzung zugeordnet ist.
+
+</ParamField>
+
+<ParamField query="billing_exempt" param-type="string" required="false">
+
+Optionales Flag für das Billing-Verhalten bei der Token-Erzeugung.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="identity" field-type="string" required="true">
+
+Erzeugte Teilnehmeridentität.
+
+</ResponseField>
+
+<ResponseField name="accessToken" field-type="string" required="true">
+
+LiveKit-Access-Token für die Teilnehmer-Sitzung.
+
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+
+Name des LiveKit-Rooms, der für die Sitzung erstellt oder wiederverwendet wurde.
+
+</ResponseField>
+
+<ResponseField name="agentName" field-type="string" required="true">
+
+Name des gedispatchten Agents.
+
+</ResponseField>
+
+## Zapier-Integration
+
+`POST /api/integrations/zapier` ist der Talkturo-Endpunkt für die Zapier-Integration. Verwenden Sie diesen Endpunkt, wenn Sie Talkturo-Events oder -Aktionen in Zapier-Workflows einbinden.
+
+### Antwortverhalten
+
+Exakter Payload und Authentifizierungsverhalten hängen von der Zapier-Integrationskonfiguration ab. Wenn Sie gegen diesen Endpunkt entwickeln, validieren Sie das konkrete Integrationssetup in Ihrem Workspace, bevor Sie Produktionsverkehr senden.
+
+## Sicherheitshinweise
+
+<Callout kind="info">
+
+Bevorzugen Sie signierte Webhooks, wann immer das Upstream-System sie unterstützt. Bei unsignierten Callbacks behandeln Sie den eingehenden Body als unvertrauenswürdige Eingabe und verifizieren den Status beim Provider, bevor Sie Kontodaten ändern.
+
+</Callout>
+
+Die Webhook-Oberfläche in Talkturo folgt drei Mustern:
+
+- **Provider-signierte Anfragen** für Stripe und Telnyx.
+- **Von Talkturo verwaltete HMAC-Secrets** für Flow-Trigger und Integrations-Webhooks.
+- **Status-Reverifizierung** für Callbacks wie Twilio, bei denen Talkturo den aktuellen Provider-Status abruft, bevor Updates angewendet werden.
+
+## Verwandte Endpunkte
+
+<Columns cols={2}>
+  <Card title="Flow-Integrationen" href="/de/api-reference/flow" icon="zap" cta="Flow-API-Referenz öffnen" />
+  <Card title="Assistenten" href="/de/api-reference/assistants" icon="users" cta="Assistenten-API-Referenz öffnen" />
+</Columns>
