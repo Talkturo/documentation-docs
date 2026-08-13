@@ -1,11 +1,15 @@
 {
-  "name": "Talkturo LLC",
+  "name": "Talkturo",
   "colors": {
     "light": {
-      "brand": "#3B82F6"
+      "brand": "#7B34DE",
+      "heading": "#1a1a1a",
+      "text": "#374151"
     },
     "dark": {
-      "brand": "#87B1F6"
+      "brand": "#9256e6",
+      "heading": "#f2f2f2",
+      "text": "#c1c1c1"
     }
   },
   "navigation": {
@@ -545,5 +549,9 @@
         ]
       }
     ]
-  }
+  },
+  "logo-dark": "https://blob-cdn.documentation.ai/org-a9279f2a-06ad-4980-b2d9-ff5ae04d1ba3/doc-5be77f70-df12-41c2-9faf-13096db869a0/1786605271930-6lrke101ot8-talkturo-logo.svg?rasterize-bypass=true",
+  "logo-light": "https://blob-cdn.documentation.ai/org-a9279f2a-06ad-4980-b2d9-ff5ae04d1ba3/doc-5be77f70-df12-41c2-9faf-13096db869a0/1786605317830-k2gfl3l43yi-talkturo-logo-dark.svg?rasterize-bypass=true",
+  "favicon": "https://blob-cdn.documentation.ai/org-a9279f2a-06ad-4980-b2d9-ff5ae04d1ba3/doc-5be77f70-df12-41c2-9faf-13096db869a0/1786605460295-niqejkn9wfa-8027a492-d416-4b7b-835e-0df3788ed453.jpg?fm=auto&auto=compress%2Cformat",
+  "title": "Talkturo"
 }
