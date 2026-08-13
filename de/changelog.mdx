@@ -8,6 +8,26 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-12" description="v2.3.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Guthaben und Profilmenü auf mobil** — Dein Guthabenstand und das Profilmenü sind jetzt in der mobilen Top-Bar erreichbar, sodass du Guthaben prüfen und dein Konto verwalten kannst, ohne auf den Desktop zu wechseln. Siehe [Abrechnung](/billing).
+  - **Telnyx-City-Level-Verifizierung erzwungen** — Telefonnummernkäufe über Telnyx erzwingen jetzt die City-Level-Verifizierung, analog zum Schutz, den Twilio bereits bietet. Das verhindert den Kauf von Nummern in Städten, für die du nicht verifiziert bist. Siehe [Telefonie](/telephony).
+
+  ## Verbesserungen
+
+  - **Compliance-Stadtauswahl neu gestaltet** — Bei der Beantragung einer regulatorischen Verifizierung musst du jetzt explizit eine Stadt auswählen oder eingeben. Ein neuer Hinweis erklärt, dass die Freigabe nur für diese Stadt gilt — nicht für das gesamte Land. Siehe [Telefonie](/telephony).
+  - **Admin-Kontosuche verbessert** — Die Admin-Kontosuche findet jetzt Name, E-Mail und Workspace-Slug unabhängig von Groß-/Kleinschreibung, sodass sich Konten schneller finden lassen.
+  - **Abgelaufene Telnyx-Verifizierungen erkannt** — Abgelaufene Carrier-Freigaben für Telnyx werden jetzt automatisch erkannt und neu bewertet, damit das Kauf-Gate über die Zeit korrekt bleibt. Siehe [Telefonie](/telephony).
+
+  ## Bugfixes
+
+  - **Mobiles Menü scrollt** — Das mobile Hamburger-Menü scrollt jetzt auf kleinen Bildschirmen, sodass alle Navigationspunkte — inklusive Abmelden — immer erreichbar sind.
+  - **Twilio-Compliance-Freigabe-Webhook** — Echtzeit-Freigabebenachrichtigungen von Twilio werden jetzt korrekt verarbeitet statt still ignoriert, sodass Freigaben sofort sichtbar werden.
+  - **Layout des Verifizierungsprüfungsdialogs** — Behoben: Lange Feldnamen führten dazu, dass im Admin-Verifizierungsprüfungsdialog Labels und Buttons abgeschnitten wurden.
+  - **Logging bei nächtlicher Bundle-Erneuerung** — Behoben: Ein Logging-Fehler im nächtlichen Job zur Erneuerung regulatorischer Bundles machte es unmöglich, erfolgreiche Erneuerungen von Carrier-Ausfällen zu unterscheiden.
+</Update>
+
 <Update label="2026-08-11" description="v2.2.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
