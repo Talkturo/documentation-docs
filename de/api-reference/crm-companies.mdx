@@ -7,267 +7,935 @@ description: >-
 ---
 ## Unternehmen im CRM verwalten
 
-Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge aktualisieren, löschen und die zugeordneten Kontakte eines Unternehmens abfragen.
-
-Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung.
+Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge aktualisieren, löschen und Kontakte direkt einem Unternehmen zuordnen.
 
 <Callout kind="info" collapsed="false">
-  Die Listenansicht unterstützt Seitennummerierung und Suche. Die Detailendpunkte arbeiten mit der Unternehmens-ID aus dem CRM.
+
+`GET /api/crm/companies` und `POST /api/crm/companies` akzeptieren API-Keys oder Session-Cookies. `GET /api/crm/companies/{id}`, `PUT /api/crm/companies/{id}` und `DELETE /api/crm/companies/{id}` funktionieren nur mit einem Session-Cookie aus einer angemeldeten Anwendungssitzung.
+
 </Callout>
 
 ## Endpunktübersicht
 
-| Methode  | Pfad                               | Zweck                                 |
-| -------- | ---------------------------------- | ------------------------------------- |
-| `GET`    | `/api/crm/companies`               | Unternehmen auflisten                 |
-| `POST`   | `/api/crm/companies`               | Unternehmen erstellen                 |
-| `GET`    | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen         |
-| `PATCH`  | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             |
-| `DELETE` | `/api/crm/companies/{id}`          | Unternehmen löschen                   |
-| `GET`    | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten |
+| Methode | Pfad                               | Zweck                                      |
+| ------- | ---------------------------------- | ------------------------------------------ |
+| `GET`   | `/api/crm/companies`               | Unternehmen auflisten                      |
+| `POST`  | `/api/crm/companies`               | Unternehmen erstellen                      |
+| `GET`   | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen              |
+| `PUT`   | `/api/crm/companies/{id}`          | Unternehmen aktualisieren                  |
+| `DELETE`| `/api/crm/companies/{id}`          | Unternehmen löschen                        |
+| `GET`   | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten      |
+| `POST`  | `/api/crm/companies/{id}/contacts` | Kontakt direkt für ein Unternehmen anlegen |
+
+## Unternehmensobjekt
+
+Das Unternehmensobjekt enthält Stammdaten, Adressfelder, Audit-Informationen und benutzerdefinierte Felder. Listenantworten enthalten zusätzlich `contact_count`.
+
+<ResponseField name="id" field-type="string" required="true">
+  Eindeutige ID des Unternehmens.
+</ResponseField>
+
+<ResponseField name="team_id" field-type="string" required="true">
+  ID des Teams, zu dem das Unternehmen gehört.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+  Name des Unternehmens.
+</ResponseField>
+
+<ResponseField name="website" field-type="string" required="false">
+  Website des Unternehmens, falls hinterlegt.
+</ResponseField>
+
+<ResponseField name="industry" field-type="string" required="false">
+  Branche des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company_size" field-type="string" required="false">
+  Größenkategorie oder Mitarbeitersegment des Unternehmens.
+</ResponseField>
+
+<ResponseField name="address_line1" field-type="string" required="false">
+  Erste Zeile der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="address_line2" field-type="string" required="false">
+  Zweite Zeile der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="city" field-type="string" required="false">
+  Stadt der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="state" field-type="string" required="false">
+  Bundesland, Region oder Kanton der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="postal_code" field-type="string" required="false">
+  Postleitzahl der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="country" field-type="string" required="false">
+  Land der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="phone" field-type="string" required="false">
+  Zentrale Telefonnummer des Unternehmens.
+</ResponseField>
+
+<ResponseField name="notes" field-type="string" required="false">
+  Interne Notizen zum Unternehmen.
+</ResponseField>
+
+<ResponseField name="custom_fields" field-type="object" required="false">
+  Benutzerdefinierte Felder als Schlüssel-Wert-Objekt.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+  Zeitpunkt der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+  Zeitpunkt der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="created_by" field-type="string" required="false">
+  ID des Benutzers, der den Datensatz erstellt hat.
+</ResponseField>
+
+<ResponseField name="updated_by" field-type="string" required="false">
+  ID des Benutzers, der den Datensatz zuletzt aktualisiert hat.
+</ResponseField>
+
+<ResponseField name="contact_count" field-type="integer" required="false">
+  Anzahl der zugeordneten Kontakte. Dieses Feld ist nur in Listenantworten enthalten.
+</ResponseField>
 
 ## Unternehmen auflisten
 
-Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise abzurufen oder mit einer Suchanfrage zu filtern.
+Rufen Sie `GET /api/crm/companies` auf, um Unternehmen zu filtern und in Blöcken abzurufen. Die Suche verwendet `ILIKE` auf `name` und `website`.
 
 <Request show-lines="true">
-  ```bash
-  curl -X GET "https://api.talkturo.local/api/crm/companies?page=1&limit=20&search=Acme" \
-    -H "Cookie: sb-session=example_session_token"
-  ```
+```bash
+curl -X GET "https://api.talkturo.local/api/crm/companies?teamId=team_d3f91ab4&search=acme&industry=Manufacturing&limit=25&offset=0" \
+  -H "x-api-key: tk_example_9xmk7q2r"
+```
 </Request>
 
 <Response show-lines="true">
-  ```json
-  {
-    "success": true,
-    "companies": [
-      {
-        "id": "cmp_9f2c7a1d",
-        "name": "Acme Industrial Group",
-        "website": "https://acme-industrial.com",
-        "industry": "Manufacturing"
+```json
+{
+  "success": true,
+  "companies": [
+    {
+      "id": "cmp_9f2c7a1d",
+      "team_id": "team_d3f91ab4",
+      "name": "Acme Industrial Group",
+      "website": "https://acme-industrial.com",
+      "industry": "Manufacturing",
+      "company_size": "201-500",
+      "address_line1": "Industriestraße 18",
+      "address_line2": "Gebäude B",
+      "city": "Hamburg",
+      "state": "Hamburg",
+      "postal_code": "20457",
+      "country": "DE",
+      "phone": "+49 40 55550100",
+      "notes": "Bestandskunde mit mehreren Standorten.",
+      "custom_fields": {
+        "customerTier": "enterprise",
+        "accountRegion": "DACH"
       },
-      {
-        "id": "cmp_2b7d1e4a",
-        "name": "Acme Logistics GmbH",
-        "website": "https://acme-logistics.de",
-        "industry": "Logistics"
-      }
-    ],
-    "total": 42,
-    "page": 1
-  }
-  ```
+      "created_at": "2025-01-10T09:12:44.000Z",
+      "updated_at": "2025-02-14T15:28:03.000Z",
+      "created_by": "usr_41cd82fa",
+      "updated_by": "usr_41cd82fa",
+      "contact_count": 12
+    }
+  ],
+  "count": 1,
+  "limit": 25,
+  "offset": 0
+}
+```
 </Response>
 
 ### Query-Parameter
 
-<ParamField query="page" param-type="integer" required="false" deprecated="false" show-location="true">
-  Die Seitennummer der Ergebnisliste.
+<ParamField query="teamId" param-type="string" required="false">
+  Beschränkt die Ergebnisse auf ein bestimmtes Team.
 </ParamField>
 
-<ParamField query="limit" param-type="integer" required="false" deprecated="false" show-location="true">
-  Die maximale Anzahl der zurückgegebenen Unternehmen pro Seite.
+<ParamField query="search" param-type="string" required="false">
+  Durchsucht `name` und `website` per `ILIKE`.
 </ParamField>
 
-<ParamField query="search" param-type="string" required="false" deprecated="false" show-location="true">
-  Filtert die Liste nach einem Suchbegriff.
+<ParamField query="industry" param-type="string" required="false">
+  Filtert nach exakter Branchenübereinstimmung.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+  Maximale Anzahl zurückgegebener Unternehmen. Standardwert ist `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+  Anzahl zu überspringender Datensätze. Standardwert ist `0`.
 </ParamField>
 
 ### Antwortfelder
 
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+<ResponseField name="success" field-type="boolean" required="true">
   Gibt an, ob die Anfrage erfolgreich war.
 </ResponseField>
 
-<ResponseField name="companies" field-type="array" required="true" deprecated="false">
+<ResponseField name="companies" field-type="array" required="true">
   Liste der gefundenen Unternehmensdatensätze.
 </ResponseField>
 
-<ResponseField name="companies[].id" field-type="string" required="true" deprecated="false">
+<ResponseField name="companies[].id" field-type="string" required="true">
   Eindeutige ID des Unternehmens.
 </ResponseField>
 
-<ResponseField name="companies[].name" field-type="string" required="true" deprecated="false">
+<ResponseField name="companies[].team_id" field-type="string" required="true">
+  ID des Teams, zu dem das Unternehmen gehört.
+</ResponseField>
+
+<ResponseField name="companies[].name" field-type="string" required="true">
   Name des Unternehmens.
 </ResponseField>
 
-<ResponseField name="companies[].website" field-type="string" required="false" deprecated="false">
-  Webadresse des Unternehmens, falls hinterlegt.
+<ResponseField name="companies[].website" field-type="string" required="false">
+  Website des Unternehmens.
 </ResponseField>
 
-<ResponseField name="companies[].industry" field-type="string" required="false" deprecated="false">
-  Branche des Unternehmens, falls hinterlegt.
+<ResponseField name="companies[].industry" field-type="string" required="false">
+  Branche des Unternehmens.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true" deprecated="false">
-  Gesamtzahl der Treffer über alle Seiten hinweg.
+<ResponseField name="companies[].company_size" field-type="string" required="false">
+  Größenkategorie des Unternehmens.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true" deprecated="false">
-  Die aktuelle Ergebnisseite.
+<ResponseField name="companies[].address_line1" field-type="string" required="false">
+  Erste Adresszeile.
+</ResponseField>
+
+<ResponseField name="companies[].address_line2" field-type="string" required="false">
+  Zweite Adresszeile.
+</ResponseField>
+
+<ResponseField name="companies[].city" field-type="string" required="false">
+  Stadt der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="companies[].state" field-type="string" required="false">
+  Region oder Bundesland.
+</ResponseField>
+
+<ResponseField name="companies[].postal_code" field-type="string" required="false">
+  Postleitzahl.
+</ResponseField>
+
+<ResponseField name="companies[].country" field-type="string" required="false">
+  Ländercode oder Ländername.
+</ResponseField>
+
+<ResponseField name="companies[].phone" field-type="string" required="false">
+  Telefonnummer des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].notes" field-type="string" required="false">
+  Interne Notizen zum Unternehmen.
+</ResponseField>
+
+<ResponseField name="companies[].custom_fields" field-type="object" required="false">
+  Benutzerdefinierte Felder des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].created_at" field-type="string" required="true">
+  Erstellungszeitpunkt im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="companies[].updated_at" field-type="string" required="true">
+  Zeitpunkt der letzten Änderung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="companies[].created_by" field-type="string" required="false">
+  ID des Benutzers, der das Unternehmen erstellt hat.
+</ResponseField>
+
+<ResponseField name="companies[].updated_by" field-type="string" required="false">
+  ID des Benutzers, der das Unternehmen zuletzt aktualisiert hat.
+</ResponseField>
+
+<ResponseField name="companies[].contact_count" field-type="integer" required="false">
+  Anzahl der Kontakte, die diesem Unternehmen zugeordnet sind.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+  Anzahl der in dieser Antwort enthaltenen Unternehmen.
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true">
+  Verwendetes Limit der Abfrage.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+  Verwendeter Offset der Abfrage.
 </ResponseField>
 
 ## Unternehmen erstellen
 
-Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CRM anzulegen.
+Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CRM anzulegen. Der Request-Body verwendet Camel-Case-Feldnamen.
 
 <Request show-lines="true">
-  ```bash
-  curl -X POST "https://api.talkturo.local/api/crm/companies" \
-    -H "Content-Type: application/json" \
-    -H "Cookie: sb-session=example_session_token" \
-    -d '{
-      "name": "Northwind Health Partners",
-      "website": "https://northwind-health.com",
-      "industry": "Healthcare",
-      "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
-    }'
-  ```
+```bash
+curl -X POST "https://api.talkturo.local/api/crm/companies" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: tk_example_9xmk7q2r" \
+  -d '{
+    "name": "Northwind Health Partners",
+    "website": "https://northwind-health.com",
+    "industry": "Healthcare",
+    "companySize": "51-200",
+    "addressLine1": "Friedrichstraße 120",
+    "addressLine2": "3. OG",
+    "city": "Berlin",
+    "state": "Berlin",
+    "postalCode": "10117",
+    "country": "DE",
+    "phone": "+49 30 55550123",
+    "notes": "Pilotprojekt für Q2 geplant.",
+    "customFields": {
+      "ownerRegion": "EMEA",
+      "complianceLevel": "high"
+    }
+  }'
+```
 </Request>
 
 <Response show-lines="true">
-  ```json
-  {
-    "success": true,
-    "company": {
-      "id": "cmp_c4a91e7b",
-      "name": "Northwind Health Partners",
-      "website": "https://northwind-health.com",
-      "industry": "Healthcare",
-      "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
-    }
+```json
+{
+  "success": true,
+  "company": {
+    "id": "cmp_c4a91e7b",
+    "team_id": "team_d3f91ab4",
+    "name": "Northwind Health Partners",
+    "website": "https://northwind-health.com",
+    "industry": "Healthcare",
+    "company_size": "51-200",
+    "address_line1": "Friedrichstraße 120",
+    "address_line2": "3. OG",
+    "city": "Berlin",
+    "state": "Berlin",
+    "postal_code": "10117",
+    "country": "DE",
+    "phone": "+49 30 55550123",
+    "notes": "Pilotprojekt für Q2 geplant.",
+    "custom_fields": {
+      "ownerRegion": "EMEA",
+      "complianceLevel": "high"
+    },
+    "created_at": "2025-02-18T10:05:11.000Z",
+    "updated_at": "2025-02-18T10:05:11.000Z",
+    "created_by": "usr_41cd82fa",
+    "updated_by": "usr_41cd82fa"
   }
-  ```
+}
+```
 </Response>
 
 ### Request-Body
 
-<ParamField body="name" param-type="string" required="true" deprecated="false" show-location="true">
+<ParamField body="name" param-type="string" required="true">
   Name des Unternehmens.
 </ParamField>
 
-<ParamField body="website" param-type="string" required="false" deprecated="false" show-location="true">
-  Webadresse des Unternehmens.
+<ParamField body="website" param-type="string" required="false">
+  Website des Unternehmens.
 </ParamField>
 
-<ParamField body="industry" param-type="string" required="false" deprecated="false" show-location="true">
+<ParamField body="industry" param-type="string" required="false">
   Branche oder Marktsegment des Unternehmens.
 </ParamField>
 
-<ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
+<ParamField body="companySize" param-type="string" required="false">
+  Größenkategorie des Unternehmens.
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string" required="false">
+  Erste Zeile der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string" required="false">
+  Zweite Zeile der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false">
+  Stadt der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false">
+  Bundesland, Region oder Kanton.
+</ParamField>
+
+<ParamField body="postalCode" param-type="string" required="false">
+  Postleitzahl der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false">
+  Land oder Ländercode.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false">
   Telefonnummer des Unternehmens.
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Postanschrift oder Geschäftsadresse des Unternehmens.
+<ParamField body="notes" param-type="string" required="false">
+  Interne Notizen zum Unternehmen.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+  Benutzerdefinierte Felder als Schlüssel-Wert-Objekt.
 </ParamField>
 
 ### Antwortfelder
 
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+<ResponseField name="success" field-type="boolean" required="true">
   Gibt an, ob das Unternehmen erfolgreich erstellt wurde.
 </ResponseField>
 
-<ResponseField name="company" field-type="object" required="true" deprecated="false">
+<ResponseField name="company" field-type="object" required="true">
   Der neu angelegte Unternehmensdatensatz.
 </ResponseField>
 
-<ResponseField name="company.id" field-type="string" required="true" deprecated="false">
+<ResponseField name="company.id" field-type="string" required="true">
   Eindeutige ID des neuen Unternehmens.
 </ResponseField>
 
+<ResponseField name="company.team_id" field-type="string" required="true">
+  ID des Teams, zu dem das Unternehmen gehört.
+</ResponseField>
+
+<ResponseField name="company.name" field-type="string" required="true">
+  Name des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.website" field-type="string" required="false">
+  Website des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.industry" field-type="string" required="false">
+  Branche des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.company_size" field-type="string" required="false">
+  Größenkategorie des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.address_line1" field-type="string" required="false">
+  Erste Adresszeile.
+</ResponseField>
+
+<ResponseField name="company.address_line2" field-type="string" required="false">
+  Zweite Adresszeile.
+</ResponseField>
+
+<ResponseField name="company.city" field-type="string" required="false">
+  Stadt der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="company.state" field-type="string" required="false">
+  Region oder Bundesland.
+</ResponseField>
+
+<ResponseField name="company.postal_code" field-type="string" required="false">
+  Postleitzahl.
+</ResponseField>
+
+<ResponseField name="company.country" field-type="string" required="false">
+  Land oder Ländercode.
+</ResponseField>
+
+<ResponseField name="company.phone" field-type="string" required="false">
+  Telefonnummer des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.notes" field-type="string" required="false">
+  Interne Notizen zum Unternehmen.
+</ResponseField>
+
+<ResponseField name="company.custom_fields" field-type="object" required="false">
+  Benutzerdefinierte Felder des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.created_at" field-type="string" required="true">
+  Erstellungszeitpunkt im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="company.updated_at" field-type="string" required="true">
+  Zeitpunkt der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="company.created_by" field-type="string" required="false">
+  ID des Benutzers, der den Datensatz erstellt hat.
+</ResponseField>
+
+<ResponseField name="company.updated_by" field-type="string" required="false">
+  ID des Benutzers, der den Datensatz zuletzt aktualisiert hat.
+</ResponseField>
+
 <Callout kind="tip" collapsed="false">
-  Wenn Sie Unternehmensdatensätze später mit Kontakten oder Opportunities verknüpfen möchten, speichern Sie die zurückgegebene `company.id` direkt nach dem Erstellen.
+
+Wenn Sie Unternehmensdatensätze später mit Kontakten oder Opportunities verknüpfen möchten, speichern Sie die zurückgegebene `company.id` direkt nach dem Erstellen.
+
 </Callout>
 
 ## Einzelnes Unternehmen abrufen
 
-Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdatensatz anhand seiner ID abzurufen.
+Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdatensatz samt zugehöriger Kontakte und Opportunities abzurufen. Die Antwort enthält bis zu 100 Kontakte und bis zu 50 Opportunities in reduzierter Form.
+
+<Request show-lines="true">
+```bash
+curl -X GET "https://api.talkturo.local/api/crm/companies/cmp_c4a91e7b" \
+  -H "Cookie: sb-session=example_session_token"
+```
+</Request>
+
+<Response show-lines="true">
+```json
+{
+  "success": true,
+  "company": {
+    "id": "cmp_c4a91e7b",
+    "team_id": "team_d3f91ab4",
+    "name": "Northwind Health Partners",
+    "website": "https://northwind-health.com",
+    "industry": "Healthcare",
+    "company_size": "51-200",
+    "address_line1": "Friedrichstraße 120",
+    "address_line2": "3. OG",
+    "city": "Berlin",
+    "state": "Berlin",
+    "postal_code": "10117",
+    "country": "DE",
+    "phone": "+49 30 55550123",
+    "notes": "Pilotprojekt für Q2 geplant.",
+    "custom_fields": {
+      "ownerRegion": "EMEA",
+      "complianceLevel": "high"
+    },
+    "created_at": "2025-02-18T10:05:11.000Z",
+    "updated_at": "2025-02-20T08:41:57.000Z",
+    "created_by": "usr_41cd82fa",
+    "updated_by": "usr_7d20be19",
+    "contacts": [
+      {
+        "id": "ctc_2fa1bd9c",
+        "first_name": "Mara",
+        "last_name": "Klein",
+        "email": "mara.klein@northwind-health.com",
+        "phone": "+49 30 55550124",
+        "job_title": "Head of Operations",
+        "lead_status": "qualified"
+      }
+    ],
+    "opportunities": [
+      {
+        "id": "opp_64ca9df1",
+        "name": "Rollout Berlin Clinics",
+        "stage": "proposal",
+        "amount": 48000,
+        "probability": 65,
+        "expected_close_date": "2025-04-30"
+      }
+    ]
+  }
+}
+```
+</Response>
 
 ### Pfadparameter
 
-<ParamField path="id" param-type="string" required="true" deprecated="false" show-location="true">
+<ParamField path="id" param-type="string" required="true">
   Eindeutige ID des Unternehmens.
 </ParamField>
 
 ### Antwortstruktur
 
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+<ResponseField name="success" field-type="boolean" required="true">
   Gibt an, ob die Anfrage erfolgreich war.
 </ResponseField>
 
-<ResponseField name="company" field-type="object" required="true" deprecated="false">
+<ResponseField name="company" field-type="object" required="true">
   Der angeforderte Unternehmensdatensatz.
 </ResponseField>
 
-<ResponseField name="company.id" field-type="string" required="true" deprecated="false">
+<ResponseField name="company.id" field-type="string" required="true">
   Eindeutige ID des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.team_id" field-type="string" required="true">
+  ID des Teams, zu dem das Unternehmen gehört.
+</ResponseField>
+
+<ResponseField name="company.name" field-type="string" required="true">
+  Name des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.website" field-type="string" required="false">
+  Website des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.industry" field-type="string" required="false">
+  Branche des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.company_size" field-type="string" required="false">
+  Größenkategorie des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.address_line1" field-type="string" required="false">
+  Erste Adresszeile.
+</ResponseField>
+
+<ResponseField name="company.address_line2" field-type="string" required="false">
+  Zweite Adresszeile.
+</ResponseField>
+
+<ResponseField name="company.city" field-type="string" required="false">
+  Stadt der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="company.state" field-type="string" required="false">
+  Region oder Bundesland.
+</ResponseField>
+
+<ResponseField name="company.postal_code" field-type="string" required="false">
+  Postleitzahl.
+</ResponseField>
+
+<ResponseField name="company.country" field-type="string" required="false">
+  Land oder Ländercode.
+</ResponseField>
+
+<ResponseField name="company.phone" field-type="string" required="false">
+  Telefonnummer des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.notes" field-type="string" required="false">
+  Interne Notizen zum Unternehmen.
+</ResponseField>
+
+<ResponseField name="company.custom_fields" field-type="object" required="false">
+  Benutzerdefinierte Felder des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.created_at" field-type="string" required="true">
+  Erstellungszeitpunkt im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="company.updated_at" field-type="string" required="true">
+  Zeitpunkt der letzten Änderung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="company.created_by" field-type="string" required="false">
+  ID des Benutzers, der den Datensatz erstellt hat.
+</ResponseField>
+
+<ResponseField name="company.updated_by" field-type="string" required="false">
+  ID des Benutzers, der den Datensatz zuletzt aktualisiert hat.
+</ResponseField>
+
+<ResponseField name="company.contacts" field-type="array" required="true">
+  Die letzten bis zu 100 zugeordneten Kontakte in reduzierter Form.
+</ResponseField>
+
+<ResponseField name="company.contacts[].id" field-type="string" required="true">
+  Eindeutige ID des Kontakts.
+</ResponseField>
+
+<ResponseField name="company.contacts[].first_name" field-type="string" required="true">
+  Vorname des Kontakts.
+</ResponseField>
+
+<ResponseField name="company.contacts[].last_name" field-type="string" required="true">
+  Nachname des Kontakts.
+</ResponseField>
+
+<ResponseField name="company.contacts[].email" field-type="string" required="false">
+  E-Mail-Adresse des Kontakts.
+</ResponseField>
+
+<ResponseField name="company.contacts[].phone" field-type="string" required="false">
+  Telefonnummer des Kontakts.
+</ResponseField>
+
+<ResponseField name="company.contacts[].job_title" field-type="string" required="false">
+  Berufsbezeichnung des Kontakts.
+</ResponseField>
+
+<ResponseField name="company.contacts[].lead_status" field-type="string" required="false">
+  Lead-Status des Kontakts.
+</ResponseField>
+
+<ResponseField name="company.opportunities" field-type="array" required="true">
+  Die letzten bis zu 50 zugeordneten Opportunities in reduzierter Form.
+</ResponseField>
+
+<ResponseField name="company.opportunities[].id" field-type="string" required="true">
+  Eindeutige ID der Opportunity.
+</ResponseField>
+
+<ResponseField name="company.opportunities[].name" field-type="string" required="true">
+  Name der Opportunity.
+</ResponseField>
+
+<ResponseField name="company.opportunities[].stage" field-type="string" required="false">
+  Aktuelle Pipeline-Phase.
+</ResponseField>
+
+<ResponseField name="company.opportunities[].amount" field-type="number" required="false">
+  Erwarteter Wert der Opportunity.
+</ResponseField>
+
+<ResponseField name="company.opportunities[].probability" field-type="number" required="false">
+  Abschlusswahrscheinlichkeit in Prozent.
+</ResponseField>
+
+<ResponseField name="company.opportunities[].expected_close_date" field-type="string" required="false">
+  Erwartetes Abschlussdatum.
 </ResponseField>
 
 ## Unternehmen aktualisieren
 
-Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehmens zu ändern. Der Endpunkt gibt den aktualisierten Datensatz zurück.
+Senden Sie `PUT /api/crm/companies/{id}`, um einen vorhandenen Unternehmensdatensatz vollständig zu aktualisieren. Der Endpunkt akzeptiert nur Session-Cookies und verwendet im Request-Body Camel-Case-Feldnamen.
+
+<Request show-lines="true">
+```bash
+curl -X PUT "https://api.talkturo.local/api/crm/companies/cmp_c4a91e7b" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_token" \
+  -d '{
+    "name": "Northwind Health Partners GmbH",
+    "website": "https://northwind-health.com",
+    "industry": "Healthcare",
+    "companySize": "201-500",
+    "addressLine1": "Friedrichstraße 120",
+    "addressLine2": "5. OG",
+    "city": "Berlin",
+    "state": "Berlin",
+    "postalCode": "10117",
+    "country": "DE",
+    "phone": "+49 30 55550123",
+    "notes": "Rahmenvertrag in Abstimmung.",
+    "customFields": {
+      "ownerRegion": "EMEA",
+      "complianceLevel": "high"
+    }
+  }'
+```
+</Request>
+
+<Response show-lines="true">
+```json
+{
+  "success": true,
+  "company": {
+    "id": "cmp_c4a91e7b",
+    "team_id": "team_d3f91ab4",
+    "name": "Northwind Health Partners GmbH",
+    "website": "https://northwind-health.com",
+    "industry": "Healthcare",
+    "company_size": "201-500",
+    "address_line1": "Friedrichstraße 120",
+    "address_line2": "5. OG",
+    "city": "Berlin",
+    "state": "Berlin",
+    "postal_code": "10117",
+    "country": "DE",
+    "phone": "+49 30 55550123",
+    "notes": "Rahmenvertrag in Abstimmung.",
+    "custom_fields": {
+      "ownerRegion": "EMEA",
+      "complianceLevel": "high"
+    },
+    "created_at": "2025-02-18T10:05:11.000Z",
+    "updated_at": "2025-02-22T12:14:36.000Z",
+    "created_by": "usr_41cd82fa",
+    "updated_by": "usr_7d20be19"
+  }
+}
+```
+</Response>
 
 ### Pfadparameter
 
-<ParamField path="id" param-type="string" required="true" deprecated="false" show-location="true">
+<ParamField path="id" param-type="string" required="true">
   Eindeutige ID des zu aktualisierenden Unternehmens.
 </ParamField>
 
 ### Aktualisierbare Felder
 
-<ParamField body="name" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierter Unternehmensname.
+<ParamField body="name" param-type="string" required="true">
+  Name des Unternehmens.
 </ParamField>
 
-<ParamField body="website" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierte Webadresse.
+<ParamField body="website" param-type="string" required="false">
+  Website des Unternehmens.
 </ParamField>
 
-<ParamField body="industry" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierte Branchenangabe.
+<ParamField body="industry" param-type="string" required="false">
+  Branche oder Marktsegment des Unternehmens.
 </ParamField>
 
-<ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierte Telefonnummer.
+<ParamField body="companySize" param-type="string" required="false">
+  Größenkategorie des Unternehmens.
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierte Geschäftsadresse.
+<ParamField body="addressLine1" param-type="string" required="false">
+  Erste Zeile der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string" required="false">
+  Zweite Zeile der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false">
+  Stadt der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false">
+  Bundesland, Region oder Kanton.
+</ParamField>
+
+<ParamField body="postalCode" param-type="string" required="false">
+  Postleitzahl der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false">
+  Land oder Ländercode.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false">
+  Telefonnummer des Unternehmens.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+  Interne Notizen zum Unternehmen.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+  Benutzerdefinierte Felder als Schlüssel-Wert-Objekt.
 </ParamField>
 
 ### Antwortstruktur
 
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+<ResponseField name="success" field-type="boolean" required="true">
   Gibt an, ob die Aktualisierung erfolgreich war.
 </ResponseField>
 
-<ResponseField name="company" field-type="object" required="true" deprecated="false">
+<ResponseField name="company" field-type="object" required="true">
   Der aktualisierte Unternehmensdatensatz.
+</ResponseField>
+
+<ResponseField name="company.id" field-type="string" required="true">
+  Eindeutige ID des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.team_id" field-type="string" required="true">
+  ID des Teams, zu dem das Unternehmen gehört.
+</ResponseField>
+
+<ResponseField name="company.name" field-type="string" required="true">
+  Name des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.website" field-type="string" required="false">
+  Website des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.industry" field-type="string" required="false">
+  Branche des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.company_size" field-type="string" required="false">
+  Größenkategorie des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.address_line1" field-type="string" required="false">
+  Erste Adresszeile.
+</ResponseField>
+
+<ResponseField name="company.address_line2" field-type="string" required="false">
+  Zweite Adresszeile.
+</ResponseField>
+
+<ResponseField name="company.city" field-type="string" required="false">
+  Stadt der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="company.state" field-type="string" required="false">
+  Region oder Bundesland.
+</ResponseField>
+
+<ResponseField name="company.postal_code" field-type="string" required="false">
+  Postleitzahl.
+</ResponseField>
+
+<ResponseField name="company.country" field-type="string" required="false">
+  Land oder Ländercode.
+</ResponseField>
+
+<ResponseField name="company.phone" field-type="string" required="false">
+  Telefonnummer des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.notes" field-type="string" required="false">
+  Interne Notizen zum Unternehmen.
+</ResponseField>
+
+<ResponseField name="company.custom_fields" field-type="object" required="false">
+  Benutzerdefinierte Felder des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.created_at" field-type="string" required="true">
+  Erstellungszeitpunkt im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="company.updated_at" field-type="string" required="true">
+  Zeitpunkt der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="company.created_by" field-type="string" required="false">
+  ID des Benutzers, der das Unternehmen erstellt hat.
+</ResponseField>
+
+<ResponseField name="company.updated_by" field-type="string" required="false">
+  ID des Benutzers, der das Unternehmen zuletzt aktualisiert hat.
 </ResponseField>
 
 ## Unternehmen löschen
 
-Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz aus dem CRM zu entfernen.
+Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz aus dem CRM zu entfernen. Der Endpunkt akzeptiert nur Session-Cookies.
 
 ### Pfadparameter
 
-<ParamField path="id" param-type="string" required="true" deprecated="false" show-location="true">
+<ParamField path="id" param-type="string" required="true">
   Eindeutige ID des zu löschenden Unternehmens.
 </ParamField>
 
 ### Antwortstruktur
 
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+<ResponseField name="success" field-type="boolean" required="true">
   Gibt an, ob der Datensatz erfolgreich gelöscht wurde.
 </ResponseField>
 
 <Callout kind="alert" collapsed="false">
-  Das Löschen eines Unternehmens ist als Operation destruktiv. Prüfen Sie vor dem Entfernen, ob nachgelagerte Prozesse oder verknüpfte Datensätze die Unternehmens-ID noch verwenden.
+
+Wenn dem Unternehmen noch Kontakte zugeordnet sind, gibt der Endpunkt `400` zurück und löscht den Datensatz nicht. Entfernen oder verschieben Sie die verknüpften Kontakte zuerst.
+
 </Callout>
 
 ## Kontakte eines Unternehmens auflisten
@@ -276,18 +944,135 @@ Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen
 
 ### Pfadparameter
 
-<ParamField path="id" param-type="string" required="true" deprecated="false" show-location="true">
+<ParamField path="id" param-type="string" required="true">
   Eindeutige ID des Unternehmens.
 </ParamField>
 
 ### Antwortfelder
 
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
+<ResponseField name="success" field-type="boolean" required="true">
   Gibt an, ob die Anfrage erfolgreich war.
 </ResponseField>
 
-<ResponseField name="contacts" field-type="array" required="true" deprecated="false">
+<ResponseField name="contacts" field-type="array" required="true">
   Liste der dem Unternehmen zugeordneten Kontakte.
+</ResponseField>
+
+## Kontakt direkt für ein Unternehmen anlegen
+
+Senden Sie `POST /api/crm/companies/{id}/contacts`, um einen neuen Kontakt direkt mit einem Unternehmen zu verknüpfen. Die Unternehmens-ID stammt aus dem Pfad, nicht aus dem Request-Body.
+
+<Request show-lines="true">
+```bash
+curl -X POST "https://api.talkturo.local/api/crm/companies/cmp_c4a91e7b/contacts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_token" \
+  -d '{
+    "firstName": "Mara",
+    "lastName": "Klein",
+    "phone": "+493055550124",
+    "email": "mara.klein@northwind-health.com",
+    "jobTitle": "Head of Operations",
+    "leadStatus": "qualified",
+    "notes": "Operative Ansprechpartnerin für den Berlin-Rollout."
+  }'
+```
+</Request>
+
+<Response show-lines="true">
+```json
+{
+  "success": true,
+  "contact": {
+    "id": "ctc_2fa1bd9c",
+    "company_id": "cmp_c4a91e7b",
+    "first_name": "Mara",
+    "last_name": "Klein",
+    "email": "mara.klein@northwind-health.com",
+    "phone": "+493055550124",
+    "job_title": "Head of Operations",
+    "lead_status": "qualified"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+  Eindeutige ID des Unternehmens, dem der Kontakt zugeordnet wird.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="firstName" param-type="string" required="true">
+  Vorname des Kontakts.
+</ParamField>
+
+<ParamField body="lastName" param-type="string" required="true">
+  Nachname des Kontakts.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="true">
+  Telefonnummer im E.164-Format.
+</ParamField>
+
+<ParamField body="email" param-type="string" required="false">
+  E-Mail-Adresse des Kontakts.
+</ParamField>
+
+<ParamField body="jobTitle" param-type="string" required="false">
+  Berufsbezeichnung des Kontakts.
+</ParamField>
+
+<ParamField body="leadStatus" param-type="string" required="false">
+  Lead-Status des Kontakts.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+  Interne Notizen zum Kontakt.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+  Gibt an, ob der Kontakt erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="contact" field-type="object" required="true">
+  Der neu angelegte und verknüpfte Kontakt.
+</ResponseField>
+
+<ResponseField name="contact.id" field-type="string" required="true">
+  Eindeutige ID des Kontakts.
+</ResponseField>
+
+<ResponseField name="contact.company_id" field-type="string" required="true">
+  ID des zugeordneten Unternehmens.
+</ResponseField>
+
+<ResponseField name="contact.first_name" field-type="string" required="true">
+  Vorname des Kontakts.
+</ResponseField>
+
+<ResponseField name="contact.last_name" field-type="string" required="true">
+  Nachname des Kontakts.
+</ResponseField>
+
+<ResponseField name="contact.email" field-type="string" required="false">
+  E-Mail-Adresse des Kontakts.
+</ResponseField>
+
+<ResponseField name="contact.phone" field-type="string" required="true">
+  Telefonnummer des Kontakts im E.164-Format.
+</ResponseField>
+
+<ResponseField name="contact.job_title" field-type="string" required="false">
+  Berufsbezeichnung des Kontakts.
+</ResponseField>
+
+<ResponseField name="contact.lead_status" field-type="string" required="false">
+  Lead-Status des Kontakts.
 </ResponseField>
 
 ## Verwandte Ressourcen
@@ -301,4 +1086,3 @@ Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen
 
   </Card>
 </Columns>
-

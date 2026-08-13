@@ -25,7 +25,7 @@ Use **async mode** for production workloads that may run longer than a few secon
 | --- | --- | --- | --- |
 | GET | `/api/flow` | Session cookie | List flows |
 | POST | `/api/flow` | Session cookie | Create a flow |
-| GET | `/api/flow/manifest` | Session cookie | Get connector manifest |
+| GET | `/api/flow/manifest` | None (public) | Get connector manifest |
 | GET | `/api/flow/{flowId}` | Session cookie | Get a flow |
 | PATCH | `/api/flow/{flowId}` | Session cookie | Update a flow |
 | DELETE | `/api/flow/{flowId}` | Session cookie | Archive a flow |

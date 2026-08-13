@@ -1,15 +1,15 @@
 ---
 title: CRM-Opportunities
-description: Verkaufsschancen im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen — Deal-Wert, Phase, zugehörige Kontakte und Unternehmen sowie erwartete Abschlusstermine verfolgen.
+description: Opportunities im Talkturo-CRM auflisten, erstellen, abrufen, aktualisieren und löschen — mit Phasen, Beträgen, Verantwortlichen und Verknüpfungen.
 ---
 
 ## CRM-Opportunities verwalten
 
-Verwalten Sie Verkaufschancen im Talkturo-CRM über Endpunkte zum Auflisten, Erstellen, Abrufen, Aktualisieren und Löschen. Jede Opportunity kann einen Titel, einen Wert, eine Phase sowie Verknüpfungen zu Kontakten und Unternehmen enthalten.
+Verwalten Sie Verkaufschancen im Talkturo-CRM über Endpunkte zum Auflisten, Erstellen, Abrufen, Aktualisieren und Löschen. Jede Opportunity speichert Pipeline-Phase, Betrag, Verantwortliche, erwartete Abschlussdaten sowie Verknüpfungen zu Unternehmen und primären Kontakten.
 
 <Callout kind="info">
 
-Alle CRM-Opportunity-Endpunkte verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Sitzung heraus.
+`GET /api/crm/opportunities` und `POST /api/crm/opportunities` akzeptieren API-Keys oder Session-Cookies. `GET`, `PUT` und `DELETE` für `/api/crm/opportunities/{id}` benötigen eine angemeldete Sitzung und damit ein gültiges Session-Cookie.
 
 </Callout>
 
@@ -17,20 +17,34 @@ Alle CRM-Opportunity-Endpunkte verwenden Session-Authentifizierung. Senden Sie d
 
 | Methode | Pfad | Beschreibung |
 | --- | --- | --- |
-| `GET` | `/api/crm/opportunities` | Opportunities auflisten und nach Suchbegriff, Kontakt oder Unternehmen filtern |
+| `GET` | `/api/crm/opportunities` | Opportunities auflisten und nach Team, Unternehmen, Phase oder Verantwortlichem filtern |
 | `POST` | `/api/crm/opportunities` | Eine neue Opportunity erstellen |
-| `GET` | `/api/crm/opportunities/{id}` | Eine einzelne Opportunity abrufen |
-| `PATCH` | `/api/crm/opportunities/{id}` | Eine bestehende Opportunity aktualisieren |
-| `DELETE` | `/api/crm/opportunities/{id}` | Eine Opportunity löschen |
+| `GET` | `/api/crm/opportunities/{id}` | Eine einzelne Opportunity mit verknüpften Daten abrufen |
+| `PUT` | `/api/crm/opportunities/{id}` | Eine bestehende Opportunity vollständig oder teilweise aktualisieren |
+| `DELETE` | `/api/crm/opportunities/{id}` | Eine Opportunity dauerhaft löschen |
 
 ## GET /api/crm/opportunities
 
-Rufen Sie eine paginierte Liste von Opportunities ab und filtern Sie die Ergebnisse nach Suchbegriff, Kontakt oder Unternehmen.
+Rufen Sie eine paginierte Liste von Opportunities ab und filtern Sie die Ergebnisse nach Team, Unternehmen, Phase oder verantwortlichem Benutzer.
 
-<Request>
+<Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/crm/opportunities?page=1&limit=20&search=renewal&companyId=cmp_9f3k2m1a" \
-  -H "Cookie: sb-access-token=session_example_7fd82k"
+curl -X GET "https://api.talkturo.com/api/crm/opportunities?teamId=team_7a2c91d4&stage=proposal&ownerUserId=usr_1c93ad55&limit=20&offset=0" \
+  -H "Authorization: Bearer ttrk_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/crm/opportunities?teamId=team_7a2c91d4&stage=proposal&ownerUserId=usr_1c93ad55&limit=20&offset=0",
+  {
+    headers: {
+      Authorization: "Bearer ttrk_example_9xmk7q2r"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
 ```
 </Request>
 
@@ -41,39 +55,94 @@ curl -X GET "https://api.talkturo.com/api/crm/opportunities?page=1&limit=20&sear
   "opportunities": [
     {
       "id": "opp_4b29d7e1",
-      "title": "Annual renewal - Acme GmbH",
-      "value": 24000,
+      "team_id": "team_7a2c91d4",
+      "company_id": "cmp_9f3k2m1a",
+      "primary_contact_id": "cnt_8c13fa20",
+      "name": "Jahresverlängerung Acme GmbH",
       "stage": "proposal",
-      "contact_id": "cnt_8c13fa20",
-      "company_id": "cmp_9f3k2m1a"
+      "amount": 24000,
+      "currency": "EUR",
+      "probability": 70,
+      "expected_close_date": "2025-10-15",
+      "actual_close_date": null,
+      "lost_reason": null,
+      "won_details": null,
+      "owner_user_id": "usr_1c93ad55",
+      "notes": "Angebot versendet, Rückmeldung bis Ende des Monats erwartet.",
+      "custom_fields": {
+        "region": "DACH",
+        "renewal_type": "annual"
+      },
+      "created_at": "2025-08-01T09:15:00.000Z",
+      "updated_at": "2025-08-12T14:22:00.000Z",
+      "company": {
+        "id": "cmp_9f3k2m1a",
+        "name": "Acme GmbH"
+      },
+      "primary_contact": {
+        "id": "cnt_8c13fa20",
+        "first_name": "Julia",
+        "last_name": "Weber"
+      }
     }
   ],
-  "total": 1,
-  "page": 1
+  "count": 1,
+  "limit": 20,
+  "offset": 0,
+  "stageTotals": {
+    "lead": {
+      "count": 0,
+      "value": 0
+    },
+    "qualified": {
+      "count": 0,
+      "value": 0
+    },
+    "proposal": {
+      "count": 1,
+      "value": 24000
+    },
+    "negotiation": {
+      "count": 0,
+      "value": 0
+    },
+    "won": {
+      "count": 0,
+      "value": 0
+    },
+    "lost": {
+      "count": 0,
+      "value": 0
+    }
+  }
 }
 ```
 </Response>
 
 ### Query-Parameter
 
-<ParamField query="page" param-type="integer" required="false">
-Gibt die Ergebnisseite an. Wenn Sie keinen Wert senden, verwendet die API die Standardpagination des Endpunkts.
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false">
-Begrenzt die Anzahl der zurückgegebenen Opportunities pro Seite.
-</ParamField>
-
-<ParamField query="search" param-type="string" required="false">
-Filtert Opportunities nach einem Suchbegriff. Verwenden Sie diesen Parameter, um gezielt nach Titeln oder anderen durchsuchbaren Opportunity-Daten zu suchen.
-</ParamField>
-
-<ParamField query="contactId" param-type="string" required="false">
-Gibt nur Opportunities zurück, die mit der angegebenen Kontakt-ID verknüpft sind.
+<ParamField query="teamId" param-type="string" required="false">
+Filtert die Liste auf Opportunities eines bestimmten Teams.
 </ParamField>
 
 <ParamField query="companyId" param-type="string" required="false">
-Gibt nur Opportunities zurück, die mit der angegebenen Unternehmens-ID verknüpft sind.
+Gibt nur Opportunities zurück, die dem angegebenen Unternehmen zugeordnet sind.
+</ParamField>
+
+<ParamField query="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
+Filtert nach einer exakten Opportunity-Phase.
+</ParamField>
+
+<ParamField query="ownerUserId" param-type="string" required="false">
+Gibt nur Opportunities zurück, die dem angegebenen Benutzer gehören.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Begrenzt die Anzahl der zurückgegebenen Opportunities. Standardwert ist `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Überspringt die angegebene Anzahl von Ergebnissen. Standardwert ist `0`.
 </ParamField>
 
 ### Antwortfelder
@@ -83,57 +152,197 @@ Kennzeichnet, ob die Anfrage erfolgreich verarbeitet wurde.
 </ResponseField>
 
 <ResponseField name="opportunities" field-type="array" required="true">
-Enthält die Liste der gefundenen Opportunities für die angeforderte Seite.
+Enthält die Opportunities für den angeforderten Ausschnitt.
 </ResponseField>
 
 <ResponseField name="opportunities[].id" field-type="string" required="true">
 Eindeutige ID der Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].title" field-type="string" required="true">
-Titel oder Name der Verkaufschance.
-</ResponseField>
-
-<ResponseField name="opportunities[].value" field-type="number" required="false">
-Numerischer Wert der Opportunity.
-</ResponseField>
-
-<ResponseField name="opportunities[].stage" field-type="string" required="false">
-Aktuelle Phase der Opportunity.
-</ResponseField>
-
-<ResponseField name="opportunities[].contact_id" field-type="string" required="false">
-ID des verknüpften Kontakts, falls vorhanden.
+<ResponseField name="opportunities[].team_id" field-type="string" required="true">
+ID des Teams, dem die Opportunity gehört.
 </ResponseField>
 
 <ResponseField name="opportunities[].company_id" field-type="string" required="false">
 ID des verknüpften Unternehmens, falls vorhanden.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
-Gesamtzahl der Treffer über alle Seiten hinweg.
+<ResponseField name="opportunities[].primary_contact_id" field-type="string" required="false">
+ID des primären Kontakts, falls vorhanden.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
-Aktuelle Ergebnisseite in der Antwort.
+<ResponseField name="opportunities[].name" field-type="string" required="true">
+Name der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].stage" field-type="string" required="true">
+Aktuelle Phase der Opportunity. Mögliche Werte sind `lead`, `qualified`, `proposal`, `negotiation`, `won` und `lost`.
+</ResponseField>
+
+<ResponseField name="opportunities[].amount" field-type="number" required="false">
+Betrag der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].currency" field-type="string" required="false">
+Währung des Betrags, zum Beispiel `EUR`.
+</ResponseField>
+
+<ResponseField name="opportunities[].probability" field-type="number" required="false">
+Erwartete Abschlusswahrscheinlichkeit als numerischer Wert.
+</ResponseField>
+
+<ResponseField name="opportunities[].expected_close_date" field-type="string" required="false">
+Erwartetes Abschlussdatum im ISO-Datumsformat.
+</ResponseField>
+
+<ResponseField name="opportunities[].actual_close_date" field-type="string" required="false">
+Tatsächliches Abschlussdatum, wenn die Opportunity gewonnen oder verloren wurde.
+</ResponseField>
+
+<ResponseField name="opportunities[].lost_reason" field-type="string" required="false">
+Grund für eine verlorene Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].won_details" field-type="string" required="false">
+Zusätzliche Details zu einer gewonnenen Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].owner_user_id" field-type="string" required="false">
+ID des verantwortlichen Benutzers.
+</ResponseField>
+
+<ResponseField name="opportunities[].notes" field-type="string" required="false">
+Freitextnotizen zur Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].custom_fields" field-type="object" required="false">
+Benutzerdefinierte Felder der Opportunity als Schlüssel-Wert-Objekt.
+</ResponseField>
+
+<ResponseField name="opportunities[].created_at" field-type="string" required="true">
+Zeitpunkt der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="opportunities[].updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="opportunities[].company" field-type="object" required="false">
+Minimal eingebettete Unternehmensdaten zur Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].company.id" field-type="string" required="true">
+ID des eingebetteten Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunities[].company.name" field-type="string" required="true">
+Name des eingebetteten Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact" field-type="object" required="false">
+Minimal eingebettete Kontaktdaten zur Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.id" field-type="string" required="true">
+ID des eingebetteten Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.first_name" field-type="string" required="true">
+Vorname des eingebetteten Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.last_name" field-type="string" required="true">
+Nachname des eingebetteten Kontakts.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Anzahl der zurückgegebenen Opportunities in dieser Antwort.
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true">
+Tatsächlich angewendetes Limit.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Tatsächlich angewendeter Offset.
+</ResponseField>
+
+<ResponseField name="stageTotals" field-type="object" required="true">
+Aggregierte Summen pro Opportunity-Phase für die aktuelle Ergebnismenge.
+</ResponseField>
+
+<ResponseField name="stageTotals.lead.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `lead`.
+</ResponseField>
+
+<ResponseField name="stageTotals.lead.value" field-type="number" required="true">
+Summierter Betrag der Opportunities in der Phase `lead`.
+</ResponseField>
+
+<ResponseField name="stageTotals.qualified.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `qualified`.
+</ResponseField>
+
+<ResponseField name="stageTotals.qualified.value" field-type="number" required="true">
+Summierter Betrag der Opportunities in der Phase `qualified`.
+</ResponseField>
+
+<ResponseField name="stageTotals.proposal.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `proposal`.
+</ResponseField>
+
+<ResponseField name="stageTotals.proposal.value" field-type="number" required="true">
+Summierter Betrag der Opportunities in der Phase `proposal`.
+</ResponseField>
+
+<ResponseField name="stageTotals.negotiation.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `negotiation`.
+</ResponseField>
+
+<ResponseField name="stageTotals.negotiation.value" field-type="number" required="true">
+Summierter Betrag der Opportunities in der Phase `negotiation`.
+</ResponseField>
+
+<ResponseField name="stageTotals.won.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `won`.
+</ResponseField>
+
+<ResponseField name="stageTotals.won.value" field-type="number" required="true">
+Summierter Betrag der Opportunities in der Phase `won`.
+</ResponseField>
+
+<ResponseField name="stageTotals.lost.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `lost`.
+</ResponseField>
+
+<ResponseField name="stageTotals.lost.value" field-type="number" required="true">
+Summierter Betrag der Opportunities in der Phase `lost`.
 </ResponseField>
 
 ## POST /api/crm/opportunities
 
-Erstellen Sie eine neue Opportunity mit Titel, Wert, Phase und optionalen Verknüpfungen zu Kontakt oder Unternehmen.
+Erstellen Sie eine neue Opportunity mit Namen, Phase, Betrag und optionalen Verknüpfungen zu Unternehmen oder primärem Kontakt.
 
 <Request>
 ```bash
 curl -X POST "https://api.talkturo.com/api/crm/opportunities" \
+  -H "Authorization: Bearer ttrk_example_9xmk7q2r" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-access-token=session_example_7fd82k" \
   -d '{
-    "title": "New expansion deal - Nordstern AG",
-    "value": 18500,
-    "stage": "qualification",
-    "contact_id": "cnt_28d91fa4",
-    "company_id": "cmp_44aa91d2",
-    "expected_close_date": "2025-10-15"
+    "name": "Expansion Nordstern AG",
+    "stage": "qualified",
+    "companyId": "cmp_44aa91d2",
+    "primaryContactId": "cnt_28d91fa4",
+    "amount": 18500,
+    "currency": "EUR",
+    "probability": 45,
+    "expectedCloseDate": "2025-10-15",
+    "ownerUserId": "usr_77fd0182",
+    "notes": "Erstgespräch abgeschlossen, Angebot in Vorbereitung.",
+    "customFields": {
+      "market": "Enterprise",
+      "source": "Outbound"
+    }
   }'
 ```
 </Request>
@@ -144,12 +353,26 @@ curl -X POST "https://api.talkturo.com/api/crm/opportunities" \
   "success": true,
   "opportunity": {
     "id": "opp_91cd34ab",
-    "title": "New expansion deal - Nordstern AG",
-    "value": 18500,
-    "stage": "qualification",
-    "contact_id": "cnt_28d91fa4",
+    "team_id": "team_7a2c91d4",
     "company_id": "cmp_44aa91d2",
-    "expected_close_date": "2025-10-15"
+    "primary_contact_id": "cnt_28d91fa4",
+    "name": "Expansion Nordstern AG",
+    "stage": "qualified",
+    "amount": 18500,
+    "currency": "EUR",
+    "probability": 45,
+    "expected_close_date": "2025-10-15",
+    "actual_close_date": null,
+    "lost_reason": null,
+    "won_details": null,
+    "owner_user_id": "usr_77fd0182",
+    "notes": "Erstgespräch abgeschlossen, Angebot in Vorbereitung.",
+    "custom_fields": {
+      "market": "Enterprise",
+      "source": "Outbound"
+    },
+    "created_at": "2025-08-12T10:41:00.000Z",
+    "updated_at": "2025-08-12T10:41:00.000Z"
   }
 }
 ```
@@ -157,28 +380,48 @@ curl -X POST "https://api.talkturo.com/api/crm/opportunities" \
 
 ### Request-Body
 
-<ParamField body="title" param-type="string" required="true">
-Titel der Opportunity. Ohne diesen Wert kann die Opportunity nicht erstellt werden.
+<ParamField body="name" param-type="string" required="true">
+Name der Opportunity. Ohne diesen Wert kann die Opportunity nicht erstellt werden.
 </ParamField>
 
-<ParamField body="value" param-type="number" required="false">
-Monetärer Wert der Opportunity.
+<ParamField body="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
+Phase der Opportunity. Wenn Sie keinen Wert senden, verwendet die API `lead`.
 </ParamField>
 
-<ParamField body="stage" param-type="string" required="false">
-Phase der Opportunity, zum Beispiel für Qualifizierung oder Angebot.
+<ParamField body="companyId" param-type="string" required="false">
+Verknüpft die Opportunity mit einem Unternehmen.
 </ParamField>
 
-<ParamField body="contact_id" param-type="string" required="false">
-ID eines Kontakts, der mit der Opportunity verknüpft werden soll.
+<ParamField body="primaryContactId" param-type="string" required="false">
+Verknüpft die Opportunity mit einem primären Kontakt.
 </ParamField>
 
-<ParamField body="company_id" param-type="string" required="false">
-ID eines Unternehmens, das mit der Opportunity verknüpft werden soll.
+<ParamField body="amount" param-type="number" required="false">
+Monetärer Betrag der Opportunity.
 </ParamField>
 
-<ParamField body="expected_close_date" param-type="string" required="false">
-Erwartetes Abschlussdatum der Opportunity.
+<ParamField body="currency" param-type="string" required="false">
+Währung des Betrags.
+</ParamField>
+
+<ParamField body="probability" param-type="number" required="false">
+Abschlusswahrscheinlichkeit als numerischer Wert.
+</ParamField>
+
+<ParamField body="expectedCloseDate" param-type="string" required="false">
+Erwartetes Abschlussdatum im ISO-Datumsformat.
+</ParamField>
+
+<ParamField body="ownerUserId" param-type="string" required="false">
+ID des verantwortlichen Benutzers.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Freitextnotizen zur Opportunity.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Benutzerdefinierte Felder als Schlüssel-Wert-Objekt.
 </ParamField>
 
 ### Antwortfelder
@@ -195,29 +438,77 @@ Enthält die neu erstellte Opportunity.
 Eindeutige ID der neuen Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunity.title" field-type="string" required="true">
-Titel der Opportunity.
-</ResponseField>
-
-<ResponseField name="opportunity.value" field-type="number" required="false">
-Gespeicherter Wert der Opportunity.
-</ResponseField>
-
-<ResponseField name="opportunity.stage" field-type="string" required="false">
-Gespeicherte Phase der Opportunity.
-</ResponseField>
-
-<ResponseField name="opportunity.contact_id" field-type="string" required="false">
-Verknüpfte Kontakt-ID.
+<ResponseField name="opportunity.team_id" field-type="string" required="true">
+ID des Teams, dem die Opportunity gehört.
 </ResponseField>
 
 <ResponseField name="opportunity.company_id" field-type="string" required="false">
-Verknüpfte Unternehmens-ID.
+ID des verknüpften Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact_id" field-type="string" required="false">
+ID des primären Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.name" field-type="string" required="true">
+Name der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.stage" field-type="string" required="true">
+Gespeicherte Phase der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.amount" field-type="number" required="false">
+Gespeicherter Betrag der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.currency" field-type="string" required="false">
+Gespeicherte Währung.
+</ResponseField>
+
+<ResponseField name="opportunity.probability" field-type="number" required="false">
+Gespeicherte Abschlusswahrscheinlichkeit.
+</ResponseField>
+
+<ResponseField name="opportunity.expected_close_date" field-type="string" required="false">
+Gespeichertes erwartetes Abschlussdatum.
+</ResponseField>
+
+<ResponseField name="opportunity.actual_close_date" field-type="string" required="false">
+Gespeichertes tatsächliches Abschlussdatum.
+</ResponseField>
+
+<ResponseField name="opportunity.lost_reason" field-type="string" required="false">
+Gespeicherter Verlustgrund.
+</ResponseField>
+
+<ResponseField name="opportunity.won_details" field-type="string" required="false">
+Gespeicherte Details zu einem gewonnenen Abschluss.
+</ResponseField>
+
+<ResponseField name="opportunity.owner_user_id" field-type="string" required="false">
+Gespeicherte ID des verantwortlichen Benutzers.
+</ResponseField>
+
+<ResponseField name="opportunity.notes" field-type="string" required="false">
+Gespeicherte Notizen.
+</ResponseField>
+
+<ResponseField name="opportunity.custom_fields" field-type="object" required="false">
+Gespeicherte benutzerdefinierte Felder.
+</ResponseField>
+
+<ResponseField name="opportunity.created_at" field-type="string" required="true">
+Zeitpunkt der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="opportunity.updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung im ISO-8601-Format.
 </ResponseField>
 
 ## GET /api/crm/opportunities/{id}
 
-Rufen Sie eine einzelne Opportunity anhand ihrer ID ab.
+Rufen Sie eine einzelne Opportunity anhand ihrer ID zusammen mit verknüpften Unternehmens-, Kontakt- und Aktivitätsdaten ab.
 
 <Request>
 ```bash
@@ -232,11 +523,55 @@ curl -X GET "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
   "success": true,
   "opportunity": {
     "id": "opp_4b29d7e1",
-    "title": "Annual renewal - Acme GmbH",
-    "value": 24000,
+    "team_id": "team_7a2c91d4",
+    "company_id": "cmp_9f3k2m1a",
+    "primary_contact_id": "cnt_8c13fa20",
+    "name": "Jahresverlängerung Acme GmbH",
     "stage": "proposal",
-    "contact_id": "cnt_8c13fa20",
-    "company_id": "cmp_9f3k2m1a"
+    "amount": 24000,
+    "currency": "EUR",
+    "probability": 70,
+    "expected_close_date": "2025-10-15",
+    "actual_close_date": null,
+    "lost_reason": null,
+    "won_details": null,
+    "owner_user_id": "usr_1c93ad55",
+    "notes": "Angebot versendet, Rückmeldung bis Ende des Monats erwartet.",
+    "custom_fields": {
+      "region": "DACH",
+      "renewal_type": "annual"
+    },
+    "created_at": "2025-08-01T09:15:00.000Z",
+    "updated_at": "2025-08-12T14:22:00.000Z",
+    "company": {
+      "id": "cmp_9f3k2m1a",
+      "name": "Acme GmbH",
+      "website": "https://www.acme-gmbh.de",
+      "industry": "Manufacturing",
+      "phone": "+49 30 55550120"
+    },
+    "primary_contact": {
+      "id": "cnt_8c13fa20",
+      "first_name": "Julia",
+      "last_name": "Weber",
+      "email": "julia.weber@acme-gmbh.de",
+      "phone": "+49 30 55550121",
+      "job_title": "Head of Procurement"
+    },
+    "activities": [
+      {
+        "id": "act_2f9a77cd",
+        "type": "note",
+        "subject": "Feedback zum Angebot",
+        "created_at": "2025-08-12T13:10:00.000Z"
+      },
+      {
+        "id": "act_11bd67fa",
+        "type": "call",
+        "subject": "Verlängerung besprochen",
+        "created_at": "2025-08-08T08:45:00.000Z"
+      }
+    ]
   }
 }
 ```
@@ -255,28 +590,175 @@ Kennzeichnet, ob die Opportunity erfolgreich geladen wurde.
 </ResponseField>
 
 <ResponseField name="opportunity" field-type="object" required="true">
-Enthält die angeforderte Opportunity.
+Enthält die angeforderte Opportunity inklusive verknüpfter Daten.
+</ResponseField>
+
+<ResponseField name="opportunity.id" field-type="string" required="true">
+Eindeutige ID der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.team_id" field-type="string" required="true">
+ID des Teams, dem die Opportunity gehört.
+</ResponseField>
+
+<ResponseField name="opportunity.company_id" field-type="string" required="false">
+ID des verknüpften Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact_id" field-type="string" required="false">
+ID des primären Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.name" field-type="string" required="true">
+Name der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.stage" field-type="string" required="true">
+Aktuelle Phase der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.amount" field-type="number" required="false">
+Betrag der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.currency" field-type="string" required="false">
+Währung der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.probability" field-type="number" required="false">
+Abschlusswahrscheinlichkeit.
+</ResponseField>
+
+<ResponseField name="opportunity.expected_close_date" field-type="string" required="false">
+Erwartetes Abschlussdatum.
+</ResponseField>
+
+<ResponseField name="opportunity.actual_close_date" field-type="string" required="false">
+Tatsächliches Abschlussdatum.
+</ResponseField>
+
+<ResponseField name="opportunity.lost_reason" field-type="string" required="false">
+Grund für einen verlorenen Abschluss.
+</ResponseField>
+
+<ResponseField name="opportunity.won_details" field-type="string" required="false">
+Details zu einem gewonnenen Abschluss.
+</ResponseField>
+
+<ResponseField name="opportunity.owner_user_id" field-type="string" required="false">
+ID des verantwortlichen Benutzers.
+</ResponseField>
+
+<ResponseField name="opportunity.notes" field-type="string" required="false">
+Notizen zur Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.custom_fields" field-type="object" required="false">
+Benutzerdefinierte Felder der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.created_at" field-type="string" required="true">
+Zeitpunkt der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="opportunity.updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="opportunity.company" field-type="object" required="false">
+Eingebettete Unternehmensdaten.
+</ResponseField>
+
+<ResponseField name="opportunity.company.id" field-type="string" required="true">
+ID des eingebetteten Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.company.name" field-type="string" required="true">
+Name des Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.company.website" field-type="string" required="false">
+Website des Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.company.industry" field-type="string" required="false">
+Branche des Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.company.phone" field-type="string" required="false">
+Telefonnummer des Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact" field-type="object" required="false">
+Eingebettete Daten des primären Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.id" field-type="string" required="true">
+ID des eingebetteten Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.first_name" field-type="string" required="true">
+Vorname des Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.last_name" field-type="string" required="true">
+Nachname des Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.email" field-type="string" required="false">
+E-Mail-Adresse des Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.phone" field-type="string" required="false">
+Telefonnummer des Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.job_title" field-type="string" required="false">
+Jobtitel des Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.activities" field-type="array" required="true">
+Enthält die letzten 50 Aktivitäten zur Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.activities[].id" field-type="string" required="true">
+Eindeutige ID der Aktivität.
+</ResponseField>
+
+<ResponseField name="opportunity.activities[].type" field-type="string" required="true">
+Typ der Aktivität, zum Beispiel `note` oder `call`.
+</ResponseField>
+
+<ResponseField name="opportunity.activities[].subject" field-type="string" required="false">
+Kurze Zusammenfassung der Aktivität.
+</ResponseField>
+
+<ResponseField name="opportunity.activities[].created_at" field-type="string" required="true">
+Erstellungszeitpunkt der Aktivität im ISO-8601-Format.
 </ResponseField>
 
 <Callout kind="tip">
 
-Wenn Sie Opportunities in Listenansichten anzeigen, verwenden Sie zuerst den Listenendpunkt und rufen Sie den Detailendpunkt nur für gezielte Detailansichten auf.
+Verwenden Sie den Listenendpunkt für Übersichten und laden Sie den Detailendpunkt nur dann nach, wenn Sie Unternehmensdaten, Kontaktinformationen oder Aktivitäten benötigen.
 
 </Callout>
 
-## PATCH /api/crm/opportunities/{id}
+## PUT /api/crm/opportunities/{id}
 
-Aktualisieren Sie eine bestehende Opportunity anhand ihrer ID. Die Antwort enthält die aktualisierte Opportunity.
+Aktualisieren Sie eine bestehende Opportunity anhand ihrer ID. Wenn Sie die Phase auf `won` oder `lost` setzen und kein `actualCloseDate` senden, ergänzt die API das tatsächliche Abschlussdatum automatisch.
 
 <Request>
 ```bash
-curl -X PATCH "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
+curl -X PUT "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
   -H "Content-Type: application/json" \
   -H "Cookie: sb-access-token=session_example_7fd82k" \
   -d '{
-    "stage": "negotiation",
-    "value": 26000,
-    "expected_close_date": "2025-11-01"
+    "stage": "won",
+    "amount": 26000,
+    "currency": "EUR",
+    "actualCloseDate": "2025-11-01",
+    "wonDetails": "Vertrag für 24 Monate unterschrieben.",
+    "notes": "Übergabe an Customer Success geplant."
   }'
 ```
 </Request>
@@ -287,12 +769,26 @@ curl -X PATCH "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
   "success": true,
   "opportunity": {
     "id": "opp_4b29d7e1",
-    "title": "Annual renewal - Acme GmbH",
-    "value": 26000,
-    "stage": "negotiation",
-    "contact_id": "cnt_8c13fa20",
+    "team_id": "team_7a2c91d4",
     "company_id": "cmp_9f3k2m1a",
-    "expected_close_date": "2025-11-01"
+    "primary_contact_id": "cnt_8c13fa20",
+    "name": "Jahresverlängerung Acme GmbH",
+    "stage": "won",
+    "amount": 26000,
+    "currency": "EUR",
+    "probability": 100,
+    "expected_close_date": "2025-10-15",
+    "actual_close_date": "2025-11-01",
+    "lost_reason": null,
+    "won_details": "Vertrag für 24 Monate unterschrieben.",
+    "owner_user_id": "usr_1c93ad55",
+    "notes": "Übergabe an Customer Success geplant.",
+    "custom_fields": {
+      "region": "DACH",
+      "renewal_type": "annual"
+    },
+    "created_at": "2025-08-01T09:15:00.000Z",
+    "updated_at": "2025-08-13T11:30:00.000Z"
   }
 }
 ```
@@ -306,33 +802,147 @@ Eindeutige ID der Opportunity, die Sie aktualisieren möchten.
 
 ### Aktualisierbare Felder
 
-<ParamField body="title" param-type="string" required="false">
-Aktualisiert den Titel der Opportunity.
+<ParamField body="name" param-type="string" required="false">
+Aktualisiert den Namen der Opportunity.
 </ParamField>
 
-<ParamField body="value" param-type="number" required="false">
-Aktualisiert den monetären Wert der Opportunity.
-</ParamField>
-
-<ParamField body="stage" param-type="string" required="false">
+<ParamField body="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
 Aktualisiert die aktuelle Phase der Opportunity.
 </ParamField>
 
-<ParamField body="contact_id" param-type="string" required="false">
-Verknüpft die Opportunity mit einem anderen Kontakt oder aktualisiert die bestehende Zuordnung.
-</ParamField>
-
-<ParamField body="company_id" param-type="string" required="false">
+<ParamField body="companyId" param-type="string" required="false">
 Verknüpft die Opportunity mit einem anderen Unternehmen oder aktualisiert die bestehende Zuordnung.
 </ParamField>
 
-<ParamField body="expected_close_date" param-type="string" required="false">
+<ParamField body="primaryContactId" param-type="string" required="false">
+Verknüpft die Opportunity mit einem anderen primären Kontakt oder aktualisiert die bestehende Zuordnung.
+</ParamField>
+
+<ParamField body="amount" param-type="number" required="false">
+Aktualisiert den monetären Betrag der Opportunity.
+</ParamField>
+
+<ParamField body="currency" param-type="string" required="false">
+Aktualisiert die Währung der Opportunity.
+</ParamField>
+
+<ParamField body="probability" param-type="number" required="false">
+Aktualisiert die Abschlusswahrscheinlichkeit.
+</ParamField>
+
+<ParamField body="expectedCloseDate" param-type="string" required="false">
 Aktualisiert das erwartete Abschlussdatum.
 </ParamField>
 
+<ParamField body="actualCloseDate" param-type="string" required="false">
+Setzt das tatsächliche Abschlussdatum.
+</ParamField>
+
+<ParamField body="lostReason" param-type="string" required="false">
+Speichert den Grund für eine verlorene Opportunity.
+</ParamField>
+
+<ParamField body="wonDetails" param-type="string" required="false">
+Speichert zusätzliche Informationen zu einer gewonnenen Opportunity.
+</ParamField>
+
+<ParamField body="ownerUserId" param-type="string" required="false">
+Ändert den verantwortlichen Benutzer.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Aktualisiert die Notizen zur Opportunity.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Aktualisiert benutzerdefinierte Felder als Schlüssel-Wert-Objekt.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Kennzeichnet, ob die Opportunity erfolgreich aktualisiert wurde.
+</ResponseField>
+
+<ResponseField name="opportunity" field-type="object" required="true">
+Enthält die aktualisierte Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.id" field-type="string" required="true">
+Eindeutige ID der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.team_id" field-type="string" required="true">
+ID des Teams, dem die Opportunity gehört.
+</ResponseField>
+
+<ResponseField name="opportunity.company_id" field-type="string" required="false">
+ID des verknüpften Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact_id" field-type="string" required="false">
+ID des primären Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunity.name" field-type="string" required="true">
+Name der Opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.stage" field-type="string" required="true">
+Aktuelle Phase nach der Aktualisierung.
+</ResponseField>
+
+<ResponseField name="opportunity.amount" field-type="number" required="false">
+Aktualisierter Betrag.
+</ResponseField>
+
+<ResponseField name="opportunity.currency" field-type="string" required="false">
+Aktualisierte Währung.
+</ResponseField>
+
+<ResponseField name="opportunity.probability" field-type="number" required="false">
+Aktualisierte Abschlusswahrscheinlichkeit.
+</ResponseField>
+
+<ResponseField name="opportunity.expected_close_date" field-type="string" required="false">
+Aktualisiertes erwartetes Abschlussdatum.
+</ResponseField>
+
+<ResponseField name="opportunity.actual_close_date" field-type="string" required="false">
+Tatsächliches Abschlussdatum nach der Aktualisierung.
+</ResponseField>
+
+<ResponseField name="opportunity.lost_reason" field-type="string" required="false">
+Aktualisierter Verlustgrund.
+</ResponseField>
+
+<ResponseField name="opportunity.won_details" field-type="string" required="false">
+Aktualisierte Gewinn-Details.
+</ResponseField>
+
+<ResponseField name="opportunity.owner_user_id" field-type="string" required="false">
+ID des verantwortlichen Benutzers nach der Aktualisierung.
+</ResponseField>
+
+<ResponseField name="opportunity.notes" field-type="string" required="false">
+Aktualisierte Notizen.
+</ResponseField>
+
+<ResponseField name="opportunity.custom_fields" field-type="object" required="false">
+Aktualisierte benutzerdefinierte Felder.
+</ResponseField>
+
+<ResponseField name="opportunity.created_at" field-type="string" required="true">
+Ursprünglicher Erstellungszeitpunkt.
+</ResponseField>
+
+<ResponseField name="opportunity.updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung.
+</ResponseField>
+
 ## DELETE /api/crm/opportunities/{id}
 
-Löschen Sie eine Opportunity dauerhaft anhand ihrer ID.
+Löschen Sie eine Opportunity dauerhaft anhand ihrer ID. Der Endpunkt führt einen Hard Delete ohne zusätzliche Schutzmechanismen aus.
 
 <Request>
 ```bash
@@ -363,7 +973,7 @@ Ist `true`, wenn die Opportunity erfolgreich gelöscht wurde.
 
 <Callout kind="alert">
 
-Das Löschen ist dauerhaft. Stellen Sie sicher, dass die Opportunity nicht mehr für Berichte, Automatisierungen oder Vertriebsprozesse benötigt wird.
+Der Endpunkt löscht Opportunities dauerhaft und ohne Prüfungen. Stellen Sie vor dem Aufruf sicher, dass die Opportunity nicht mehr für Berichte, Automatisierungen oder Vertriebsprozesse benötigt wird.
 
 </Callout>
 

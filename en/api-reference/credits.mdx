@@ -5,23 +5,30 @@ description: Check credit balances, deduct usage credits, create checkout sessio
 
 ## Credits endpoints
 
-Use the credits API to read an account balance, record usage deductions, and start credit purchases through Stripe. The balance, deduction, and checkout endpoints support dual authentication, while account management endpoints for auto-reload and history use session authentication.
+Use the credits API to read an account balance, record usage deductions, and start credit purchases through Stripe. The balance, deduction, and checkout endpoints support dual authentication. Auto-reload, statement, and transactions also support dual authentication, while claim-grants uses session authentication and plans is public.
 
 <Callout kind="info">
 
 **Authentication**
+
+The following endpoints accept either an API key or a signed-in session cookie:
+
 - `GET /api/credits`
 - `POST /api/credits`
 - `POST /api/credits/checkout`
-
-These endpoints use dual authentication. Authenticate with either an API key or a signed-in session cookie.
+- `PATCH /api/credits/auto-reload`
+- `POST /api/credits/auto-reload`
+- `GET /api/credits/statement`
+- `GET /api/credits/transactions`
 
 The following endpoints require a session-authenticated browser request:
-- `GET` and `POST` `/api/credits/auto-reload`
-- `POST` `/api/credits/claim-grants`
-- `GET` `/api/credits/plans`
-- `GET` `/api/credits/statement`
-- `GET` `/api/credits/transactions`
+
+- `GET /api/credits/claim-grants`
+- `POST /api/credits/claim-grants`
+
+The following endpoint is public and does not require authentication:
+
+- `GET /api/credits/plans`
 
 </Callout>
 
@@ -32,12 +39,13 @@ The following endpoints require a session-authenticated browser request:
 | `GET` | `/api/credits` | API key or session | Get the current credit balance for an account |
 | `POST` | `/api/credits` | API key or session | Deduct credits for usage tracking |
 | `POST` | `/api/credits/checkout` | API key or session | Create an embedded Stripe checkout session for a credit purchase |
-| `GET` | `/api/credits/auto-reload` | Session | Get auto-reload settings |
-| `POST` | `/api/credits/auto-reload` | Session | Update auto-reload settings |
-| `POST` | `/api/credits/claim-grants` | Session | Claim pending credit grants |
-| `GET` | `/api/credits/plans` | Session | List available credit purchase plans |
-| `GET` | `/api/credits/statement` | Session | Get credit statement history |
-| `GET` | `/api/credits/transactions` | Session | Get credit transaction history |
+| `PATCH` | `/api/credits/auto-reload` | API key or session | Update auto-reload settings |
+| `POST` | `/api/credits/auto-reload` | API key or session | Attempt an auto-reload charge for an account |
+| `GET` | `/api/credits/claim-grants` | Session only | List unclaimed credit grants for the signed-in account |
+| `POST` | `/api/credits/claim-grants` | Session only | Claim a pending credit grant |
+| `GET` | `/api/credits/plans` | None (public) | List available credit purchase plans |
+| `GET` | `/api/credits/statement` | API key or session | Download credit statement history as CSV |
+| `GET` | `/api/credits/transactions` | API key or session | Get credit transaction history |
 
 ## Get credits balance
 
@@ -415,45 +423,736 @@ Purchase amount returned by the API.
 
 ## Session-authenticated credits endpoints
 
-Use the following endpoints from a signed-in browser session when you need account-level credits management and history screens.
+Use the following endpoints when you need credits management and history features beyond balance reads, deductions, and checkout creation.
 
-### Get or update auto-reload
+### Update auto-reload settings
 
-`GET /api/credits/auto-reload` reads the current auto-reload settings. `POST /api/credits/auto-reload` updates those settings for the signed-in account.
+`PATCH /api/credits/auto-reload` updates auto-reload settings for an account and returns the updated credits record.
 
-<ParamField body="auto_reload_enabled" param-type="boolean" required="false" show-location="false">
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PATCH "https://api.talkturo.com/api/credits/auto-reload" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+    "autoReloadEnabled": true,
+    "autoReloadThreshold": 5000,
+    "autoReloadAmount": 199
+  }'
+```
 
-Whether automatic reloading is enabled when the balance falls below the threshold.
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/auto-reload", {
+  method: "PATCH",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+  },
+  body: JSON.stringify({
+    accountId: "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+    autoReloadEnabled: true,
+    autoReloadThreshold: 5000,
+    autoReloadAmount: 199,
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "credits": {
+    "id": "c8b74c77-8f54-4f72-bfc6-2dc0db7d6f0b",
+    "account_id": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+    "credits": 18420,
+    "total_purchased": 25000,
+    "total_used": 6580,
+    "auto_reload_enabled": true,
+    "auto_reload_threshold": 5000,
+    "auto_reload_amount_usd": 199
+  }
+}
+```
+</Response>
+
+#### Body parameters
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Account UUID to update.
 
 </ParamField>
 
-<ParamField body="auto_reload_threshold" param-type="number" required="false" show-location="false">
+<ParamField body="autoReloadEnabled" param-type="boolean" required="false">
 
-Balance threshold that qualifies the account for auto-reload.
+Whether automatic reloading is enabled.
 
 </ParamField>
 
-<ParamField body="auto_reload_amount_usd" param-type="number" required="false" show-location="false">
+<ParamField body="autoReloadAmount" param-type="number" required="false">
 
 Dollar amount to charge when auto-reload runs.
 
 </ParamField>
 
+<ParamField body="autoReloadThreshold" param-type="number" required="false">
+
+Balance threshold that can trigger an auto-reload after a deduction.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the update succeeds.
+
+</ResponseField>
+
+<ResponseField name="credits" field-type="object" required="true">
+
+Updated credit record for the account.
+
+</ResponseField>
+
+<ResponseField name="credits.id" field-type="string" required="true">
+
+Unique identifier for the credits record.
+
+</ResponseField>
+
+<ResponseField name="credits.account_id" field-type="string" required="true">
+
+Account UUID that owns the credits balance.
+
+</ResponseField>
+
+<ResponseField name="credits.credits" field-type="number" required="true">
+
+Current available credit balance.
+
+</ResponseField>
+
+<ResponseField name="credits.total_purchased" field-type="number" required="true">
+
+Total credits purchased for the account.
+
+</ResponseField>
+
+<ResponseField name="credits.total_used" field-type="number" required="true">
+
+Total credits deducted from the account.
+
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_enabled" field-type="boolean" required="true">
+
+Whether automatic credit reloading is enabled.
+
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_threshold" field-type="number" required="true">
+
+Balance threshold that can trigger auto-reload after a deduction.
+
+</ResponseField>
+
+<ResponseField name="credits.auto_reload_amount_usd" field-type="number" required="true">
+
+Dollar amount charged when auto-reload runs.
+
+</ResponseField>
+
+### Trigger auto-reload
+
+`POST /api/credits/auto-reload` attempts to run auto-reload for an account by calling `runMaybeAutoReload()`.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/credits/auto-reload" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/auto-reload", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+  },
+  body: JSON.stringify({
+    accountId: "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200 charged,200 skip" default-tab="1">
+```json
+{
+  "success": true,
+  "kind": "charged",
+  "creditsAdded": 20000,
+  "paymentIntentId": "pi_3Qx8am2eZvKYlo2C0mT8n1b4"
+}
+```
+
+```json
+{
+  "success": true,
+  "kind": "skip"
+}
+```
+</Response>
+
+#### Body parameters
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Account UUID to evaluate for auto-reload.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the request completes.
+
+</ResponseField>
+
+<ResponseField name="kind" field-type="string" required="true">
+
+Result of the auto-reload attempt. The API returns `charged`, `skip`, or `error`.
+
+</ResponseField>
+
+<ResponseField name="creditsAdded" field-type="number" required="false">
+
+Number of credits added when `kind` is `charged`.
+
+</ResponseField>
+
+<ResponseField name="paymentIntentId" field-type="string" required="false">
+
+Stripe PaymentIntent identifier when a charge succeeds.
+
+</ResponseField>
+
+<Callout kind="info">
+
+A `skip` result means the account did not qualify for an auto-reload at the time of the request. For example, the balance may still be above the configured threshold or auto-reload may be disabled.
+
+</Callout>
+
+### Get pending grants
+
+`GET /api/credits/claim-grants` returns unclaimed credit grants for the signed-in account.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/credits/claim-grants" \
+  -H "Cookie: sb-access-token=session_example_3r8k2m9p4v1x7c6d"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/claim-grants", {
+  method: "GET",
+  credentials: "include",
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "grants": [
+    {
+      "id": "6b52d2d4-8f36-46a7-a7f5-8a55cfce24d7",
+      "credits": 10000,
+      "pack_name": "Starter bonus pack",
+      "status": "pending",
+      "stripe_session_id": "cs_test_b1b8ac39f2f54ceaa55d4e9b2f13"
+    }
+  ]
+}
+```
+</Response>
+
+#### Response fields
+
+<ResponseField name="grants" field-type="array" required="true">
+
+List of unclaimed credit grants for the signed-in account.
+
+</ResponseField>
+
+<ResponseField name="grants.id" field-type="string" required="true">
+
+Unique identifier for the grant.
+
+</ResponseField>
+
+<ResponseField name="grants.credits" field-type="number" required="true">
+
+Number of credits available to claim.
+
+</ResponseField>
+
+<ResponseField name="grants.pack_name" field-type="string" required="true">
+
+Display name of the credit pack or grant source.
+
+</ResponseField>
+
+<ResponseField name="grants.status" field-type="string" required="true">
+
+Current grant status. This endpoint returns unclaimed grants only.
+
+</ResponseField>
+
+<ResponseField name="grants.stripe_session_id" field-type="string" required="false">
+
+Stripe Checkout session associated with the grant when the grant originated from a purchase.
+
+</ResponseField>
+
 ### Claim pending grants
 
-`POST /api/credits/claim-grants` applies any pending credit grants to the signed-in account. Use this endpoint after account actions that provision promotional or manual credits.
+`POST /api/credits/claim-grants` applies a specific pending credit grant to the signed-in account.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/credits/claim-grants" \
+  -H "Cookie: sb-access-token=session_example_3r8k2m9p4v1x7c6d" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grantId": "6b52d2d4-8f36-46a7-a7f5-8a55cfce24d7",
+    "accountId": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/claim-grants", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    grantId: "6b52d2d4-8f36-46a7-a7f5-8a55cfce24d7",
+    accountId: "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "transactionId": "txn_credits_f87a19c20d44",
+  "clonedAssistantId": "a2d9e58c-b9a2-4ce8-8d54-0ff3b17d6ac1"
+}
+```
+</Response>
+
+#### Body parameters
+
+<ParamField body="grantId" param-type="string" required="true">
+
+Grant UUID to claim.
+
+</ParamField>
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Account UUID that will receive the granted credits.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="transactionId" field-type="string" required="true">
+
+Identifier for the credits transaction created by the claim.
+
+</ResponseField>
+
+<ResponseField name="clonedAssistantId" field-type="string" required="false">
+
+Assistant UUID created during grant fulfillment when the grant includes an assistant clone.
+
+</ResponseField>
 
 ### List available plans
 
-`GET /api/credits/plans` returns the purchase plans available to the signed-in account. Use it to populate a billing UI before calling checkout.
+`GET /api/credits/plans` returns the available credit purchase plans. This endpoint is public and does not require authentication.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/credits/plans"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/plans", {
+  method: "GET",
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "plans": [
+    {
+      "id": "credits_growth_500",
+      "variant_id": "var_01hzyrpkf7ad2x2m0k5w3v9e1n",
+      "name": "Growth 500",
+      "description": "500 minutes of outbound calling credits",
+      "credits": 50000,
+      "price_usd": 499,
+      "is_active": true
+    }
+  ]
+}
+```
+</Response>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the request succeeds.
+
+</ResponseField>
+
+<ResponseField name="plans" field-type="array" required="true">
+
+Available credit purchase plans.
+
+</ResponseField>
+
+<ResponseField name="plans.id" field-type="string" required="true">
+
+Internal identifier for the plan.
+
+</ResponseField>
+
+<ResponseField name="plans.variant_id" field-type="string" required="true">
+
+Billing system variant identifier for the plan.
+
+</ResponseField>
+
+<ResponseField name="plans.name" field-type="string" required="true">
+
+Display name for the plan.
+
+</ResponseField>
+
+<ResponseField name="plans.description" field-type="string" required="false">
+
+Short description shown with the plan.
+
+</ResponseField>
+
+<ResponseField name="plans.credits" field-type="number" required="true">
+
+Number of credits granted by the plan.
+
+</ResponseField>
+
+<ResponseField name="plans.price_usd" field-type="number" required="true">
+
+Plan price in USD.
+
+</ResponseField>
+
+<ResponseField name="plans.is_active" field-type="boolean" required="true">
+
+Whether the plan is currently available for purchase.
+
+</ResponseField>
 
 ### Get statement history
 
-`GET /api/credits/statement` returns statement-style credit history for the signed-in account. Use it when you need a chronological ledger view.
+`GET /api/credits/statement` returns a CSV file for the requested account and billing period.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/credits/statement?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2&month=01&year=2026" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/credits/statement?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2&month=01&year=2026",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+    },
+  }
+);
+
+const csv = await response.text();
+console.log(csv);
+```
+</Request>
+
+<Response tabs="200">
+```text
+date,type,amount,balance_after,description
+2026-01-04T18:42:11.000Z,purchase,50000,50000,Growth 500 purchase
+2026-01-06T09:14:22.000Z,usage,-320,49680,Outbound call usage for campaign cmp_7d2fa19c
+```
+</Response>
+
+#### Query parameters
+
+<ParamField query="accountId" param-type="string" required="false">
+
+Account UUID to export. If you omit `accountId`, the endpoint falls back to the authenticated account.
+
+</ParamField>
+
+<ParamField query="month" param-type="string" required="false">
+
+Billing month as a two-digit string such as `01` through `12`.
+
+</ParamField>
+
+<ParamField query="year" param-type="string" required="false">
+
+Billing year as a four-digit string such as `2026`.
+
+</ParamField>
+
+<Callout kind="info">
+
+The response is a file download with `Content-Type` set to `text/csv`.
+
+</Callout>
 
 ### Get transaction history
 
-`GET /api/credits/transactions` returns transaction-level credit history for the signed-in account. Use it when you need detailed usage and purchase records.
+`GET /api/credits/transactions` returns detailed credit transaction records for an account.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/credits/transactions?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2&type=usage,purchase&source=calls&from=2026-01-01T00:00:00.000Z&to=2026-01-31T23:59:59.999Z&limit=50&offset=0" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/credits/transactions?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2&type=usage,purchase&source=calls&from=2026-01-01T00:00:00.000Z&to=2026-01-31T23:59:59.999Z&limit=50&offset=0",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "transactions": [
+    {
+      "id": "txn_credits_4aa92d1f6d10",
+      "account_id": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
+      "type": "usage",
+      "amount": -320,
+      "balance_after": 18100,
+      "description": "Outbound call usage for campaign cmp_7d2fa19c",
+      "metadata": {
+        "assistantId": "0b760e0d-4b10-4ee8-9c8b-89f02d0a9149",
+        "campaignId": "cmp_7d2fa19c",
+        "minutes": 4.8
+      },
+      "order_id": null,
+      "session_id": null,
+      "idempotency_key": "deduct:cmp_7d2fa19c:2026-01-06T09:14:22.000Z",
+      "created_at": "2026-01-06T09:14:22.000Z"
+    }
+  ],
+  "count": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+</Response>
+
+#### Query parameters
+
+<ParamField query="accountId" param-type="string" required="false">
+
+Account UUID to query. If you omit `accountId`, the endpoint falls back to the authenticated account.
+
+</ParamField>
+
+<ParamField query="type" param-type="string" required="false">
+
+Filter by transaction type. Use one or more comma-separated values from `purchase`, `usage`, `refund`, or `bonus`.
+
+</ParamField>
+
+<ParamField query="source" param-type="string" required="false">
+
+Filter by transaction source. Use one or more comma-separated values from `calls`, `kb_storage`, `phone`, or `usage`.
+
+</ParamField>
+
+<ParamField query="from" param-type="string" required="false">
+
+Start of the date range as an ISO 8601 timestamp.
+
+</ParamField>
+
+<ParamField query="to" param-type="string" required="false">
+
+End of the date range as an ISO 8601 timestamp.
+
+</ParamField>
+
+<ParamField query="limit" param-type="number" required="false">
+
+Maximum number of results to return. Defaults to `50`.
+
+</ParamField>
+
+<ParamField query="offset" param-type="number" required="false">
+
+Number of matching records to skip before returning results. Defaults to `0`.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the request succeeds.
+
+</ResponseField>
+
+<ResponseField name="transactions" field-type="array" required="true">
+
+List of matching credit transactions.
+
+</ResponseField>
+
+<ResponseField name="transactions.id" field-type="string" required="true">
+
+Unique identifier for the transaction.
+
+</ResponseField>
+
+<ResponseField name="transactions.account_id" field-type="string" required="true">
+
+Account UUID that owns the transaction.
+
+</ResponseField>
+
+<ResponseField name="transactions.type" field-type="string" required="true">
+
+Transaction type.
+
+</ResponseField>
+
+<ResponseField name="transactions.amount" field-type="number" required="true">
+
+Signed credit change for the transaction.
+
+</ResponseField>
+
+<ResponseField name="transactions.balance_after" field-type="number" required="true">
+
+Account balance after the transaction was applied.
+
+</ResponseField>
+
+<ResponseField name="transactions.description" field-type="string" required="false">
+
+Human-readable description of the transaction.
+
+</ResponseField>
+
+<ResponseField name="transactions.metadata" field-type="object" required="false">
+
+Structured metadata stored with the transaction.
+
+</ResponseField>
+
+<ResponseField name="transactions.order_id" field-type="string" required="false">
+
+Associated order identifier when the transaction came from a purchase.
+
+</ResponseField>
+
+<ResponseField name="transactions.session_id" field-type="string" required="false">
+
+Associated checkout or billing session identifier when available.
+
+</ResponseField>
+
+<ResponseField name="transactions.idempotency_key" field-type="string" required="false">
+
+Idempotency key recorded for the transaction.
+
+</ResponseField>
+
+<ResponseField name="transactions.created_at" field-type="string" required="true">
+
+Timestamp when the transaction was created.
+
+</ResponseField>
+
+<ResponseField name="count" field-type="number" required="true">
+
+Total number of matching transactions before pagination.
+
+</ResponseField>
+
+<ResponseField name="limit" field-type="number" required="true">
+
+Page size applied to the response.
+
+</ResponseField>
+
+<ResponseField name="offset" field-type="number" required="true">
+
+Offset applied to the response.
+
+</ResponseField>
 
 ## Common integration patterns
 

@@ -1,15 +1,15 @@
 ---
 title: CRM Campaigns
-description: Create, manage, and run outbound calling campaigns through the Talkturo CRM API — add contacts, monitor real-time dashboard stats, start and stop campaigns, and retrieve call logs and AI insights.
+description: Create, update, and soft-delete outbound calling campaigns through the Talkturo CRM API, including contacts, scheduling, status, and limits.
 ---
 
 ## Manage outbound CRM campaigns
 
-Use the CRM Campaigns endpoints to create outbound calling campaigns, attach contacts, monitor live progress, and start or stop execution. All CRM campaign endpoints require an authenticated **session cookie** and are intended for browser-based or same-origin application requests.
+Use the CRM Campaigns endpoints to create outbound calling campaigns, attach contacts, list and retrieve campaigns, and control campaign status. Authentication depends on the route: collection routes support API key or session cookie authentication, while campaign-specific routes require a valid Talkturo session cookie.
 
 <Callout kind="info">
 
-Authenticate these endpoints with a valid Talkturo session cookie. These routes do not accept API key authentication.
+Use either an API key or a valid Talkturo session cookie for `GET /api/crm/campaigns` and `POST /api/crm/campaigns`. Use a valid Talkturo session cookie for `GET`, `PUT`, and `DELETE` requests to `/api/crm/campaigns/[id]` and for campaign contact routes.
 
 </Callout>
 
@@ -20,44 +20,159 @@ Authenticate these endpoints with a valid Talkturo session cookie. These routes 
 | `GET` | `/api/crm/campaigns` | List campaigns |
 | `POST` | `/api/crm/campaigns` | Create a campaign |
 | `GET` | `/api/crm/campaigns/[id]` | Retrieve one campaign |
-| `PATCH` | `/api/crm/campaigns/[id]` | Update a campaign |
-| `DELETE` | `/api/crm/campaigns/[id]` | Delete a campaign |
+| `PUT` | `/api/crm/campaigns/[id]` | Update a campaign or change campaign status |
+| `DELETE` | `/api/crm/campaigns/[id]` | Soft-delete a campaign |
 | `GET` | `/api/crm/campaigns/[id]/contacts` | List campaign contacts |
 | `POST` | `/api/crm/campaigns/[id]/contacts` | Add contacts to a campaign |
-| `GET` | `/api/crm/campaigns/[id]/dashboard` | Retrieve real-time campaign stats |
-| `POST` | `/api/crm/campaigns/[id]/run` | Start or stop a campaign |
-| `GET` | `/api/crm/outbound-assistants` | List assistants available for outbound calls |
-| `GET` | `/api/crm/calls` | List CRM call logs |
-| `GET` | `/api/crm/intelligence` | Retrieve AI insights |
 
 ## Campaign object
 
-Campaign responses return a `campaign` object or a `campaigns` array. The exact shape can include additional campaign fields beyond the core fields listed here.
+Campaign responses return a `campaign` object or a `campaigns` array. List responses can also include `contact_stats` when you set `includeContactStats` to `true`.
 
 <ResponseField name="id" field-type="string" required="true">
 Unique campaign identifier.
+</ResponseField>
+
+<ResponseField name="team_id" field-type="string" required="true">
+Team that owns the campaign.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="false">
+Identifier of the outbound-enabled assistant assigned to the campaign.
 </ResponseField>
 
 <ResponseField name="name" field-type="string" required="true">
 Campaign name.
 </ResponseField>
 
-<ResponseField name="status" field-type="string" required="true">
-Current campaign status.
+<ResponseField name="description" field-type="string" required="false">
+Free-form campaign description.
 </ResponseField>
 
-<ResponseField name="assistant_id" field-type="string" required="false">
-Identifier of the outbound assistant assigned to the campaign.
+<ResponseField name="from_number" field-type="string" required="false">
+Resolved outbound phone number used for calls when available in the campaign record.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Current campaign status. Possible values are `draft`, `scheduled`, `running`, `paused`, `completed`, and `cancelled`.
+</ResponseField>
+
+<ResponseField name="scheduled_start_at" field-type="string" required="false">
+Scheduled start time in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="started_at" field-type="string" required="false">
+Timestamp when the campaign started running.
+</ResponseField>
+
+<ResponseField name="completed_at" field-type="string" required="false">
+Timestamp when the campaign completed.
+</ResponseField>
+
+<ResponseField name="call_window_start" field-type="string" required="false">
+Daily call window start time in `HH:MM` format.
+</ResponseField>
+
+<ResponseField name="call_window_end" field-type="string" required="false">
+Daily call window end time in `HH:MM` format.
+</ResponseField>
+
+<ResponseField name="call_window_timezone" field-type="string" required="false">
+IANA timezone used for the campaign call window.
+</ResponseField>
+
+<ResponseField name="max_concurrent_calls" field-type="integer" required="false">
+Maximum number of contacts the campaign can call at the same time.
+</ResponseField>
+
+<ResponseField name="max_attempts_per_contact" field-type="integer" required="false">
+Maximum retry attempts allowed per contact.
+</ResponseField>
+
+<ResponseField name="retry_delay_minutes" field-type="integer" required="false">
+Base retry delay in minutes between attempts.
+</ResponseField>
+
+<ResponseField name="total_contacts" field-type="integer" required="false">
+Total number of contacts attached to the campaign.
+</ResponseField>
+
+<ResponseField name="contacts_called" field-type="integer" required="false">
+Number of contacts the campaign has attempted to call.
+</ResponseField>
+
+<ResponseField name="contacts_completed" field-type="integer" required="false">
+Number of contacts that have finished campaign processing.
+</ResponseField>
+
+<ResponseField name="contacts_answered" field-type="integer" required="false">
+Number of contacts that answered a call.
+</ResponseField>
+
+<ResponseField name="settings" field-type="object" required="false">
+Campaign execution settings, including voicemail behavior, retry rules, and webhook configuration.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Timestamp when the campaign was created.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Timestamp when the campaign was last updated.
+</ResponseField>
+
+<ResponseField name="deleted_at" field-type="string" required="false">
+Timestamp when the campaign was soft-deleted.
+</ResponseField>
+
+<ResponseField name="deleted_by" field-type="string" required="false">
+User ID that soft-deleted the campaign.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="false">
+Joined assistant summary with `id` and `name`.
+</ResponseField>
+
+<ResponseField name="contact_stats" field-type="object" required="false">
+Optional contact outcome counts returned when `includeContactStats` is enabled.
 </ResponseField>
 
 ## List campaigns
 
-Retrieve a paginated list of CRM campaigns.
+Retrieve a filtered list of CRM campaigns. The list endpoint supports API key or session cookie authentication.
 
-### Request
+### Query parameters
 
-<ParamField query="page" param-type="integer" required="false">
-Page number returned by the list endpoint. The response includes the current `page` value.
+<ParamField query="teamId" param-type="string" required="false">
+Filter campaigns by team ID.
+</ParamField>
+
+<ParamField query="status" param-type="string" required="false" enum="draft,scheduled,running,paused,completed,cancelled">
+Return only campaigns with the exact status value.
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+Filter campaigns by assistant ID.
+</ParamField>
+
+<ParamField query="deleted" param-type="string" required="false" enum="exclude,include,only">
+Controls soft-deleted record visibility. The default behavior is `exclude`.
+</ParamField>
+
+<ParamField query="contactFilter" param-type="string" required="false" enum="voicemail,awaiting_retry,answered,no_answer,busy,error">
+Pre-filter campaigns by contact outcome.
+</ParamField>
+
+<ParamField query="includeContactStats" param-type="string" required="false" enum="1,true">
+Include `contact_stats` in each returned campaign object.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of campaigns to return. The default is `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of campaigns to skip before returning results. The default is `0`.
 </ParamField>
 
 ### Response fields
@@ -67,32 +182,59 @@ Returns `true` when the request succeeds.
 </ResponseField>
 
 <ResponseField name="campaigns" field-type="array" required="true">
-List of campaign objects.
+List of campaign objects matching the query.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
-Total number of campaigns available for the current query.
+<ResponseField name="count" field-type="integer" required="true">
+Number of campaigns returned in the current response.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
-Current page number.
+<ResponseField name="limit" field-type="integer" required="true">
+Applied result limit.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Applied result offset.
 </ResponseField>
 
 ## Create a campaign
 
-Create a new outbound campaign by name, and optionally assign an outbound assistant or schedule metadata.
+Create a new outbound campaign and set its execution rules. If you set `scheduledStartAt`, the campaign is created with status `scheduled`. If you omit `scheduledStartAt`, the campaign starts in `draft`.
 
 <Request>
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token" \
+  -H "x-api-key: ttr_example_live_9xmk7q2r" \
   -d '{
+    "teamId": "team_2a9f5e14-3d0d-4df5-bec7-b0c5a1f9ef40",
+    "assistantId": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
+    "companyId": "co_6af7fdf4-8d84-46f7-8bd6-2f0a1c9f35c8",
+    "fromNumberIds": [
+      "pn_34a0f61a-52b4-4c9d-a6ef-0e8a3fd72f11"
+    ],
     "name": "Q3 renewal outreach",
-    "assistant_id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
-    "schedule": {
-      "timezone": "America/Los_Angeles",
-      "start_at": "2026-08-13T16:00:00Z"
+    "description": "Call active accounts before renewal dates",
+    "scheduledStartAt": "2026-08-13T16:00:00Z",
+    "callWindowStart": "09:00",
+    "callWindowEnd": "17:30",
+    "callWindowTimezone": "America/Los_Angeles",
+    "maxConcurrentCalls": 8,
+    "maxAttemptsPerContact": 3,
+    "retryDelayMinutes": 30,
+    "noAutoComplete": false,
+    "webhookEnabled": true,
+    "webhookUrl": "https://ops.acme.io/talkturo/campaign-events",
+    "webhookSecret": "whsec_example_4r7m2qp9",
+    "webhookEvents": [
+      "campaign.started",
+      "campaign.completed",
+      "call.completed"
+    ],
+    "settings": {
+      "voicemailDetectionEnabled": true,
+      "voicemailAction": "drop_message",
+      "useContactTimezoneForCallWindow": true
     }
   }'
 ```
@@ -104,13 +246,33 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
   "success": true,
   "campaign": {
     "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
-    "name": "Q3 renewal outreach",
-    "status": "draft",
+    "team_id": "team_2a9f5e14-3d0d-4df5-bec7-b0c5a1f9ef40",
     "assistant_id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
-    "schedule": {
-      "timezone": "America/Los_Angeles",
-      "start_at": "2026-08-13T16:00:00Z"
-    }
+    "name": "Q3 renewal outreach",
+    "description": "Call active accounts before renewal dates",
+    "status": "scheduled",
+    "scheduled_start_at": "2026-08-13T16:00:00Z",
+    "call_window_start": "09:00",
+    "call_window_end": "17:30",
+    "call_window_timezone": "America/Los_Angeles",
+    "max_concurrent_calls": 8,
+    "max_attempts_per_contact": 3,
+    "retry_delay_minutes": 30,
+    "settings": {
+      "voicemailDetectionEnabled": true,
+      "voicemailAction": "drop_message",
+      "useContactTimezoneForCallWindow": true,
+      "noAutoComplete": false,
+      "webhookEnabled": true,
+      "webhookUrl": "https://ops.acme.io/talkturo/campaign-events",
+      "webhookEvents": [
+        "campaign.started",
+        "campaign.completed",
+        "call.completed"
+      ]
+    },
+    "created_at": "2026-08-10T14:22:31.000Z",
+    "updated_at": "2026-08-10T14:22:31.000Z"
   }
 }
 ```
@@ -118,16 +280,80 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
 
 ### Body parameters
 
+<ParamField body="teamId" param-type="string" required="false">
+Team ID for the campaign. This field is conditionally required when the authenticated context does not already resolve a team.
+</ParamField>
+
+<ParamField body="assistantId" param-type="string" required="true">
+Assistant to use for outbound calls. The assistant must be outbound-enabled.
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="true">
+Company associated with the campaign.
+</ParamField>
+
+<ParamField body="fromNumberIds" param-type="array" required="true">
+Array of phone number UUIDs to use for outbound calling. The array can be empty when you want the system default or demo behavior.
+</ParamField>
+
 <ParamField body="name" param-type="string" required="true">
 Campaign name.
 </ParamField>
 
-<ParamField body="assistant_id" param-type="string" required="false">
-Assistant to use for outbound calls.
+<ParamField body="description" param-type="string" required="false">
+Optional campaign description.
 </ParamField>
 
-<ParamField body="schedule" param-type="object" required="false">
-Campaign scheduling configuration. The endpoint accepts a `schedule` object when you want to attach scheduling metadata during creation.
+<ParamField body="scheduledStartAt" param-type="string" required="false">
+ISO 8601 timestamp for scheduled execution. When present, the campaign is created with status `scheduled`.
+</ParamField>
+
+<ParamField body="callWindowStart" param-type="string" required="false">
+Daily call window start time in `HH:MM` format.
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false">
+Daily call window end time in `HH:MM` format.
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false">
+IANA timezone for the call window.
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false">
+Maximum number of simultaneous outbound calls.
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false">
+Maximum retry attempts per contact.
+</ParamField>
+
+<ParamField body="retryDelayMinutes" param-type="integer" required="false">
+Base retry delay in minutes between attempts.
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false">
+Additional campaign execution settings. Use this object for advanced retry, voicemail, and timezone behavior.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false">
+Prevents the campaign from auto-completing when all contacts finish processing.
+</ParamField>
+
+<ParamField body="webhookEnabled" param-type="boolean" required="false">
+Enables campaign webhooks.
+</ParamField>
+
+<ParamField body="webhookUrl" param-type="string" required="false">
+Destination URL for webhook deliveries.
+</ParamField>
+
+<ParamField body="webhookSecret" param-type="string" required="false">
+Secret used to sign outbound webhook payloads.
+</ParamField>
+
+<ParamField body="webhookEvents" param-type="array" required="false">
+List of event names to send to the webhook endpoint.
 </ParamField>
 
 ### Response fields
@@ -142,7 +368,7 @@ Created campaign object.
 
 ## Get a campaign
 
-Retrieve one campaign by ID.
+Retrieve one campaign by ID. This route requires a valid Talkturo session cookie.
 
 ### Path parameters
 
@@ -157,12 +383,90 @@ Returns `true` when the campaign is found.
 </ResponseField>
 
 <ResponseField name="campaign" field-type="object" required="true">
-Requested campaign object.
+Requested campaign object with joined assistant details.
 </ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="false">
+Assistant summary with `id` and `name`.
+</ResponseField>
+
+<ResponseField name="campaign_contacts" field-type="array" required="true">
+First 100 campaign contact records, including contact details and company summary when available.
+</ResponseField>
+
+<ResponseField name="contact_count" field-type="integer" required="true">
+Total number of contacts attached to the campaign.
+</ResponseField>
+
+<Callout kind="info">
+
+Single-campaign responses include up to the first 100 `campaign_contacts` records. Each record can include contact fields such as `id`, `first_name`, `last_name`, `phone`, `email`, and `company` with `id` and `name`.
+
+</Callout>
 
 ## Update a campaign
 
-Update one or more campaign fields.
+Update campaign fields or change campaign status with `PUT /api/crm/campaigns/[id]`. This route requires a valid Talkturo session cookie.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token" \
+  -d '{
+    "status": "paused",
+    "settings": {
+      "voicemailDropMessage": "Hi, this is Maya from Acme. We missed you and will try again tomorrow.",
+      "voicemailDetectionEnabled": true,
+      "voicemailAction": "drop_message",
+      "unavailableAction": "retry",
+      "retryDelayMinutesNoAnswer": 20,
+      "retryDelayMinutesBusy": 45,
+      "retryDelayMinutesError": 60,
+      "retryOnError": true,
+      "useContactTimezoneForCallWindow": true,
+      "retryBackoffMode": "exponential",
+      "retryBackoffMultiplier": 2,
+      "retryBackoffMaxMinutes": 240,
+      "maxAttemptsNoAnswer": 3,
+      "maxAttemptsBusy": 2,
+      "maxAttemptsError": 2,
+      "noAutoComplete": false
+    }
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
+    "status": "paused",
+    "updated_at": "2026-08-10T15:04:12.000Z",
+    "settings": {
+      "voicemailDropMessage": "Hi, this is Maya from Acme. We missed you and will try again tomorrow.",
+      "voicemailDetectionEnabled": true,
+      "voicemailAction": "drop_message",
+      "unavailableAction": "retry",
+      "retryDelayMinutesNoAnswer": 20,
+      "retryDelayMinutesBusy": 45,
+      "retryDelayMinutesError": 60,
+      "retryOnError": true,
+      "useContactTimezoneForCallWindow": true,
+      "retryBackoffMode": "exponential",
+      "retryBackoffMultiplier": 2,
+      "retryBackoffMaxMinutes": 240,
+      "maxAttemptsNoAnswer": 3,
+      "maxAttemptsBusy": 2,
+      "maxAttemptsError": 2,
+      "noAutoComplete": false
+    }
+  }
+}
+```
+</Response>
 
 ### Path parameters
 
@@ -172,16 +476,84 @@ Campaign ID.
 
 ### Body parameters
 
+<ParamField body="status" param-type="string" required="false" enum="draft,scheduled,running,paused,completed,cancelled">
+Updated campaign status.
+</ParamField>
+
+<ParamField body="teamId" param-type="string" required="false">
+Updated team ID when supported by your application context.
+</ParamField>
+
+<ParamField body="assistantId" param-type="string" required="false">
+Updated outbound assistant ID.
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="false">
+Updated company ID.
+</ParamField>
+
+<ParamField body="fromNumberIds" param-type="array" required="false">
+Updated list of outbound phone number UUIDs.
+</ParamField>
+
 <ParamField body="name" param-type="string" required="false">
 Updated campaign name.
 </ParamField>
 
-<ParamField body="assistant_id" param-type="string" required="false">
-Updated outbound assistant ID.
+<ParamField body="description" param-type="string" required="false">
+Updated campaign description.
 </ParamField>
 
-<ParamField body="schedule" param-type="object" required="false">
-Updated scheduling configuration.
+<ParamField body="scheduledStartAt" param-type="string" required="false">
+Updated ISO 8601 scheduled start time.
+</ParamField>
+
+<ParamField body="callWindowStart" param-type="string" required="false">
+Updated call window start time in `HH:MM` format.
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false">
+Updated call window end time in `HH:MM` format.
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false">
+Updated IANA timezone for the call window.
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false">
+Updated maximum number of simultaneous outbound calls.
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false">
+Updated maximum retry attempts per contact.
+</ParamField>
+
+<ParamField body="retryDelayMinutes" param-type="integer" required="false">
+Updated base retry delay in minutes.
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false">
+Advanced campaign settings object. Common fields include `voicemailDropMessage`, `voicemailDetectionEnabled`, `voicemailAction`, `unavailableAction`, `retryDelayMinutesNoAnswer`, `retryDelayMinutesBusy`, `retryDelayMinutesError`, `retryOnError`, `useContactTimezoneForCallWindow`, `retryBackoffMode`, `retryBackoffMultiplier`, `retryBackoffMaxMinutes`, `maxAttemptsNoAnswer`, `maxAttemptsBusy`, `maxAttemptsError`, and `noAutoComplete`.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false">
+Updated auto-complete behavior.
+</ParamField>
+
+<ParamField body="webhookEnabled" param-type="boolean" required="false">
+Enables or disables campaign webhooks.
+</ParamField>
+
+<ParamField body="webhookUrl" param-type="string" required="false">
+Updated webhook destination URL.
+</ParamField>
+
+<ParamField body="webhookSecret" param-type="string" required="false">
+Updated webhook signing secret.
+</ParamField>
+
+<ParamField body="webhookEvents" param-type="array" required="false">
+Updated list of subscribed webhook event names.
 </ParamField>
 
 ### Response fields
@@ -194,9 +566,21 @@ Returns `true` when the update succeeds.
 Updated campaign object.
 </ResponseField>
 
+<Callout kind="alert">
+
+If a campaign is already `running`, you can change only the `status` field. Attempts to modify other fields while the campaign is running return `409`.
+
+</Callout>
+
+<Callout kind="info">
+
+Changing `status` to `running` requires at least 1 available credit. If the account has no available credit, the status transition is rejected.
+
+</Callout>
+
 ## Delete a campaign
 
-Delete a campaign by ID.
+Soft-delete a campaign by ID. This route requires a valid Talkturo session cookie.
 
 ### Path parameters
 
@@ -207,16 +591,22 @@ Campaign ID.
 ### Response fields
 
 <ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the campaign is deleted.
+Returns `true` when the campaign is soft-deleted.
 </ResponseField>
 
 <ResponseField name="message" field-type="string" required="true">
 Deletion result message.
 </ResponseField>
 
+<Callout kind="alert">
+
+Delete is allowed only when the campaign status is `draft` or `cancelled`. Other statuses return `400`.
+
+</Callout>
+
 ## Manage campaign contacts
 
-Attach contacts to a campaign and retrieve the current campaign contact list.
+Attach contacts to a campaign and retrieve the current campaign contact list. Both routes require a valid Talkturo session cookie.
 
 ### List campaign contacts
 
@@ -242,6 +632,46 @@ Contacts attached to the campaign.
 
 Add contacts to an existing campaign.
 
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/contacts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token" \
+  -d '{
+    "contacts": [
+      {
+        "id": "con_81f3ef70-95f8-4fa1-b8b5-d3fa17d8eec1"
+      },
+      {
+        "id": "con_2df0944a-c90a-40fc-bbfe-50599657f210"
+      }
+    ]
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "contacts": [
+    {
+      "id": "con_81f3ef70-95f8-4fa1-b8b5-d3fa17d8eec1",
+      "first_name": "Maya",
+      "last_name": "Patel",
+      "phone": "+14155550118"
+    },
+    {
+      "id": "con_2df0944a-c90a-40fc-bbfe-50599657f210",
+      "first_name": "Daniel",
+      "last_name": "Ruiz",
+      "phone": "+14155550174"
+    }
+  ]
+}
+```
+</Response>
+
 #### Path parameters
 
 <ParamField path="id" param-type="string" required="true">
@@ -251,7 +681,7 @@ Campaign ID.
 #### Body parameters
 
 <ParamField body="contacts" param-type="array" required="false">
-List of contacts to add. The endpoint accepts contact payloads for campaign association.
+List of contacts to add to the campaign.
 </ParamField>
 
 #### Response fields
@@ -266,202 +696,21 @@ Updated contact list or added contact records.
 
 <Callout kind="info">
 
-The repository confirms that `GET` and `POST` are available on `/api/crm/campaigns/[id]/contacts`, but it does not expose the exact contact request schema on this page. Use the response from your CRM contacts endpoints as the source for contact IDs and payload shape.
+The route accepts `POST /api/crm/campaigns/[id]/contacts`, but the exact contact input schema is not fully exposed on this page. Use your CRM contacts data as the source for contact IDs and supported payload fields.
 
 </Callout>
 
-## Retrieve real-time dashboard stats
+## Campaign status workflow
 
-Read live execution metrics for a campaign dashboard.
+Campaign execution is controlled through the campaign `status` field on `PUT /api/crm/campaigns/[id]`.
 
-<Request>
-```bash
-curl -X GET "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/dashboard" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token"
-```
-</Request>
+- Create the campaign in `draft` or `scheduled`.
+- Add contacts through `POST /api/crm/campaigns/[id]/contacts`.
+- Start the campaign by updating `status` to `running`.
+- Pause execution by updating `status` to `paused`.
+- Cancel execution by updating `status` to `cancelled`.
 
-<Response>
-```json
-{
-  "success": true,
-  "stats": {
-    "total_calls": 240,
-    "answered": 118,
-    "failed": 21,
-    "in_progress": 7
-  }
-}
-```
-</Response>
-
-### Path parameters
-
-<ParamField path="id" param-type="string" required="true">
-Campaign ID.
-</ParamField>
-
-### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when dashboard stats are available.
-</ResponseField>
-
-<ResponseField name="stats" field-type="object" required="true">
-Campaign dashboard metrics object.
-</ResponseField>
-
-<ResponseField name="total_calls" field-type="integer" required="false">
-Total calls recorded for the campaign.
-</ResponseField>
-
-<ResponseField name="answered" field-type="integer" required="false">
-Calls answered by recipients.
-</ResponseField>
-
-<ResponseField name="failed" field-type="integer" required="false">
-Calls that failed.
-</ResponseField>
-
-<ResponseField name="in_progress" field-type="integer" required="false">
-Calls currently in progress.
-</ResponseField>
-
-## Start or stop a campaign
-
-Control campaign execution by sending a run action.
-
-<Request>
-```bash
-curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/run" \
-  -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token" \
-  -d '{
-    "action": "start"
-  }'
-```
-</Request>
-
-<Response>
-```json
-{
-  "success": true,
-  "status": "running"
-}
-```
-</Response>
-
-### Path parameters
-
-<ParamField path="id" param-type="string" required="true">
-Campaign ID.
-</ParamField>
-
-### Body parameters
-
-<ParamField body="action" param-type="string" required="true" enum="start,stop">
-Execution command for the campaign.
-</ParamField>
-
-### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the action is accepted.
-</ResponseField>
-
-<ResponseField name="status" field-type="string" required="true">
-Resulting campaign status, such as `running` or `stopped`.
-</ResponseField>
-
-## Related CRM endpoints
-
-These endpoints are commonly used alongside campaign operations.
-
-### List outbound assistants
-
-Retrieve assistants that can be assigned to outbound campaigns.
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the request succeeds.
-</ResponseField>
-
-<ResponseField name="assistants" field-type="array" required="true">
-Assistants available for outbound calling.
-</ResponseField>
-
-```bash
-GET /api/crm/outbound-assistants
-```
-
-### List CRM call logs
-
-Retrieve CRM call history for campaign analysis and operational debugging.
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the request succeeds.
-</ResponseField>
-
-<ResponseField name="calls" field-type="array" required="true">
-CRM call log entries.
-</ResponseField>
-
-```bash
-GET /api/crm/calls
-```
-
-### Retrieve AI insights
-
-Retrieve AI-generated CRM intelligence and insights.
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the request succeeds.
-</ResponseField>
-
-<ResponseField name="insights" field-type="array" required="true">
-Insight records generated from CRM activity.
-</ResponseField>
-
-```bash
-GET /api/crm/intelligence
-```
-
-## Common workflow
-
-Most campaign integrations follow the same path:
-
-<Steps>
-
-<Step title="List outbound assistants" icon="users">
-
-Call `GET /api/crm/outbound-assistants` and select the assistant you want to use for outbound calls.
-
-</Step>
-
-<Step title="Create the campaign" icon="plus">
-
-Create a campaign with `POST /api/crm/campaigns`. A successful response returns `success: true` and a new `campaign.id`.
-
-</Step>
-
-<Step title="Add contacts" icon="upload">
-
-Attach contacts with `POST /api/crm/campaigns/[id]/contacts`. After the request succeeds, the response includes a `contacts` array.
-
-</Step>
-
-<Step title="Start the run" icon="play-circle">
-
-Send `POST /api/crm/campaigns/[id]/run` with `action` set to `start`. The response returns `status: running` when execution begins.
-
-</Step>
-
-<Step title="Monitor progress" icon="bar-chart">
-
-Poll `GET /api/crm/campaigns/[id]/dashboard` to track `total_calls`, `answered`, `failed`, and `in_progress` while the campaign runs.
-
-</Step>
-
-</Steps>
+If a campaign is already `running`, send a status-only update until the campaign leaves the running state.
 
 ## Related resources
 
