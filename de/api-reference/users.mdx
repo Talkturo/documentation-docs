@@ -1,0 +1,829 @@
+---
+title: Benutzer
+description: Benutzerprofile abrufen, Anzeigenamen verwalten, Desktop-fähige Workspaces auflisten und den Desktop-Abonnementstatus über die Talkturo-API abfragen.
+---
+
+## Benutzer-Endpunkte
+
+Verwalten Sie das Profil des authentifizierten Desktop-Benutzers, listen Sie zugriffsberechtigte Workspaces auf und lesen Sie den Desktop-Abonnementstatus aus.
+
+<Callout kind="info">
+
+**Authentifizierung**
+
+Alle Endpunkte auf dieser Seite erwarten ein Desktop-Bearer-JWT im Header `Authorization`. Verwenden Sie keinen API-Schlüssel. Die Authentifizierung erfolgt mit `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt`.
+
+</Callout>
+
+## Endpunktübersicht
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/users/me` | Profil des authentifizierten Benutzers abrufen |
+| `PUT` | `/api/users/me` | Anzeigenamen aktualisieren |
+| `DELETE` | `/api/users/me` | Benutzerlöschung anfordern |
+| `GET` | `/api/users/me/workspaces` | Workspaces mit Desktop-Zugriff auflisten |
+| `GET` | `/api/users/me/subscription` | Desktop-Abonnementstatus abrufen |
+| `GET` | `/api/users/me/auto-update` | Auto-Update-Status abrufen |
+| `PUT` | `/api/users/me/auto-update` | Auto-Update-Einstellung setzen |
+
+## GET /api/users/me
+
+Rufen Sie das Profil des authentifizierten Benutzers ab.
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Desktop-Bearer-JWT im Format `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt`.
+
+</ParamField>
+
+### Anfragebeispiel
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/users/me" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/users/me", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,401" default-tab="1">
+```json
+{
+  "success": true,
+  "data": {
+    "uid": "usr_2m9x8k41",
+    "email": "lea.hoffmann@talkturo.dev",
+    "display_name": "Lea Hoffmann",
+    "auto_update_enabled": true,
+    "has_migrated_to_firebase": 0
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Unauthorized"
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Enthält die Profildaten des authentifizierten Benutzers.
+
+</ResponseField>
+
+<ResponseField name="data.uid" field-type="string" required="true">
+
+Eindeutige Benutzer-ID.
+
+</ResponseField>
+
+<ResponseField name="data.email" field-type="string" required="true">
+
+E-Mail-Adresse des Benutzers.
+
+</ResponseField>
+
+<ResponseField name="data.display_name" field-type="string" required="true">
+
+Aktueller Anzeigename.
+
+</ResponseField>
+
+<ResponseField name="data.auto_update_enabled" field-type="boolean" required="true">
+
+Auto-Update-Status. Dieser Wert ist derzeit immer `true`.
+
+</ResponseField>
+
+<ResponseField name="data.has_migrated_to_firebase" field-type="integer" required="true">
+
+Migrationskennzeichen. Dieser Wert ist derzeit immer `0`.
+
+</ResponseField>
+
+### Fehler
+
+| Status | Bedeutung |
+| --- | --- |
+| `401` | Das Bearer-JWT fehlt, ist ungültig oder kann nicht authentifiziert werden. |
+
+## PUT /api/users/me
+
+Aktualisieren Sie den Anzeigenamen des authentifizierten Benutzers.
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Desktop-Bearer-JWT im Format `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt`.
+
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="display_name" param-type="string" required="true">
+
+Neuer Anzeigename des Benutzers.
+
+</ParamField>
+
+### Anfragebeispiel
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PUT "https://api.talkturo.com/api/users/me" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "display_name": "Lea M. Hoffmann"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/users/me", {
+  method: "PUT",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    display_name: "Lea M. Hoffmann"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,500" default-tab="1">
+```json
+{
+  "success": true,
+  "data": {
+    "uid": "usr_2m9x8k41"
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid JSON body"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Failed to update user"
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Aktualisierung erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Enthält das Ergebnis der Aktualisierung.
+
+</ResponseField>
+
+<ResponseField name="data.uid" field-type="string" required="true">
+
+Benutzer-ID des aktualisierten Profils.
+
+</ResponseField>
+
+### Fehler
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | Der Request-Body enthält ungültiges JSON. |
+| `500` | Die Aktualisierung des Benutzers ist serverseitig fehlgeschlagen. |
+
+## DELETE /api/users/me
+
+Dieser Endpunkt bestätigt die Anfrage, löscht den Benutzer aber nicht.
+
+<Callout kind="alert">
+
+`DELETE /api/users/me` ist derzeit ein Stub-Endpunkt. Die Antwort enthält immer `deleted: false`.
+
+</Callout>
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Desktop-Bearer-JWT im Format `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt`.
+
+</ParamField>
+
+### Anfragebeispiel
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X DELETE "https://api.talkturo.com/api/users/me" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/users/me", {
+  method: "DELETE",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "data": {
+    "uid": "usr_2m9x8k41",
+    "deleted": false
+  }
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage verarbeitet wurde.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Enthält das Ergebnis der Löschanfrage.
+
+</ResponseField>
+
+<ResponseField name="data.uid" field-type="string" required="true">
+
+Benutzer-ID des authentifizierten Benutzers.
+
+</ResponseField>
+
+<ResponseField name="data.deleted" field-type="boolean" required="true">
+
+Löschstatus. Dieser Wert ist derzeit immer `false`.
+
+</ResponseField>
+
+## GET /api/users/me/workspaces
+
+Listen Sie alle Workspaces auf, auf die der Benutzer im Desktop-Kontext zugreifen darf.
+
+Nur Workspaces mit `has_desktop_plan=true` und `has_desktop_access=true` werden zurückgegeben.
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Desktop-Bearer-JWT im Format `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt`.
+
+</ParamField>
+
+### Anfragebeispiel
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/users/me/workspaces" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/users/me/workspaces", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "workspaces": [
+    {
+      "account_id": "acc_7d3n4r2k",
+      "slug": "nordstern-vertrieb",
+      "name": "Nordstern Vertrieb",
+      "is_personal_account": false,
+      "role": "admin",
+      "has_desktop_plan": true,
+      "has_desktop_access": true,
+      "plan": "desktop_pro"
+    },
+    {
+      "account_id": "acc_1v8p2s6m",
+      "slug": "lea-hoffmann",
+      "name": "Lea Hoffmann",
+      "is_personal_account": true,
+      "role": "owner",
+      "has_desktop_plan": true,
+      "has_desktop_access": true,
+      "plan": "desktop_basic"
+    }
+  ]
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="workspaces" field-type="array" required="true">
+
+Liste der Workspaces mit Desktop-Zugriff.
+
+</ResponseField>
+
+<ResponseField name="workspaces[].account_id" field-type="string" required="true">
+
+Eindeutige Workspace-ID.
+
+</ResponseField>
+
+<ResponseField name="workspaces[].slug" field-type="string" required="true">
+
+URL-Slug des Workspace.
+
+</ResponseField>
+
+<ResponseField name="workspaces[].name" field-type="string" required="true">
+
+Anzeigename des Workspace.
+
+</ResponseField>
+
+<ResponseField name="workspaces[].is_personal_account" field-type="boolean" required="true">
+
+Kennzeichnet persönliche Workspaces.
+
+</ResponseField>
+
+<ResponseField name="workspaces[].role" field-type="string" required="true">
+
+Rolle des Benutzers im Workspace.
+
+</ResponseField>
+
+<ResponseField name="workspaces[].has_desktop_plan" field-type="boolean" required="true">
+
+Gibt an, ob für den Workspace ein Desktop-Plan aktiv ist.
+
+</ResponseField>
+
+<ResponseField name="workspaces[].has_desktop_access" field-type="boolean" required="true">
+
+Gibt an, ob der Benutzer Desktop-Zugriff auf diesen Workspace hat.
+
+</ResponseField>
+
+<ResponseField name="workspaces[].plan" field-type="string" required="true">
+
+Planbezeichnung des Workspace.
+
+</ResponseField>
+
+## GET /api/users/me/subscription
+
+Rufen Sie den Desktop-Abonnementstatus des authentifizierten Benutzers oder eines Mitglieds-Workspace ab.
+
+Wenn Sie den optionalen Header `X-Talkturo-Account` senden, wertet der Endpunkt das Abonnement für den angegebenen Workspace-Kontext aus.
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Desktop-Bearer-JWT im Format `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt`.
+
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string" required="false">
+
+Optionaler Workspace-Bezug für die Abfrage des Abonnementstatus.
+
+</ParamField>
+
+### Anfragebeispiel
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/users/me/subscription" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt" \
+  -H "X-Talkturo-Account: nordstern-vertrieb"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/users/me/subscription", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt",
+    "X-Talkturo-Account": "nordstern-vertrieb"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,403" default-tab="1">
+```json
+{
+  "success": true,
+  "hasActiveSubscription": true,
+  "data": {
+    "active": true,
+    "plan": "desktop_pro",
+    "source": "stripe",
+    "current_period_end": "2026-02-28T23:59:59.000Z",
+    "trial_ends_at": null,
+    "account_id": "acc_7d3n4r2k",
+    "account_slug": "nordstern-vertrieb",
+    "access_blocked_reason": null,
+    "limits": {
+      "seats": 10,
+      "calls_per_month": 5000,
+      "session_max_minutes": 180,
+      "retention_days": 365,
+      "sales_modes": [
+        "preview",
+        "power"
+      ]
+    },
+    "usage": {
+      "calls_this_month": 842,
+      "calls_limit": 5000
+    }
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Forbidden"
+}
+```
+</Response>
+
+### Header-Parameter
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Desktop-Bearer-JWT für den authentifizierten Benutzer.
+
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string" required="false">
+
+Workspace-Slug oder konto-bezogener Kontext für eine workspace-spezifische Abfrage. Wenn der Benutzer kein Mitglied ist, gibt der Endpunkt `403` zurück.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="hasActiveSubscription" field-type="boolean" required="true">
+
+Zusammengefasster Status, ob ein aktives Desktop-Abonnement vorliegt.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Enthält den detaillierten Abonnementstatus.
+
+</ResponseField>
+
+<ResponseField name="data.active" field-type="boolean" required="true">
+
+Gibt an, ob das Abonnement aktiv ist.
+
+</ResponseField>
+
+<ResponseField name="data.plan" field-type="string" required="true">
+
+Name des aktiven oder zuletzt ausgewerteten Plans.
+
+</ResponseField>
+
+<ResponseField name="data.source" field-type="string" required="true">
+
+Quelle des Abonnements, zum Beispiel ein Abrechnungssystem oder interner Ursprung.
+
+</ResponseField>
+
+<ResponseField name="data.current_period_end" field-type="string" required="false">
+
+Ende des aktuellen Abrechnungszeitraums als ISO-8601-Zeitstempel.
+
+</ResponseField>
+
+<ResponseField name="data.trial_ends_at" field-type="string" required="false">
+
+Ende einer laufenden Testphase als ISO-8601-Zeitstempel oder `null`.
+
+</ResponseField>
+
+<ResponseField name="data.account_id" field-type="string" required="true">
+
+Workspace-ID, für die der Status ausgewertet wurde.
+
+</ResponseField>
+
+<ResponseField name="data.account_slug" field-type="string" required="true">
+
+Workspace-Slug, für den der Status ausgewertet wurde.
+
+</ResponseField>
+
+<ResponseField name="data.access_blocked_reason" field-type="string" required="false">
+
+Grund für gesperrten Zugriff oder `null`, wenn kein Zugriff blockiert ist.
+
+</ResponseField>
+
+<ResponseField name="data.limits" field-type="object" required="true">
+
+Planlimits für den ausgewerteten Workspace.
+
+</ResponseField>
+
+<ResponseField name="data.limits.seats" field-type="integer" required="true">
+
+Maximale Anzahl von Sitzplätzen.
+
+</ResponseField>
+
+<ResponseField name="data.limits.calls_per_month" field-type="integer" required="true">
+
+Monatliches Limit für Anrufe.
+
+</ResponseField>
+
+<ResponseField name="data.limits.session_max_minutes" field-type="integer" required="true">
+
+Maximale Sitzungsdauer in Minuten.
+
+</ResponseField>
+
+<ResponseField name="data.limits.retention_days" field-type="integer" required="true">
+
+Aufbewahrungsdauer in Tagen.
+
+</ResponseField>
+
+<ResponseField name="data.limits.sales_modes" field-type="array" required="true">
+
+Verfügbare Vertriebsmodi für den Plan.
+
+</ResponseField>
+
+<ResponseField name="data.usage" field-type="object" required="true">
+
+Aktuelle Nutzung im ausgewerteten Zeitraum.
+
+</ResponseField>
+
+<ResponseField name="data.usage.calls_this_month" field-type="integer" required="true">
+
+Bisherige Anzahl der Anrufe im aktuellen Monat.
+
+</ResponseField>
+
+<ResponseField name="data.usage.calls_limit" field-type="integer" required="true">
+
+Monatliches Anruflimit für den aktuellen Plan.
+
+</ResponseField>
+
+### Fehler
+
+| Status | Bedeutung |
+| --- | --- |
+| `403` | Der Header `X-Talkturo-Account` wurde gesetzt, aber der Benutzer ist kein Mitglied des angegebenen Workspace. |
+
+## GET /api/users/me/auto-update
+
+Lesen Sie den Auto-Update-Status aus.
+
+<Callout kind="alert">
+
+`GET /api/users/me/auto-update` ist derzeit ein Stub-Endpunkt. Die Antwort enthält immer `enabled: true`.
+
+</Callout>
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Desktop-Bearer-JWT im Format `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt`.
+
+</ParamField>
+
+### Anfragebeispiel
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/users/me/auto-update" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/users/me/auto-update", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "data": {
+    "enabled": true
+  }
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Enthält den Auto-Update-Status.
+
+</ResponseField>
+
+<ResponseField name="data.enabled" field-type="boolean" required="true">
+
+Auto-Update-Status. Dieser Wert ist derzeit immer `true`.
+
+</ResponseField>
+
+## PUT /api/users/me/auto-update
+
+Senden Sie eine Auto-Update-Einstellung an den Endpunkt.
+
+Der Endpunkt akzeptiert einen Request-Body, wertet ihn aber derzeit nicht aus.
+
+<Callout kind="alert">
+
+`PUT /api/users/me/auto-update` ist derzeit ein Stub-Endpunkt. Jeder gültige Request führt zu einer Antwort mit `enabled: true`, unabhängig vom gesendeten Body.
+
+</Callout>
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Desktop-Bearer-JWT im Format `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt`.
+
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="any" param-type="any" required="false">
+
+Beliebiger JSON-Body. Der Endpunkt ignoriert den Inhalt.
+
+</ParamField>
+
+### Anfragebeispiel
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PUT "https://api.talkturo.com/api/users/me/auto-update" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": false
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/users/me/auto-update", {
+  method: "PUT",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_desktop_jwt",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    enabled: false
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "data": {
+    "enabled": true
+  }
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Enthält den zurückgegebenen Auto-Update-Status.
+
+</ResponseField>
+
+<ResponseField name="data.enabled" field-type="boolean" required="true">
+
+Auto-Update-Status. Dieser Wert ist derzeit immer `true`.
+
+</ResponseField>
+
+## Verwandte Endpunkte
+
+<Columns cols={3}>
+<Card title="Authentifizierung" href="/de/api-reference/authentication" icon="lock" cta="Zur Referenz" />
+<Card title="API-Schlüssel" href="/de/api-reference/api-keys" icon="key" cta="Zu den Schlüsseln" />
+<Card title="Desktop-Auth" href="/de/api-reference/desktop" icon="monitor" cta="Zur Desktop-Auth" />
+</Columns>

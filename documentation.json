@@ -285,6 +285,21 @@
                     "title": "Webhooks",
                     "path": "en/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "Users",
+                    "path": "en/api-reference/users",
+                    "icon": "user-cog"
+                  },
+                  {
+                    "title": "Payment Methods",
+                    "path": "en/api-reference/payment-methods",
+                    "icon": "credit-card"
+                  },
+                  {
+                    "title": "Usage Analytics",
+                    "path": "en/api-reference/usage",
+                    "icon": "bar-chart"
                   }
                 ]
               },
@@ -655,6 +670,21 @@
                     "title": "Webhooks",
                     "path": "de/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "Benutzer",
+                    "path": "de/api-reference/users",
+                    "icon": "user-cog"
+                  },
+                  {
+                    "title": "Zahlungsmethoden",
+                    "path": "de/api-reference/payment-methods",
+                    "icon": "credit-card"
+                  },
+                  {
+                    "title": "Nutzungsanalyse",
+                    "path": "de/api-reference/usage",
+                    "icon": "bar-chart"
                   }
                 ]
               },

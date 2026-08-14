@@ -5,11 +5,11 @@ description: Create, manage, and run outbound calling campaigns through the Talk
 
 ## Manage outbound CRM campaigns
 
-Use the CRM Campaigns endpoints to create outbound calling campaigns, attach contacts, monitor live progress, and start or stop execution. All CRM campaign endpoints require an authenticated **session cookie** and are intended for browser-based or same-origin application requests.
+Use the CRM Campaigns endpoints to create outbound calling campaigns, attach contacts, monitor live progress, and start or stop execution. All CRM campaign endpoints support dual authentication — use either an API key or an authenticated session cookie.
 
 <Callout kind="info">
 
-Authenticate these endpoints with a valid Talkturo session cookie. These routes do not accept API key authentication.
+Authenticate these endpoints with either an API key (`Authorization: Bearer tk_live_...`) or a valid Talkturo session cookie.
 
 </Callout>
 
@@ -50,14 +50,99 @@ Current campaign status.
 Identifier of the outbound assistant assigned to the campaign.
 </ResponseField>
 
+<ResponseField name="assistant" field-type="object" required="false">
+Nested assistant record with `id` and `name`.
+</ResponseField>
+
+<ResponseField name="assistant.id" field-type="string" required="false">
+Assistant UUID.
+</ResponseField>
+
+<ResponseField name="assistant.name" field-type="string" required="false">
+Assistant name.
+</ResponseField>
+
+<ResponseField name="contact_stats" field-type="object" required="false">
+Present when `includeContactStats` is set. Contains `voicemail` and `awaiting_retry` counts.
+</ResponseField>
+
+<ResponseField name="contact_stats.voicemail" field-type="number" required="false">
+Number of contacts in the campaign whose latest outcome is `voicemail`.
+</ResponseField>
+
+<ResponseField name="contact_stats.awaiting_retry" field-type="number" required="false">
+Number of contacts in the campaign currently awaiting retry.
+</ResponseField>
+
 ## List campaigns
 
-Retrieve a paginated list of CRM campaigns.
+Retrieve a list of CRM campaigns with optional filtering by status, assistant, soft-deletion, contact outcomes, and contact stats.
 
-### Request
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/campaigns?status=running&includeContactStats=true&limit=25&offset=0" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
+```
+</Request>
 
-<ParamField query="page" param-type="integer" required="false">
-Page number returned by the list endpoint. The response includes the current `page` value.
+<Response>
+```json
+{
+  "success": true,
+  "campaigns": [
+    {
+      "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
+      "name": "Q3 renewal outreach",
+      "status": "running",
+      "assistant": {
+        "id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
+        "name": "Sales Bot"
+      },
+      "contact_stats": {
+        "voicemail": 5,
+        "awaiting_retry": 3
+      }
+    }
+  ],
+  "count": 1,
+  "limit": 25,
+  "offset": 0
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="teamId" param-type="string" required="false">
+Team ID to query against. Falls back to the authenticated account when omitted.
+</ParamField>
+
+<ParamField query="status" param-type="string" required="false" enum="draft,scheduled,running,paused,completed,cancelled">
+Filter campaigns by status.
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+Filter campaigns by the assigned assistant.
+</ParamField>
+
+<ParamField query="deleted" param-type="string" required="false" enum="exclude,include,only">
+Controls whether soft-deleted campaigns are included. Defaults to `exclude`.
+</ParamField>
+
+<ParamField query="contactFilter" param-type="string" required="false" enum="voicemail,awaiting_retry,answered,no_answer,busy,error">
+Filter campaigns by their contacts' call outcomes.
+</ParamField>
+
+<ParamField query="includeContactStats" param-type="string" required="false" enum="1,true">
+When set, adds `contact_stats` to each campaign.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of campaigns to return. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of campaigns to skip. Defaults to `0`.
 </ParamField>
 
 ### Response fields
@@ -70,30 +155,54 @@ Returns `true` when the request succeeds.
 List of campaign objects.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
-Total number of campaigns available for the current query.
+<ResponseField name="count" field-type="integer" required="true">
+Total number of campaigns returned for the current query.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
-Current page number.
+<ResponseField name="limit" field-type="integer" required="true">
+Maximum number of campaigns requested.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Number of campaigns skipped before the current result set.
 </ResponseField>
 
 ## Create a campaign
 
-Create a new outbound campaign by name, and optionally assign an outbound assistant or schedule metadata.
+Create a new outbound campaign with an assistant, company, dialing configuration, and optional scheduling or webhook settings.
 
 <Request>
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
   -d '{
+    "assistantId": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
+    "companyId": "com_3ab29b61-4d56-42f2-9f29-7c6d5efbc104",
     "name": "Q3 renewal outreach",
-    "assistant_id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
-    "schedule": {
-      "timezone": "America/Los_Angeles",
-      "start_at": "2026-08-13T16:00:00Z"
-    }
+    "description": "Priority renewal campaign for active accounts in the west region",
+    "fromNumberIds": [
+      "num_f92b4b8d-9f6d-4c28-b0f9-68b2396770f1"
+    ],
+    "scheduledStartAt": "2026-08-13T16:00:00Z",
+    "callWindowStart": "09:00",
+    "callWindowEnd": "17:00",
+    "callWindowTimezone": "America/Los_Angeles",
+    "maxConcurrentCalls": 8,
+    "maxAttemptsPerContact": 3,
+    "retryDelayMinutes": 30,
+    "settings": {
+      "record_calls": true
+    },
+    "noAutoComplete": true,
+    "webhookEnabled": true,
+    "webhookUrl": "https://ops.acmecrm.com/talkturo/webhooks/campaigns",
+    "webhookSecret": "whsec_example_7r3m2p9x5k1d8v4n6q0",
+    "webhookEvents": [
+      "campaign.started",
+      "campaign.completed",
+      "call.completed"
+    ]
   }'
 ```
 </Request>
@@ -105,11 +214,11 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
   "campaign": {
     "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
     "name": "Q3 renewal outreach",
-    "status": "draft",
+    "status": "scheduled",
     "assistant_id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
-    "schedule": {
-      "timezone": "America/Los_Angeles",
-      "start_at": "2026-08-13T16:00:00Z"
+    "assistant": {
+      "id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
+      "name": "Sales Bot"
     }
   }
 }
@@ -118,16 +227,80 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
 
 ### Body parameters
 
+<ParamField body="assistantId" param-type="string" required="true">
+Assistant assigned to the campaign. The assistant must exist, belong to the team, and have outbound calling enabled.
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="true">
+Company record associated with the campaign. The company must exist and belong to the team.
+</ParamField>
+
 <ParamField body="name" param-type="string" required="true">
-Campaign name.
+Campaign name. Use a non-empty value.
 </ParamField>
 
-<ParamField body="assistant_id" param-type="string" required="false">
-Assistant to use for outbound calls.
+<ParamField body="fromNumberIds" param-type="array" required="false">
+List of outbound number IDs to use for dialing. Required unless the workspace uses a default workspace number. Every number must be active, belong to the team, and be assigned to `assistantId`.
 </ParamField>
 
-<ParamField body="schedule" param-type="object" required="false">
-Campaign scheduling configuration. The endpoint accepts a `schedule` object when you want to attach scheduling metadata during creation.
+<ParamField body="teamId" param-type="string" required="false">
+Team ID for the campaign. Required when you are not authenticating with an API key.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+Optional internal description for the campaign.
+</ParamField>
+
+<ParamField body="scheduledStartAt" param-type="string" required="false">
+Campaign start time as an ISO 8601 timestamp. When set, the campaign is created with `status` set to `scheduled` instead of `draft`.
+</ParamField>
+
+<ParamField body="callWindowStart" param-type="string" required="false">
+Daily call window start time.
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false">
+Daily call window end time.
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false">
+Timezone used to interpret `callWindowStart` and `callWindowEnd`.
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" param-type="number" required="false">
+Maximum number of calls the campaign can place at the same time.
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="number" required="false">
+Maximum number of attempts allowed per contact.
+</ParamField>
+
+<ParamField body="retryDelayMinutes" param-type="number" required="false">
+Delay, in minutes, before retrying a contact.
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false">
+Additional campaign settings object.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false">
+When set, maps to `settings.no_auto_complete`.
+</ParamField>
+
+<ParamField body="webhookEnabled" param-type="boolean" required="false">
+Controls webhook behavior as a tri-state value. `true` forces webhooks on, `false` silences them, and an omitted value inherits workspace behavior.
+</ParamField>
+
+<ParamField body="webhookUrl" param-type="string" required="false">
+Destination URL for campaign webhook deliveries.
+</ParamField>
+
+<ParamField body="webhookSecret" param-type="string" required="false">
+Secret used to sign webhook payloads.
+</ParamField>
+
+<ParamField body="webhookEvents" param-type="array" required="false">
+List of campaign webhook event names to emit.
 </ParamField>
 
 ### Response fields
@@ -138,6 +311,34 @@ Returns `true` when the campaign is created.
 
 <ResponseField name="campaign" field-type="object" required="true">
 Created campaign object.
+</ResponseField>
+
+<ResponseField name="campaign.id" field-type="string" required="true">
+Unique campaign identifier.
+</ResponseField>
+
+<ResponseField name="campaign.name" field-type="string" required="true">
+Campaign name.
+</ResponseField>
+
+<ResponseField name="campaign.status" field-type="string" required="true">
+Created campaign status. When `scheduledStartAt` is set, the status is typically `scheduled`.
+</ResponseField>
+
+<ResponseField name="campaign.assistant_id" field-type="string" required="false">
+Identifier of the assigned assistant.
+</ResponseField>
+
+<ResponseField name="campaign.assistant" field-type="object" required="false">
+Nested assistant record for the assigned outbound assistant.
+</ResponseField>
+
+<ResponseField name="campaign.assistant.id" field-type="string" required="false">
+Assistant UUID.
+</ResponseField>
+
+<ResponseField name="campaign.assistant.name" field-type="string" required="false">
+Assistant name.
 </ResponseField>
 
 ## Get a campaign
@@ -277,7 +478,7 @@ Read live execution metrics for a campaign dashboard.
 <Request>
 ```bash
 curl -X GET "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/dashboard" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token"
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
 ```
 </Request>
 
@@ -335,7 +536,7 @@ Control campaign execution by sending a run action.
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/run" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
   -d '{
     "action": "start"
   }'

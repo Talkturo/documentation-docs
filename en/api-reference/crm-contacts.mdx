@@ -9,7 +9,7 @@ Use CRM contact endpoints to manage contact records, filter contact lists, and i
 
 <Callout kind="info">
 
-All CRM contact endpoints require session cookie authentication. Send requests from an authenticated browser session or a client that includes the Talkturo session cookie.
+All CRM contact endpoints support dual authentication. Use either an API key (`Authorization: Bearer tk_live_...`) or an authenticated session cookie. The code examples on this page use API key authentication.
 
 </Callout>
 
@@ -26,20 +26,22 @@ All CRM contact endpoints require session cookie authentication. Send requests f
 
 ## List contacts
 
-Retrieve a paginated list of contacts. Use query parameters to search by text or narrow results to a company or campaign.
+Retrieve a paginated list of contacts. Use query parameters to search by text or narrow results to a company or lead status.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://app.talkturo.com/api/crm/contacts?page=1&limit=25&search=chen&companyId=cmp_9f3e21&campaignId=camp_7d2a44" \
-  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+curl -X GET "https://app.talkturo.com/api/crm/contacts?search=chen&companyId=cmp_9f3e21&leadStatus=new&limit=25&offset=0" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://app.talkturo.com/api/crm/contacts?page=1&limit=25&search=chen&companyId=cmp_9f3e21&campaignId=camp_7d2a44",
+  "https://app.talkturo.com/api/crm/contacts?search=chen&companyId=cmp_9f3e21&leadStatus=new&limit=25&offset=0",
   {
     method: "GET",
-    credentials: "include",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+    },
   }
 );
 
@@ -59,7 +61,11 @@ console.log(data);
       "last_name": "Chen",
       "email": "maya.chen@northstarhealth.co",
       "phone": "+14155550187",
-      "company_id": "cmp_9f3e21"
+      "company_id": "cmp_9f3e21",
+      "company": {
+        "id": "cmp_9f3e21",
+        "name": "Northstar Health"
+      }
     },
     {
       "id": "bd3cfaf2-d375-47b4-9495-3e66512a6e75",
@@ -67,35 +73,52 @@ console.log(data);
       "last_name": "Chen",
       "email": "daniel.chen@northstarhealth.co",
       "phone": "+14155550199",
-      "company_id": "cmp_9f3e21"
+      "company_id": "cmp_9f3e21",
+      "company": {
+        "id": "cmp_9f3e21",
+        "name": "Northstar Health"
+      }
     }
   ],
-  "total": 2,
-  "page": 1
+  "count": 2,
+  "limit": 25,
+  "offset": 0
 }
 ```
 </Response>
 
 ### Query parameters
 
-<ParamField query="page" param-type="integer" required="false">
-Page number to return.
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false">
-Maximum number of contacts to return for the current page.
-</ParamField>
-
-<ParamField query="search" param-type="string" required="false">
-Free-text search term used to filter contacts.
+<ParamField query="teamId" param-type="string" required="false">
+Falls back to the authenticated account when omitted.
 </ParamField>
 
 <ParamField query="companyId" param-type="string" required="false">
-Filter contacts to a specific company.
+Filter contacts by company.
 </ParamField>
 
-<ParamField query="campaignId" param-type="string" required="false">
-Filter contacts to a specific campaign.
+<ParamField query="search" param-type="string" required="false">
+Case-insensitive partial match on first name, last name, email, and phone.
+</ParamField>
+
+<ParamField query="leadStatus" param-type="string" required="false">
+Exact match on the lead status column.
+</ParamField>
+
+<ParamField query="doNotCall" param-type="string" required="false" enum="true,false">
+Filter by do-not-call flag.
+</ParamField>
+
+<ParamField query="hasPhone" param-type="string" required="false" enum="true,false">
+`true` returns contacts with a phone number. `false` returns contacts without one.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of contacts to return. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of contacts to skip for pagination. Defaults to `0`.
 </ParamField>
 
 ### Response fields
@@ -132,12 +155,28 @@ Contact phone number when available.
 Associated company ID when the contact belongs to a company.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
+<ResponseField name="contacts[].company" field-type="object" required="false">
+Company record associated with the contact.
+</ResponseField>
+
+<ResponseField name="contacts[].company.id" field-type="string" required="false">
+Unique company identifier.
+</ResponseField>
+
+<ResponseField name="contacts[].company.name" field-type="string" required="false">
+Company name.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
 Total number of contacts that match the current filters.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
-Current page number in the paginated result.
+<ResponseField name="limit" field-type="integer" required="true">
+Page size used for the current response.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Offset used for the current response.
 </ResponseField>
 
 ## Create contact
@@ -148,33 +187,37 @@ Create a single CRM contact by sending the contact fields in the request body. I
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/contacts" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
   -d '{
-    "first_name": "Priya",
-    "last_name": "Natarajan",
+    "firstName": "Priya",
+    "lastName": "Natarajan",
     "email": "priya.natarajan@lakesidepartners.com",
     "phone": "+14155550231",
-    "company_id": "cmp_4c8d12",
-    "job_title": "Operations Director",
-    "lead_source": "webinar"
+    "companyId": "cmp_4c8d12",
+    "jobTitle": "Operations Director",
+    "source": "webinar",
+    "campaignId": "camp_7d2a44",
+    "campaignPriority": 2
   }'
 ```
 
 ```javascript
 const response = await fetch("https://app.talkturo.com/api/crm/contacts", {
   method: "POST",
-  credentials: "include",
   headers: {
     "Content-Type": "application/json",
+    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
   },
   body: JSON.stringify({
-    first_name: "Priya",
-    last_name: "Natarajan",
+    firstName: "Priya",
+    lastName: "Natarajan",
     email: "priya.natarajan@lakesidepartners.com",
     phone: "+14155550231",
-    company_id: "cmp_4c8d12",
-    job_title: "Operations Director",
-    lead_source: "webinar",
+    companyId: "cmp_4c8d12",
+    jobTitle: "Operations Director",
+    source: "webinar",
+    campaignId: "camp_7d2a44",
+    campaignPriority: 2,
   }),
 });
 
@@ -183,7 +226,7 @@ console.log(data);
 ```
 </Request>
 
-<Response tabs="200">
+<Response tabs="200,200 skipped enrollment" default-tab="1">
 ```json
 {
   "success": true,
@@ -194,20 +237,50 @@ console.log(data);
     "email": "priya.natarajan@lakesidepartners.com",
     "phone": "+14155550231",
     "company_id": "cmp_4c8d12",
+    "company": {
+      "id": "cmp_4c8d12",
+      "name": "Lakeside Partners"
+    },
     "job_title": "Operations Director",
-    "lead_source": "webinar"
+    "source": "webinar"
+  },
+  "campaign_enrollment": {
+    "campaign_contact_id": "cc_7f31b924",
+    "status": "queued"
   }
+}
+```
+
+```json
+{
+  "success": true,
+  "contact": {
+    "id": "2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41",
+    "first_name": "Priya",
+    "last_name": "Natarajan",
+    "email": "priya.natarajan@lakesidepartners.com",
+    "phone": "+14155550231",
+    "company_id": "cmp_4c8d12",
+    "company": {
+      "id": "cmp_4c8d12",
+      "name": "Lakeside Partners"
+    },
+    "job_title": "Operations Director",
+    "source": "webinar"
+  },
+  "campaign_enrollment": null,
+  "warning": "Campaign enrollment was skipped for this contact."
 }
 ```
 </Response>
 
 ### Request body
 
-<ParamField body="first_name" param-type="string" required="true">
+<ParamField body="firstName" param-type="string" required="true">
 Contact first name.
 </ParamField>
 
-<ParamField body="last_name" param-type="string" required="true">
+<ParamField body="lastName" param-type="string" required="true">
 Contact last name.
 </ParamField>
 
@@ -215,16 +288,64 @@ Contact last name.
 Contact email address.
 </ParamField>
 
-<ParamField body="phone" param-type="string" required="false">
-Contact phone number.
+<ParamField body="phone" param-type="string" required="true">
+Primary contact phone number.
 </ParamField>
 
-<ParamField body="company_id" param-type="string" required="false">
+<ParamField body="phoneSecondary" param-type="string" required="false">
+Secondary contact phone number.
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="true">
 Company ID to associate with the contact.
 </ParamField>
 
-<ParamField body="custom fields" param-type="object" required="false">
-Any additional custom fields supported by your CRM configuration. Send each custom field as a top-level property in the request body.
+<ParamField body="teamId" param-type="string" required="false">
+Required when you are not using an API key. Falls back to `auth.accountId` when available.
+</ParamField>
+
+<ParamField body="jobTitle" param-type="string" required="false">
+Contact job title.
+</ParamField>
+
+<ParamField body="source" param-type="string" required="false">
+Lead source for the contact.
+</ParamField>
+
+<ParamField body="leadStatus" param-type="string" required="false">
+Lead status value for the contact.
+</ParamField>
+
+<ParamField body="timezone" param-type="string" required="false">
+Contact time zone.
+</ParamField>
+
+<ParamField body="preferredContactMethod" param-type="string" required="false">
+Preferred contact method for outreach.
+</ParamField>
+
+<ParamField body="doNotCall" param-type="boolean" required="false">
+Marks the contact as do-not-call when set to `true`.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Free-form notes stored on the contact record.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Additional custom field values keyed by your CRM field names.
+</ParamField>
+
+<ParamField body="tags" param-type="array" required="false">
+List of tag names to attach to the contact.
+</ParamField>
+
+<ParamField body="campaignId" param-type="string" required="false">
+Enrolls the contact in a campaign when provided.
+</ParamField>
+
+<ParamField body="campaignPriority" param-type="number" required="false">
+Priority used for campaign enrollment. Defaults to `0`.
 </ParamField>
 
 ### Response fields
@@ -261,9 +382,79 @@ Contact phone number when provided.
 Associated company ID when provided.
 </ResponseField>
 
+<ResponseField name="contact.company" field-type="object" required="false">
+Associated company record when available.
+</ResponseField>
+
+<ResponseField name="contact.company.id" field-type="string" required="false">
+Unique company identifier.
+</ResponseField>
+
+<ResponseField name="contact.company.name" field-type="string" required="false">
+Company name.
+</ResponseField>
+
+<ResponseField name="campaign_enrollment" field-type="object|null" required="true">
+Campaign enrollment result when `campaignId` is provided. Returns `null` when enrollment is skipped.
+</ResponseField>
+
+<ResponseField name="campaign_enrollment.campaign_contact_id" field-type="string|null" required="false">
+Campaign contact identifier for the enrollment record.
+</ResponseField>
+
+<ResponseField name="campaign_enrollment.status" field-type="string" required="false">
+Enrollment status for the contact in the campaign.
+</ResponseField>
+
+<ResponseField name="warning" field-type="string" required="false">
+Returned when the contact is created but campaign enrollment is skipped.
+</ResponseField>
+
 ## Get a contact
 
 Fetch a single contact by its ID.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/contacts/2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/contacts/2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "contact": {
+    "id": "2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41",
+    "first_name": "Priya",
+    "last_name": "Natarajan",
+    "email": "priya.natarajan@lakesidepartners.com",
+    "phone": "+14155550231",
+    "company_id": "cmp_4c8d12",
+    "company": {
+      "id": "cmp_4c8d12",
+      "name": "Lakeside Partners"
+    }
+  }
+}
+```
+</Response>
 
 ### Path parameters
 
@@ -305,9 +496,68 @@ Contact phone number when available.
 Associated company ID when the contact belongs to a company.
 </ResponseField>
 
+<ResponseField name="contact.company" field-type="object" required="false">
+Company record associated with the contact.
+</ResponseField>
+
+<ResponseField name="contact.company.id" field-type="string" required="false">
+Unique company identifier.
+</ResponseField>
+
+<ResponseField name="contact.company.name" field-type="string" required="false">
+Company name.
+</ResponseField>
+
 ## Update a contact
 
 Update one or more contact fields by sending a partial request body. Omit fields you do not want to change.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PATCH "https://app.talkturo.com/api/crm/contacts/2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -d '{
+    "leadStatus": "qualified",
+    "notes": "Requested a follow-up call next week."
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/contacts/2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41",
+  {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+    },
+    body: JSON.stringify({
+      leadStatus: "qualified",
+      notes: "Requested a follow-up call next week.",
+    }),
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "contact": {
+    "id": "2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41",
+    "first_name": "Priya",
+    "last_name": "Natarajan",
+    "lead_status": "qualified",
+    "notes": "Requested a follow-up call next week."
+  }
+}
+```
+</Response>
 
 ### Path parameters
 
@@ -355,6 +605,37 @@ Updated contact record.
 
 Delete a contact by ID.
 
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X DELETE "https://app.talkturo.com/api/crm/contacts/2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/contacts/2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "message": "Contact deleted"
+}
+```
+</Response>
+
 ### Path parameters
 
 <ParamField path="id" param-type="string" required="true">
@@ -375,27 +656,27 @@ Deletion result message. The response returns a success message such as `Contact
 
 Import many contacts in a single request. Send either structured JSON with a `contacts` array or CSV data, depending on your import flow.
 
-<Request tabs="JSON import,cSV import" default-tab="1">
+<Request tabs="JSON import,CSV import" default-tab="1">
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/contacts/import" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
   -d '{
     "contacts": [
       {
-        "first_name": "Alicia",
-        "last_name": "Moreno",
+        "firstName": "Alicia",
+        "lastName": "Moreno",
         "email": "alicia.moreno@brightpath.io",
         "phone": "+14155550311",
-        "company_id": "cmp_12ab45",
+        "companyId": "cmp_12ab45",
         "region": "West"
       },
       {
-        "first_name": "Marcus",
-        "last_name": "Reed",
+        "firstName": "Marcus",
+        "lastName": "Reed",
         "email": "marcus.reed@brightpath.io",
         "phone": "+14155550329",
-        "company_id": "cmp_12ab45",
+        "companyId": "cmp_12ab45",
         "region": "Central"
       }
     ]
@@ -405,8 +686,8 @@ curl -X POST "https://app.talkturo.com/api/crm/contacts/import" \
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/contacts/import" \
   -H "Content-Type: text/csv" \
-  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
-  --data-binary $'first_name,last_name,email,phone,company_id,region\nAlicia,Moreno,alicia.moreno@brightpath.io,+14155550311,cmp_12ab45,West\nMarcus,Reed,marcus.reed@brightpath.io,+14155550329,cmp_12ab45,Central'
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  --data-binary $'firstName,lastName,email,phone,companyId,region\nAlicia,Moreno,alicia.moreno@brightpath.io,+14155550311,cmp_12ab45,West\nMarcus,Reed,marcus.reed@brightpath.io,+14155550329,cmp_12ab45,Central'
 ```
 </Request>
 
@@ -427,11 +708,11 @@ curl -X POST "https://app.talkturo.com/api/crm/contacts/import" \
 Array of contacts to import when using JSON input.
 </ParamField>
 
-<ParamField body="contacts[].first_name" param-type="string" required="true">
+<ParamField body="contacts[].firstName" param-type="string" required="true">
 Contact first name for each imported record.
 </ParamField>
 
-<ParamField body="contacts[].last_name" param-type="string" required="true">
+<ParamField body="contacts[].lastName" param-type="string" required="true">
 Contact last name for each imported record.
 </ParamField>
 
@@ -443,7 +724,7 @@ Contact email address.
 Contact phone number.
 </ParamField>
 
-<ParamField body="contacts[].company_id" param-type="string" required="false">
+<ParamField body="contacts[].companyId" param-type="string" required="false">
 Company ID to associate with each imported contact.
 </ParamField>
 

@@ -7,7 +7,7 @@ description: Suchen, kaufen, abrufen und freigeben von Telefonnummern für Talkt
 
 Mit den Endpunkten für Telefonnummern suchen Sie verfügbare Rufnummern, kaufen neue Nummern, rufen vorhandene Nummern ab, geben nicht mehr benötigte Nummern frei und verarbeiten Carrier-Webhooks für KYC- und Compliance-Statusänderungen. Diese Endpunkte decken den vollständigen Lebenszyklus einer Telefonnummer innerhalb der Talkturo-Telefonie ab.
 
-Für alle regulären Telefonnummern-Endpunkte ist eine authentifizierte Sitzung per Session-Cookie erforderlich. Die beiden Webhook-Endpunkte bilden die Ausnahme, da sie von externen Carriern aufgerufen werden.
+Für die Endpunkte zum Suchen, Kaufen und Abrufen können Sie entweder einen API-Schlüssel oder eine authentifizierte Sitzung verwenden. Der Freigabe-Endpunkt erfordert eine authentifizierte Sitzung des Workspace-Eigentümers. Die beiden Webhook-Endpunkte bilden die Ausnahme, da sie von externen Carriern aufgerufen werden.
 
 <Callout kind="info">
 
@@ -17,44 +17,60 @@ Verwenden Sie diese Endpunkte für die Verwaltung von Telefonnummern in Ihrem Ac
 
 ## Authentifizierung
 
-Die folgenden Endpunkte erfordern Session-Cookie-Authentifizierung:
-
-- `GET /api/phone-numbers/search`
-- `POST /api/phone-numbers/purchase`
-- `GET /api/phone-numbers/{id}`
-- `DELETE /api/phone-numbers/{id}`
-
-Die folgenden Webhook-Endpunkte akzeptieren Anfragen von Carriern und verwenden kein Session-Cookie:
-
-- `POST /api/phone-numbers/telnyx-webhook`
-- `POST /api/phone-numbers/twilio-webhook`
+Die Endpunkte für Suche, Kauf und Abruf unterstützen duale Authentifizierung. Verwenden Sie entweder einen API-Schlüssel im Header `Authorization: Bearer tk_live_...` oder ein authentifiziertes Session-Cookie. Der Freigabe-Endpunkt erfordert ein Session-Cookie, authentifiziert durch den Workspace-Eigentümer. Die beiden Webhook-Endpunkte bilden die Ausnahme, da sie von Carriern aufgerufen werden.
 
 ## Endpunktübersicht
 
 | Methode | Pfad | Authentifizierung | Zweck |
 | --- | --- | --- | --- |
-| `GET` | `/api/phone-numbers/search` | Session-Cookie | Verfügbare Telefonnummern beim Carrier suchen |
-| `POST` | `/api/phone-numbers/purchase` | Session-Cookie | Eine Telefonnummer kaufen und bereitstellen |
-| `GET` | `/api/phone-numbers/{id}` | Session-Cookie | Eine bestimmte Telefonnummer abrufen |
-| `DELETE` | `/api/phone-numbers/{id}` | Session-Cookie | Eine Telefonnummer freigeben |
+| `POST` | `/api/phone-numbers/search` | API-Schlüssel oder Session | Verfügbare Telefonnummern beim Carrier suchen |
+| `POST` | `/api/phone-numbers/purchase` | API-Schlüssel oder Session | Eine Telefonnummer kaufen und bereitstellen |
+| `GET` | `/api/phone-numbers/{id}` | API-Schlüssel oder Session | Eine bestimmte Telefonnummer abrufen |
+| `DELETE` | `/api/phone-numbers/{id}` | Session (nur Eigentümer) | Eine Telefonnummer freigeben |
 | `POST` | `/api/phone-numbers/telnyx-webhook` | ED25519-Signatur | KYC- und Compliance-Status von Telnyx verarbeiten |
 | `POST` | `/api/phone-numbers/twilio-webhook` | Keine direkte Signaturprüfung | Bundle-Status von Twilio verarbeiten |
 
 ## Verfügbare Telefonnummern suchen
 
-Rufen Sie `GET /api/phone-numbers/search` auf, um freie Telefonnummern anhand von Region, Muster oder gewünschten Funktionen zu finden.
+Rufen Sie `POST /api/phone-numbers/search` auf, um freie Telefonnummern anhand von Land, Nummerntyp und carrier-spezifischen Filtern zu finden.
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/phone-numbers/search?areaCode=415&countryCode=US&phoneNumberPattern=555&features=sms,voice" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+curl -X POST "https://api.talkturo.com/api/phone-numbers/search" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -d '{
+    "filters": {
+      "countryCode": "US",
+      "numberType": "local",
+      "areaCode": "415",
+      "features": ["sms", "voice"],
+      "limit": 2
+    },
+    "teamId": "team_7c9a2b11",
+    "carrier": "talkturo"
+  }'
 ```
 </Request>
 
-<Response tabs="200" default-tab="1">
+<Response tabs="200,400,403,409,502" default-tab="1">
 ```json
 {
   "success": true,
+  "count": 2,
+  "carrier": "talkturo",
+  "provider": "talkturo",
+  "billing": "credits",
+  "verifiedLocalities": [
+    "San Francisco"
+  ],
+  "pricing": {
+    "upfrontCredits": 200,
+    "monthlyCredits": 50,
+    "upfrontUsd": 2,
+    "monthlyUsd": 0.5,
+    "estimated": true
+  },
   "numbers": [
     {
       "phoneNumber": "+14155550188",
@@ -76,24 +92,72 @@ curl -X GET "https://api.talkturo.com/api/phone-numbers/search?areaCode=415&coun
   ]
 }
 ```
+
+```json
+{
+  "success": false,
+  "error": "filters.countryCode is required"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "KYC verification is required for phone numbers in this country"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Twilio carrier is not configured"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Carrier API request failed"
+}
+```
 </Response>
 
-### Query-Parameter
+### Request-Body
 
-<ParamField query="areaCode" param-type="string" required="false">
-Filtert verfügbare Nummern nach Vorwahl.
+<ParamField body="filters" param-type="object" required="true">
+Enthält die Suchfilter für verfügbare Telefonnummern. Das Objekt muss mindestens `filters.countryCode` enthalten.
 </ParamField>
 
-<ParamField query="countryCode" param-type="string" required="false">
-Filtert verfügbare Nummern nach Ländercode.
+<ParamField body="filters.countryCode" param-type="string" required="true">
+ISO-3166-1-Alpha-2-Ländercode, nach dem verfügbare Nummern gesucht werden.
 </ParamField>
 
-<ParamField query="phoneNumberPattern" param-type="string" required="false">
-Sucht nach Nummern, die ein bestimmtes Ziffernmuster enthalten.
+<ParamField body="filters.numberType" param-type="string" required="false" enum="local,mobile,toll-free">
+Typ der Telefonnummer. Standard ist `local`.
 </ParamField>
 
-<ParamField query="features" param-type="string" required="false">
-Filtert nach gewünschten Funktionen. Der Endpunkt akzeptiert diesen Wert als Query-Parameter, um verfügbare Nummern nach Carrier-Funktionen einzugrenzen.
+<ParamField body="filters.areaCode" param-type="string" required="false">
+Carrier-spezifischer Filter für die Vorwahl.
+</ParamField>
+
+<ParamField body="filters.features" param-type="array" required="false">
+Carrier-spezifischer Filter für gewünschte Funktionen wie `sms` oder `voice`.
+</ParamField>
+
+<ParamField body="filters.limit" param-type="integer" required="false">
+Carrier-spezifischer Filter, der die Anzahl der zurückgegebenen Ergebnisse begrenzt.
+</ParamField>
+
+<ParamField body="teamId" param-type="string" required="false">
+Team-Kennung für KYC-Länder-Prüfung und Abrechnung.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false">
+Auswahl des Carriers, zum Beispiel `talkturo`.
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="false">
+Legacy-Alias für `carrier`. Unterstützt zum Beispiel `talkturo` oder `twilio`.
 </ParamField>
 
 ### Antwortfelder
@@ -102,9 +166,42 @@ Filtert nach gewünschten Funktionen. Der Endpunkt akzeptiert diesen Wert als Qu
 Gibt an, ob die Suche erfolgreich war.
 </ResponseField>
 
+<ResponseField name="count" field-type="integer" required="true">
+Anzahl der gefundenen Telefonnummern im Ergebnis.
+</ResponseField>
+
+<ResponseField name="carrier" field-type="string" required="false">
+Carrier, der für die Suche verwendet wurde.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string" required="false">
+Aufgelöster Provider-Name. Dieses Feld bleibt aus Kompatibilitätsgründen erhalten.
+</ResponseField>
+
+<ResponseField name="billing" field-type="string" required="false">
+Abrechnungsmodus für die gefundenen Nummern. Mögliche Werte sind `credits`, `exempt` oder `byoa`.
+</ResponseField>
+
+<ResponseField name="verifiedLocalities" field-type="array" required="false">
+Liste der verifizierten Orte, die für lokale Compliance- oder KYC-Prüfungen relevant sind.
+</ResponseField>
+
+<ResponseField name="pricing" field-type="object" required="false">
+Preisangaben für Kauf und laufende Nutzung der gefundenen Nummern.
+</ResponseField>
+
 <ResponseField name="numbers" field-type="array" required="true">
 Liste der verfügbaren Telefonnummern, die den angegebenen Filtern entsprechen.
 </ResponseField>
+
+### Fehlerantworten
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | `filters.countryCode` fehlt im Request-Body. |
+| `403` | Das angegebene Land erfordert eine abgeschlossene KYC-Verifizierung. |
+| `409` | Der angeforderte Twilio-Carrier ist nicht eingerichtet. |
+| `502` | Die Carrier-API hat einen Fehler zurückgegeben oder war nicht erreichbar. |
 
 ## Telefonnummer kaufen
 
@@ -114,24 +211,68 @@ Rufen Sie `POST /api/phone-numbers/purchase` auf, um eine verfügbare Telefonnum
 ```bash
 curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
   -d '{
     "phoneNumber": "+14155550188",
-    "accountSlug": "acme-support"
+    "teamId": "team_7c9a2b11",
+    "connectionId": "fqdn_conn_4a8d2c9e",
+    "carrier": "talkturo",
+    "numberType": "local",
+    "region": {
+      "state": "CA",
+      "locality": "San Francisco",
+      "rateCenter": "SNFC CNTRL"
+    }
   }'
 ```
 </Request>
 
-<Response tabs="200" default-tab="1">
+<Response tabs="200,400,402,403,409" default-tab="1">
 ```json
 {
   "success": true,
+  "eligibility": {
+    "currentCount": 2,
+    "maxAllowed": 10,
+    "hasSubscription": true,
+    "planName": "Growth"
+  },
   "phoneNumber": {
     "id": "pn_2f6c9a41",
-    "phoneNumber": "+14155550188",
-    "accountSlug": "acme-support",
-    "status": "active"
+    "phone_number": "+14155550188",
+    "status": "active",
+    "is_trial": false,
+    "trial_expires_at": null,
+    "message": "Provisioned successfully"
   }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid purchase request"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Insufficient credits"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "KYC verification is not complete"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Phone number already exists"
 }
 ```
 </Response>
@@ -139,11 +280,43 @@ curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
 ### Request-Body
 
 <ParamField body="phoneNumber" param-type="string" required="true">
-Die zu kaufende Telefonnummer im internationalen Format.
+Die zu kaufende Telefonnummer im E.164-Format.
 </ParamField>
 
-<ParamField body="accountSlug" param-type="string" required="true">
-Der Slug des Accounts, dem die Telefonnummer zugeordnet werden soll.
+<ParamField body="teamId" param-type="string" required="false">
+Team-Kennung für den Kauf. Dieses Feld ist erforderlich, wenn Sie keinen API-Schlüssel verwenden.
+</ParamField>
+
+<ParamField body="connectionId" param-type="string" required="false">
+Telnyx-FQDN-Verbindungs-ID für die Provisionierung der Nummer.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false">
+Carrier, über den die Telefonnummer gekauft werden soll.
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="false">
+Legacy-Alias für `carrier`.
+</ParamField>
+
+<ParamField body="numberType" param-type="string" required="false">
+Typ der zu kaufenden Telefonnummer.
+</ParamField>
+
+<ParamField body="region" param-type="object" required="false">
+Regionale Angaben für Nummern, deren Bestellung standortbezogene Metadaten erfordert.
+</ParamField>
+
+<ParamField body="region.state" param-type="string" required="false">
+Bundesstaat oder Region der Telefonnummer.
+</ParamField>
+
+<ParamField body="region.locality" param-type="string" required="false">
+Ort der Telefonnummer.
+</ParamField>
+
+<ParamField body="region.rateCenter" param-type="string" required="false">
+Rate Center der Telefonnummer.
 </ParamField>
 
 ### Antwortfelder
@@ -152,9 +325,22 @@ Der Slug des Accounts, dem die Telefonnummer zugeordnet werden soll.
 Gibt an, ob der Kauf erfolgreich war.
 </ResponseField>
 
+<ResponseField name="eligibility" field-type="object" required="true">
+Informationen zur aktuellen Berechtigung und zu den verfügbaren Limits für Telefonnummern.
+</ResponseField>
+
 <ResponseField name="phoneNumber" field-type="object" required="true">
 Die bereitgestellte Telefonnummer mit den zugehörigen Metadaten.
 </ResponseField>
+
+### Fehlerantworten
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | Der Request-Body ist ungültig oder unvollständig. |
+| `402` | Das verfügbare Guthaben reicht für den Kauf nicht aus. |
+| `403` | Die erforderliche KYC-Prüfung ist noch nicht abgeschlossen. |
+| `409` | Die Telefonnummer existiert bereits oder wurde bereits provisioniert. |
 
 ## Telefonnummer abrufen
 
@@ -163,7 +349,7 @@ Rufen Sie `GET /api/phone-numbers/{id}` auf, um die Details einer bestimmten Tel
 <Request tabs="cURL" default-tab="1">
 ```bash
 curl -X GET "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
 ```
 </Request>
 
@@ -199,19 +385,54 @@ Die Telefonnummer mit ihren gespeicherten Details.
 
 ## Telefonnummer freigeben
 
-Rufen Sie `DELETE /api/phone-numbers/{id}` auf, um eine Telefonnummer aus Ihrem Account freizugeben.
+Rufen Sie `DELETE /api/phone-numbers/{id}` auf, um eine Telefonnummer aus Ihrem Account freizugeben. Übergeben Sie den Workspace-Slug als Query-Parameter `account`.
+
+<Callout kind="alert">
+
+Dieser Endpunkt akzeptiert nur Session-Cookie-Authentifizierung und erfordert eine Sitzung des Workspace-Eigentümers.
+
+</Callout>
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X DELETE "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
+curl -X DELETE "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41?account=acme-support" \
   -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
 ```
 </Request>
 
-<Response tabs="200" default-tab="1">
+<Response tabs="200,400,403,404,502" default-tab="1">
 ```json
 {
-  "success": true
+  "success": true,
+  "phoneNumber": "+14155550182"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "account is required"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Only workspace owners can release phone numbers"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Phone number not found"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Carrier release failed"
 }
 ```
 </Response>
@@ -222,11 +443,30 @@ curl -X DELETE "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
 Die eindeutige Kennung der freizugebenden Telefonnummer.
 </ParamField>
 
+### Query-Parameter
+
+<ParamField query="account" param-type="string" required="true">
+Workspace-Slug, aus dem die Telefonnummer freigegeben wird.
+</ParamField>
+
 ### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true">
 Gibt an, ob die Telefonnummer erfolgreich freigegeben wurde.
 </ResponseField>
+
+<ResponseField name="phoneNumber" field-type="string" required="true">
+Die freigegebene Telefonnummer im E.164-Format.
+</ResponseField>
+
+### Fehlerantworten
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | Der Query-Parameter `account` fehlt. |
+| `403` | Nur der Workspace-Eigentümer darf Telefonnummern freigeben. |
+| `404` | Die Telefonnummer wurde nicht gefunden. |
+| `502` | Die Freigabe beim Carrier ist fehlgeschlagen. |
 
 ## Telnyx-Webhook für KYC-Status
 
@@ -300,6 +540,12 @@ curl -X POST "https://api.talkturo.com/api/phone-numbers/twilio-webhook" \
     title="Telephony"
     href="/de/api-reference/telephony"
     icon="phone"
+    cta="Zur API-Referenz"
+  />
+  <Card
+    title="Assistenten"
+    href="/de/api-reference/assistants"
+    icon="users"
     cta="Zur API-Referenz"
   />
 </Columns>

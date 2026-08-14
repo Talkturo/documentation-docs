@@ -1,0 +1,343 @@
+---
+title: Nutzungsanalyse
+description: Tägliche oder wöchentliche Anruf-Nutzung und Kreditkosten-Aufschlüsselungen nach Komponente (STT, LLM, TTS) für einen Talkturo-Account über die API abrufen.
+---
+
+## Nutzungsanalyse-Endpunkt
+
+Rufen Sie tägliche oder wöchentliche Nutzungsdaten für einen Account ab, inklusive aggregierter Serienwerte, Gesamtsummen und einer paginierten Liste einzelner Anrufe.
+
+<Callout kind="info">
+
+**Authentifizierung**
+
+Dieser Endpunkt unterstützt nur Cookie-basierte Session-Authentifizierung im Browser. API-Schlüssel werden nicht unterstützt. Wenn keine gültige Session vorhanden ist, antwortet der Endpunkt mit einer `302`-Weiterleitung zur Anmeldung.
+
+Nach der Authentifizierung prüft die API den Account-Zugriff. Sie müssen entweder der primäre Eigentümer des Accounts sein oder ein Mitglied des Accounts.
+
+</Callout>
+
+## Endpunkt
+
+`GET /api/accounts/{accountId}/usage`
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -G "https://app.talkturo.com/api/accounts/9f2b7f7f-6c1e-4b8d-9c7c-2d98fd1e4b71/usage" \
+  --data-urlencode "from=2026-08-01T00:00:00Z" \
+  --data-urlencode "to=2026-08-31T23:59:59Z" \
+  --data-urlencode "granularity=day" \
+  --data-urlencode "page=1" \
+  --data-urlencode "pageSize=25" \
+  --header "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+```javascript
+const url = new URL(
+  "https://app.talkturo.com/api/accounts/9f2b7f7f-6c1e-4b8d-9c7c-2d98fd1e4b71/usage"
+);
+
+url.searchParams.set("from", "2026-08-01T00:00:00Z");
+url.searchParams.set("to", "2026-08-31T23:59:59Z");
+url.searchParams.set("granularity", "day");
+url.searchParams.set("page", "1");
+url.searchParams.set("pageSize", "25");
+
+const response = await fetch(url.toString(), {
+  method: "GET",
+  headers: {
+    Cookie: "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+  },
+  credentials: "include"
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,403" default-tab="1">
+```json
+{
+  "granularity": "day",
+  "series": [
+    {
+      "day": "2026-08-01",
+      "period": "2026-08-01",
+      "call_count": 5,
+      "total_credits": 2.3,
+      "stt_credits": 0.5,
+      "llm_credits": 1.0,
+      "tts_credits": 0.8,
+      "talkturo_credits": 0.0
+    }
+  ],
+  "totals": {
+    "call_count": 100,
+    "total_credits": 45.6,
+    "stt_credits": 10.2,
+    "llm_credits": 20.1,
+    "tts_credits": 15.3,
+    "talkturo_credits": 0.0
+  },
+  "assistants": [
+    {
+      "id": "7d7b2f1a-4cc5-41ce-8e8d-8b6f6a3a12c4",
+      "name": "Sales Bot"
+    }
+  ],
+  "rows": [
+    {
+      "id": "4ec8df32-4e31-4c11-9f80-4db6e83e2c43",
+      "call_id": "call_abc123",
+      "started_at": "2026-08-01T10:00:00Z",
+      "ended_at": "2026-08-01T10:05:00Z",
+      "assistant_id": "7d7b2f1a-4cc5-41ce-8e8d-8b6f6a3a12c4",
+      "assistant_name": "Sales Bot",
+      "total_cost": 2.3,
+      "stt_cost": 0.5,
+      "llm_cost": 1.0,
+      "tts_cost": 0.8,
+      "talkturo_cost": 0.0
+    }
+  ],
+  "page": 1,
+  "pageSize": 25,
+  "rowCount": 100
+}
+```
+
+```json
+{
+  "error": "Invalid date range"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+</Response>
+
+## Pfadparameter
+
+<ParamField path="accountId" param-type="string" required="true">
+UUID des Accounts, für den die Nutzung abgerufen wird.
+</ParamField>
+
+## Query-Parameter
+
+<ParamField query="from" param-type="string" required="true">
+Start des Datumsbereichs als ISO-8601-Datum oder Zeitstempel.
+</ParamField>
+
+<ParamField query="to" param-type="string" required="true">
+Ende des Datumsbereichs als ISO-8601-Datum oder Zeitstempel. Der Wert muss größer oder gleich `from` sein.
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+Filtert die Nutzung auf einen einzelnen Assistenten. Wenn gesetzt, muss der Wert eine gültige UUID sein.
+</ParamField>
+
+<ParamField query="page" param-type="integer" required="false">
+Seitennummer für die paginierte Anrufliste. Standardwert ist `1`.
+</ParamField>
+
+<ParamField query="pageSize" param-type="integer" required="false">
+Anzahl der Anrufe pro Seite in `rows`. Standardwert ist `25`, der Maximalwert `100`.
+</ParamField>
+
+<ParamField query="granularity" param-type="string" required="false" enum="day,week">
+Granularität der aggregierten Serie. Standardwert ist `day`.
+</ParamField>
+
+## Einschränkungen und Verhalten
+
+<Callout kind="alert">
+
+Der Datumsbereich zwischen `from` und `to` darf höchstens 366 Tage umfassen. Überschreitet die Anfrage dieses Limit, antwortet der Endpunkt mit `400`.
+
+</Callout>
+
+Die Antwort kombiniert drei Sichten auf dieselben Nutzungsdaten. `series` enthält aggregierte Zeit-Buckets entsprechend der angeforderten Granularität, `rows` enthält einzelne Anrufe als paginierte Liste, und `totals` enthält die Gesamtsummen für den gesamten Zeitraum.
+
+Die Liste in `rows` enthält nur Anrufe mit gesetztem `ended_at` und ist absteigend nach `ended_at` sortiert. Verwenden Sie `page` und `pageSize`, wenn Sie ein Reporting-Interface mit Drilldown auf Einzelebene bauen.
+
+`totals` wird immer aus Tagesdaten berechnet, unabhängig davon, ob Sie `granularity=day` oder `granularity=week` anfordern. Wochenwerte in `series` ändern also die Darstellung der Serie, nicht die Berechnungslogik der Summen.
+
+## Antwortfelder
+
+<ResponseField name="granularity" field-type="string" required="true">
+Die tatsächlich verwendete Granularität der Serie. Mögliche Werte sind `day` und `week`.
+</ResponseField>
+
+<ResponseField name="series" field-type="array" required="true">
+Aggregierte Nutzungsserie für den angefragten Zeitraum. Jedes Element repräsentiert einen Tages- oder Wochen-Bucket.
+</ResponseField>
+
+<ResponseField name="totals" field-type="object" required="true">
+Gesamtsummen für den gesamten angefragten Zeitraum.
+</ResponseField>
+
+<ResponseField name="assistants" field-type="array" required="true">
+Liste der im Ergebnis berücksichtigten Assistenten. Diese Liste eignet sich für Filter oder Legenden im Frontend.
+</ResponseField>
+
+<ResponseField name="rows" field-type="array" required="true">
+Paginierte Liste einzelner Anrufdatensätze. Die Liste ist nach `ended_at` absteigend sortiert.
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true">
+Aktuelle Seite der zurückgegebenen Anrufliste.
+</ResponseField>
+
+<ResponseField name="pageSize" field-type="integer" required="true">
+Tatsächlich verwendete Seitengröße für `rows`.
+</ResponseField>
+
+<ResponseField name="rowCount" field-type="integer" required="true">
+Gesamtzahl der verfügbaren Einzelzeilen im angefragten Zeitraum, unabhängig von der aktuellen Seite.
+</ResponseField>
+
+### Felder in `series`
+
+<ResponseField name="series[].day" field-type="string" required="true">
+Kalendertag des Datenpunkts im Format `YYYY-MM-DD`.
+</ResponseField>
+
+<ResponseField name="series[].period" field-type="string" required="true">
+Periodenkennung für den Bucket. Bei täglicher Granularität entspricht der Wert dem Tag, bei wöchentlicher Granularität dem Wochenbeginn der aggregierten Periode.
+</ResponseField>
+
+<ResponseField name="series[].call_count" field-type="integer" required="true">
+Anzahl der Anrufe im Bucket.
+</ResponseField>
+
+<ResponseField name="series[].total_credits" field-type="number" required="true">
+Gesamte verbrauchte Credits im Bucket.
+</ResponseField>
+
+<ResponseField name="series[].stt_credits" field-type="number" required="true">
+Credits für Speech-to-Text im Bucket.
+</ResponseField>
+
+<ResponseField name="series[].llm_credits" field-type="number" required="true">
+Credits für LLM-Verarbeitung im Bucket.
+</ResponseField>
+
+<ResponseField name="series[].tts_credits" field-type="number" required="true">
+Credits für Text-to-Speech im Bucket.
+</ResponseField>
+
+<ResponseField name="series[].talkturo_credits" field-type="number" required="true">
+Weitere Talkturo-spezifische Credits im Bucket.
+</ResponseField>
+
+### Felder in `totals`
+
+<ResponseField name="totals.call_count" field-type="integer" required="true">
+Gesamtzahl der Anrufe im gesamten Zeitraum.
+</ResponseField>
+
+<ResponseField name="totals.total_credits" field-type="number" required="true">
+Gesamtverbrauch aller Credits im gesamten Zeitraum.
+</ResponseField>
+
+<ResponseField name="totals.stt_credits" field-type="number" required="true">
+Gesamtverbrauch für Speech-to-Text.
+</ResponseField>
+
+<ResponseField name="totals.llm_credits" field-type="number" required="true">
+Gesamtverbrauch für LLM-Verarbeitung.
+</ResponseField>
+
+<ResponseField name="totals.tts_credits" field-type="number" required="true">
+Gesamtverbrauch für Text-to-Speech.
+</ResponseField>
+
+<ResponseField name="totals.talkturo_credits" field-type="number" required="true">
+Gesamtverbrauch weiterer Talkturo-spezifischer Credits.
+</ResponseField>
+
+### Felder in `assistants`
+
+<ResponseField name="assistants[].id" field-type="string" required="true">
+UUID des Assistenten.
+</ResponseField>
+
+<ResponseField name="assistants[].name" field-type="string" required="true">
+Anzeigename des Assistenten.
+</ResponseField>
+
+### Felder in `rows`
+
+<ResponseField name="rows[].id" field-type="string" required="true">
+UUID des Anrufdatensatzes.
+</ResponseField>
+
+<ResponseField name="rows[].call_id" field-type="string" required="true">
+Externe oder interne Anrufkennung.
+</ResponseField>
+
+<ResponseField name="rows[].started_at" field-type="string" required="true">
+Startzeit des Anrufs als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="rows[].ended_at" field-type="string" required="true">
+Endzeit des Anrufs als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="rows[].assistant_id" field-type="string" required="true">
+UUID des zugeordneten Assistenten.
+</ResponseField>
+
+<ResponseField name="rows[].assistant_name" field-type="string" required="true">
+Name des zugeordneten Assistenten.
+</ResponseField>
+
+<ResponseField name="rows[].total_cost" field-type="number" required="true">
+Gesamtkosten des einzelnen Anrufs in Credits.
+</ResponseField>
+
+<ResponseField name="rows[].stt_cost" field-type="number" required="true">
+Speech-to-Text-Kosten des Anrufs in Credits.
+</ResponseField>
+
+<ResponseField name="rows[].llm_cost" field-type="number" required="true">
+LLM-Kosten des Anrufs in Credits.
+</ResponseField>
+
+<ResponseField name="rows[].tts_cost" field-type="number" required="true">
+Text-to-Speech-Kosten des Anrufs in Credits.
+</ResponseField>
+
+<ResponseField name="rows[].talkturo_cost" field-type="number" required="true">
+Weitere Talkturo-spezifische Kosten des Anrufs in Credits.
+</ResponseField>
+
+## Statuscodes
+
+| Status | Bedeutung |
+| --- | --- |
+| `200` | Anfrage erfolgreich verarbeitet |
+| `302` | Keine gültige Session, Weiterleitung zur Anmeldung |
+| `400` | Ungültige oder fehlende Anfrageparameter |
+| `403` | Zugriff auf den Account nicht erlaubt |
+| `500` | Interner Fehler |
+
+## Fehlerfälle
+
+Ein `400`-Fehler tritt auf, wenn `from` oder `to` fehlen, Datumswerte ungültig sind, `from` nach `to` liegt, der Bereich länger als 366 Tage ist oder `assistantId` keine gültige UUID ist.
+
+Ein `403`-Fehler tritt auf, wenn Sie zwar angemeldet sind, aber weder primärer Eigentümer noch Mitglied des angefragten Accounts sind.
+
+Wenn keine Session vorhanden ist, erhalten Sie keine JSON-Fehlermeldung, sondern eine `302`-Weiterleitung zur Anmeldeseite. Dieser Endpunkt eignet sich deshalb für browserbasierte Dashboards und nicht für serverseitige Integrationen mit API-Schlüsseln.
+
+## Verwandte Endpunkte
+
+<Columns cols={3}>
+  <Card title="Guthaben" href="/de/api-reference/credits" icon="database" cta="Öffnen" />
+  <Card title="Abrechnung" href="/de/api-reference/billing" icon="bar-chart" cta="Öffnen" />
+  <Card title="Assistenten" href="/de/api-reference/assistants" icon="users" cta="Öffnen" />
+</Columns>

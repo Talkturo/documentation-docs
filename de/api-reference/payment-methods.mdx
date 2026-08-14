@@ -1,0 +1,580 @@
+---
+title: Zahlungsmethoden
+description: Gespeicherte Stripe-Zahlungsmethoden für einen Talkturo-Account auflisten, hinzufügen, entfernen und verwalten über die API.
+---
+
+## Zahlungsmethoden-Endpunkte
+
+Verwalten Sie gespeicherte Stripe-Zahlungsmethoden für einen Talkturo-Account über die Endpunkte unter ` /api/payment-methods ` und ` /api/payment-methods/[id] `. Die API unterstützt das Auflisten, Hinzufügen, Abrufen, Entfernen und Setzen der Standard-Zahlungsmethode.
+
+<Callout kind="info">
+
+**Authentifizierung**
+
+Alle Zahlungsmethoden-Endpunkte verwenden `withApiAuth` und akzeptieren entweder einen API-Schlüssel im `Authorization`-Header oder einen gültigen Session-Cookie.
+
+</Callout>
+
+<Callout kind="alert">
+
+**Stripe Elements erforderlich**
+
+Für `POST /api/payment-methods` müssen Sie zuerst clientseitig mit Stripe Elements eine gültige `pm_`-ID erzeugen. Der Endpunkt erstellt keine neue Karteingabe selbst, sondern speichert eine bereits bei Stripe angelegte Zahlungsmethode im Talkturo-Account.
+
+</Callout>
+
+## Endpunktübersicht
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | ` /api/payment-methods ` | Gespeicherte Zahlungsmethoden eines Accounts auflisten |
+| `POST` | ` /api/payment-methods ` | Eine neue Zahlungsmethode hinzufügen |
+| `GET` | ` /api/payment-methods/[id] ` | Eine einzelne Zahlungsmethode abrufen |
+| `PATCH` | ` /api/payment-methods/[id] ` | Eine Zahlungsmethode als Standard setzen |
+| `DELETE` | ` /api/payment-methods/[id] ` | Eine Zahlungsmethode per Soft-Delete entfernen |
+
+## GET /api/payment-methods
+
+Rufen Sie alle aktiven gespeicherten Zahlungsmethoden für einen Account ab. Wenn Sie `accountId` nicht senden, versucht der Endpunkt `auth.accountId` aus dem Auth-Kontext zu verwenden.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/payment-methods?accountId=acc_9f2k3m8q1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/payment-methods?accountId=acc_9f2k3m8q1",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+      Accept: "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "success": true,
+  "count": 2,
+  "paymentMethods": [
+    {
+      "id": "d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10",
+      "stripe_payment_method_id": "pm_1QxR7L2eZvKYlo2C7fA9mP4d",
+      "type": "card",
+      "card_brand": "visa",
+      "card_last4": "4242",
+      "card_exp_month": 12,
+      "card_exp_year": 2027,
+      "card_funding": "credit",
+      "is_default": true,
+      "is_active": true,
+      "billing_details": {
+        "name": "Lena Hoffmann",
+        "email": "lena@northpeak.de"
+      },
+      "created_at": "2025-01-14T10:22:31.000Z"
+    },
+    {
+      "id": "f5c6d7e8-3c91-41a7-8d4e-2b8f6a1d0c22",
+      "stripe_payment_method_id": "pm_1QxR8M2eZvKYlo2C1dH4nK7s",
+      "type": "card",
+      "card_brand": "mastercard",
+      "card_last4": "4444",
+      "card_exp_month": 8,
+      "card_exp_year": 2028,
+      "card_funding": "debit",
+      "is_default": false,
+      "is_active": true,
+      "billing_details": {
+        "name": "Lena Hoffmann",
+        "email": "billing@northpeak.de"
+      },
+      "created_at": "2025-02-03T08:11:05.000Z"
+    }
+  ]
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "accountId is required"
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="accountId" param-type="string" required="false">
+Die Talkturo-Account-ID. Wenn Sie den Parameter weglassen, verwendet der Endpunkt `auth.accountId` aus dem API-Schlüssel oder der Session. Wenn keine Account-ID auflösbar ist, gibt der Endpunkt `400 Bad Request` zurück.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Anzahl der zurückgegebenen Zahlungsmethoden.
+</ResponseField>
+
+<ResponseField name="paymentMethods" field-type="array" required="true">
+Liste der gespeicherten Zahlungsmethoden für den Account.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].id" field-type="string" required="true">
+Interne ID der Zahlungsmethode in Talkturo.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].stripe_payment_method_id" field-type="string" required="true">
+Zugehörige Stripe-Zahlungsmethoden-ID im Format `pm_...`.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].type" field-type="string" required="true">
+Typ der Zahlungsmethode. Für Karten ist der Wert typischerweise `card`.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_brand" field-type="string" required="false">
+Kartenmarke, zum Beispiel `visa` oder `mastercard`.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_last4" field-type="string" required="false">
+Die letzten vier Ziffern der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_exp_month" field-type="integer" required="false">
+Ablaufmonat der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_exp_year" field-type="integer" required="false">
+Ablaufjahr der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_funding" field-type="string" required="false">
+Finanzierungsart der Karte, zum Beispiel `credit` oder `debit`.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].is_default" field-type="boolean" required="true">
+Kennzeichnet die aktuelle Standard-Zahlungsmethode des Accounts.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].is_active" field-type="boolean" required="true">
+Kennzeichnet, ob die Zahlungsmethode aktiv ist.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].billing_details" field-type="object" required="false">
+Von Stripe übernommene Rechnungsdaten der Zahlungsmethode.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].created_at" field-type="string" required="true">
+Zeitpunkt der Speicherung im ISO-8601-Format.
+</ResponseField>
+
+## POST /api/payment-methods
+
+Fügen Sie eine neue Stripe-Zahlungsmethode zu einem Talkturo-Account hinzu. Optional können Sie die neue Methode direkt als Standard markieren.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/payment-methods" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "accountId": "acc_9f2k3m8q1",
+    "paymentMethodId": "pm_1QxR7L2eZvKYlo2C7fA9mP4d",
+    "setAsDefault": true
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/payment-methods", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+    "Content-Type": "application/json",
+    Accept: "application/json"
+  },
+  body: JSON.stringify({
+    accountId: "acc_9f2k3m8q1",
+    paymentMethodId: "pm_1QxR7L2eZvKYlo2C7fA9mP4d",
+    setAsDefault: true
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404,409" default-tab="1">
+```json
+{
+  "success": true,
+  "paymentMethod": {
+    "id": "d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10",
+    "stripe_payment_method_id": "pm_1QxR7L2eZvKYlo2C7fA9mP4d",
+    "card_brand": "visa",
+    "card_last4": "4242",
+    "card_exp_month": 12,
+    "card_exp_year": 2027,
+    "is_default": true
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Billing customer not found"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method already exists"
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="accountId" param-type="string" required="true">
+Die Account-ID, zu der die Zahlungsmethode gespeichert werden soll.
+</ParamField>
+
+<ParamField body="paymentMethodId" param-type="string" required="true">
+Die Stripe-Zahlungsmethoden-ID im Format `pm_...`, die Sie zuvor über Stripe Elements erzeugt haben.
+</ParamField>
+
+<ParamField body="setAsDefault" param-type="boolean" required="false">
+Setzt die neue Zahlungsmethode direkt als Standard. Wenn Sie den Wert weglassen, verwendet der Endpunkt `false`.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="paymentMethod" field-type="object" required="true">
+Die neu gespeicherte Zahlungsmethode.
+</ResponseField>
+
+<ResponseField name="paymentMethod.id" field-type="string" required="true">
+Interne ID der Zahlungsmethode in Talkturo.
+</ResponseField>
+
+<ResponseField name="paymentMethod.stripe_payment_method_id" field-type="string" required="true">
+Die zugehörige Stripe-Zahlungsmethoden-ID.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_brand" field-type="string" required="false">
+Kartenmarke der gespeicherten Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_last4" field-type="string" required="false">
+Die letzten vier Ziffern der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_exp_month" field-type="integer" required="false">
+Ablaufmonat der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_exp_year" field-type="integer" required="false">
+Ablaufjahr der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethod.is_default" field-type="boolean" required="true">
+Kennzeichnet, ob die neue Zahlungsmethode als Standard gespeichert wurde.
+</ResponseField>
+
+### Fehlerfälle
+
+| Status | Ursache |
+| --- | --- |
+| `400` | Pflichtfelder fehlen oder sind ungültig |
+| `404` | Für den Account existiert kein Billing-Customer |
+| `409` | Die Stripe-Zahlungsmethode ist bereits im Account gespeichert |
+
+## GET /api/payment-methods/[id]
+
+Rufen Sie eine einzelne gespeicherte Zahlungsmethode über ihre interne ID ab. Der Endpunkt liefert dieselben Felder wie die Listenansicht für genau einen Datensatz zurück.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/payment-methods/d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10?accountId=acc_9f2k3m8q1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/payment-methods/d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10?accountId=acc_9f2k3m8q1",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+      Accept: "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+```json
+{
+  "success": true,
+  "paymentMethod": {
+    "id": "d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10",
+    "stripe_payment_method_id": "pm_1QxR7L2eZvKYlo2C7fA9mP4d",
+    "type": "card",
+    "card_brand": "visa",
+    "card_last4": "4242",
+    "card_exp_month": 12,
+    "card_exp_year": 2027,
+    "card_funding": "credit",
+    "is_default": true,
+    "is_active": true,
+    "billing_details": {
+      "name": "Lena Hoffmann",
+      "email": "lena@northpeak.de"
+    },
+    "created_at": "2025-01-14T10:22:31.000Z"
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+</Response>
+
+### Pfad- und Query-Parameter
+
+<ParamField path="id" param-type="string" required="true">
+Die interne ID der Zahlungsmethode.
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="false">
+Die Talkturo-Account-ID. Wenn Sie den Parameter weglassen, versucht der Endpunkt `auth.accountId` zu verwenden.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="paymentMethod" field-type="object" required="true">
+Die angeforderte Zahlungsmethode.
+</ResponseField>
+
+<ResponseField name="paymentMethod.id" field-type="string" required="true">
+Interne ID der Zahlungsmethode in Talkturo.
+</ResponseField>
+
+<ResponseField name="paymentMethod.stripe_payment_method_id" field-type="string" required="true">
+Die zugehörige Stripe-Zahlungsmethoden-ID.
+</ResponseField>
+
+<ResponseField name="paymentMethod.type" field-type="string" required="true">
+Typ der Zahlungsmethode.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_brand" field-type="string" required="false">
+Kartenmarke.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_last4" field-type="string" required="false">
+Die letzten vier Ziffern der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_exp_month" field-type="integer" required="false">
+Ablaufmonat der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_exp_year" field-type="integer" required="false">
+Ablaufjahr der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_funding" field-type="string" required="false">
+Finanzierungsart der Karte.
+</ResponseField>
+
+<ResponseField name="paymentMethod.is_default" field-type="boolean" required="true">
+Kennzeichnet die Standard-Zahlungsmethode.
+</ResponseField>
+
+<ResponseField name="paymentMethod.is_active" field-type="boolean" required="true">
+Kennzeichnet, ob die Zahlungsmethode aktiv ist.
+</ResponseField>
+
+<ResponseField name="paymentMethod.billing_details" field-type="object" required="false">
+Rechnungsdaten aus Stripe.
+</ResponseField>
+
+<ResponseField name="paymentMethod.created_at" field-type="string" required="true">
+Erstellungszeitpunkt im ISO-8601-Format.
+</ResponseField>
+
+## PATCH /api/payment-methods/[id]
+
+Setzen Sie eine vorhandene Zahlungsmethode als Standard für den Account. Der Endpunkt aktualisiert die Standardmarkierung serverseitig.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PATCH "https://api.talkturo.com/api/payment-methods/d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10?accountId=acc_9f2k3m8q1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/payment-methods/d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10?accountId=acc_9f2k3m8q1",
+  {
+    method: "PATCH",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+      Accept: "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+```json
+{
+  "success": true,
+  "message": "Default payment method updated"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+</Response>
+
+### Pfad- und Query-Parameter
+
+<ParamField path="id" param-type="string" required="true">
+Die interne ID der Zahlungsmethode, die als Standard gesetzt werden soll.
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="false">
+Die Talkturo-Account-ID. Wenn Sie den Parameter weglassen, versucht der Endpunkt `auth.accountId` zu verwenden.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Bestätigt, dass die Standard-Zahlungsmethode aktualisiert wurde.
+</ResponseField>
+
+## DELETE /api/payment-methods/[id]
+
+Entfernen Sie eine gespeicherte Zahlungsmethode aus dem Account. Der Endpunkt trennt die Zahlungsmethode bei Stripe, markiert den Datensatz intern als gelöscht und setzt bei Bedarf automatisch eine andere aktive Methode als neuen Standard.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X DELETE "https://api.talkturo.com/api/payment-methods/d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10?accountId=acc_9f2k3m8q1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
+  -H "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/payment-methods/d1a2b3c4-8a72-4f6b-9f2d-7a1c5e3b9d10?accountId=acc_9f2k3m8q1",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+      Accept: "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+```json
+{
+  "success": true,
+  "message": "Payment method removed"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+</Response>
+
+### Pfad- und Query-Parameter
+
+<ParamField path="id" param-type="string" required="true">
+Die interne ID der Zahlungsmethode, die entfernt werden soll.
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="false">
+Die Talkturo-Account-ID. Wenn Sie den Parameter weglassen, versucht der Endpunkt `auth.accountId` zu verwenden.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Bestätigt, dass die Zahlungsmethode entfernt wurde.
+</ResponseField>
+
+## Verhalten beim Entfernen und Setzen des Standards
+
+Die `DELETE`-Route führt keinen Hard-Delete aus. Stattdessen wird die Zahlungsmethode bei Stripe getrennt und in Talkturo intern als gelöscht oder inaktiv markiert.
+
+Wenn Sie die aktuelle Standard-Zahlungsmethode entfernen, fördert Talkturo automatisch eine andere aktive Zahlungsmethode zum neuen Standard, sofern eine weitere Methode verfügbar ist. Die `PATCH`-Route setzt die Standardmarkierung gezielt für eine vorhandene Methode.
+
+## Verwandte API-Referenzen
+
+<Columns cols={3}>
+  <Card title="Guthaben" href="/de/api-reference/credits" icon="database" />
+  <Card title="Abrechnung" href="/de/api-reference/billing" icon="credit-card" />
+  <Card title="API-Schlüssel" href="/de/api-reference/api-keys" icon="key" />
+</Columns>
