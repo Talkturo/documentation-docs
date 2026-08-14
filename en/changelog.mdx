@@ -8,6 +8,28 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-14" description="v2.5.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Per-document carrier rejection detail** — When a carrier rejects a verification document, you now see exactly which document was refused and the carrier's reason, and can replace just that document instead of resubmitting the entire filing. See [Telephony](/en/telephony).
+  - **Carrier requirements comparison** — Before choosing a carrier for regulatory verification, see a side-by-side summary of what each carrier requires — number of items and documents — so you can pick the simpler option upfront. See [Telephony](/en/telephony).
+  - **Address-based city for verification** — The verification city is now derived from the address you enter instead of a dropdown, preventing silent mismatches and supporting businesses registered in any city. An "Add another location" button lets businesses with multiple offices file separate verifications. See [Telephony](/en/telephony).
+  - **"Check with carrier" button** — Manually trigger a live carrier status check for pending verifications instead of waiting for the next automatic sync. See [Telephony](/en/telephony).
+
+  ## Improvements
+
+  - **Full filing details in admin review** — Admin reviewers now see all submitted form fields — business name, registration number, representative details, address, and comments — alongside uploaded documents. A warning highlights when the representative's email domain doesn't match the business domain, a common cause of regulatory rejections. See [Telephony](/en/telephony).
+  - **TTS voice catalogue sync** — Fixed a silent sync failure that left the voice library stale. Voice providers now sync one at a time with live progress indicators, and existing voices are protected from accidental deletion during sync. See [Voice Library](/en/voice-library).
+  - **Billing webhook reliability** — Billing webhooks now have an extended runtime budget and bounded external API calls, reducing the chance of missed billing events during high-traffic periods. See [Billing](/en/billing).
+
+  ## Bug Fixes
+
+  - **Call pricing for LLM and TTS** — Fixed a bug where LLM and TTS call costs were silently billed as zero due to missing cost catalogue entries. Calls now correctly include LLM, TTS, and STT costs. See [Billing](/en/billing).
+  - **Recheck button while blocked** — The "Check with carrier" button is now available even when a filing is blocked waiting for a carrier response, exactly when it's most useful.
+  - **Admin impersonation logout** — Fixed an intermittent issue where admin account switching would log you out instead of switching accounts.
+  - **Review dialog scroll** — The admin verification review dialog now scrolls when content exceeds the viewport, keeping action buttons reachable.
+</Update>
+
 <Update label="2026-08-13" description="v2.4.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
