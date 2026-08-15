@@ -1,11 +1,11 @@
 ---
 title: CRM Custom Fields
-description: Create, list, update, and delete custom fields on contacts, companies, and opportunities in the Talkturo CRM — extend records with text, number, date, select, and boolean field types.
+description: Define and manage custom CRM fields for contacts and companies, including field types, validation rules, and session-authenticated endpoints.
 ---
 
 ## Manage CRM custom fields
 
-Custom fields let you extend Talkturo CRM records with data that does not fit the default schema. Use these endpoints to define fields for **contacts**, **companies**, and **opportunities**, then read, update, or remove those definitions later.
+Custom fields let you extend Talkturo CRM records with data that does not fit the default schema. Use these endpoints to create, list, update, and delete field definitions for **contacts** and **companies**.
 
 <Callout kind="info">
 
@@ -17,37 +17,37 @@ All CRM custom field endpoints require **session cookie authentication**. These 
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/crm/custom-fields` | List all custom fields |
+| `GET` | `/api/crm/custom-fields` | List custom fields |
 | `POST` | `/api/crm/custom-fields` | Create a custom field |
 | `GET` | `/api/crm/custom-fields/{id}` | Get one custom field by ID |
-| `PATCH` | `/api/crm/custom-fields/{id}` | Update a custom field |
+| `PUT` | `/api/crm/custom-fields/{id}` | Update a custom field |
 | `DELETE` | `/api/crm/custom-fields/{id}` | Delete a custom field |
 
-## Field types and entity types
+## Supported field types and entity types
 
-Use one of the supported field types when you create a custom field:
+Create custom fields with one of these field types:
 
-- **`text`** — freeform string values
+- **`text`** — short text values
 - **`number`** — numeric values
-- **`date`** — date values
-- **`select`** — one value from a defined list of options
 - **`boolean`** — true or false values
+- **`date`** — date values
+- **`select`** — one value from a predefined list
+- **`textarea`** — longer freeform text values
 
-Attach each custom field to one CRM entity type:
+Attach each field to one supported CRM entity type:
 
-- **`contact`**
 - **`company`**
-- **`opportunity`**
+- **`contact`**
 
-If you create a `select` field, include `options` in the request body.
+If you create a `select` field, send an `options` object with an `options` array inside it.
 
 ## List custom fields
 
-Returns the custom fields available in your CRM.
+Returns the custom fields available for a team. Filter the results by entity type, and include inactive fields when you need the full set.
 
 <Request>
 ```bash
-curl -X GET "https://app.talkturo.com/api/crm/custom-fields" \
+curl -X GET "https://app.talkturo.com/api/crm/custom-fields?teamId=team_9f2d3a1c&entityType=company&includeInactive=true" \
   -H "Cookie: sb-access-token=sb_session_example_f84k2m"
 ```
 </Request>
@@ -59,25 +59,50 @@ curl -X GET "https://app.talkturo.com/api/crm/custom-fields" \
   "fields": [
     {
       "id": "8bb0cf7b-6f0e-45e3-8f40-c0d6dc4c9a11",
-      "name": "Lead source",
-      "type": "select",
-      "entity_type": "contact",
-      "options": [
-        "Website",
-        "Referral",
-        "Conference"
-      ]
+      "entity_type": "company",
+      "key": "customer_tier",
+      "label": "Customer tier",
+      "field_type": "select",
+      "options": {
+        "options": [
+          "Starter",
+          "Growth",
+          "Enterprise"
+        ]
+      },
+      "is_required": false,
+      "sort_order": 10,
+      "is_active": true
     },
     {
       "id": "1cf4bc3d-cad3-4d8b-8a4f-5c5c33bc3a86",
-      "name": "Renewal date",
-      "type": "date",
-      "entity_type": "company"
+      "entity_type": "contact",
+      "key": "linkedin_profile",
+      "label": "LinkedIn profile",
+      "field_type": "text",
+      "options": null,
+      "is_required": false,
+      "sort_order": 20,
+      "is_active": true
     }
   ]
 }
 ```
 </Response>
+
+### Query parameters
+
+<ParamField query="teamId" param-type="string" required="true">
+Team ID that owns the custom field definitions.
+</ParamField>
+
+<ParamField query="entityType" param-type="string" required="false" enum="company,contact">
+Filters results to one CRM entity type.
+</ParamField>
+
+<ParamField query="includeInactive" param-type="string" required="false" enum="true">
+Set to `true` to include inactive fields in the response.
+</ParamField>
 
 ### Response fields
 
@@ -86,12 +111,12 @@ curl -X GET "https://app.talkturo.com/api/crm/custom-fields" \
 </ResponseField>
 
 <ResponseField name="fields" field-type="array" required="true">
-Array of custom field definitions.
+Array of custom field definitions for the requested team.
 </ResponseField>
 
 ## Create a custom field
 
-Creates a new custom field definition for a contact, company, or opportunity.
+Creates a new custom field definition for a contact or company. The API normalizes `key` to snake case before validation and storage.
 
 <Request>
 ```bash
@@ -99,10 +124,17 @@ curl -X POST "https://app.talkturo.com/api/crm/custom-fields" \
   -H "Content-Type: application/json" \
   -H "Cookie: sb-access-token=sb_session_example_f84k2m" \
   -d '{
-    "name": "Customer tier",
-    "type": "select",
-    "entity_type": "company",
-    "options": ["Starter", "Growth", "Enterprise"]
+    "teamId": "team_9f2d3a1c",
+    "entityType": "company",
+    "key": "Customer Tier",
+    "label": "Customer tier",
+    "fieldType": "select",
+    "options": {
+      "options": ["Starter", "Growth", "Enterprise"]
+    },
+    "isRequired": false,
+    "sortOrder": 10,
+    "isActive": true
   }'
 ```
 </Request>
@@ -113,14 +145,20 @@ curl -X POST "https://app.talkturo.com/api/crm/custom-fields" \
   "success": true,
   "field": {
     "id": "ec607f3e-77c8-45e7-a58d-62b8d09c4d5d",
-    "name": "Customer tier",
-    "type": "select",
     "entity_type": "company",
-    "options": [
-      "Starter",
-      "Growth",
-      "Enterprise"
-    ]
+    "key": "customer_tier",
+    "label": "Customer tier",
+    "field_type": "select",
+    "options": {
+      "options": [
+        "Starter",
+        "Growth",
+        "Enterprise"
+      ]
+    },
+    "is_required": false,
+    "sort_order": 10,
+    "is_active": true
   }
 }
 ```
@@ -128,20 +166,40 @@ curl -X POST "https://app.talkturo.com/api/crm/custom-fields" \
 
 ### Body parameters
 
-<ParamField body="name" param-type="string" required="true">
-Field label shown in the CRM.
+<ParamField body="teamId" param-type="string" required="true">
+Team ID that owns the new custom field.
 </ParamField>
 
-<ParamField body="type" param-type="string" required="true" enum="text,number,date,select,boolean">
-Custom field type.
+<ParamField body="entityType" param-type="string" required="true" enum="company,contact">
+CRM entity type that this field applies to.
 </ParamField>
 
-<ParamField body="entity_type" param-type="string" required="true" enum="contact,company,opportunity">
-CRM record type that this field applies to.
+<ParamField body="key" param-type="string" required="true">
+Unique field key. The API normalizes the value to snake case, then validates it against `^[a-z][a-z0-9_]{1,63}$`.
 </ParamField>
 
-<ParamField body="options" param-type="array" required="false">
-List of allowed values for `select` fields. Omit `options` for other field types.
+<ParamField body="label" param-type="string" required="true">
+Human-readable display label shown in the CRM. This value cannot be blank.
+</ParamField>
+
+<ParamField body="fieldType" param-type="string" required="true" enum="text,number,boolean,date,select,textarea">
+Type of field to create.
+</ParamField>
+
+<ParamField body="options" param-type="object" required="false">
+Field-specific options object. For `select` fields, send an `options.options` array with one or more string values.
+</ParamField>
+
+<ParamField body="isRequired" param-type="boolean" required="false">
+Marks the field as required. Defaults to `false`.
+</ParamField>
+
+<ParamField body="sortOrder" param-type="number" required="false">
+Controls display order in the CRM. Defaults to `0`.
+</ParamField>
+
+<ParamField body="isActive" param-type="boolean" required="false">
+Controls whether the field is active and visible. Defaults to `true`.
 </ParamField>
 
 ### Response fields
@@ -151,7 +209,7 @@ List of allowed values for `select` fields. Omit `options` for other field types
 </ResponseField>
 
 <ResponseField name="field" field-type="object" required="true">
-The newly created custom field definition, including its `id`.
+The newly created custom field definition.
 </ResponseField>
 
 ## Get a custom field
@@ -171,12 +229,62 @@ UUID of the custom field.
 </ResponseField>
 
 <ResponseField name="field" field-type="object" required="true">
-The requested custom field definition.
+The requested custom field definition, including `entity_type`, `key`, `label`, `field_type`, `options`, `is_required`, `sort_order`, and `is_active`.
 </ResponseField>
 
 ## Update a custom field
 
-Updates an existing custom field. You can change the field name, options, and other editable properties supported by the endpoint.
+Updates an existing custom field definition. Use this endpoint to change the display label, field type, options, required status, sort order, or active status.
+
+<Callout kind="info">
+
+`key`, `entityType`, and `teamId` are immutable. Set those values when you create the field.
+
+</Callout>
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/crm/custom-fields/ec607f3e-77c8-45e7-a58d-62b8d09c4d5d" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=sb_session_example_f84k2m" \
+  -d '{
+    "label": "Account tier",
+    "fieldType": "select",
+    "options": {
+      "options": ["Starter", "Growth", "Enterprise", "Strategic"]
+    },
+    "isRequired": true,
+    "sortOrder": 5,
+    "isActive": true
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "field": {
+    "id": "ec607f3e-77c8-45e7-a58d-62b8d09c4d5d",
+    "entity_type": "company",
+    "key": "customer_tier",
+    "label": "Account tier",
+    "field_type": "select",
+    "options": {
+      "options": [
+        "Starter",
+        "Growth",
+        "Enterprise",
+        "Strategic"
+      ]
+    },
+    "is_required": true,
+    "sort_order": 5,
+    "is_active": true
+  }
+}
+```
+</Response>
 
 ### Path parameters
 
@@ -186,12 +294,28 @@ UUID of the custom field to update.
 
 ### Body parameters
 
-<ParamField body="name" param-type="string" required="false">
-Updated field label.
+<ParamField body="label" param-type="string" required="false">
+New display label for the field.
 </ParamField>
 
-<ParamField body="options" param-type="array" required="false">
-Updated list of allowed values for a `select` field.
+<ParamField body="fieldType" param-type="string" required="false" enum="text,number,boolean,date,select,textarea">
+New field type. The value must be one of the supported field types.
+</ParamField>
+
+<ParamField body="options" param-type="object" required="false">
+Replacement options object for the field. For `select` fields, send an `options.options` array.
+</ParamField>
+
+<ParamField body="isRequired" param-type="boolean" required="false">
+Updates whether the field is required.
+</ParamField>
+
+<ParamField body="sortOrder" param-type="number" required="false">
+Updates the field display order.
+</ParamField>
+
+<ParamField body="isActive" param-type="boolean" required="false">
+Toggles field visibility without deleting the definition.
 </ParamField>
 
 ### Response fields
@@ -223,33 +347,3 @@ UUID of the custom field to delete.
 <ResponseField name="message" field-type="string" required="true">
 Confirmation message returned by the API after deletion.
 </ResponseField>
-
-## Custom field object
-
-The API returns a custom field object in list, create, get, and update responses.
-
-<ResponseField name="id" field-type="string" required="true">
-Unique identifier for the custom field.
-</ResponseField>
-
-<ResponseField name="name" field-type="string" required="true">
-Display name of the field.
-</ResponseField>
-
-<ResponseField name="type" field-type="string" required="true">
-Field type. One of `text`, `number`, `date`, `select`, or `boolean`.
-</ResponseField>
-
-<ResponseField name="entity_type" field-type="string" required="true">
-CRM entity this field applies to. One of `contact`, `company`, or `opportunity`.
-</ResponseField>
-
-<ResponseField name="options" field-type="array" required="false">
-Allowed values for `select` fields. This field is only relevant when `type` is `select`.
-</ResponseField>
-
-## Usage notes
-
-Choose the field type carefully before you create it. A `select` field requires predefined options, while other field types store single values without an options list.
-
-Use the entity type to keep field definitions scoped to the right records. A field created for `contact` records does not apply to `company` or `opportunity` records.

@@ -24,10 +24,11 @@ All endpoints on this page require **session cookie authentication**. Send reque
 | `POST` | `/api/assistants/[assistantId]/telephony/test-call` | Start a test outbound SIP call |
 | `GET` `POST` | `/api/assistants/[assistantId]/telephony/inbound` | Read or configure inbound telephony |
 | `GET` `POST` | `/api/assistants/[assistantId]/telephony/outbound` | Read or configure outbound telephony |
-| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/settings` | Read or update full telephony settings |
+| `POST` | `/api/assistants/[assistantId]/telephony/settings` | Update full telephony settings |
 | `GET` `POST` | `/api/assistants/[assistantId]/telephony/phone-numbers` | List or manage phone numbers attached to the assistant |
 | `POST` | `/api/assistants/[assistantId]/telephony/assign-phone-numbers` | Assign phone numbers to the assistant |
 | `GET` | `/api/assistants/[assistantId]/telephony/compliance-templates` | List available compliance templates |
+| `GET` `POST` `PUT` `DELETE` | `/api/telephony/account` | Manage account-level telephony ownership and provider credentials |
 
 ## POST test-call
 
@@ -209,9 +210,9 @@ Assistant UUID.
 
 Use this endpoint before initiating outbound calls. A valid outbound setup is a prerequisite for `POST /telephony/test-call`, which verifies outbound enablement and trunk configuration before dialing.
 
-## GET and PATCH settings
+## POST settings
 
-Read or update the assistant's full telephony settings from a single endpoint. Use `GET` to retrieve the current settings object and `PATCH` to update only the fields you want to change.
+Update the assistant's full telephony settings from a single endpoint. Use `POST` to send the settings object for the assistant.
 
 ### Path parameters
 
@@ -223,12 +224,11 @@ Assistant UUID.
 
 ### Methods
 
-- **`GET`** — returns full telephony settings for the assistant.
-- **`PATCH`** — updates telephony settings for the assistant.
+- **`POST`** — updates telephony settings for the assistant.
 
 ### Expected behavior
 
-Use the settings endpoint when you need the full telephony configuration rather than inbound-only or outbound-only values. `PATCH` is the right choice for partial updates because it avoids replacing the entire settings object.
+Use the settings endpoint when you need to update the full telephony configuration rather than inbound-only or outbound-only values.
 
 ## GET and POST phone-numbers
 
@@ -291,6 +291,156 @@ List of available compliance templates for the assistant's telephony context.
 
 Fetch compliance templates before presenting telephony compliance choices in your application. This keeps your UI aligned with the templates currently available in Talkturo.
 
+## GET, POST, PUT, and DELETE account telephony
+
+Manage workspace-level telephony ownership and provider credentials with the account telephony endpoint. Use this route to provision a Talkturo-managed account, store bring-your-own-account credentials, validate stored credentials, or remove stored BYOA credentials.
+
+### Base path
+
+`/api/telephony/account`
+
+### Authentication
+
+Session cookie authentication only.
+
+### GET account telephony
+
+Fetch the workspace telephony ownership state and available carrier readiness for a workspace.
+
+#### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+
+Workspace slug.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="canManage" field-type="boolean" required="true">
+
+Whether the authenticated user can manage telephony for the workspace.
+
+</ResponseField>
+
+<ResponseField name="existingNumberCount" field-type="number" required="true">
+
+Count of phone numbers already associated with the workspace telephony context.
+
+</ResponseField>
+
+<ResponseField name="availableCarriers" field-type="array" required="true">
+
+List of carriers available to the workspace and whether each carrier is ready for use.
+
+</ResponseField>
+
+<ResponseField name="own" field-type="object">
+
+Stored bring-your-own-account configuration for the workspace, or `null` when no BYOA credentials are stored.
+
+</ResponseField>
+
+### POST account telephony
+
+Create or update the workspace telephony ownership mode. The request body uses `mode` as a discriminator.
+
+#### Request body
+
+<ParamField body="mode" param-type="string" required="true" enum="managed,byoa">
+
+Provisioning mode for the workspace telephony account.
+
+</ParamField>
+
+<ParamField body="account" param-type="string" required="true">
+
+Workspace slug.
+
+</ParamField>
+
+<ParamField body="providerAccountSid" param-type="string">
+
+Required when `mode` is `byoa`. Must match `AC[0-9a-fA-F]{32}`.
+
+</ParamField>
+
+<ParamField body="apiKeySid" param-type="string">
+
+Required when `mode` is `byoa`. Must match `SK[0-9a-fA-F]{32}`.
+
+</ParamField>
+
+<ParamField body="apiKeySecret" param-type="string">
+
+Required when `mode` is `byoa`. Minimum length is `10` characters.
+
+</ParamField>
+
+<ParamField body="label" param-type="string">
+
+Optional when `mode` is `byoa`. Maximum length is `120` characters.
+
+</ParamField>
+
+### PUT account telephony
+
+Re-validate stored bring-your-own-account credentials for a workspace.
+
+#### Request body
+
+<ParamField body="account" param-type="string" required="true">
+
+Workspace slug.
+
+</ParamField>
+
+<ParamField body="action" param-type="string" required="true" enum="validate">
+
+Validation action. Use `validate`.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the validation request succeeded.
+
+</ResponseField>
+
+<ResponseField name="error" field-type="string">
+
+Error message returned when validation fails.
+
+</ResponseField>
+
+### DELETE account telephony
+
+Remove stored bring-your-own-account credentials for a workspace. The customer's Twilio account and numbers remain unchanged.
+
+#### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+
+Workspace slug.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the credentials were removed successfully.
+
+</ResponseField>
+
 ## Common integration notes
 
 A successful telephony integration usually follows this order:
@@ -308,8 +458,9 @@ A successful telephony integration usually follows this order:
 
 ## Related telephony context
 
-Talkturo also exposes an account-level session-auth endpoint outside the assistant telephony namespace:
+Talkturo also exposes session-auth endpoints outside the assistant telephony namespace:
 
 - `GET /api/assistant-phone-numbers` — lists phone numbers attached to an assistant across the account.
+- `GET`, `POST`, `PUT`, and `DELETE /api/telephony/account` — manages workspace-level telephony ownership and stored provider credentials.
 
-Use the assistant-scoped telephony routes on this page for configuration changes tied to one assistant. Use the account-level listing route when you need a broader lookup across the account.
+Use the assistant-scoped telephony routes on this page for configuration changes tied to one assistant. Use the account-level routes when you need workspace-wide telephony ownership or broader phone-number lookups.

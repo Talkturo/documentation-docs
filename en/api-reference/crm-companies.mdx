@@ -1,15 +1,15 @@
 ---
 title: CRM Companies
-description: Create, list, update, delete, and retrieve companies in the Talkturo CRM — manage organization records with custom fields and contact associations.
+description: Manage company records in the Talkturo CRM with filters, structured address fields, and contact-aware deletion rules.
 ---
 
 ## Manage CRM company records
 
-Use the CRM Companies endpoints to store organization records, attach custom fields, and retrieve contacts associated with each company.
+Store company records in the Talkturo CRM, filter them by industry or search term, and retrieve related contacts and opportunities.
 
 <Callout kind="info">
 
-All CRM Companies endpoints require session cookie authentication. Send requests from an authenticated Talkturo session.
+`GET /api/crm/companies` and `POST /api/crm/companies` accept either session cookie authentication or an API key. `GET /api/crm/companies/{id}`, `PUT /api/crm/companies/{id}`, `DELETE /api/crm/companies/{id}`, and `GET /api/crm/companies/{id}/contacts` require an authenticated Talkturo session.
 
 </Callout>
 
@@ -20,63 +20,23 @@ All CRM Companies endpoints require session cookie authentication. Send requests
 | `GET` | `/api/crm/companies` | List companies |
 | `POST` | `/api/crm/companies` | Create a company |
 | `GET` | `/api/crm/companies/{id}` | Retrieve a company |
-| `PATCH` | `/api/crm/companies/{id}` | Update a company |
+| `PUT` | `/api/crm/companies/{id}` | Update a company |
 | `DELETE` | `/api/crm/companies/{id}` | Delete a company |
 | `GET` | `/api/crm/companies/{id}/contacts` | List contacts for a company |
 
-## Company object
-
-Company responses return a company record with core fields such as `id`, `name`, `website`, and `industry`. Records may also include additional standard or custom CRM fields stored on the company.
-
-<ResponseField name="id" field-type="string" required="true">
-
-Unique company identifier in UUID format.
-
-</ResponseField>
-
-<ResponseField name="name" field-type="string" required="true">
-
-Company name.
-
-</ResponseField>
-
-<ResponseField name="website" field-type="string">
-
-Company website URL when provided.
-
-</ResponseField>
-
-<ResponseField name="industry" field-type="string">
-
-Industry label for the company.
-
-</ResponseField>
-
-<ResponseField name="phone" field-type="string">
-
-Primary phone number for the company.
-
-</ResponseField>
-
-<ResponseField name="address" field-type="string">
-
-Company address.
-
-</ResponseField>
-
 ## List companies
 
-Retrieve a paginated list of companies. Use `search` to filter results by a search term.
+Retrieve companies with optional filters for search and industry. If you omit `teamId`, the API uses the authenticated account ID when auth context is available.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://app.talkturo.com/api/crm/companies?page=1&limit=25&search=Acme" \
-  -H "Cookie: sb-session=example_session_cookie"
+curl -X GET "https://api.talkturo.com/api/crm/companies?search=Acme&industry=Manufacturing&limit=50&offset=0" \
+  -H "x-api-key: tturo_example_key_9xmk7q2r"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://app.talkturo.com/api/crm/companies?page=1&limit=25&search=Acme",
+  "https://app.talkturo.com/api/crm/companies?search=Acme&industry=Manufacturing&limit=50&offset=0",
   {
     method: "GET",
     credentials: "include",
@@ -101,41 +61,55 @@ console.log(data);
       "name": "Acme Manufacturing",
       "website": "https://acmemanufacturing.com",
       "industry": "Manufacturing",
+      "company_size": "201-500",
+      "city": "San Francisco",
+      "state": "CA",
+      "country": "US",
       "phone": "+1-415-555-0142",
-      "address": "1450 Market Street, San Francisco, CA 94103"
-    },
-    {
-      "id": "d948c0e2-7ed3-4d94-a26b-c73db7fc32ea",
-      "name": "Northwind Health",
-      "website": "https://northwindhealth.com",
-      "industry": "Healthcare",
-      "phone": "+1-312-555-0188",
-      "address": "210 W Madison St, Chicago, IL 60606"
+      "custom_fields": {
+        "accountTier": "enterprise",
+        "partnerStatus": "reseller"
+      },
+      "contact_count": 12,
+      "created_at": "2024-11-07T18:24:11.000Z"
     }
   ],
-  "total": 2,
-  "page": 1
+  "count": 100,
+  "limit": 50,
+  "offset": 0
 }
 ```
 </Response>
 
 ### Query parameters
 
-<ParamField query="page" param-type="integer" required="false">
+<ParamField query="teamId" param-type="string" required="false">
 
-Page number to return.
-
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false">
-
-Maximum number of companies to return per page.
+Team ID in UUID format. If you omit `teamId`, the API falls back to the authenticated account ID.
 
 </ParamField>
 
 <ParamField query="search" param-type="string" required="false">
 
-Search term used to filter company records.
+Case-insensitive search term applied to the `name` and `website` fields.
+
+</ParamField>
+
+<ParamField query="industry" param-type="string" required="false">
+
+Exact-match filter on the company `industry` field.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximum number of companies to return. Defaults to `50`.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Number of matching records to skip before returning results. Defaults to `0`.
 
 </ParamField>
 
@@ -149,39 +123,54 @@ Returns `true` when the request succeeds.
 
 <ResponseField name="companies" field-type="array" required="true">
 
-Array of company records for the current page.
+Array of company records for the current result set.
 
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
+<ResponseField name="count" field-type="integer" required="true">
 
-Total number of matching company records.
+Total number of matching company records before `limit` and `offset` are applied.
 
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
+<ResponseField name="limit" field-type="integer" required="true">
 
-Current page number in the paginated result.
+Page size used for the response.
+
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+
+Offset used for the response.
 
 </ResponseField>
 
 ## Create a company
 
-Create a new company record by sending the company name and any additional fields you want to store.
+Create a company with standard CRM fields and an optional `customFields` object. If you do not send `teamId`, the API uses the authenticated account ID and returns `400` if neither value is available.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X POST "https://app.talkturo.com/api/crm/companies" \
+curl -X POST "https://api.talkturo.com/api/crm/companies" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=example_session_cookie" \
+  -H "x-api-key: tturo_example_key_9xmk7q2r" \
   -d '{
     "name": "Acme Manufacturing",
     "website": "https://acmemanufacturing.com",
     "industry": "Manufacturing",
+    "companySize": "201-500",
+    "addressLine1": "1450 Market Street",
+    "addressLine2": "Suite 600",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94103",
+    "country": "US",
     "phone": "+1-415-555-0142",
-    "address": "1450 Market Street, San Francisco, CA 94103",
-    "employee_count": 240,
-    "account_owner": "Maya Patel"
+    "notes": "Primary west coast manufacturing partner.",
+    "customFields": {
+      "accountTier": "enterprise",
+      "partnerStatus": "reseller"
+    }
   }'
 ```
 
@@ -196,10 +185,19 @@ const response = await fetch("https://app.talkturo.com/api/crm/companies", {
     name: "Acme Manufacturing",
     website: "https://acmemanufacturing.com",
     industry: "Manufacturing",
+    companySize: "201-500",
+    addressLine1: "1450 Market Street",
+    addressLine2: "Suite 600",
+    city: "San Francisco",
+    state: "CA",
+    postalCode: "94103",
+    country: "US",
     phone: "+1-415-555-0142",
-    address: "1450 Market Street, San Francisco, CA 94103",
-    employee_count: 240,
-    account_owner: "Maya Patel"
+    notes: "Primary west coast manufacturing partner.",
+    customFields: {
+      accountTier: "enterprise",
+      partnerStatus: "reseller"
+    }
   })
 });
 
@@ -214,13 +212,25 @@ console.log(data);
   "success": true,
   "company": {
     "id": "8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132",
+    "team_id": "1ec9b998-8f2d-47bd-9d95-b12a2d6e4ef1",
     "name": "Acme Manufacturing",
     "website": "https://acmemanufacturing.com",
     "industry": "Manufacturing",
+    "company_size": "201-500",
+    "address_line_1": "1450 Market Street",
+    "address_line_2": "Suite 600",
+    "city": "San Francisco",
+    "state": "CA",
+    "postal_code": "94103",
+    "country": "US",
     "phone": "+1-415-555-0142",
-    "address": "1450 Market Street, San Francisco, CA 94103",
-    "employee_count": 240,
-    "account_owner": "Maya Patel"
+    "notes": "Primary west coast manufacturing partner.",
+    "custom_fields": {
+      "accountTier": "enterprise",
+      "partnerStatus": "reseller"
+    },
+    "created_at": "2024-11-07T18:24:11.000Z",
+    "updated_at": "2024-11-07T18:24:11.000Z"
   }
 }
 ```
@@ -228,9 +238,15 @@ console.log(data);
 
 ### Body parameters
 
+<ParamField body="teamId" param-type="string" required="false">
+
+Team ID in UUID format. If you omit `teamId`, the API falls back to the authenticated account ID. The request fails with `400` if neither value is available.
+
+</ParamField>
+
 <ParamField body="name" param-type="string" required="true">
 
-Company name.
+Company name. The API trims this value and requires a non-empty result.
 
 </ParamField>
 
@@ -246,21 +262,63 @@ Industry label for the company.
 
 </ParamField>
 
+<ParamField body="companySize" param-type="string" required="false">
+
+Company size value. The API stores this value in the `company_size` column.
+
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string" required="false">
+
+First address line. The API stores this value in the `address_line_1` column.
+
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string" required="false">
+
+Second address line. The API stores this value in the `address_line_2` column.
+
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false">
+
+City for the company address.
+
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false">
+
+State or region for the company address.
+
+</ParamField>
+
+<ParamField body="postalCode" param-type="string" required="false">
+
+Postal or ZIP code. The API stores this value in the `postal_code` column.
+
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false">
+
+Country for the company address.
+
+</ParamField>
+
 <ParamField body="phone" param-type="string" required="false">
 
 Primary company phone number.
 
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false">
+<ParamField body="notes" param-type="string" required="false">
 
-Company address.
+Freeform notes stored on the company record.
 
 </ParamField>
 
-<ParamField body="custom fields" param-type="object" required="false">
+<ParamField body="customFields" param-type="object" required="false">
 
-Any additional CRM fields to store on the company record. Custom field names and value types depend on your CRM configuration.
+Additional company fields stored in the `custom_fields` column.
 
 </ParamField>
 
@@ -274,13 +332,76 @@ Returns `true` when the company is created successfully.
 
 <ResponseField name="company" field-type="object" required="true">
 
-The created company record, including its generated `id`.
+The created company record.
 
 </ResponseField>
 
 ## Get a company
 
-Retrieve a single company by its ID.
+Retrieve a single company by ID. The response includes the company record plus nested `contacts` and `opportunities` arrays.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/companies/8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/companies/8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "company": {
+    "id": "8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132",
+    "name": "Acme Manufacturing",
+    "website": "https://acmemanufacturing.com",
+    "industry": "Manufacturing",
+    "company_size": "201-500",
+    "address_line_1": "1450 Market Street",
+    "address_line_2": "Suite 600",
+    "city": "San Francisco",
+    "state": "CA",
+    "postal_code": "94103",
+    "country": "US",
+    "phone": "+1-415-555-0142",
+    "notes": "Primary west coast manufacturing partner.",
+    "custom_fields": {
+      "accountTier": "enterprise"
+    },
+    "contacts": [
+      {
+        "id": "3f1c8c44-ea5f-4e66-bf95-f3162a2c5f60",
+        "first_name": "Maya",
+        "last_name": "Patel",
+        "email": "maya.patel@acmemanufacturing.com"
+      }
+    ],
+    "opportunities": [
+      {
+        "id": "opp_7f3d2b91",
+        "name": "Q1 expansion renewal",
+        "stage": "proposal"
+      }
+    ]
+  }
+}
+```
+</Response>
 
 ### Path parameters
 
@@ -292,21 +413,84 @@ Unique company identifier in UUID format.
 
 ### Response fields
 
-<ResponseField name="success" field-type="boolean" required="true">
-
-Returns `true` when the company is found.
-
-</ResponseField>
-
 <ResponseField name="company" field-type="object" required="true">
 
-The requested company record.
+The requested company record, including nested `contacts` and `opportunities` arrays.
 
 </ResponseField>
 
 ## Update a company
 
-Update one or more fields on an existing company. Send only the fields you want to change.
+Replace one or more fields on an existing company with a `PUT` request. Send only the fields you want to change.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PUT "https://app.talkturo.com/api/crm/companies/8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_cookie" \
+  -d '{
+    "industry": "Industrial Manufacturing",
+    "companySize": "501-1000",
+    "city": "Oakland",
+    "notes": "Updated after account review.",
+    "customFields": {
+      "accountTier": "strategic"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/companies/8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132",
+  {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      industry: "Industrial Manufacturing",
+      companySize: "501-1000",
+      city: "Oakland",
+      notes: "Updated after account review.",
+      customFields: {
+        accountTier: "strategic"
+      }
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "company": {
+    "id": "8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132",
+    "name": "Acme Manufacturing",
+    "website": "https://acmemanufacturing.com",
+    "industry": "Industrial Manufacturing",
+    "company_size": "501-1000",
+    "address_line_1": "1450 Market Street",
+    "address_line_2": "Suite 600",
+    "city": "Oakland",
+    "state": "CA",
+    "postal_code": "94103",
+    "country": "US",
+    "phone": "+1-415-555-0142",
+    "notes": "Updated after account review.",
+    "custom_fields": {
+      "accountTier": "strategic"
+    },
+    "updated_at": "2024-11-08T09:10:22.000Z"
+  }
+}
+```
+</Response>
 
 ### Path parameters
 
@@ -318,39 +502,81 @@ Unique company identifier in UUID format.
 
 ### Body parameters
 
-<ParamField body="name" param-type="string" required="false">
+<ParamField body="name" param-type="string | null" required="false">
 
 Updated company name.
 
 </ParamField>
 
-<ParamField body="website" param-type="string" required="false">
+<ParamField body="website" param-type="string | null" required="false">
 
 Updated website URL.
 
 </ParamField>
 
-<ParamField body="industry" param-type="string" required="false">
+<ParamField body="industry" param-type="string | null" required="false">
 
 Updated industry label.
 
 </ParamField>
 
-<ParamField body="phone" param-type="string" required="false">
+<ParamField body="companySize" param-type="string | null" required="false">
+
+Updated company size value. The API stores this value in the `company_size` column.
+
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string | null" required="false">
+
+Updated first address line. The API stores this value in the `address_line_1` column.
+
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string | null" required="false">
+
+Updated second address line. The API stores this value in the `address_line_2` column.
+
+</ParamField>
+
+<ParamField body="city" param-type="string | null" required="false">
+
+Updated city value.
+
+</ParamField>
+
+<ParamField body="state" param-type="string | null" required="false">
+
+Updated state or region value.
+
+</ParamField>
+
+<ParamField body="postalCode" param-type="string | null" required="false">
+
+Updated postal or ZIP code. The API stores this value in the `postal_code` column.
+
+</ParamField>
+
+<ParamField body="country" param-type="string | null" required="false">
+
+Updated country value.
+
+</ParamField>
+
+<ParamField body="phone" param-type="string | null" required="false">
 
 Updated primary phone number.
 
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false">
+<ParamField body="notes" param-type="string | null" required="false">
 
-Updated company address.
+Updated notes value.
 
 </ParamField>
 
-<ParamField body="custom fields" param-type="object" required="false">
+<ParamField body="customFields" param-type="object" required="false">
 
-Additional company fields to update. Include only the custom fields you want to change.
+Updated custom field values stored in the `custom_fields` column.
 
 </ParamField>
 
@@ -370,7 +596,45 @@ The updated company record.
 
 ## Delete a company
 
-Delete a company by its ID.
+Delete a company by ID. The API blocks deletion when contacts are still associated with the company.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X DELETE "https://app.talkturo.com/api/crm/companies/8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/companies/8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132",
+  {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "success": true,
+  "message": "Company deleted"
+}
+```
+
+```json
+{
+  "error": "Cannot delete company: 3 contacts are associated with it. Remove or reassign them first."
+}
+```
+</Response>
 
 ### Path parameters
 
@@ -382,21 +646,77 @@ Unique company identifier in UUID format.
 
 ### Response fields
 
-<ResponseField name="success" field-type="boolean" required="true">
+<ResponseField name="success" field-type="boolean">
 
 Returns `true` when the company is deleted.
 
 </ResponseField>
 
-<ResponseField name="message" field-type="string" required="true">
+<ResponseField name="message" field-type="string">
 
 Deletion status message. Successful responses return `Company deleted`.
 
 </ResponseField>
 
+<ResponseField name="error" field-type="string">
+
+Error message returned when associated contacts block deletion.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+Delete the company's associated contacts, or reassign those contacts to another company, before retrying the delete request.
+
+</Callout>
+
 ## List contacts for a company
 
 Retrieve the contacts associated with a specific company.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/companies/8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132/contacts" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/companies/8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132/contacts",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "contacts": [
+    {
+      "id": "3f1c8c44-ea5f-4e66-bf95-f3162a2c5f60",
+      "first_name": "Maya",
+      "last_name": "Patel",
+      "email": "maya.patel@acmemanufacturing.com"
+    },
+    {
+      "id": "af3c8e2e-d61c-4d7d-b9be-b43256ab8f10",
+      "first_name": "Jordan",
+      "last_name": "Lee",
+      "email": "jordan.lee@acmemanufacturing.com"
+    }
+  ]
+}
+```
+</Response>
 
 ### Path parameters
 
@@ -407,39 +727,9 @@ Unique company identifier in UUID format.
 </ParamField>
 
 ### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-
-Returns `true` when the request succeeds.
-
-</ResponseField>
 
 <ResponseField name="contacts" field-type="array" required="true">
 
 Array of contacts associated with the company.
 
 </ResponseField>
-
-<ResponseField name="id" field-type="string">
-
-Unique contact identifier.
-
-</ResponseField>
-
-<ResponseField name="first_name" field-type="string">
-
-Contact first name.
-
-</ResponseField>
-
-<ResponseField name="last_name" field-type="string">
-
-Contact last name.
-
-</ResponseField>
-
-## Common patterns
-
-Use `GET /api/crm/companies` when you need pagination and search across company records. Use `GET /api/crm/companies/{id}` when you already have the company ID and need the full record.
-
-Create and update requests accept standard fields plus custom CRM fields. If your workspace defines additional fields on companies, include them directly in the JSON body using the field names configured in your CRM.

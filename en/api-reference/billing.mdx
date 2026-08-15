@@ -12,6 +12,10 @@ Use these endpoints to receive Stripe billing events, inspect invoice history, a
 | `POST` | `/api/billing/webhook` | Stripe signature verification | Process Stripe webhook events for subscriptions, invoices, credits, and payment flows |
 | `GET` | `/api/billing/invoices` | Session auth | List invoices for the current account |
 | `GET` | `/api/debug/billing` | Session auth, admin only | Inspect billing state for debugging |
+| `GET` | `/api/payment-methods` | Session or API key | List payment methods for the account |
+| `POST` | `/api/payment-methods` | Session or API key | Attach a Stripe payment method |
+| `DELETE` | `/api/payment-methods/{id}` | Session or API key | Detach and soft-delete a payment method |
+| `PATCH` | `/api/payment-methods/{id}` | Session or API key | Set a payment method as default |
 
 ## POST /api/billing/webhook
 
@@ -239,6 +243,312 @@ Use the debug endpoint when you need to verify billing state after webhook deliv
 ### Response shape
 
 The repository context confirms this endpoint exists and requires admin session access, but it does not define a stable public response schema. Treat the payload as diagnostic output rather than a contract for external integrations.
+
+## Payment methods
+
+Use these endpoints to list saved payment methods, attach a new Stripe payment method, remove a saved method, and control which method is the default for future billing.
+
+### List payment methods (GET /api/payment-methods)
+
+This endpoint returns active payment methods for an account. Results exclude soft-deleted records and are ordered by `is_default` descending, then `created_at` descending.
+
+<Request tabs="HTTP" default-tab="1">
+```bash
+curl "https://api.talkturo.com/api/payment-methods?accountId=8d3b1d77-9c5a-4b8f-b2ec-1f6b9d347e21" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json"
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "paymentMethods": [
+    {
+      "id": "4e2f2d0b-c8ec-4a56-b0e2-5d8c3aa6f1d4",
+      "stripe_payment_method_id": "pm_1Qx9zA2Lk8fR3mN7jD4eF6gH",
+      "type": "card",
+      "card_brand": "visa",
+      "card_last4": "4242",
+      "card_exp_month": 8,
+      "card_exp_year": 2028,
+      "card_funding": "credit",
+      "is_default": true,
+      "is_active": true,
+      "billing_details": {
+        "name": "Jane Chen",
+        "email": "jane@talkturo.com"
+      },
+      "created_at": "2025-01-14T18:22:11.000Z"
+    },
+    {
+      "id": "b1c4426a-39c7-4d8b-bd09-21508e6a13e7",
+      "stripe_payment_method_id": "pm_1QxA012Lk8fR3mN7nH7jK9lM",
+      "type": "card",
+      "card_brand": "mastercard",
+      "card_last4": "4444",
+      "card_exp_month": 11,
+      "card_exp_year": 2027,
+      "card_funding": "debit",
+      "is_default": false,
+      "is_active": true,
+      "billing_details": {
+        "name": "Jane Chen",
+        "email": "jane@talkturo.com"
+      },
+      "created_at": "2024-12-02T09:14:37.000Z"
+    }
+  ],
+  "count": 2
+}
+```
+</Response>
+
+#### Authentication
+
+This endpoint accepts either session authentication or API key authentication through `withApiAuth`.
+
+#### Query parameters
+
+<ParamField query="accountId" param-type="string" required="false">
+Workspace account ID in UUID format. If omitted, Talkturo falls back to `auth.accountId`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the payment methods list is fetched successfully.
+</ResponseField>
+
+<ResponseField name="paymentMethods" field-type="array" required="true">
+Array of active payment method records for the account. Soft-deleted rows are excluded from the result.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Number of payment methods returned in the response.
+</ResponseField>
+
+### Attach a payment method (POST /api/payment-methods)
+
+Attach a Stripe payment method to a workspace account. Use the Stripe `pm_...` identifier returned by Stripe.js or another client-side Stripe flow.
+
+<Request tabs="HTTP" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/payment-methods" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "8d3b1d77-9c5a-4b8f-b2ec-1f6b9d347e21",
+    "paymentMethodId": "pm_1Qx9zA2Lk8fR3mN7jD4eF6gH",
+    "setAsDefault": true
+  }'
+```
+</Request>
+
+<Response tabs="200,400,404,409,500" default-tab="1">
+```json
+{
+  "success": true,
+  "paymentMethod": {
+    "id": "4e2f2d0b-c8ec-4a56-b0e2-5d8c3aa6f1d4",
+    "stripe_payment_method_id": "pm_1Qx9zA2Lk8fR3mN7jD4eF6gH",
+    "card_brand": "visa",
+    "card_last4": "4242",
+    "card_exp_month": 8,
+    "card_exp_year": 2028,
+    "is_default": true
+  }
+}
+```
+```json
+{
+  "success": false,
+  "error": "Missing required parameters"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Stripe billing customer not found"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Payment method already exists"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Failed to attach payment method"
+}
+```
+</Response>
+
+#### Authentication
+
+This endpoint accepts either session authentication or API key authentication.
+
+#### Request body
+
+<ParamField body="accountId" param-type="string" required="true">
+Workspace account ID in UUID format.
+</ParamField>
+
+<ParamField body="paymentMethodId" param-type="string" required="true">
+Stripe payment method ID to attach. Pass the `pm_...` value returned by Stripe.
+</ParamField>
+
+<ParamField body="setAsDefault" param-type="boolean" required="false">
+If `true`, marks the attached payment method as the account default.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the payment method is attached successfully.
+</ResponseField>
+
+<ResponseField name="paymentMethod" field-type="object" required="true">
+Saved payment method summary returned after a successful attach operation.
+</ResponseField>
+
+<Callout kind="info">
+
+The API returns `404` when the account does not have a Stripe billing customer yet, and `409` when the same payment method is already attached.
+
+</Callout>
+
+### Delete a payment method (DELETE /api/payment-methods/{id})
+
+Delete a saved payment method by database record ID. Talkturo detaches the Stripe payment method, soft-deletes the local record, and promotes another remaining method to default if needed.
+
+<Request tabs="HTTP" default-tab="1">
+```bash
+curl -X DELETE "https://api.talkturo.com/api/payment-methods/4e2f2d0b-c8ec-4a56-b0e2-5d8c3aa6f1d4?accountId=8d3b1d77-9c5a-4b8f-b2ec-1f6b9d347e21" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response tabs="200,400,404,500" default-tab="1">
+```json
+{
+  "success": true,
+  "message": "Payment method deleted"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Missing payment method id"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Failed to delete payment method"
+}
+```
+</Response>
+
+#### Authentication
+
+This endpoint accepts either session authentication or API key authentication.
+
+#### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the Talkturo payment method record. Pass the database record ID, not the Stripe payment method ID.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="accountId" param-type="string" required="false">
+Workspace account ID in UUID format. If omitted, Talkturo falls back to `auth.accountId`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the payment method is deleted successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Confirmation message. Successful deletes return `Payment method deleted`.
+</ResponseField>
+
+### Set default payment method (PATCH /api/payment-methods/{id})
+
+Set one saved payment method as the account default for future charges.
+
+<Request tabs="HTTP" default-tab="1">
+```bash
+curl -X PATCH "https://api.talkturo.com/api/payment-methods/4e2f2d0b-c8ec-4a56-b0e2-5d8c3aa6f1d4?accountId=8d3b1d77-9c5a-4b8f-b2ec-1f6b9d347e21" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json"
+```
+</Request>
+
+<Response tabs="200,400,404,500" default-tab="1">
+```json
+{
+  "success": true,
+  "message": "Default payment method updated"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Missing payment method id"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+```json
+{
+  "success": false,
+  "error": "Failed to update default payment method"
+}
+```
+</Response>
+
+#### Authentication
+
+This endpoint accepts either session authentication or API key authentication.
+
+#### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the Talkturo payment method record to promote as default.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="accountId" param-type="string" required="false">
+Workspace account ID in UUID format. If omitted, Talkturo falls back to `auth.accountId`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the default payment method is updated successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Confirmation message. Successful updates return `Default payment method updated`.
+</ResponseField>
 
 ## Common integration guidance
 

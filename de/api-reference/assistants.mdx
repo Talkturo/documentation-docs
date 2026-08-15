@@ -5,11 +5,15 @@ description: Erstellen, aktualisieren, klonen, löschen und verwalten Sie KI-Spr
 
 ## Assistenten verwalten
 
-Erstellen Sie Assistenten, aktualisieren Sie ihre Konfiguration, klonen Sie bestehende Setups, löschen Sie nicht mehr benötigte Assistenten und rufen Sie Nutzungsdaten für Reporting oder operative Prüfungen ab.
+Erstellen Sie Assistenten, aktualisieren Sie ihre Konfiguration, klonen Sie bestehende Setups, löschen Sie nicht mehr benötigte Assistenten, rufen Sie Nutzungsdaten für Reporting oder operative Prüfungen ab und verwalten Sie Telefonie-, Tool- und Webhook-bezogene Subressourcen.
 
-Alle Assistant-Endpunkte unterstützen Dual-Authentifizierung über `withApiAuth`. Authentifizieren Sie sich entweder mit einem Talkturo-API-Schlüssel oder mit einem authentifizierten Session-Cookie.
+Alle Assistant-Endpunkte unterstützen Dual-Authentifizierung über `withApiAuth`, sofern nicht anders angegeben. Authentifizieren Sie sich je nach Endpunkt entweder mit einem Talkturo-API-Schlüssel oder mit einem authentifizierten Session-Cookie.
 
 Basispfad: `/api/assistants`
+
+<Callout kind="info">
+Einige Sub-Endpunkte akzeptieren ausschließlich Session-Authentifizierung. Das betrifft insbesondere Telefonie- und Tool-Konfigurationen, weil diese Endpunkte kontobezogene Berechtigungen und Infrastrukturänderungen auslösen.
+</Callout>
 
 ## Endpunktübersicht
 
@@ -20,6 +24,19 @@ Basispfad: `/api/assistants`
 | `DELETE` | `/api/assistants/{assistantId}` | Löscht einen Assistenten |
 | `POST` | `/api/assistants/{assistantId}/clone` | Klont einen vorhandenen Assistenten |
 | `GET` | `/api/assistants/{assistantId}/usage-stats` | Ruft Nutzungsstatistiken für einen Assistenten ab |
+| `GET` | `/api/assistants/{assistantId}/billing/estimate` | Schätzt die laufenden Kosten pro Minute für einen Assistenten |
+| `POST` | `/api/assistants/{assistantId}/telephony/settings` | Speichert Telefonieeinstellungen und weist Telefonnummern zu |
+| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Weist einem Assistenten Telefonnummern zu |
+| `GET` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Listet dem Assistenten zugewiesene Telefonnummern auf |
+| `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Startet einen Testanruf an eine Zielnummer |
+| `GET` | `/api/assistants/{assistantId}/telephony/compliance-templates` | Listet verfügbare Compliance-Vorlagen für Telefonie auf |
+| `POST` | `/api/assistants/{assistantId}/webhooks/test` | Sendet ein Test-Webhook-Ereignis an den konfigurierten Endpoint |
+| `GET` | `/api/assistants/{assistantId}/tool-configs` | Listet Tool-Konfigurationen für einen Assistenten auf |
+| `GET` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Ruft Tool-Konfigurationen nach Tool-Typ ab |
+| `POST` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Erstellt oder aktualisiert eine Tool-Konfiguration |
+| `DELETE` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Löscht eine oder mehrere Tool-Konfigurationen eines Typs |
+| `GET` | `/api/assistants/{assistantId}/tools/workflow` | Ruft die aktuelle Workflow-Zuordnung ab |
+| `POST` | `/api/assistants/{assistantId}/tools/workflow` | Verknüpft oder entfernt ein TurboFlow-Workflow-Tool |
 
 ## Einen Assistenten erstellen
 
@@ -266,15 +283,25 @@ Klonen Sie einen vorhandenen Assistenten, um schnell eine neue Konfiguration auf
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/clone" \
-  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "newName": "Inbound Qualification Assistant DACH"
+  }'
 ```
 
 ```javascript
 const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/clone", {
   method: "POST",
   headers: {
-    "Authorization": "Bearer tk_test_example_9xmk7q2r"
-  }
+    "Authorization": "Bearer tk_test_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountSlug: "acme-sales",
+    newName: "Inbound Qualification Assistant DACH"
+  })
 });
 
 const data = await response.json();
@@ -288,7 +315,7 @@ console.log(data);
   "success": true,
   "assistant": {
     "id": "2f850d8a-a9d5-4906-af87-8c9838ab7d5d",
-    "name": "Inbound Qualification Assistant Copy",
+    "name": "Inbound Qualification Assistant DACH",
     "created_at": "2025-01-14T11:10:42.000Z",
     "updated_at": "2025-01-14T11:10:42.000Z"
   }
@@ -300,6 +327,16 @@ console.log(data);
 
 <ParamField path="assistantId" param-type="string" required="true">
 Die UUID des zu klonenden Assistenten.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Slug des Kontos, in dem die Kopie erstellt wird.
+</ParamField>
+
+<ParamField body="newName" param-type="string" required="false">
+Optionaler Name für den geklonten Assistenten. Ohne Angabe vergibt Talkturo einen abgeleiteten Kopienamen.
 </ParamField>
 
 ### Antwortfelder
@@ -330,16 +367,16 @@ Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
 
 ## Nutzungsstatistiken abrufen
 
-Rufen Sie aggregierte Nutzungsdaten für einen einzelnen Assistenten ab, um Aufrufe, Gesprächsminuten und den Zeitpunkt des letzten Anrufs zu prüfen.
+Rufen Sie aggregierte Nutzungsdaten für einen einzelnen Assistenten ab, um Aufrufe, Gesprächsminuten und den Zeitpunkt des letzten Anrufs zu prüfen. Über den Query-Parameter `period` können Sie das Auswertungsfenster auf eine bestimmte Anzahl von Tagen begrenzen.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/usage-stats" \
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/usage-stats?period=30" \
   -H "Authorization: Bearer tk_test_example_9xmk7q2r"
 ```
 
 ```javascript
-const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/usage-stats", {
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/usage-stats?period=30", {
   method: "GET",
   headers: {
     "Authorization": "Bearer tk_test_example_9xmk7q2r"
@@ -370,6 +407,12 @@ console.log(data);
 Die UUID des Assistenten, dessen Nutzungsstatistiken Sie abrufen möchten.
 </ParamField>
 
+### Query-Parameter
+
+<ParamField query="period" param-type="number" required="false">
+Anzahl der Tage, für die Nutzungsdaten aggregiert werden sollen.
+</ParamField>
+
 ### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true">
@@ -390,6 +433,916 @@ Die Gesamtzahl der Gesprächsminuten für diesen Assistenten.
 
 <ResponseField name="stats.last_call_at" field-type="string" required="true">
 Zeitstempel des letzten Anrufs im ISO-8601-Format.
+</ResponseField>
+
+## Abrechnungsschätzung abrufen
+
+Schätzen Sie die laufenden Minutenkosten eines Assistenten, bevor Sie Änderungen an Modell-, Sprach- oder Telefonieeinstellungen produktiv schalten.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/billing/estimate" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/billing/estimate", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "estimate": {
+    "costPerMinute": 0.19,
+    "breakdown": {
+      "model": 0.11,
+      "transcription": 0.04,
+      "voice": 0.02,
+      "telephony": 0.02
+    }
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, für den die Kostenschätzung berechnet werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="estimate" field-type="object" required="true">
+Die berechnete Kostenschätzung für den Assistenten.
+</ResponseField>
+
+<ResponseField name="estimate.costPerMinute" field-type="number" required="true">
+Geschätzte Gesamtkosten pro Gesprächsminute.
+</ResponseField>
+
+<ResponseField name="estimate.breakdown" field-type="object" required="true">
+Aufschlüsselung der Minutenkosten nach Kostenkomponenten.
+</ResponseField>
+
+## Telefonieeinstellungen speichern
+
+Speichern Sie die vollständige Telefoniekonfiguration eines Assistenten in einem Request. Der Endpunkt kann LiveKit-SIP-Trunks provisionieren, Telefonnummern zuweisen sowie Compliance- und Voicemail-Einstellungen mitschreiben.
+
+<Callout kind="alert">
+Dieser Endpunkt akzeptiert nur Session-Authentifizierung. API-Schlüssel reichen für Änderungen an Telefonieinfrastruktur nicht aus.
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/settings" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=session_example_7dk29af" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "phoneNumberIds": [
+      "2c8de0a0-6ab4-4f4f-a79c-1eb9459e2251",
+      "d6fef07f-6459-44b7-9466-690307cc10b8"
+    ],
+    "inboundEnabled": true,
+    "outboundEnabled": true,
+    "inboundCompanyId": "f5e9c3e9-0891-4ed8-b89a-b2f7cab4ce82",
+    "telnyxConnectionId": "9cb22568-4036-4c32-bc67-594ec7d351b1",
+    "destinationCountry": "de",
+    "voicemail": {
+      "detectionEnabled": true,
+      "action": "leave_message",
+      "message": "Guten Tag, wir haben Sie leider nicht erreicht. Wir melden uns in Kürze erneut."
+    },
+    "compliance": {
+      "enabled": true,
+      "templateId": "cmp_9e1cbf7d8f3f",
+      "briefingText": "Inform callers that the conversation may be recorded for quality assurance.",
+      "language": "de",
+      "requireAck": true,
+      "fallbackPolicy": "retry",
+      "ackTimeoutSeconds": 8
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/settings", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    accountSlug: "acme-sales",
+    phoneNumberIds: [
+      "2c8de0a0-6ab4-4f4f-a79c-1eb9459e2251",
+      "d6fef07f-6459-44b7-9466-690307cc10b8"
+    ],
+    inboundEnabled: true,
+    outboundEnabled: true,
+    inboundCompanyId: "f5e9c3e9-0891-4ed8-b89a-b2f7cab4ce82",
+    telnyxConnectionId: "9cb22568-4036-4c32-bc67-594ec7d351b1",
+    destinationCountry: "de",
+    voicemail: {
+      detectionEnabled: true,
+      action: "leave_message",
+      message: "Guten Tag, wir haben Sie leider nicht erreicht. Wir melden uns in Kürze erneut."
+    },
+    compliance: {
+      enabled: true,
+      templateId: "cmp_9e1cbf7d8f3f",
+      briefingText: "Inform callers that the conversation may be recorded for quality assurance.",
+      language: "de",
+      requireAck: true,
+      fallbackPolicy: "retry",
+      ackTimeoutSeconds: 8
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e",
+    "inbound_enabled": true,
+    "outbound_enabled": true,
+    "inbound_company_id": "f5e9c3e9-0891-4ed8-b89a-b2f7cab4ce82",
+    "telnyx_connection_id": "9cb22568-4036-4c32-bc67-594ec7d351b1",
+    "destination_country": "de"
+  },
+  "assignedActive": 2
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Telefoniekonfiguration gespeichert wird.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Slug des Kontos, in dem Telefonnummern und Telefonieressourcen verwaltet werden.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="string[]" required="true">
+Liste der Telefonnummern-UUIDs, die diesem Assistenten zugewiesen werden sollen.
+</ParamField>
+
+<ParamField body="inboundEnabled" param-type="boolean" required="false">
+Aktiviert eingehende Anrufe für den Assistenten.
+</ParamField>
+
+<ParamField body="outboundEnabled" param-type="boolean" required="false">
+Aktiviert ausgehende Anrufe für den Assistenten.
+</ParamField>
+
+<ParamField body="inboundCompanyId" param-type="string | null" required="false">
+Optionale Unternehmens-ID für eingehende Telefonierouten.
+</ParamField>
+
+<ParamField body="telnyxConnectionId" param-type="string | null" required="false">
+Optionale Kennung der Telnyx-Verbindung, die für ausgehende Telefonie verwendet wird.
+</ParamField>
+
+<ParamField body="destinationCountry" param-type="string" required="false">
+Zielland für Telefonierouting als Ländercode, zum Beispiel `us`, `de` oder `gb`.
+</ParamField>
+
+<ParamField body="voicemail" param-type="object" required="false">
+Optionale Voicemail-Konfiguration für nicht erreichte Anrufe.
+</ParamField>
+
+<ParamField body="voicemail.detectionEnabled" param-type="boolean" required="false">
+Aktiviert die Erkennung von Voicemail-Systemen.
+</ParamField>
+
+<ParamField body="voicemail.action" param-type="string | null" required="false" enum="leave_message,hangup">
+Aktion nach erkannter Voicemail.
+</ParamField>
+
+<ParamField body="voicemail.message" param-type="string | null" required="false">
+Nachricht, die bei `leave_message` abgespielt oder eingesprochen wird.
+</ParamField>
+
+<ParamField body="compliance" param-type="object" required="false">
+Optionale Compliance-Konfiguration für Ansagen und Bestätigungen vor Gesprächsbeginn.
+</ParamField>
+
+<ParamField body="compliance.enabled" param-type="boolean" required="false">
+Aktiviert den Compliance-Ablauf für Anrufe dieses Assistenten.
+</ParamField>
+
+<ParamField body="compliance.templateId" param-type="string | null" required="false">
+Optionale Kennung einer gespeicherten Compliance-Vorlage.
+</ParamField>
+
+<ParamField body="compliance.briefingText" param-type="string | null" required="false">
+Freitext für eine individuelle Compliance-Einleitung.
+</ParamField>
+
+<ParamField body="compliance.language" param-type="string | null" required="false">
+Sprache der Compliance-Ansage.
+</ParamField>
+
+<ParamField body="compliance.requireAck" param-type="boolean" required="false">
+Fordert eine aktive Bestätigung des Anrufteilnehmers an.
+</ParamField>
+
+<ParamField body="compliance.fallbackPolicy" param-type="string" required="false" enum="retry,block,continue">
+Verhalten, wenn keine Bestätigung innerhalb des Zeitlimits erfolgt.
+</ParamField>
+
+<ParamField body="compliance.ackTimeoutSeconds" param-type="number" required="false">
+Wartezeit in Sekunden auf die Bestätigung des Teilnehmers.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Die gespeicherte Telefoniekonfiguration des Assistenten.
+</ResponseField>
+
+<ResponseField name="assistant.inbound_enabled" field-type="boolean" required="false">
+Status für eingehende Anrufe nach dem Speichern.
+</ResponseField>
+
+<ResponseField name="assistant.outbound_enabled" field-type="boolean" required="false">
+Status für ausgehende Anrufe nach dem Speichern.
+</ResponseField>
+
+<ResponseField name="assistant.inbound_company_id" field-type="string" required="false">
+Gespeicherte Unternehmens-ID für eingehende Telefonierouten.
+</ResponseField>
+
+<ResponseField name="assistant.telnyx_connection_id" field-type="string" required="false">
+Gespeicherte Kennung der Telnyx-Verbindung.
+</ResponseField>
+
+<ResponseField name="assistant.destination_country" field-type="string" required="false">
+Gespeichertes Zielland für Telefonierouting.
+</ResponseField>
+
+<ResponseField name="assignedActive" field-type="number" required="true">
+Anzahl aktiver Telefonnummernzuweisungen nach dem Speichern.
+</ResponseField>
+
+## Telefonnummern zuweisen
+
+Weisen Sie einem Assistenten gezielt Telefonnummern zu, ohne die restlichen Telefonieeinstellungen zu ändern.
+
+<Callout kind="alert">
+Dieser Endpunkt akzeptiert nur Session-Authentifizierung.
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/assign-phone-numbers" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=session_example_7dk29af" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "phoneNumberIds": [
+      "2c8de0a0-6ab4-4f4f-a79c-1eb9459e2251",
+      "d6fef07f-6459-44b7-9466-690307cc10b8"
+    ]
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/assign-phone-numbers", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    accountSlug: "acme-sales",
+    phoneNumberIds: [
+      "2c8de0a0-6ab4-4f4f-a79c-1eb9459e2251",
+      "d6fef07f-6459-44b7-9466-690307cc10b8"
+    ]
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dem Telefonnummern zugewiesen werden sollen.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Slug des Kontos, in dem die Telefonnummern verwaltet werden.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="string[]" required="true">
+Liste der Telefonnummern-UUIDs, die dem Assistenten zugewiesen werden.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Zuweisung erfolgreich war.
+</ResponseField>
+
+## Zugewiesene Telefonnummern auflisten
+
+Rufen Sie die aktuell mit einem Assistenten verknüpften Telefonnummern ab, um Routing und Betriebsstatus zu prüfen.
+
+<Callout kind="alert">
+Dieser Endpunkt akzeptiert nur Session-Authentifizierung.
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/phone-numbers" \
+  -H "Cookie: talkturo_session=session_example_7dk29af"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/phone-numbers", {
+  method: "GET",
+  credentials: "include"
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "phoneNumbers": [
+    {
+      "id": "2c8de0a0-6ab4-4f4f-a79c-1eb9459e2251",
+      "phone_number": "+493012345670",
+      "status": "active",
+      "provider": "telnyx",
+      "country": "de"
+    },
+    {
+      "id": "d6fef07f-6459-44b7-9466-690307cc10b8",
+      "phone_number": "+493012345671",
+      "status": "active",
+      "provider": "telnyx",
+      "country": "de"
+    }
+  ]
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Telefonnummern Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="phoneNumbers" field-type="array" required="true">
+Liste der dem Assistenten zugewiesenen Telefonnummern.
+</ResponseField>
+
+<ResponseField name="phoneNumbers[].id" field-type="string" required="true">
+Die eindeutige Kennung der Telefonnummer.
+</ResponseField>
+
+<ResponseField name="phoneNumbers[].phone_number" field-type="string" required="true">
+Die Telefonnummer im internationalen Format.
+</ResponseField>
+
+<ResponseField name="phoneNumbers[].status" field-type="string" required="true">
+Betriebsstatus der Telefonnummer.
+</ResponseField>
+
+<ResponseField name="phoneNumbers[].provider" field-type="string" required="false">
+Provider der Telefonnummer, falls verfügbar.
+</ResponseField>
+
+<ResponseField name="phoneNumbers[].country" field-type="string" required="false">
+Land der Telefonnummer, falls verfügbar.
+</ResponseField>
+
+## Testanruf starten
+
+Starten Sie einen Testanruf an eine Zielnummer, um Sprach-, Routing- oder Compliance-Einstellungen zu prüfen, bevor Sie produktive Anrufe freischalten.
+
+<Callout kind="alert">
+Dieser Endpunkt akzeptiert nur Session-Authentifizierung.
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/test-call" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=session_example_7dk29af" \
+  -d '{
+    "toNumber": "+491701234567",
+    "accountSlug": "acme-sales"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/test-call", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    toNumber: "+491701234567",
+    accountSlug: "acme-sales"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "callId": "call_4fd8e0ac7a5c",
+  "status": "queued"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, der den Testanruf ausführt.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="toNumber" param-type="string" required="true">
+Zielrufnummer für den Testanruf im internationalen Format.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Slug des Kontos, in dem der Testanruf ausgelöst wird.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="callId" field-type="string" required="true">
+Die Kennung des erzeugten Testanrufs.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Aktueller Status des Testanrufs, zum Beispiel `queued`.
+</ResponseField>
+
+## Compliance-Vorlagen auflisten
+
+Rufen Sie die für Telefonie verfügbaren Compliance-Vorlagen eines Assistenten ab, um eine Vorlage in der Telefoniekonfiguration auszuwählen.
+
+<Callout kind="alert">
+Dieser Endpunkt akzeptiert nur Session-Authentifizierung.
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/compliance-templates" \
+  -H "Cookie: talkturo_session=session_example_7dk29af"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/compliance-templates", {
+  method: "GET",
+  credentials: "include"
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "templates": [
+    {
+      "id": "cmp_9e1cbf7d8f3f",
+      "name": "DACH recording notice",
+      "text": "Dieses Gespräch kann zu Qualitätszwecken aufgezeichnet werden.",
+      "language": "de"
+    },
+    {
+      "id": "cmp_f6b302ab1d90",
+      "name": "UK consent prompt",
+      "text": "This call may be recorded for compliance purposes.",
+      "language": "en"
+    }
+  ]
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Compliance-Vorlagen Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="templates" field-type="array" required="true">
+Liste verfügbarer Compliance-Vorlagen.
+</ResponseField>
+
+<ResponseField name="templates[].id" field-type="string" required="true">
+Die eindeutige Kennung der Vorlage.
+</ResponseField>
+
+<ResponseField name="templates[].name" field-type="string" required="true">
+Anzeigename der Vorlage.
+</ResponseField>
+
+<ResponseField name="templates[].text" field-type="string" required="true">
+Der Text der Compliance-Vorlage.
+</ResponseField>
+
+<ResponseField name="templates[].language" field-type="string" required="true">
+Sprachcode der Vorlage.
+</ResponseField>
+
+## Test-Webhook senden
+
+Stoßen Sie ein Testereignis für den konfigurierten Webhook eines Assistenten an, um Erreichbarkeit und Signaturverarbeitung vor dem Produktivbetrieb zu prüfen.
+
+<Callout kind="info">
+Der Assistent muss einen aktivierten Webhook mit URL und Secret konfiguriert haben. Ohne vollständige Webhook-Konfiguration kann kein Testereignis in die Auslieferung eingereiht werden.
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/webhooks/test" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/webhooks/test", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "delivery_id": "f2f1f2db-b374-4f97-8b3e-0e1f4f4ad4ca",
+  "message": "Test event queued"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Webhook getestet werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob das Testereignis erfolgreich in die Zustellung eingereiht wurde.
+</ResponseField>
+
+<ResponseField name="delivery_id" field-type="string" required="true">
+Die Kennung der erzeugten Testzustellung.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Statusmeldung zur Testauslösung.
+</ResponseField>
+
+## Tool-Konfigurationen auflisten
+
+Listen Sie alle Tool-Konfigurationen eines Assistenten auf, wenn Sie Integrationen prüfen oder die aktuelle Tool-Landschaft im UI abbilden möchten.
+
+<Callout kind="alert">
+Dieser Endpunkt akzeptiert nur Session-Authentifizierung.
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/tool-configs" \
+  -H "Cookie: talkturo_session=session_example_7dk29af"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/tool-configs", {
+  method: "GET",
+  credentials: "include"
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "toolConfigs": [
+    {
+      "id": "cfg_7f0fbf3d41c5",
+      "tool_type": "cal_com",
+      "is_enabled": true,
+      "config": {
+        "integration_id": "int_2c5d421e",
+        "event_type_id": 48219,
+        "tool_name": "book_demo_call"
+      }
+    },
+    {
+      "id": "cfg_8e17a19b6a4d",
+      "tool_type": "custom_webhook",
+      "is_enabled": false,
+      "config": {
+        "url": "https://hooks.acme-sales.com/assistants/outbound"
+      }
+    }
+  ]
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Tool-Konfigurationen Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="toolConfigs" field-type="array" required="true">
+Liste der Tool-Konfigurationsobjekte des Assistenten.
+</ResponseField>
+
+<ResponseField name="toolConfigs[].id" field-type="string" required="true">
+Die eindeutige Kennung der Tool-Konfiguration.
+</ResponseField>
+
+<ResponseField name="toolConfigs[].tool_type" field-type="string" required="true">
+Der Typ des konfigurierten Tools.
+</ResponseField>
+
+<ResponseField name="toolConfigs[].is_enabled" field-type="boolean" required="true">
+Gibt an, ob die Tool-Konfiguration aktiv ist.
+</ResponseField>
+
+<ResponseField name="toolConfigs[].config" field-type="object" required="true">
+Toolspezifische Konfigurationsdaten.
+</ResponseField>
+
+## Tool-Konfiguration nach Typ verwalten
+
+Rufen Sie Tool-Konfigurationen eines bestimmten Typs ab, erstellen Sie neue Konfigurationen oder löschen Sie bestehende Einträge. Der Pfadparameter `toolType` steuert, welche Integration angesprochen wird.
+
+<Callout kind="alert">
+Dieser Endpunkt akzeptiert nur Session-Authentifizierung.
+</Callout>
+
+<Request tabs="GET cURL,POST cURL,DELETE cURL" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/tool-configs/cal_com?all=true" \
+  -H "Cookie: talkturo_session=session_example_7dk29af"
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/tool-configs/cal_com" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=session_example_7dk29af" \
+  -d '{
+    "config": {
+      "integration_id": "int_2c5d421e",
+      "event_type_id": 48219,
+      "tool_name": "book_demo_call"
+    },
+    "is_enabled": true
+  }'
+```
+
+```bash
+curl -X DELETE "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/tool-configs/cal_com?configId=cfg_7f0fbf3d41c5" \
+  -H "Cookie: talkturo_session=session_example_7dk29af"
+```
+</Request>
+
+<Response tabs="GET 200,POST 200,DELETE 200">
+```json
+{
+  "toolConfigs": [
+    {
+      "id": "cfg_7f0fbf3d41c5",
+      "tool_type": "cal_com",
+      "is_enabled": true,
+      "config": {
+        "integration_id": "int_2c5d421e",
+        "event_type_id": 48219,
+        "tool_name": "book_demo_call"
+      }
+    }
+  ]
+}
+```
+
+```json
+{
+  "success": true,
+  "toolConfig": {
+    "id": "cfg_7f0fbf3d41c5",
+    "tool_type": "cal_com",
+    "is_enabled": true,
+    "config": {
+      "integration_id": "int_2c5d421e",
+      "event_type_id": 48219,
+      "tool_name": "book_demo_call"
+    }
+  }
+}
+```
+
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Tool-Konfigurationen Sie verwalten.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true" enum="cal_com,zapier,cal_com_schedule,cal_com_get_bookings,cal_com_cancel,calendly,custom_webhook">
+Der Typ der Tool-Integration, die Sie abrufen oder ändern möchten.
+</ParamField>
+
+### Query-Parameter
+
+<ParamField query="configId" param-type="string" required="false">
+Optionale UUID einer spezifischen Tool-Konfiguration. Bei `GET` ruft der Endpunkt einen bestimmten Eintrag ab, bei `DELETE` löscht er genau diesen Eintrag.
+</ParamField>
+
+<ParamField query="all" param-type="boolean" required="false">
+Wenn auf `true` gesetzt, gibt der `GET`-Aufruf alle Konfigurationen des angegebenen Tool-Typs zurück.
+</ParamField>
+
+### Request-Body für POST
+
+<ParamField body="config" param-type="object" required="true">
+Toolspezifische Konfiguration. Typische Felder sind `integration_id`, `event_type_id`, `tool_name` oder weitere integrationsabhängige Parameter.
+</ParamField>
+
+<ParamField body="is_enabled" param-type="boolean" required="true">
+Aktiviert oder deaktiviert die gespeicherte Tool-Konfiguration.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="toolConfigs" field-type="array" required="false">
+Liste von Tool-Konfigurationen im `GET`-Antwortformat.
+</ResponseField>
+
+<ResponseField name="toolConfig" field-type="object" required="false">
+Einzelne Tool-Konfiguration im `POST`-Antwortformat.
+</ResponseField>
+
+<ResponseField name="success" field-type="boolean" required="false">
+Statusfeld für `POST`- und `DELETE`-Aufrufe.
+</ResponseField>
+
+## Workflow-Tool verwalten
+
+Verknüpfen Sie einen Assistenten mit einem TurboFlow-Workflow oder entfernen Sie die bestehende Zuordnung wieder.
+
+<Callout kind="alert">
+Dieser Endpunkt akzeptiert nur Session-Authentifizierung.
+</Callout>
+
+<Request tabs="GET cURL,POST cURL" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/tools/workflow" \
+  -H "Cookie: talkturo_session=session_example_7dk29af"
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/tools/workflow" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=session_example_7dk29af" \
+  -d '{
+    "flowId": "8f49d6d4-7e87-4f9f-b07c-3e6de5f0ff34"
+  }'
+```
+</Request>
+
+<Response tabs="GET 200,POST 200">
+```json
+{
+  "tool": {
+    "type": "workflow",
+    "flowId": "8f49d6d4-7e87-4f9f-b07c-3e6de5f0ff34"
+  }
+}
+```
+
+```json
+{
+  "success": true,
+  "tool": {
+    "type": "workflow",
+    "flowId": "8f49d6d4-7e87-4f9f-b07c-3e6de5f0ff34"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Workflow-Tool Sie verwalten.
+</ParamField>
+
+### Request-Body für POST
+
+<ParamField body="flowId" param-type="string | null" required="true">
+Die UUID des TurboFlow-Workflows. Übergeben Sie `null`, um die bestehende Zuordnung zu entfernen.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="tool" field-type="object" required="false">
+Aktuelle Workflow-Zuordnung des Assistenten.
+</ResponseField>
+
+<ResponseField name="tool.type" field-type="string" required="false">
+Der Tool-Typ. Für diesen Endpunkt ist der Wert `workflow`.
+</ResponseField>
+
+<ResponseField name="tool.flowId" field-type="string" required="false">
+Die UUID des zugeordneten Workflows oder kein Wert, wenn keine Zuordnung besteht.
+</ResponseField>
+
+<ResponseField name="success" field-type="boolean" required="false">
+Statusfeld für den `POST`-Aufruf.
 </ResponseField>
 
 ## Gemeinsame Antwortstruktur
@@ -420,5 +1373,5 @@ Die Assistant-Endpunkte verwenden eine konsistente Antwortform mit einem `succes
 </Response>
 
 <Callout kind="info">
-Einzelne Endpunkte geben unterschiedliche Payload-Schlüssel zurück, zum Beispiel `assistant`, `stats` oder `message`. Prüfen Sie die Antwortform des jeweiligen Endpunkts, wenn Sie Ihren Client implementieren.
+Einzelne Endpunkte geben unterschiedliche Payload-Schlüssel zurück, zum Beispiel `assistant`, `stats`, `estimate`, `phoneNumbers`, `templates`, `toolConfigs`, `tool`, `delivery_id` oder `message`. Prüfen Sie die Antwortform des jeweiligen Endpunkts, wenn Sie Ihren Client implementieren.
 </Callout>

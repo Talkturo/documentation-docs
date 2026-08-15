@@ -51,6 +51,12 @@ curl -X POST "https://api.talkturo.com/api/assistants" \
 
 If you use session-based auth from the Talkturo app, the browser sends the session cookie automatically. External integrations usually use API keys.
 
+<Callout kind="info">
+
+Knowledge base sub-endpoints for listing files and attaching or detaching files from an assistant are documented on the Knowledge Base API page.
+
+</Callout>
+
 ## Create an assistant
 
 Create a new assistant under an account by sending the account slug and assistant name. If you provide a template ID, Talkturo sets the assistant type from that template.
@@ -322,7 +328,12 @@ Clone an existing assistant to duplicate its configuration into a new assistant 
 
 ```bash
 curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone" \
-  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "newName": "Inbound Sales Assistant - Germany"
+  }'
 ```
 
 ```javascript
@@ -331,8 +342,13 @@ const response = await fetch(
   {
     method: "POST",
     headers: {
-      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
-    }
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      newName: "Inbound Sales Assistant - Germany"
+    })
   }
 );
 
@@ -349,7 +365,7 @@ console.log(data);
   "success": true,
   "assistant": {
     "id": "0f3f8bc6-5e95-4344-88d2-8e5660ec9bf1",
-    "name": "Inbound Sales Assistant Copy",
+    "name": "Inbound Sales Assistant - Germany",
     "created_at": "2025-02-18T14:39:12.442Z",
     "updated_at": "2025-02-18T14:39:12.442Z"
   }
@@ -366,6 +382,16 @@ console.log(data);
 
 <ParamField path="assistantId" param-type="string" required="true">
 The assistant UUID to clone.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+The account slug that owns the source assistant and will own the cloned assistant.
+</ParamField>
+
+<ParamField body="newName" param-type="string" required="false">
+An optional name for the cloned assistant. If you omit `newName`, Talkturo creates a copy with its default copy naming convention.
 </ParamField>
 
 ### Response fields
@@ -391,13 +417,13 @@ Fetch usage data for a single assistant. Use this endpoint for monitoring, dashb
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats" \
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?period=30" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats",
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?period=30",
   {
     method: "GET",
     headers: {
@@ -437,6 +463,12 @@ console.log(data);
 The assistant UUID whose usage statistics you want to retrieve.
 </ParamField>
 
+### Query parameters
+
+<ParamField query="period" param-type="number" required="false">
+The reporting period in days. When provided, Talkturo returns usage statistics scoped to that number of days.
+</ParamField>
+
 ### Response fields
 
 <ResponseField name="success" field-type="boolean" required="true">
@@ -448,6 +480,902 @@ An object containing usage data for the assistant.
 </ResponseField>
 
 The shape of `stats` depends on the usage data Talkturo returns for that assistant. Build your client to read the fields your reporting workflow requires and tolerate additional fields over time.
+
+## Retrieve a billing estimate
+
+Fetch the assistant's per-minute billing estimate before you deploy configuration changes or compare telephony setups.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/billing/estimate" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/billing/estimate",
+  {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "estimate": {
+    "costPerMinute": 0.084,
+    "breakdown": {
+      "model": 0.041,
+      "voice": 0.018,
+      "telephony": 0.025
+    }
+  }
+}
+```
+
+</Response>
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/billing/estimate`
+
+### Authentication
+
+Use either a session cookie or an API key.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose billing estimate you want to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the billing estimate is returned successfully.
+</ResponseField>
+
+<ResponseField name="estimate" field-type="object" required="true">
+The billing estimate for the assistant's current configuration.
+</ResponseField>
+
+<ResponseField name="estimate.costPerMinute" field-type="number" required="true">
+The estimated cost per minute for calls handled by this assistant.
+</ResponseField>
+
+<ResponseField name="estimate.breakdown" field-type="object" required="true">
+A cost breakdown by billing component.
+</ResponseField>
+
+## Configure telephony settings
+
+Save telephony configuration, assign phone numbers, and apply voicemail or compliance policies in one request.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated Talkturo session. API keys are not supported.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/settings" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "phoneNumberIds": [
+      "pn_2f4d6e8a-90ab-4cde-8f01-23456789abcd",
+      "pn_7c8d9e0f-12ab-45cd-9e01-98765432fedc"
+    ],
+    "inboundEnabled": true,
+    "outboundEnabled": true,
+    "inboundCompanyId": "co_4e65c8a1-90f7-4f77-9f3e-82d62d7b91b4",
+    "telnyxConnectionId": "tx_conn_7a8b9c0d1e2f3g4h",
+    "destinationCountry": "us",
+    "voicemail": {
+      "detectionEnabled": true,
+      "action": "leave_message",
+      "message": "Hello, this is Jordan from Acme Sales following up on your request. Please call us back when convenient."
+    },
+    "compliance": {
+      "enabled": true,
+      "templateId": "cmp_9a7f1dc4-02b8-4a45-98cf-2f6f04fd6b72",
+      "briefingText": "Introduce the call as a recorded sales follow-up and wait for explicit acknowledgement before continuing.",
+      "language": "en",
+      "requireAck": true,
+      "fallbackPolicy": "retry",
+      "ackTimeoutSeconds": 8
+    }
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
+    "inbound_enabled": true,
+    "outbound_enabled": true,
+    "destination_country": "us",
+    "inbound_company_id": "co_4e65c8a1-90f7-4f77-9f3e-82d62d7b91b4",
+    "telnyx_connection_id": "tx_conn_7a8b9c0d1e2f3g4h"
+  },
+  "assignedActive": 2
+}
+```
+
+</Response>
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/telephony/settings`
+
+### Authentication
+
+Use a session cookie from the Talkturo app.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose telephony settings you want to update.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+The account slug that owns the assistant and phone numbers.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="string[]" required="true">
+The phone number UUIDs to assign to the assistant as part of the telephony update.
+</ParamField>
+
+<ParamField body="inboundEnabled" param-type="boolean" required="false">
+Enables inbound calling for the assistant.
+</ParamField>
+
+<ParamField body="outboundEnabled" param-type="boolean" required="false">
+Enables outbound calling for the assistant.
+</ParamField>
+
+<ParamField body="inboundCompanyId" param-type="string | null" required="false">
+The company UUID to associate with inbound calls, or `null` to clear the setting.
+</ParamField>
+
+<ParamField body="telnyxConnectionId" param-type="string | null" required="false">
+The Telnyx connection UUID to use for outbound or SIP-related routing, or `null` to clear it.
+</ParamField>
+
+<ParamField body="destinationCountry" param-type="string" required="false">
+The destination country code for telephony routing, such as `us`, `de`, or `gb`.
+</ParamField>
+
+<ParamField body="voicemail" param-type="object" required="false">
+Voicemail behavior for the assistant.
+</ParamField>
+
+<ParamField body="voicemail.detectionEnabled" param-type="boolean" required="false">
+Enables voicemail detection before Talkturo applies the configured voicemail action.
+</ParamField>
+
+<ParamField body="voicemail.action" param-type="string | null" required="false" enum="leave_message,hangup">
+Controls what Talkturo does after voicemail detection. Use `null` to clear the setting.
+</ParamField>
+
+<ParamField body="voicemail.message" param-type="string | null" required="false">
+The voicemail message to leave when `voicemail.action` is `leave_message`.
+</ParamField>
+
+<ParamField body="compliance" param-type="object" required="false">
+Compliance policy to apply to calls handled by this assistant.
+</ParamField>
+
+<ParamField body="compliance.enabled" param-type="boolean" required="false">
+Enables compliance handling for the assistant.
+</ParamField>
+
+<ParamField body="compliance.templateId" param-type="string | null" required="false">
+The compliance template UUID, or `null` to remove the current template.
+</ParamField>
+
+<ParamField body="compliance.briefingText" param-type="string | null" required="false">
+Custom compliance briefing text, or `null` to clear it.
+</ParamField>
+
+<ParamField body="compliance.language" param-type="string | null" required="false">
+The compliance language code, or `null` to clear it.
+</ParamField>
+
+<ParamField body="compliance.requireAck" param-type="boolean" required="false">
+Requires explicit acknowledgement before the assistant continues the call.
+</ParamField>
+
+<ParamField body="compliance.fallbackPolicy" param-type="string" required="false" enum="retry,block,continue">
+Defines what Talkturo does when acknowledgement is not received.
+</ParamField>
+
+<ParamField body="compliance.ackTimeoutSeconds" param-type="number" required="false">
+The number of seconds to wait for acknowledgement before applying the fallback policy.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when telephony settings are saved successfully.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+The updated assistant record with telephony-related fields.
+</ResponseField>
+
+<ResponseField name="assignedActive" field-type="number" required="true">
+The number of active phone numbers assigned to the assistant after the update.
+</ResponseField>
+
+<Callout kind="info">
+
+Saving telephony settings can provision LiveKit SIP trunks, assign phone numbers, and apply compliance or voicemail settings as side effects.
+
+</Callout>
+
+## Assign phone numbers
+
+Assign one or more existing phone numbers to an assistant without changing the rest of its telephony configuration.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated Talkturo session. API keys are not supported.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/assign-phone-numbers" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "phoneNumberIds": [
+      "pn_2f4d6e8a-90ab-4cde-8f01-23456789abcd",
+      "pn_7c8d9e0f-12ab-45cd-9e01-98765432fedc"
+    ]
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/telephony/assign-phone-numbers`
+
+### Authentication
+
+Use a session cookie from the Talkturo app.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID that will receive the assigned phone numbers.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+The account slug that owns the phone numbers.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="string[]" required="true">
+The phone number UUIDs to assign.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the phone numbers are assigned successfully.
+</ResponseField>
+
+## List assigned phone numbers
+
+Retrieve the phone numbers currently assigned to an assistant.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated Talkturo session. API keys are not supported.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/phone-numbers" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "phoneNumbers": [
+    {
+      "id": "pn_2f4d6e8a-90ab-4cde-8f01-23456789abcd",
+      "phone_number": "+14155550123",
+      "status": "active",
+      "country": "US"
+    },
+    {
+      "id": "pn_7c8d9e0f-12ab-45cd-9e01-98765432fedc",
+      "phone_number": "+442070313000",
+      "status": "active",
+      "country": "GB"
+    }
+  ]
+}
+```
+
+</Response>
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/telephony/phone-numbers`
+
+### Authentication
+
+Use a session cookie from the Talkturo app.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose assigned phone numbers you want to list.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="phoneNumbers" field-type="array" required="true">
+The phone numbers assigned to the assistant.
+</ResponseField>
+
+<ResponseField name="phoneNumbers[].id" field-type="string" required="true">
+The phone number UUID.
+</ResponseField>
+
+<ResponseField name="phoneNumbers[].phone_number" field-type="string" required="true">
+The E.164 phone number.
+</ResponseField>
+
+<ResponseField name="phoneNumbers[].status" field-type="string" required="false">
+The provisioning or assignment status for the phone number.
+</ResponseField>
+
+## Start a test call
+
+Trigger a telephony test call to verify routing and assistant behavior.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated Talkturo session. API keys are not supported.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/test-call" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z" \
+  -d '{
+    "toNumber": "+14155550123",
+    "accountSlug": "acme-sales"
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "callId": "call_4f31a8f2-6b9d-48b1-9d3a-52b0f5b09f57",
+  "status": "queued"
+}
+```
+
+</Response>
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/telephony/test-call`
+
+### Authentication
+
+Use a session cookie from the Talkturo app.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID to test.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="toNumber" param-type="string" required="true">
+The destination phone number to call, typically in E.164 format.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+The account slug that owns the assistant and telephony configuration.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="callId" field-type="string" required="true">
+The identifier for the queued or active test call.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+The initial status returned for the test call.
+</ResponseField>
+
+## List compliance templates
+
+Retrieve telephony compliance templates available to the assistant's account.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated Talkturo session. API keys are not supported.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/compliance-templates" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "templates": [
+    {
+      "id": "cmp_9a7f1dc4-02b8-4a45-98cf-2f6f04fd6b72",
+      "name": "Outbound consent disclosure",
+      "text": "This call may be recorded for quality assurance. Do I have your permission to continue?",
+      "language": "en"
+    }
+  ]
+}
+```
+
+</Response>
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/telephony/compliance-templates`
+
+### Authentication
+
+Use a session cookie from the Talkturo app.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose account templates you want to list.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="templates" field-type="array" required="true">
+The compliance templates available to the assistant.
+</ResponseField>
+
+<ResponseField name="templates[].id" field-type="string" required="true">
+The compliance template UUID.
+</ResponseField>
+
+<ResponseField name="templates[].name" field-type="string" required="true">
+The template name.
+</ResponseField>
+
+<ResponseField name="templates[].text" field-type="string" required="true">
+The compliance text used during calls.
+</ResponseField>
+
+<ResponseField name="templates[].language" field-type="string" required="false">
+The language code for the template.
+</ResponseField>
+
+## Send a webhook test event
+
+Queue a test webhook delivery for the assistant's configured webhook endpoint.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/webhooks/test" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/webhooks/test",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "delivery_id": "b8b3e8e0-8d8a-4f7b-9d56-6f88d1f74a19",
+  "message": "Test event queued"
+}
+```
+
+</Response>
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/webhooks/test`
+
+### Authentication
+
+Use either a session cookie or an API key.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose webhook configuration you want to test.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the test event is queued successfully.
+</ResponseField>
+
+<ResponseField name="delivery_id" field-type="string" required="true">
+The queued webhook delivery UUID.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+A confirmation message. The value is `Test event queued`.
+</ResponseField>
+
+<Callout kind="alert">
+
+Talkturo queues a test event only when the assistant has a webhook URL, webhook secret, and webhook delivery enabled in its configuration.
+
+</Callout>
+
+## List tool configurations
+
+Retrieve tool configuration records attached to an assistant.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated Talkturo session. API keys are not supported.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/tool-configs" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+[
+  {
+    "id": "cfg_4f31a8f2-6b9d-48b1-9d3a-52b0f5b09f57",
+    "tool_type": "zapier",
+    "is_enabled": true,
+    "config": {
+      "integration_id": "int_7a8b9c0d-1234-4ef5-9012-abcdef345678",
+      "tool_name": "crm_update_contact"
+    }
+  }
+]
+```
+
+</Response>
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/tool-configs`
+
+### Authentication
+
+Use a session cookie from the Talkturo app.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose tool configurations you want to list.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="[]" field-type="array" required="true">
+An array of tool configuration objects.
+</ResponseField>
+
+## Manage a tool configuration by type
+
+Create, inspect, or delete tool configuration records for a specific tool type.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated Talkturo session. API keys are not supported.
+
+</Callout>
+
+<Request tabs="GET,POST,DELETE" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/tool-configs/zapier?all=true" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z"
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/tool-configs/zapier" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z" \
+  -d '{
+    "config": {
+      "integration_id": "int_7a8b9c0d-1234-4ef5-9012-abcdef345678",
+      "tool_name": "crm_update_contact"
+    },
+    "is_enabled": true
+  }'
+```
+
+```bash
+curl -X DELETE "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/tool-configs/zapier?configId=cfg_4f31a8f2-6b9d-48b1-9d3a-52b0f5b09f57" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z"
+```
+
+</Request>
+
+<Response tabs="GET 200,POST 200,DELETE 200" default-tab="1">
+
+```json
+[
+  {
+    "id": "cfg_4f31a8f2-6b9d-48b1-9d3a-52b0f5b09f57",
+    "tool_type": "zapier",
+    "is_enabled": true,
+    "config": {
+      "integration_id": "int_7a8b9c0d-1234-4ef5-9012-abcdef345678",
+      "tool_name": "crm_update_contact"
+    }
+  }
+]
+```
+
+```json
+{
+  "id": "cfg_4f31a8f2-6b9d-48b1-9d3a-52b0f5b09f57",
+  "tool_type": "zapier",
+  "is_enabled": true,
+  "config": {
+    "integration_id": "int_7a8b9c0d-1234-4ef5-9012-abcdef345678",
+    "tool_name": "crm_update_contact"
+  }
+}
+```
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+### Endpoint
+
+`GET|POST|DELETE /api/assistants/{assistantId}/tool-configs/{toolType}`
+
+### Authentication
+
+Use a session cookie from the Talkturo app.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose tool configuration you want to manage.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true" enum="cal_com,zapier,cal_com_schedule,cal_com_get_bookings,cal_com_cancel,calendly,custom_webhook">
+The tool type to read, create, or delete.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="configId" param-type="string" required="false">
+The specific tool configuration UUID to read or delete.
+</ParamField>
+
+<ParamField query="all" param-type="boolean" required="false">
+Set to `true` to return all configurations of the selected tool type.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="config" param-type="object" required="false">
+The tool-specific configuration payload to store.
+</ParamField>
+
+<ParamField body="config.integration_id" param-type="string" required="false">
+The integration UUID used by the selected tool.
+</ParamField>
+
+<ParamField body="config.event_type_id" param-type="string" required="false">
+The event type UUID for tools that schedule or read bookings.
+</ParamField>
+
+<ParamField body="config.tool_name" param-type="string" required="false">
+The tool name exposed to the assistant runtime.
+</ParamField>
+
+<ParamField body="is_enabled" param-type="boolean" required="false">
+Enables or disables the stored tool configuration.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" field-type="string" required="false">
+Returned by `POST` and by `GET` when reading a single configuration.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="false">
+The stored tool type.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="false">
+Whether the tool configuration is enabled.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="false">
+The stored tool configuration object.
+</ResponseField>
+
+<ResponseField name="success" field-type="boolean" required="false">
+Returned by `DELETE` when the configuration is removed successfully.
+</ResponseField>
+
+<Expandable title="Behavior by method">
+
+- **`GET`** returns either a single configuration or multiple configurations, depending on whether you pass `configId` or `all=true`.
+- **`POST`** creates or updates a configuration for the selected tool type.
+- **`DELETE`** deletes the configuration identified by `configId`. If you omit `configId`, Talkturo deletes all configurations for that tool type.
+
+</Expandable>
+
+## Attach or detach a workflow tool
+
+Attach a TurboFlow workflow to the assistant or remove the existing workflow reference.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated Talkturo session. API keys are not supported.
+
+</Callout>
+
+<Request tabs="GET,POST" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/tools/workflow" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z"
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/tools/workflow" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=sess_example_4f8n6p1s3d5h7j9k2m4q6w8x1z" \
+  -d '{
+    "flowId": "8c74f0a9-0e20-4f7f-8ef3-31dcb9c1e1d4"
+  }'
+```
+
+</Request>
+
+<Response tabs="GET 200,POST 200" default-tab="1">
+
+```json
+{
+  "flowId": "8c74f0a9-0e20-4f7f-8ef3-31dcb9c1e1d4"
+}
+```
+
+```json
+{
+  "success": true,
+  "flowId": "8c74f0a9-0e20-4f7f-8ef3-31dcb9c1e1d4"
+}
+```
+
+</Response>
+
+### Endpoint
+
+`GET|POST /api/assistants/{assistantId}/tools/workflow`
+
+### Authentication
+
+Use a session cookie from the Talkturo app.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose workflow tool you want to inspect or update.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="flowId" param-type="string | null" required="false">
+The TurboFlow workflow UUID to attach. Send `null` to detach the current workflow.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="flowId" field-type="string | null" required="false">
+Returned by `GET` and identifies the attached workflow, if one exists.
+</ResponseField>
+
+<ResponseField name="success" field-type="boolean" required="false">
+Returned by `POST` when the workflow link is saved successfully.
+</ResponseField>
 
 ## Common response shape
 
@@ -480,3 +1408,16 @@ Returned by the delete endpoint.
 | `DELETE` | ` /api/assistants/{assistantId} ` | Delete an assistant |
 | `POST` | ` /api/assistants/{assistantId}/clone ` | Clone an assistant |
 | `GET` | ` /api/assistants/{assistantId}/usage-stats ` | Retrieve usage statistics |
+| `GET` | ` /api/assistants/{assistantId}/billing/estimate ` | Retrieve a billing estimate |
+| `POST` | ` /api/assistants/{assistantId}/telephony/settings ` | Configure telephony settings |
+| `POST` | ` /api/assistants/{assistantId}/telephony/assign-phone-numbers ` | Assign phone numbers |
+| `GET` | ` /api/assistants/{assistantId}/telephony/phone-numbers ` | List assigned phone numbers |
+| `POST` | ` /api/assistants/{assistantId}/telephony/test-call ` | Start a test call |
+| `GET` | ` /api/assistants/{assistantId}/telephony/compliance-templates ` | List compliance templates |
+| `POST` | ` /api/assistants/{assistantId}/webhooks/test ` | Send a webhook test event |
+| `GET` | ` /api/assistants/{assistantId}/tool-configs ` | List tool configurations |
+| `GET` | ` /api/assistants/{assistantId}/tool-configs/{toolType} ` | Retrieve tool configurations by type |
+| `POST` | ` /api/assistants/{assistantId}/tool-configs/{toolType} ` | Create or update a tool configuration by type |
+| `DELETE` | ` /api/assistants/{assistantId}/tool-configs/{toolType} ` | Delete tool configurations by type |
+| `GET` | ` /api/assistants/{assistantId}/tools/workflow ` | Retrieve the attached workflow tool |
+| `POST` | ` /api/assistants/{assistantId}/tools/workflow ` | Attach or detach a workflow tool |

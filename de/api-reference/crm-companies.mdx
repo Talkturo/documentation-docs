@@ -1,18 +1,19 @@
 ---
 title: CRM-Unternehmen
 description: >-
-  Unternehmen im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen —
-  Organisationsdatensätze mit benutzerdefinierten Feldern und Kontaktzuordnungen
-  verwalten.
+  Unternehmen im Talkturo-CRM auflisten, erstellen, abrufen, aktualisieren und
+  löschen, mit Authentifizierung, Feldern und Antwortstrukturen pro Endpunkt.
 ---
 ## Unternehmen im CRM verwalten
 
-Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge aktualisieren, löschen und die zugeordneten Kontakte eines Unternehmens abfragen.
+Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge vollständig aktualisieren, löschen und die zugeordneten Kontakte eines Unternehmens abfragen.
 
-Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung.
+Die Authentifizierung hängt vom Endpunkt ab. Listen- und Erstellungsendpunkte akzeptieren entweder einen Session-Cookie oder einen API-Key. Detail-, Aktualisierungs-, Lösch- und Kontaktendpunkte akzeptieren nur Session-Authentifizierung.
 
 <Callout kind="info" collapsed="false">
-  Die Listenansicht unterstützt Seitennummerierung und Suche. Die Detailendpunkte arbeiten mit der Unternehmens-ID aus dem CRM.
+
+Verwenden Sie für `GET /api/crm/companies` und `POST /api/crm/companies` entweder einen gültigen Session-Cookie oder einen API-Key. Alle anderen Unternehmensendpunkte erfordern eine angemeldete Anwendungssitzung.
+
 </Callout>
 
 ## Endpunktübersicht
@@ -22,18 +23,18 @@ Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden S
 | `GET`    | `/api/crm/companies`               | Unternehmen auflisten                 |
 | `POST`   | `/api/crm/companies`               | Unternehmen erstellen                 |
 | `GET`    | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen         |
-| `PATCH`  | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             |
+| `PUT`    | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             |
 | `DELETE` | `/api/crm/companies/{id}`          | Unternehmen löschen                   |
 | `GET`    | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten |
 
 ## Unternehmen auflisten
 
-Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise abzurufen oder mit einer Suchanfrage zu filtern.
+Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze zu filtern und seitenweise abzurufen. Die Liste unterstützt Teamfilter, Volltextsuche über Name und Website sowie Offset-basierte Pagination.
 
 <Request show-lines="true">
   ```bash
-  curl -X GET "https://api.talkturo.local/api/crm/companies?page=1&limit=20&search=Acme" \
-    -H "Cookie: sb-session=example_session_token"
+  curl -X GET "https://api.talkturo.local/api/crm/companies?teamId=550e8400-e29b-41d4-a716-446655440000&search=Acme&industry=Manufacturing&limit=50&offset=0" \
+    -H "x-api-key: tk_example_9xmk7q2r"
   ```
 </Request>
 
@@ -46,33 +47,54 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
         "id": "cmp_9f2c7a1d",
         "name": "Acme Industrial Group",
         "website": "https://acme-industrial.com",
-        "industry": "Manufacturing"
-      },
-      {
-        "id": "cmp_2b7d1e4a",
-        "name": "Acme Logistics GmbH",
-        "website": "https://acme-logistics.de",
-        "industry": "Logistics"
+        "industry": "Manufacturing",
+        "company_size": "201-500",
+        "city": "Berlin",
+        "state": "Berlin",
+        "country": "DE",
+        "phone": "+49 30 55550123",
+        "custom_fields": {
+          "tier": "enterprise",
+          "region": "dach"
+        },
+        "contact_count": 12,
+        "created_at": "2025-01-14T10:22:31.000Z"
       }
     ],
-    "total": 42,
-    "page": 1
+    "count": 100,
+    "limit": 50,
+    "offset": 0
   }
   ```
 </Response>
 
+### Authentifizierung
+
+Dieser Endpunkt akzeptiert:
+
+- **Session-Cookie** aus einer angemeldeten Anwendungssitzung
+- **API-Key** über den Header `x-api-key`
+
 ### Query-Parameter
 
-<ParamField query="page" param-type="integer" required="false" deprecated="false" show-location="true">
-  Die Seitennummer der Ergebnisliste.
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false" deprecated="false" show-location="true">
-  Die maximale Anzahl der zurückgegebenen Unternehmen pro Seite.
+<ParamField query="teamId" param-type="string (UUID)" required="false" deprecated="false" show-location="true">
+  Team-ID für die Abfrage. Wenn `teamId` fehlt, verwendet der Endpunkt `auth.accountId` als Fallback.
 </ParamField>
 
 <ParamField query="search" param-type="string" required="false" deprecated="false" show-location="true">
-  Filtert die Liste nach einem Suchbegriff.
+  Führt eine `ilike`-Suche über `name` und `website` aus.
+</ParamField>
+
+<ParamField query="industry" param-type="string" required="false" deprecated="false" show-location="true">
+  Filtert nach exakter Übereinstimmung in der Spalte `industry`.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false" deprecated="false" show-location="true">
+  Seitengröße. Standardwert ist `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false" deprecated="false" show-location="true">
+  Offset für die Ergebnisliste. Standardwert ist `0`.
 </ParamField>
 
 ### Antwortfelder
@@ -94,36 +116,84 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
 </ResponseField>
 
 <ResponseField name="companies[].website" field-type="string" required="false" deprecated="false">
-  Webadresse des Unternehmens, falls hinterlegt.
+  Website des Unternehmens, falls hinterlegt.
 </ResponseField>
 
 <ResponseField name="companies[].industry" field-type="string" required="false" deprecated="false">
   Branche des Unternehmens, falls hinterlegt.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true" deprecated="false">
-  Gesamtzahl der Treffer über alle Seiten hinweg.
+<ResponseField name="companies[].company_size" field-type="string" required="false" deprecated="false">
+  Unternehmensgröße aus der Datenbankspalte `company_size`.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true" deprecated="false">
-  Die aktuelle Ergebnisseite.
+<ResponseField name="companies[].city" field-type="string" required="false" deprecated="false">
+  Ort des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].state" field-type="string" required="false" deprecated="false">
+  Bundesland, Region oder Staat des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].country" field-type="string" required="false" deprecated="false">
+  Land des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].phone" field-type="string" required="false" deprecated="false">
+  Telefonnummer des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].custom_fields" field-type="object" required="false" deprecated="false">
+  Benutzerdefinierte Felder des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].contact_count" field-type="integer" required="true" deprecated="false">
+  Anzahl der dem Unternehmen zugeordneten Kontakte.
+</ResponseField>
+
+<ResponseField name="companies[].created_at" field-type="string" required="true" deprecated="false">
+  Erstellungszeitpunkt des Unternehmensdatensatzes im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true" deprecated="false">
+  Gesamtzahl der Treffer für den aktuellen Filter.
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true" deprecated="false">
+  Tatsächlich verwendete Seitengröße.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true" deprecated="false">
+  Tatsächlich verwendeter Offset.
 </ResponseField>
 
 ## Unternehmen erstellen
 
-Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CRM anzulegen.
+Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz anzulegen. Alle Body-Felder verwenden Camel Case.
 
 <Request show-lines="true">
   ```bash
   curl -X POST "https://api.talkturo.local/api/crm/companies" \
     -H "Content-Type: application/json" \
-    -H "Cookie: sb-session=example_session_token" \
+    -H "x-api-key: tk_example_9xmk7q2r" \
     -d '{
+      "teamId": "550e8400-e29b-41d4-a716-446655440000",
       "name": "Northwind Health Partners",
       "website": "https://northwind-health.com",
       "industry": "Healthcare",
+      "companySize": "51-200",
+      "addressLine1": "Friedrichstraße 120",
+      "addressLine2": "3. Etage",
+      "city": "Berlin",
+      "state": "Berlin",
+      "postalCode": "10117",
+      "country": "DE",
       "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
+      "notes": "Bestandskunde aus dem Partnerprogramm",
+      "customFields": {
+        "segment": "clinic-group",
+        "accountStatus": "active"
+      }
     }'
   ```
 </Request>
@@ -137,33 +207,87 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
       "name": "Northwind Health Partners",
       "website": "https://northwind-health.com",
       "industry": "Healthcare",
+      "company_size": "51-200",
+      "address_line_1": "Friedrichstraße 120",
+      "address_line_2": "3. Etage",
+      "city": "Berlin",
+      "state": "Berlin",
+      "postal_code": "10117",
+      "country": "DE",
       "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
+      "notes": "Bestandskunde aus dem Partnerprogramm",
+      "custom_fields": {
+        "segment": "clinic-group",
+        "accountStatus": "active"
+      }
     }
   }
   ```
 </Response>
 
+### Authentifizierung
+
+Dieser Endpunkt akzeptiert:
+
+- **Session-Cookie** aus einer angemeldeten Anwendungssitzung
+- **API-Key** über den Header `x-api-key`
+
 ### Request-Body
 
+<ParamField body="teamId" param-type="string" required="false" deprecated="false" show-location="true">
+  Team-ID für den neuen Datensatz. Wenn `teamId` fehlt, verwendet der Endpunkt `auth.accountId`. Wenn weder `teamId` noch `auth.accountId` verfügbar ist, antwortet der Endpunkt mit `400`.
+</ParamField>
+
 <ParamField body="name" param-type="string" required="true" deprecated="false" show-location="true">
-  Name des Unternehmens.
+  Name des Unternehmens. Der Wert muss nach dem Trimmen nicht leer sein.
 </ParamField>
 
 <ParamField body="website" param-type="string" required="false" deprecated="false" show-location="true">
-  Webadresse des Unternehmens.
+  Website des Unternehmens.
 </ParamField>
 
 <ParamField body="industry" param-type="string" required="false" deprecated="false" show-location="true">
   Branche oder Marktsegment des Unternehmens.
 </ParamField>
 
+<ParamField body="companySize" param-type="string" required="false" deprecated="false" show-location="true">
+  Unternehmensgröße. Dieses Feld wird auf die Datenbankspalte `company_size` abgebildet.
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string" required="false" deprecated="false" show-location="true">
+  Erste Zeile der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string" required="false" deprecated="false" show-location="true">
+  Zweite Zeile der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false" deprecated="false" show-location="true">
+  Ort des Unternehmens.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false" deprecated="false" show-location="true">
+  Bundesland, Region oder Staat des Unternehmens.
+</ParamField>
+
+<ParamField body="postalCode" param-type="string" required="false" deprecated="false" show-location="true">
+  Postleitzahl. Dieses Feld wird auf die Datenbankspalte `postal_code` abgebildet.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false" deprecated="false" show-location="true">
+  Land des Unternehmens.
+</ParamField>
+
 <ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
   Telefonnummer des Unternehmens.
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Postanschrift oder Geschäftsadresse des Unternehmens.
+<ParamField body="notes" param-type="string" required="false" deprecated="false" show-location="true">
+  Interne Notizen zum Unternehmen.
+</ParamField>
+
+<ParamField body="customFields" param-type="Record<string, any>" required="false" deprecated="false" show-location="true">
+  Benutzerdefinierte Felder. Dieses Feld wird auf die Datenbankspalte `custom_fields` abgebildet.
 </ParamField>
 
 ### Antwortfelder
@@ -181,12 +305,62 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
 </ResponseField>
 
 <Callout kind="tip" collapsed="false">
-  Wenn Sie Unternehmensdatensätze später mit Kontakten oder Opportunities verknüpfen möchten, speichern Sie die zurückgegebene `company.id` direkt nach dem Erstellen.
+
+Speichern Sie die zurückgegebene `company.id`, wenn Sie das Unternehmen später mit Kontakten oder Opportunities verknüpfen möchten.
+
 </Callout>
 
 ## Einzelnes Unternehmen abrufen
 
-Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdatensatz anhand seiner ID abzurufen.
+Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdatensatz mit zugeordneten Kontakten und Opportunities abzurufen.
+
+<Request show-lines="true">
+  ```bash
+  curl -X GET "https://api.talkturo.local/api/crm/companies/cmp_c4a91e7b" \
+    -H "Cookie: sb-session=example_session_token"
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "success": true,
+    "company": {
+      "id": "cmp_c4a91e7b",
+      "name": "Northwind Health Partners",
+      "website": "https://northwind-health.com",
+      "industry": "Healthcare",
+      "company_size": "51-200",
+      "city": "Berlin",
+      "state": "Berlin",
+      "country": "DE",
+      "phone": "+49 30 55550123",
+      "custom_fields": {
+        "segment": "clinic-group"
+      },
+      "contacts": [
+        {
+          "id": "con_2e19ab44",
+          "first_name": "Julia",
+          "last_name": "Weber",
+          "email": "julia.weber@northwind-health.com"
+        }
+      ],
+      "opportunities": [
+        {
+          "id": "opp_7db13aa9",
+          "name": "Expansion Q3",
+          "stage": "proposal"
+        }
+      ]
+    }
+  }
+  ```
+</Response>
+
+### Authentifizierung
+
+Dieser Endpunkt erfordert eine gültige Anwendungssitzung per Session-Cookie.
 
 ### Pfadparameter
 
@@ -208,9 +382,71 @@ Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdate
   Eindeutige ID des Unternehmens.
 </ResponseField>
 
+<ResponseField name="company.contacts" field-type="array" required="true" deprecated="false">
+  Kontakte, die dem Unternehmen zugeordnet sind.
+</ResponseField>
+
+<ResponseField name="company.opportunities" field-type="array" required="true" deprecated="false">
+  Opportunities, die dem Unternehmen zugeordnet sind.
+</ResponseField>
+
 ## Unternehmen aktualisieren
 
-Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehmens zu ändern. Der Endpunkt gibt den aktualisierten Datensatz zurück.
+Senden Sie `PUT /api/crm/companies/{id}`, um einen vorhandenen Unternehmensdatensatz vollständig mit den übergebenen Feldwerten zu aktualisieren. Alle Body-Felder verwenden Camel Case.
+
+<Request show-lines="true">
+  ```bash
+  curl -X PUT "https://api.talkturo.local/api/crm/companies/cmp_c4a91e7b" \
+    -H "Content-Type: application/json" \
+    -H "Cookie: sb-session=example_session_token" \
+    -d '{
+      "website": "https://northwindhealth.eu",
+      "companySize": "201-500",
+      "addressLine1": "Unter den Linden 12",
+      "city": "Berlin",
+      "state": "Berlin",
+      "postalCode": "10117",
+      "country": "DE",
+      "phone": "+49 30 55550999",
+      "notes": null,
+      "customFields": {
+        "segment": "enterprise-health",
+        "renewalRisk": "low"
+      }
+    }'
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "success": true,
+    "company": {
+      "id": "cmp_c4a91e7b",
+      "name": "Northwind Health Partners",
+      "website": "https://northwindhealth.eu",
+      "industry": "Healthcare",
+      "company_size": "201-500",
+      "address_line_1": "Unter den Linden 12",
+      "address_line_2": null,
+      "city": "Berlin",
+      "state": "Berlin",
+      "postal_code": "10117",
+      "country": "DE",
+      "phone": "+49 30 55550999",
+      "notes": null,
+      "custom_fields": {
+        "segment": "enterprise-health",
+        "renewalRisk": "low"
+      }
+    }
+  }
+  ```
+</Response>
+
+### Authentifizierung
+
+Dieser Endpunkt erfordert eine gültige Anwendungssitzung per Session-Cookie.
 
 ### Pfadparameter
 
@@ -220,24 +456,56 @@ Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehm
 
 ### Aktualisierbare Felder
 
-<ParamField body="name" param-type="string" required="false" deprecated="false" show-location="true">
+<ParamField body="name" param-type="string | null" required="false" deprecated="false" show-location="true">
   Aktualisierter Unternehmensname.
 </ParamField>
 
-<ParamField body="website" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierte Webadresse.
+<ParamField body="website" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisierte Website.
 </ParamField>
 
-<ParamField body="industry" param-type="string" required="false" deprecated="false" show-location="true">
+<ParamField body="industry" param-type="string | null" required="false" deprecated="false" show-location="true">
   Aktualisierte Branchenangabe.
 </ParamField>
 
-<ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
+<ParamField body="companySize" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisierte Unternehmensgröße. Dieses Feld wird auf `company_size` abgebildet.
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisierte erste Adresszeile.
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisierte zweite Adresszeile.
+</ParamField>
+
+<ParamField body="city" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisierter Ort.
+</ParamField>
+
+<ParamField body="state" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisierte Region oder aktualisierter Staat.
+</ParamField>
+
+<ParamField body="postalCode" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisierte Postleitzahl. Dieses Feld wird auf `postal_code` abgebildet.
+</ParamField>
+
+<ParamField body="country" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisiertes Land.
+</ParamField>
+
+<ParamField body="phone" param-type="string | null" required="false" deprecated="false" show-location="true">
   Aktualisierte Telefonnummer.
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierte Geschäftsadresse.
+<ParamField body="notes" param-type="string | null" required="false" deprecated="false" show-location="true">
+  Aktualisierte interne Notizen. Setzen Sie den Wert auf `null`, um vorhandene Notizen zu entfernen.
+</ParamField>
+
+<ParamField body="customFields" param-type="Record<string, any>" required="false" deprecated="false" show-location="true">
+  Aktualisierte benutzerdefinierte Felder. Dieses Feld wird auf `custom_fields` abgebildet.
 </ParamField>
 
 ### Antwortstruktur
@@ -252,7 +520,33 @@ Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehm
 
 ## Unternehmen löschen
 
-Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz aus dem CRM zu entfernen.
+Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz dauerhaft aus dem CRM zu entfernen. Wenn dem Unternehmen noch Kontakte zugeordnet sind, blockiert der Endpunkt das Löschen mit einem Fehler `400`.
+
+<Request show-lines="true">
+  ```bash
+  curl -X DELETE "https://api.talkturo.local/api/crm/companies/cmp_c4a91e7b" \
+    -H "Cookie: sb-session=example_session_token"
+  ```
+</Request>
+
+<Response tabs="Erfolg,Fehler 400" show-lines="true">
+  ```json
+  {
+    "success": true
+  }
+  ```
+
+  ```json
+  {
+    "success": false,
+    "message": "Cannot delete company: 3 contacts are associated with it. Remove or reassign them first."
+  }
+  ```
+</Response>
+
+### Authentifizierung
+
+Dieser Endpunkt erfordert eine gültige Anwendungssitzung per Session-Cookie.
 
 ### Pfadparameter
 
@@ -267,12 +561,46 @@ Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz aus 
 </ResponseField>
 
 <Callout kind="alert" collapsed="false">
-  Das Löschen eines Unternehmens ist als Operation destruktiv. Prüfen Sie vor dem Entfernen, ob nachgelagerte Prozesse oder verknüpfte Datensätze die Unternehmens-ID noch verwenden.
+
+Wenn Kontakte mit dem Unternehmen verknüpft sind, schlägt der Löschvorgang mit `400` fehl. Entfernen Sie die Zuordnungen oder weisen Sie die Kontakte einem anderen Unternehmen zu, bevor Sie den Datensatz löschen.
+
 </Callout>
 
 ## Kontakte eines Unternehmens auflisten
 
-Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen, die einem Unternehmen zugeordnet sind.
+Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um die Kontakte eines Unternehmens abzurufen. Dieser Endpunkt gibt ein Objekt mit dem Feld `contacts` zurück.
+
+<Request show-lines="true">
+  ```bash
+  curl -X GET "https://api.talkturo.local/api/crm/companies/cmp_c4a91e7b/contacts" \
+    -H "Cookie: sb-session=example_session_token"
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "contacts": [
+      {
+        "id": "con_2e19ab44",
+        "first_name": "Julia",
+        "last_name": "Weber",
+        "email": "julia.weber@northwind-health.com"
+      },
+      {
+        "id": "con_8ba201cc",
+        "first_name": "Martin",
+        "last_name": "Koch",
+        "email": "martin.koch@northwind-health.com"
+      }
+    ]
+  }
+  ```
+</Response>
+
+### Authentifizierung
+
+Dieser Endpunkt erfordert eine gültige Anwendungssitzung per Session-Cookie.
 
 ### Pfadparameter
 
@@ -282,23 +610,6 @@ Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen
 
 ### Antwortfelder
 
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
-  Gibt an, ob die Anfrage erfolgreich war.
-</ResponseField>
-
 <ResponseField name="contacts" field-type="array" required="true" deprecated="false">
   Liste der dem Unternehmen zugeordneten Kontakte.
 </ResponseField>
-
-## Verwandte Ressourcen
-
-<Columns cols="2">
-  <Card title="CRM-Kontakte" href="/de/api-reference/crm-contacts" icon="users" cta="Zur Referenz" horizontal="false">
-
-  </Card>
-
-  <Card title="CRM-Opportunities" href="/de/api-reference/crm-opportunities" icon="bar-chart" cta="Zur Referenz" horizontal="false">
-
-  </Card>
-</Columns>
-

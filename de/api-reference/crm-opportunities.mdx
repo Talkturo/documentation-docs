@@ -1,15 +1,15 @@
 ---
 title: CRM-Opportunities
-description: Verkaufsschancen im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen — Deal-Wert, Phase, zugehörige Kontakte und Unternehmen sowie erwartete Abschlusstermine verfolgen.
+description: Verkaufschancen im Talkturo-CRM auflisten, erstellen, abrufen, aktualisieren und löschen, inklusive Phasen, Beträgen, Zuständigkeiten und Abschlussdaten.
 ---
 
 ## CRM-Opportunities verwalten
 
-Verwalten Sie Verkaufschancen im Talkturo-CRM über Endpunkte zum Auflisten, Erstellen, Abrufen, Aktualisieren und Löschen. Jede Opportunity kann einen Titel, einen Wert, eine Phase sowie Verknüpfungen zu Kontakten und Unternehmen enthalten.
+Verwalten Sie Verkaufschancen im Talkturo-CRM über Endpunkte zum Auflisten, Erstellen, Abrufen, Aktualisieren und Löschen. Jede Opportunity enthält einen Namen, eine Phase, optionale Beträge, Zuständigkeiten sowie Verknüpfungen zu Unternehmen und primären Kontakten.
 
 <Callout kind="info">
 
-Alle CRM-Opportunity-Endpunkte verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Sitzung heraus.
+Die Listen- und Erstellungsendpunkte akzeptieren entweder einen Session-Cookie oder einen API-Key. Detailabruf, Aktualisierung und Löschen erfordern eine angemeldete Session.
 
 </Callout>
 
@@ -17,20 +17,37 @@ Alle CRM-Opportunity-Endpunkte verwenden Session-Authentifizierung. Senden Sie d
 
 | Methode | Pfad | Beschreibung |
 | --- | --- | --- |
-| `GET` | `/api/crm/opportunities` | Opportunities auflisten und nach Suchbegriff, Kontakt oder Unternehmen filtern |
+| `GET` | `/api/crm/opportunities` | Opportunities auflisten und nach Team, Unternehmen, Phase oder Owner filtern |
 | `POST` | `/api/crm/opportunities` | Eine neue Opportunity erstellen |
 | `GET` | `/api/crm/opportunities/{id}` | Eine einzelne Opportunity abrufen |
-| `PATCH` | `/api/crm/opportunities/{id}` | Eine bestehende Opportunity aktualisieren |
+| `PUT` | `/api/crm/opportunities/{id}` | Eine bestehende Opportunity vollständig aktualisieren |
 | `DELETE` | `/api/crm/opportunities/{id}` | Eine Opportunity löschen |
+
+## Gültige Opportunity-Phasen
+
+Verwenden Sie für `stage` nur die vom System unterstützten Phasen. Ungültige Werte führen dazu, dass die Anfrage abgelehnt wird.
+
+- `lead` — neuer Deal mit noch offener Erstqualifizierung
+- `qualified` — Deal wurde geprüft und ist vertriebsrelevant
+- `proposal` — Angebot oder konkreter Lösungsvorschlag liegt vor
+- `negotiation` — Preis, Umfang oder Bedingungen werden verhandelt
+- `won` — Deal wurde erfolgreich abgeschlossen
+- `lost` — Deal wurde verloren oder abgebrochen
+
+<Callout kind="tip">
+
+Wenn Sie eigene Pipeline-Bezeichnungen in der Oberfläche verwenden, ordnen Sie diese Werte vor dem API-Aufruf auf eine der gültigen Phasen zu.
+
+</Callout>
 
 ## GET /api/crm/opportunities
 
-Rufen Sie eine paginierte Liste von Opportunities ab und filtern Sie die Ergebnisse nach Suchbegriff, Kontakt oder Unternehmen.
+Rufen Sie eine paginierte Liste von Opportunities ab und filtern Sie die Ergebnisse nach Team, Unternehmen, Phase oder verantwortlichem Owner.
 
 <Request>
 ```bash
-curl -X GET "https://api.talkturo.com/api/crm/opportunities?page=1&limit=20&search=renewal&companyId=cmp_9f3k2m1a" \
-  -H "Cookie: sb-access-token=session_example_7fd82k"
+curl -X GET "https://api.talkturo.com/api/crm/opportunities?teamId=3f4c2b9e-7d2a-4cb7-9d31-82fb9d4f4a10&companyId=9b3e5c1a-2a71-4f90-b7e4-1d42cbb7f901&stage=proposal&ownerUserId=5f08f1a3-7a9d-4a32-b6a7-0d6d4fbf9c12&limit=50&offset=0" \
+  -H "x-api-key: dkai_example_9xmk7q2r"
 ```
 </Request>
 
@@ -41,39 +58,84 @@ curl -X GET "https://api.talkturo.com/api/crm/opportunities?page=1&limit=20&sear
   "opportunities": [
     {
       "id": "opp_4b29d7e1",
-      "title": "Annual renewal - Acme GmbH",
-      "value": 24000,
+      "name": "Jahresverlängerung Acme GmbH",
       "stage": "proposal",
-      "contact_id": "cnt_8c13fa20",
-      "company_id": "cmp_9f3k2m1a"
+      "amount": 24000,
+      "currency": "EUR",
+      "probability": 70,
+      "expected_close_date": "2025-10-15",
+      "company": {
+        "id": "cmp_9f3k2m1a",
+        "name": "Acme GmbH"
+      },
+      "primary_contact": {
+        "id": "cnt_8c13fa20",
+        "first_name": "Mira",
+        "last_name": "Schneider"
+      }
     }
   ],
-  "total": 1,
-  "page": 1
+  "count": 12,
+  "limit": 50,
+  "offset": 0,
+  "stageTotals": {
+    "lead": {
+      "count": 3,
+      "value": 5000
+    },
+    "qualified": {
+      "count": 2,
+      "value": 8000
+    },
+    "proposal": {
+      "count": 1,
+      "value": 3000
+    },
+    "negotiation": {
+      "count": 1,
+      "value": 1500
+    },
+    "won": {
+      "count": 3,
+      "value": 20000
+    },
+    "lost": {
+      "count": 2,
+      "value": 0
+    }
+  }
 }
 ```
 </Response>
 
+### Authentifizierung
+
+Senden Sie diesen Endpunkt entweder mit einem gültigen Session-Cookie oder mit einem API-Key. Wenn Sie `teamId` nicht angeben, verwendet der Endpunkt standardmäßig `auth.accountId` aus dem Authentifizierungskontext.
+
 ### Query-Parameter
 
-<ParamField query="page" param-type="integer" required="false">
-Gibt die Ergebnisseite an. Wenn Sie keinen Wert senden, verwendet die API die Standardpagination des Endpunkts.
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false">
-Begrenzt die Anzahl der zurückgegebenen Opportunities pro Seite.
-</ParamField>
-
-<ParamField query="search" param-type="string" required="false">
-Filtert Opportunities nach einem Suchbegriff. Verwenden Sie diesen Parameter, um gezielt nach Titeln oder anderen durchsuchbaren Opportunity-Daten zu suchen.
-</ParamField>
-
-<ParamField query="contactId" param-type="string" required="false">
-Gibt nur Opportunities zurück, die mit der angegebenen Kontakt-ID verknüpft sind.
+<ParamField query="teamId" param-type="string" required="false">
+Team-ID als UUID. Wenn Sie keinen Wert senden, verwendet die API `auth.accountId` als Fallback.
 </ParamField>
 
 <ParamField query="companyId" param-type="string" required="false">
-Gibt nur Opportunities zurück, die mit der angegebenen Unternehmens-ID verknüpft sind.
+Filtert die Liste auf Opportunities eines bestimmten Unternehmens. Der Wert muss eine UUID sein.
+</ParamField>
+
+<ParamField query="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
+Filtert die Liste nach einer gültigen Opportunity-Phase.
+</ParamField>
+
+<ParamField query="ownerUserId" param-type="string" required="false">
+Filtert die Liste nach dem zugewiesenen Owner. Der Wert muss eine UUID sein.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Begrenzt die Seitengröße. Der Standardwert ist `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Gibt den Startoffset für die Paginierung an. Der Standardwert ist `0`.
 </ParamField>
 
 ### Antwortfelder
@@ -83,44 +145,156 @@ Kennzeichnet, ob die Anfrage erfolgreich verarbeitet wurde.
 </ResponseField>
 
 <ResponseField name="opportunities" field-type="array" required="true">
-Enthält die Liste der gefundenen Opportunities für die angeforderte Seite.
+Enthält die Opportunities für die angeforderte Seite.
 </ResponseField>
 
 <ResponseField name="opportunities[].id" field-type="string" required="true">
 Eindeutige ID der Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].title" field-type="string" required="true">
-Titel oder Name der Verkaufschance.
+<ResponseField name="opportunities[].name" field-type="string" required="true">
+Anzeigename der Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].value" field-type="number" required="false">
-Numerischer Wert der Opportunity.
-</ResponseField>
-
-<ResponseField name="opportunities[].stage" field-type="string" required="false">
+<ResponseField name="opportunities[].stage" field-type="string" required="true">
 Aktuelle Phase der Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].contact_id" field-type="string" required="false">
-ID des verknüpften Kontakts, falls vorhanden.
+<ResponseField name="opportunities[].amount" field-type="number" required="false">
+Monetärer Wert der Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].company_id" field-type="string" required="false">
-ID des verknüpften Unternehmens, falls vorhanden.
+<ResponseField name="opportunities[].currency" field-type="string" required="false">
+ISO-Währungscode des Opportunity-Betrags.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
-Gesamtzahl der Treffer über alle Seiten hinweg.
+<ResponseField name="opportunities[].probability" field-type="number" required="false">
+Abschlusswahrscheinlichkeit als numerischer Wert von `0` bis `100`.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
-Aktuelle Ergebnisseite in der Antwort.
+<ResponseField name="opportunities[].expected_close_date" field-type="string" required="false">
+Erwartetes Abschlussdatum im Format `YYYY-MM-DD`.
+</ResponseField>
+
+<ResponseField name="opportunities[].company" field-type="object" required="false">
+Enthält Basisdaten des verknüpften Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunities[].company.id" field-type="string" required="true">
+Eindeutige ID des verknüpften Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunities[].company.name" field-type="string" required="true">
+Name des verknüpften Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact" field-type="object" required="false">
+Enthält Basisdaten des primären Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.id" field-type="string" required="true">
+Eindeutige ID des primären Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.first_name" field-type="string" required="true">
+Vorname des primären Kontakts.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.last_name" field-type="string" required="true">
+Nachname des primären Kontakts.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Anzahl der in dieser Antwort enthaltenen Opportunities.
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true">
+Angewendete Seitengröße.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Angewendeter Paginierungsoffset.
+</ResponseField>
+
+<ResponseField name="stageTotals" field-type="object" required="true">
+Aggregierte Anzahl und Summenwerte je Opportunity-Phase über das gefilterte Ergebnis.
+</ResponseField>
+
+<ResponseField name="stageTotals.lead" field-type="object" required="true">
+Zusammenfassung für die Phase `lead`.
+</ResponseField>
+
+<ResponseField name="stageTotals.qualified" field-type="object" required="true">
+Zusammenfassung für die Phase `qualified`.
+</ResponseField>
+
+<ResponseField name="stageTotals.proposal" field-type="object" required="true">
+Zusammenfassung für die Phase `proposal`.
+</ResponseField>
+
+<ResponseField name="stageTotals.negotiation" field-type="object" required="true">
+Zusammenfassung für die Phase `negotiation`.
+</ResponseField>
+
+<ResponseField name="stageTotals.won" field-type="object" required="true">
+Zusammenfassung für die Phase `won`.
+</ResponseField>
+
+<ResponseField name="stageTotals.lost" field-type="object" required="true">
+Zusammenfassung für die Phase `lost`.
+</ResponseField>
+
+<ResponseField name="stageTotals.lead.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `lead`.
+</ResponseField>
+
+<ResponseField name="stageTotals.lead.value" field-type="number" required="true">
+Summierter Wert der Opportunities in der Phase `lead`.
+</ResponseField>
+
+<ResponseField name="stageTotals.qualified.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `qualified`.
+</ResponseField>
+
+<ResponseField name="stageTotals.qualified.value" field-type="number" required="true">
+Summierter Wert der Opportunities in der Phase `qualified`.
+</ResponseField>
+
+<ResponseField name="stageTotals.proposal.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `proposal`.
+</ResponseField>
+
+<ResponseField name="stageTotals.proposal.value" field-type="number" required="true">
+Summierter Wert der Opportunities in der Phase `proposal`.
+</ResponseField>
+
+<ResponseField name="stageTotals.negotiation.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `negotiation`.
+</ResponseField>
+
+<ResponseField name="stageTotals.negotiation.value" field-type="number" required="true">
+Summierter Wert der Opportunities in der Phase `negotiation`.
+</ResponseField>
+
+<ResponseField name="stageTotals.won.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `won`.
+</ResponseField>
+
+<ResponseField name="stageTotals.won.value" field-type="number" required="true">
+Summierter Wert der Opportunities in der Phase `won`.
+</ResponseField>
+
+<ResponseField name="stageTotals.lost.count" field-type="integer" required="true">
+Anzahl der Opportunities in der Phase `lost`.
+</ResponseField>
+
+<ResponseField name="stageTotals.lost.value" field-type="number" required="true">
+Summierter Wert der Opportunities in der Phase `lost`.
 </ResponseField>
 
 ## POST /api/crm/opportunities
 
-Erstellen Sie eine neue Opportunity mit Titel, Wert, Phase und optionalen Verknüpfungen zu Kontakt oder Unternehmen.
+Erstellen Sie eine neue Opportunity mit Name, Phase, Betragsdaten und optionalen Beziehungen zu Unternehmen, Kontakt und Owner.
 
 <Request>
 ```bash
@@ -128,12 +302,21 @@ curl -X POST "https://api.talkturo.com/api/crm/opportunities" \
   -H "Content-Type: application/json" \
   -H "Cookie: sb-access-token=session_example_7fd82k" \
   -d '{
-    "title": "New expansion deal - Nordstern AG",
-    "value": 18500,
-    "stage": "qualification",
-    "contact_id": "cnt_28d91fa4",
-    "company_id": "cmp_44aa91d2",
-    "expected_close_date": "2025-10-15"
+    "teamId": "3f4c2b9e-7d2a-4cb7-9d31-82fb9d4f4a10",
+    "name": "Expansion Nordstern AG",
+    "companyId": "9d1b8a75-4bb3-4d83-9fc5-d3b8d4c7e112",
+    "primaryContactId": "7f2d3a8c-b1aa-4f76-8e44-16f3d8cb2a10",
+    "stage": "qualified",
+    "amount": 18500,
+    "currency": "EUR",
+    "probability": 45,
+    "expectedCloseDate": "2025-10-15",
+    "ownerUserId": "5f08f1a3-7a9d-4a32-b6a7-0d6d4fbf9c12",
+    "notes": "Budget bestätigt, technischer Workshop offen.",
+    "customFields": {
+      "region": "DACH",
+      "leadSource": "Partnernetzwerk"
+    }
   }'
 ```
 </Request>
@@ -144,41 +327,78 @@ curl -X POST "https://api.talkturo.com/api/crm/opportunities" \
   "success": true,
   "opportunity": {
     "id": "opp_91cd34ab",
-    "title": "New expansion deal - Nordstern AG",
-    "value": 18500,
-    "stage": "qualification",
-    "contact_id": "cnt_28d91fa4",
-    "company_id": "cmp_44aa91d2",
-    "expected_close_date": "2025-10-15"
+    "name": "Expansion Nordstern AG",
+    "stage": "qualified",
+    "amount": 18500,
+    "currency": "EUR",
+    "probability": 45,
+    "expected_close_date": "2025-10-15",
+    "company": {
+      "id": "9d1b8a75-4bb3-4d83-9fc5-d3b8d4c7e112",
+      "name": "Nordstern AG"
+    },
+    "primary_contact": {
+      "id": "7f2d3a8c-b1aa-4f76-8e44-16f3d8cb2a10",
+      "first_name": "Leonie",
+      "last_name": "Berger"
+    }
   }
 }
 ```
 </Response>
 
+### Authentifizierung
+
+Senden Sie diesen Endpunkt entweder mit einem gültigen Session-Cookie oder mit einem API-Key. Wenn `teamId` fehlt, verwendet die API `auth.accountId` als Fallback.
+
 ### Request-Body
 
-<ParamField body="title" param-type="string" required="true">
-Titel der Opportunity. Ohne diesen Wert kann die Opportunity nicht erstellt werden.
+<ParamField body="teamId" param-type="string" required="false">
+Team-ID als UUID. Wenn Sie keinen Wert senden, verwendet die API `auth.accountId`.
 </ParamField>
 
-<ParamField body="value" param-type="number" required="false">
-Monetärer Wert der Opportunity.
+<ParamField body="name" param-type="string" required="true">
+Name der Opportunity. Die API trimmt führende und nachgestellte Leerzeichen. Nach dem Trimmen darf der Wert nicht leer sein.
 </ParamField>
 
-<ParamField body="stage" param-type="string" required="false">
-Phase der Opportunity, zum Beispiel für Qualifizierung oder Angebot.
+<ParamField body="companyId" param-type="string" required="false">
+ID des verknüpften Unternehmens als UUID.
 </ParamField>
 
-<ParamField body="contact_id" param-type="string" required="false">
-ID eines Kontakts, der mit der Opportunity verknüpft werden soll.
+<ParamField body="primaryContactId" param-type="string" required="false">
+ID des primären Kontakts als UUID.
 </ParamField>
 
-<ParamField body="company_id" param-type="string" required="false">
-ID eines Unternehmens, das mit der Opportunity verknüpft werden soll.
+<ParamField body="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
+Phase der Opportunity. Wenn Sie keinen Wert senden, verwendet die API `lead`.
 </ParamField>
 
-<ParamField body="expected_close_date" param-type="string" required="false">
-Erwartetes Abschlussdatum der Opportunity.
+<ParamField body="amount" param-type="number" required="false">
+Deal-Wert der Opportunity.
+</ParamField>
+
+<ParamField body="currency" param-type="string" required="false">
+ISO-Währungscode, zum Beispiel `EUR` oder `USD`.
+</ParamField>
+
+<ParamField body="probability" param-type="number" required="false">
+Abschlusswahrscheinlichkeit von `0` bis `100`.
+</ParamField>
+
+<ParamField body="expectedCloseDate" param-type="string" required="false">
+Erwartetes Abschlussdatum im ISO-Format `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="ownerUserId" param-type="string" required="false">
+ID des zugewiesenen Owners als UUID.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Freitextnotizen zur Opportunity.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Beliebige zusätzliche Felder als Schlüssel-Wert-Objekt.
 </ParamField>
 
 ### Antwortfelder
@@ -192,27 +412,39 @@ Enthält die neu erstellte Opportunity.
 </ResponseField>
 
 <ResponseField name="opportunity.id" field-type="string" required="true">
-Eindeutige ID der neuen Opportunity.
+Eindeutige ID der Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunity.title" field-type="string" required="true">
-Titel der Opportunity.
+<ResponseField name="opportunity.name" field-type="string" required="true">
+Name der erstellten Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunity.value" field-type="number" required="false">
-Gespeicherter Wert der Opportunity.
-</ResponseField>
-
-<ResponseField name="opportunity.stage" field-type="string" required="false">
+<ResponseField name="opportunity.stage" field-type="string" required="true">
 Gespeicherte Phase der Opportunity.
 </ResponseField>
 
-<ResponseField name="opportunity.contact_id" field-type="string" required="false">
-Verknüpfte Kontakt-ID.
+<ResponseField name="opportunity.amount" field-type="number" required="false">
+Gespeicherter Deal-Wert.
 </ResponseField>
 
-<ResponseField name="opportunity.company_id" field-type="string" required="false">
-Verknüpfte Unternehmens-ID.
+<ResponseField name="opportunity.currency" field-type="string" required="false">
+Gespeicherter ISO-Währungscode.
+</ResponseField>
+
+<ResponseField name="opportunity.probability" field-type="number" required="false">
+Gespeicherte Abschlusswahrscheinlichkeit.
+</ResponseField>
+
+<ResponseField name="opportunity.expected_close_date" field-type="string" required="false">
+Gespeichertes erwartetes Abschlussdatum.
+</ResponseField>
+
+<ResponseField name="opportunity.company" field-type="object" required="false">
+Basisdaten des verknüpften Unternehmens.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact" field-type="object" required="false">
+Basisdaten des primären Kontakts.
 </ResponseField>
 
 ## GET /api/crm/opportunities/{id}
@@ -232,15 +464,29 @@ curl -X GET "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
   "success": true,
   "opportunity": {
     "id": "opp_4b29d7e1",
-    "title": "Annual renewal - Acme GmbH",
-    "value": 24000,
+    "name": "Jahresverlängerung Acme GmbH",
     "stage": "proposal",
-    "contact_id": "cnt_8c13fa20",
-    "company_id": "cmp_9f3k2m1a"
+    "amount": 24000,
+    "currency": "EUR",
+    "probability": 70,
+    "expected_close_date": "2025-10-15",
+    "company": {
+      "id": "cmp_9f3k2m1a",
+      "name": "Acme GmbH"
+    },
+    "primary_contact": {
+      "id": "cnt_8c13fa20",
+      "first_name": "Mira",
+      "last_name": "Schneider"
+    }
   }
 }
 ```
 </Response>
+
+### Authentifizierung
+
+Senden Sie diesen Endpunkt aus einer angemeldeten Session. API-Keys werden für den Detailabruf nicht akzeptiert.
 
 ### Pfadparameter
 
@@ -264,19 +510,21 @@ Wenn Sie Opportunities in Listenansichten anzeigen, verwenden Sie zuerst den Lis
 
 </Callout>
 
-## PATCH /api/crm/opportunities/{id}
+## PUT /api/crm/opportunities/{id}
 
-Aktualisieren Sie eine bestehende Opportunity anhand ihrer ID. Die Antwort enthält die aktualisierte Opportunity.
+Aktualisieren Sie eine bestehende Opportunity anhand ihrer ID. Alle Body-Felder sind optional und müssen in Camel Case gesendet werden.
 
 <Request>
 ```bash
-curl -X PATCH "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
+curl -X PUT "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
   -H "Content-Type: application/json" \
   -H "Cookie: sb-access-token=session_example_7fd82k" \
   -d '{
-    "stage": "negotiation",
-    "value": 26000,
-    "expected_close_date": "2025-11-01"
+    "stage": "won",
+    "amount": 26000,
+    "probability": 100,
+    "expectedCloseDate": "2025-11-01",
+    "wonDetails": "Vertrag unterschrieben nach finaler Preisrunde."
   }'
 ```
 </Request>
@@ -287,16 +535,22 @@ curl -X PATCH "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
   "success": true,
   "opportunity": {
     "id": "opp_4b29d7e1",
-    "title": "Annual renewal - Acme GmbH",
-    "value": 26000,
-    "stage": "negotiation",
-    "contact_id": "cnt_8c13fa20",
-    "company_id": "cmp_9f3k2m1a",
-    "expected_close_date": "2025-11-01"
+    "name": "Jahresverlängerung Acme GmbH",
+    "stage": "won",
+    "amount": 26000,
+    "currency": "EUR",
+    "probability": 100,
+    "expected_close_date": "2025-11-01",
+    "actual_close_date": "2025-11-01",
+    "won_details": "Vertrag unterschrieben nach finaler Preisrunde."
   }
 }
 ```
 </Response>
+
+### Authentifizierung
+
+Senden Sie diesen Endpunkt aus einer angemeldeten Session. API-Keys werden für Aktualisierungen nicht akzeptiert.
 
 ### Pfadparameter
 
@@ -306,28 +560,60 @@ Eindeutige ID der Opportunity, die Sie aktualisieren möchten.
 
 ### Aktualisierbare Felder
 
-<ParamField body="title" param-type="string" required="false">
-Aktualisiert den Titel der Opportunity.
+<ParamField body="name" param-type="string" required="false">
+Aktualisiert den Namen der Opportunity.
 </ParamField>
 
-<ParamField body="value" param-type="number" required="false">
-Aktualisiert den monetären Wert der Opportunity.
+<ParamField body="companyId" param-type="string" required="false">
+Setzt oder ersetzt die verknüpfte Unternehmens-ID. Senden Sie `null`, um die Verknüpfung zu entfernen.
 </ParamField>
 
-<ParamField body="stage" param-type="string" required="false">
-Aktualisiert die aktuelle Phase der Opportunity.
+<ParamField body="primaryContactId" param-type="string" required="false">
+Setzt oder ersetzt die ID des primären Kontakts. Senden Sie `null`, um die Verknüpfung zu entfernen.
 </ParamField>
 
-<ParamField body="contact_id" param-type="string" required="false">
-Verknüpft die Opportunity mit einem anderen Kontakt oder aktualisiert die bestehende Zuordnung.
+<ParamField body="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
+Aktualisiert die Opportunity-Phase. Wenn Sie `won` oder `lost` setzen, trägt die API `actual_close_date` automatisch ein.
 </ParamField>
 
-<ParamField body="company_id" param-type="string" required="false">
-Verknüpft die Opportunity mit einem anderen Unternehmen oder aktualisiert die bestehende Zuordnung.
+<ParamField body="amount" param-type="number" required="false">
+Aktualisiert den Deal-Wert. Senden Sie `null`, um den Wert zu entfernen.
 </ParamField>
 
-<ParamField body="expected_close_date" param-type="string" required="false">
-Aktualisiert das erwartete Abschlussdatum.
+<ParamField body="currency" param-type="string" required="false">
+Aktualisiert den ISO-Währungscode.
+</ParamField>
+
+<ParamField body="probability" param-type="number" required="false">
+Aktualisiert die Abschlusswahrscheinlichkeit. Senden Sie `null`, um den Wert zu entfernen.
+</ParamField>
+
+<ParamField body="expectedCloseDate" param-type="string" required="false">
+Aktualisiert das erwartete Abschlussdatum im ISO-Format `YYYY-MM-DD`. Senden Sie `null`, um den Wert zu entfernen.
+</ParamField>
+
+<ParamField body="actualCloseDate" param-type="string" required="false">
+Setzt das tatsächliche Abschlussdatum im ISO-Format `YYYY-MM-DD`. Senden Sie `null`, um den Wert zu entfernen.
+</ParamField>
+
+<ParamField body="lostReason" param-type="string" required="false">
+Speichert den Verlustgrund. Senden Sie `null`, um den Wert zu entfernen.
+</ParamField>
+
+<ParamField body="wonDetails" param-type="string" required="false">
+Speichert zusätzliche Details zu einem gewonnenen Deal. Senden Sie `null`, um den Wert zu entfernen.
+</ParamField>
+
+<ParamField body="ownerUserId" param-type="string" required="false">
+Setzt oder ersetzt den zugewiesenen Owner. Senden Sie `null`, um die Zuweisung zu entfernen.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Aktualisiert Freitextnotizen zur Opportunity. Senden Sie `null`, um die Notizen zu entfernen.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Führt die gesendeten Werte in die Spalte `custom_fields` zusammen.
 </ParamField>
 
 ## DELETE /api/crm/opportunities/{id}
@@ -349,6 +635,10 @@ curl -X DELETE "https://api.talkturo.com/api/crm/opportunities/opp_4b29d7e1" \
 ```
 </Response>
 
+### Authentifizierung
+
+Senden Sie diesen Endpunkt aus einer angemeldeten Session. API-Keys werden für Löschvorgänge nicht akzeptiert.
+
 ### Pfadparameter
 
 <ParamField path="id" param-type="string" required="true">
@@ -366,20 +656,3 @@ Ist `true`, wenn die Opportunity erfolgreich gelöscht wurde.
 Das Löschen ist dauerhaft. Stellen Sie sicher, dass die Opportunity nicht mehr für Berichte, Automatisierungen oder Vertriebsprozesse benötigt wird.
 
 </Callout>
-
-## Verwandte Endpunkte
-
-<Columns cols={2}>
-  <Card
-    title="CRM-Contacts"
-    href="/de/api-reference/crm-contacts"
-    icon="users"
-    cta="Zur Referenz"
-  />
-  <Card
-    title="CRM-Companies"
-    href="/de/api-reference/crm-companies"
-    icon="database"
-    cta="Zur Referenz"
-  />
-</Columns>

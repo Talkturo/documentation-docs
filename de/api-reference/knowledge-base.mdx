@@ -1,21 +1,23 @@
 ---
 title: Wissensdatenbank
-description: Laden Sie Wissensdatenbank-Dateien für KI-Sprachassistenten über die Talkturo-API hoch, listen Sie sie auf und löschen Sie sie — verwalten Sie Dokumente, die retrievalbasierte Antworten während Anrufen ermöglichen.
+description: Verwalten Sie Wissensdatenbank-Dateien auf Konto- und Assistentenebene, mit Upload, Suche, Zuordnung und Löschung über die Talkturo-API.
 ---
 
 ## Wissensdatenbank-Endpunkte
 
-Verwalten Sie assistentenspezifische Wissensdatenbank-Dateien mit sitzungsauthentifizierten Endpunkten unter `/api/assistants/{assistantId}/knowledge-base`. Hochgeladene Dateien werden pro Assistent gespeichert und für Retrieval während Anrufen verarbeitet.
+Verwalten Sie Wissensdatenbank-Dateien in zwei Ebenen: als zentrale Bibliothek auf Kontoebene unter ` /api/kb/* ` und als Zuordnungen pro Assistent unter ` /api/assistants/{assistantId}/knowledge-base `.
 
 <Callout kind="info">
 
-Diese Endpunkte erfordern eine authentifizierte Browser-Sitzung. Sie verwenden keine API-Schlüssel-Authentifizierung.
+Alle Wissensdatenbank-Endpunkte akzeptieren entweder eine authentifizierte Browser-Sitzung oder einen API-Schlüssel.
+
+API-Schlüssel benötigen für Lesezugriffe auf `GET`-Endpunkte den Scope `kb:read` und für schreibende Anfragen auf `POST`- oder `DELETE`-Endpunkte den Scope `kb:write`.
 
 </Callout>
 
 <Callout kind="alert">
 
-Upload-Anfragen verwenden `multipart/form-data` und müssen ein Dateifeld enthalten. Die Dateiverarbeitung erfolgt nach dem Upload; eine neu hochgeladene Datei kann daher mit einem noch nicht bereiten `status` erscheinen, bevor sie für Retrieval verfügbar wird.
+Uploads verwenden `multipart/form-data`. Neu hochgeladene Dateien werden asynchron verarbeitet und können zunächst den Status `pending` oder `processing` zurückgeben, bevor sie für Suche und Retrieval bereit sind.
 
 </Callout>
 
@@ -23,29 +25,36 @@ Upload-Anfragen verwenden `multipart/form-data` und müssen ein Dateifeld enthal
 
 | Methode | Pfad | Zweck | Auth |
 | --- | --- | --- | --- |
-| `GET` | `/api/assistants/{assistantId}/knowledge-base` | Wissensdatenbank-Dateien eines Assistenten auflisten | Sitzungs-Cookie |
-| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Wissensdatenbank-Datei hochladen | Sitzungs-Cookie |
-| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Wissensdatenbank-Datei löschen | Sitzungs-Cookie |
-| `GET` | `/api/assistants/{assistantId}/billing/estimate` | Kostenschätzung für die Wissensdatenbank-Verarbeitung abrufen | Sitzungs-Cookie |
-| `GET` | `/api/kb` | Eigenständiger Wissensdatenbank-Abfrage-Endpunkt, sofern in Ihrer Deployment aktiviert | Prüfen Sie Ihre Deployment |
+| `GET` | `/api/kb/files` | Konten-KB-Dateien auflisten | Sitzung oder API-Key `kb:read` |
+| `POST` | `/api/kb/files` | Neue KB-Datei hochladen | Sitzung oder API-Key `kb:write` |
+| `GET` | `/api/kb/files/{fileId}` | Metadaten einer Datei abrufen | Sitzung oder API-Key `kb:read` |
+| `DELETE` | `/api/kb/files/{fileId}` | KB-Datei dauerhaft löschen | Sitzung oder API-Key `kb:write` |
+| `GET` | `/api/kb/files/{fileId}/download` | Signierte Download-URL abrufen | Sitzung oder API-Key `kb:read` |
+| `POST` | `/api/kb/files/{fileId}/reprocess` | Neu-Chunking und Neu-Embedding erzwingen | Sitzung oder API-Key `kb:write` |
+| `POST` | `/api/kb/search` | Semantische Suche über zugeordnete Dateien | Sitzung oder API-Key `kb:read` |
+| `GET` | `/api/assistants/{assistantId}/knowledge-base` | Zugeordnete Dateien auflisten | Sitzung oder API-Key `kb:read` |
+| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Bestehende KB-Datei zuordnen | Sitzung oder API-Key `kb:write` |
+| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Datei von Assistent entfernen | Sitzung oder API-Key `kb:write` |
 
-## Wissensdatenbank-Dateien auflisten
+## Konten-KB-Dateien auflisten
 
-Gibt alle einem Assistenten zugeordneten Wissensdatenbank-Dateien zurück.
+Rufen Sie alle Dateien in der Wissensdatenbank-Bibliothek Ihres Kontos ab.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl --request GET \
-  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
-  --cookie "sb-access-token=sb_example_session_token"
+  --url "https://app.talkturo.com/api/kb/files?include=attachment_count" \
+  --header "Authorization: Bearer tk_example_kb_read_9xmk7q2r"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  "https://app.talkturo.com/api/kb/files?include=attachment_count",
   {
     method: "GET",
-    credentials: "include",
+    headers: {
+      Authorization: "Bearer tk_example_kb_read_9xmk7q2r",
+    },
   }
 );
 
@@ -62,86 +71,260 @@ console.log(data);
     {
       "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
       "filename": "acme-pricing-guide.pdf",
-      "size": 248193,
-      "type": "application/pdf",
-      "status": "processed",
-      "created_at": "2026-02-11T14:22:09.000Z"
+      "mime_type": "application/pdf",
+      "size_bytes": 248193,
+      "status": "ready",
+      "status_error": null,
+      "char_count": 18342,
+      "chunk_count": 47,
+      "created_at": "2026-02-11T14:22:09.000Z",
+      "updated_at": "2026-02-11T14:23:41.000Z",
+      "attachment_count": 3
     },
     {
       "id": "4f6c291e-a60d-4ff3-9cb2-52e2b65f6b31",
       "filename": "returns-policy.docx",
-      "size": 91344,
-      "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "size_bytes": 91344,
       "status": "processing",
-      "created_at": "2026-02-11T14:24:51.000Z"
+      "status_error": null,
+      "char_count": null,
+      "chunk_count": null,
+      "created_at": "2026-02-11T14:24:51.000Z",
+      "updated_at": "2026-02-11T14:24:53.000Z",
+      "attachment_count": 1
     }
   ]
 }
 ```
 </Response>
 
-### Pfadparameter
+### Query-Parameter
 
-<ParamField path="assistantId" param-type="uuid" required="true">
-Assistentenkennung. Die zurückgegebene Dateiliste ist auf diesen Assistenten beschränkt.
+<ParamField query="include" param-type="string" required="false" enum="attachment_count">
+Erweitert die Antwort um zusätzliche Felder. Verwenden Sie `attachment_count`, um die Anzahl der Assistenten-Zuordnungen pro Datei einzuschließen.
 </ParamField>
 
 ### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true">
-Gibt `true` zurück, wenn die Anfrage erfolgreich ist.
+Gibt `true` zurück, wenn die Anfrage erfolgreich war.
 </ResponseField>
 
 <ResponseField name="files" field-type="array" required="true">
-Liste der dem Assistenten zugeordneten Wissensdatenbank-Dateien.
+Liste der Wissensdatenbank-Dateien in Ihrer Kontobibliothek.
 </ResponseField>
 
 <ResponseField name="files[].id" field-type="uuid" required="true">
-Eindeutige Dateikennung. Verwenden Sie diesen Wert beim Löschen einer Datei.
+Eindeutige Dateikennung.
 </ResponseField>
 
 <ResponseField name="files[].filename" field-type="string" required="true">
-Ursprünglicher Dateiname beim Upload.
+Ursprünglicher Dateiname der hochgeladenen Datei.
 </ResponseField>
 
-<ResponseField name="files[].size" field-type="number" required="true">
-Dateigröße in Bytes.
-</ResponseField>
-
-<ResponseField name="files[].type" field-type="string" required="true">
+<ResponseField name="files[].mime_type" field-type="string" required="true">
 Erkannter MIME-Typ der Datei.
 </ResponseField>
 
+<ResponseField name="files[].size_bytes" field-type="number" required="true">
+Dateigröße in Bytes.
+</ResponseField>
+
 <ResponseField name="files[].status" field-type="string" required="true">
-Verarbeitungsstatus der Datei. Nutzen Sie dieses Feld, um zu erkennen, ob die Datei noch verarbeitet wird oder für Retrieval bereit ist.
+Verarbeitungsstatus der Datei. Mögliche Werte sind `pending`, `processing`, `ready` und `failed`.
+</ResponseField>
+
+<ResponseField name="files[].status_error" field-type="string | null" required="true">
+Fehlerbeschreibung aus der Verarbeitungspipeline oder `null`, wenn kein Fehler vorliegt.
+</ResponseField>
+
+<ResponseField name="files[].char_count" field-type="number | null" required="true">
+Anzahl der extrahierten Zeichen oder `null`, solange die Verarbeitung noch nicht abgeschlossen ist.
+</ResponseField>
+
+<ResponseField name="files[].chunk_count" field-type="number | null" required="true">
+Anzahl der erzeugten Chunks oder `null`, solange die Verarbeitung noch nicht abgeschlossen ist.
 </ResponseField>
 
 <ResponseField name="files[].created_at" field-type="string" required="true">
-Zeitstempel, wann die Datei hochgeladen wurde.
+Zeitstempel der Erstellung.
 </ResponseField>
 
-## Wissensdatenbank-Datei hochladen
+<ResponseField name="files[].updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung.
+</ResponseField>
 
-Laden Sie eine Datei mit `multipart/form-data` in die Wissensdatenbank eines Assistenten hoch.
+<ResponseField name="files[].attachment_count" field-type="number" required="false">
+Anzahl der Assistenten, denen die Datei zugeordnet ist. Dieses Feld ist nur enthalten, wenn `include=attachment_count` gesetzt ist.
+</ResponseField>
+
+## Konten-KB-Datei hochladen
+
+Laden Sie eine neue Datei in die Wissensdatenbank-Bibliothek Ihres Kontos hoch.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl --request POST \
-  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
-  --cookie "sb-access-token=sb_example_session_token" \
+  --url "https://app.talkturo.com/api/kb/files" \
+  --header "Authorization: Bearer tk_example_kb_write_4rf8m2qa" \
   --form "file=@./docs/acme-support-playbook.pdf"
 ```
 
 ```javascript
 const formData = new FormData();
-formData.append("file", fileInput.files[0]);
+formData.append("file", kbFile);
 
+const response = await fetch("https://app.talkturo.com/api/kb/files", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_example_kb_write_4rf8m2qa",
+  },
+  body: formData,
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200 normal,200 dedupliziert,402">
+```json
+{
+  "success": true,
+  "credits_charged": 0,
+  "file": {
+    "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    "filename": "acme-support-playbook.pdf",
+    "mime_type": "application/pdf",
+    "size_bytes": 248193,
+    "status": "pending"
+  }
+}
+```
+
+```json
+{
+  "success": true,
+  "file": {
+    "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    "status": "ready"
+  },
+  "deduplicated": true,
+  "message": "Identical file already in your library — reusing existing record."
+}
+```
+
+```json
+{
+  "error": "Insufficient credits for knowledge base storage",
+  "reason": "insufficient_credits",
+  "required_credits": 2,
+  "balance": 0
+}
+```
+</Response>
+
+Die ersten 50 MB Speicher sind frei. Für jede weiteren 50 MB werden 1 Credit berechnet.
+
+<Callout kind="info">
+
+Der Upload akzeptiert PDF-, DOCX-, DOC-, TXT- und Markdown-Dateien mit bis zu 1 GB Größe.
+
+</Callout>
+
+### Body-Parameter
+
+<ParamField body="file" param-type="file" required="true">
+Datei für den Upload als `multipart/form-data`. Die maximale Größe beträgt 1 GB.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Upload angenommen oder eine identische Datei wiederverwendet wurde.
+</ResponseField>
+
+<ResponseField name="credits_charged" field-type="number" required="false">
+Anzahl der für diesen Upload berechneten Credits. Dieses Feld ist in der regulären Erfolgsversion enthalten.
+</ResponseField>
+
+<ResponseField name="file" field-type="object" required="true">
+Metadaten der hochgeladenen oder wiederverwendeten Datei.
+</ResponseField>
+
+<ResponseField name="file.id" field-type="uuid" required="true">
+Eindeutige Dateikennung.
+</ResponseField>
+
+<ResponseField name="file.filename" field-type="string" required="false">
+Ursprünglicher Dateiname. Dieses Feld fehlt in der deduplizierten Kurzantwort.
+</ResponseField>
+
+<ResponseField name="file.mime_type" field-type="string" required="false">
+Erkannter MIME-Typ. Dieses Feld fehlt in der deduplizierten Kurzantwort.
+</ResponseField>
+
+<ResponseField name="file.size_bytes" field-type="number" required="false">
+Dateigröße in Bytes. Dieses Feld fehlt in der deduplizierten Kurzantwort.
+</ResponseField>
+
+<ResponseField name="file.status" field-type="string" required="true">
+Aktueller Verarbeitungsstatus der Datei.
+</ResponseField>
+
+<ResponseField name="deduplicated" field-type="boolean" required="false">
+Gibt `true` zurück, wenn eine identische Datei bereits in Ihrer Bibliothek vorhanden war.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="false">
+Menschenlesbare Beschreibung der Deduplizierung.
+</ResponseField>
+
+<ResponseField name="error" field-type="string" required="false">
+Fehlermeldung bei nicht erfolgreicher Anfrage, zum Beispiel bei unzureichendem Credit-Guthaben.
+</ResponseField>
+
+<ResponseField name="reason" field-type="string" required="false">
+Maschinenlesbarer Fehlergrund. Bei fehlenden Credits ist der Wert `insufficient_credits`.
+</ResponseField>
+
+<ResponseField name="required_credits" field-type="number" required="false">
+Zusätzliche Credits, die für den Upload erforderlich wären.
+</ResponseField>
+
+<ResponseField name="balance" field-type="number" required="false">
+Aktuelles Credit-Guthaben des Kontos.
+</ResponseField>
+
+### Fehlercodes
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | Ungültige oder fehlende Upload-Daten |
+| `402` | Nicht genügend Credits für zusätzlichen Speicher |
+| `413` | Datei überschreitet die maximale Größe |
+| `415` | Dateityp wird nicht unterstützt |
+
+## Konten-KB-Datei abrufen
+
+Rufen Sie Metadaten für eine einzelne Datei in Ihrer Kontobibliothek ab.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --header "Authorization: Bearer tk_example_kb_read_9xmk7q2r"
+```
+
+```javascript
 const response = await fetch(
-  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
   {
-    method: "POST",
-    body: formData,
-    credentials: "include",
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_example_kb_read_9xmk7q2r",
+    },
   }
 );
 
@@ -156,38 +339,34 @@ console.log(data);
   "success": true,
   "file": {
     "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
-    "filename": "acme-support-playbook.pdf",
-    "size": 248193,
-    "type": "application/pdf",
-    "status": "processing",
-    "created_at": "2026-02-11T14:22:09.000Z"
+    "filename": "acme-pricing-guide.pdf",
+    "mime_type": "application/pdf",
+    "size_bytes": 248193,
+    "status": "ready",
+    "status_error": null,
+    "char_count": 18342,
+    "chunk_count": 47,
+    "created_at": "2026-02-11T14:22:09.000Z",
+    "updated_at": "2026-02-11T14:23:41.000Z"
   }
 }
 ```
 </Response>
 
-Ein erfolgreicher Upload bestätigt, dass die Datei angenommen und zur Verarbeitung eingereiht wurde. Prüfen Sie den Datei-`status` über den Listen-Endpunkt, wenn Ihr Workflow warten muss, bis die Verarbeitung abgeschlossen ist.
-
 ### Pfadparameter
 
-<ParamField path="assistantId" param-type="uuid" required="true">
-Assistentenkennung, der die hochgeladene Datei gehören soll.
-</ParamField>
-
-### Body-Parameter
-
-<ParamField body="file" param-type="binary" required="true">
-Die hochzuladende Datei, gesendet als `multipart/form-data`-Feld.
+<ParamField path="fileId" param-type="uuid" required="true">
+Kennung der Wissensdatenbank-Datei.
 </ParamField>
 
 ### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true">
-Gibt `true` zurück, wenn der Upload angenommen wird.
+Gibt `true` zurück, wenn die Datei gefunden wurde.
 </ResponseField>
 
 <ResponseField name="file" field-type="object" required="true">
-Metadaten der hochgeladenen Datei.
+Metadaten der angeforderten Datei.
 </ResponseField>
 
 <ResponseField name="file.id" field-type="uuid" required="true">
@@ -195,50 +374,82 @@ Eindeutige Dateikennung.
 </ResponseField>
 
 <ResponseField name="file.filename" field-type="string" required="true">
-Ursprünglicher Dateiname beim Upload.
+Ursprünglicher Dateiname.
 </ResponseField>
 
-<ResponseField name="file.size" field-type="number" required="true">
-Dateigröße in Bytes.
-</ResponseField>
-
-<ResponseField name="file.type" field-type="string" required="true">
+<ResponseField name="file.mime_type" field-type="string" required="true">
 Erkannter MIME-Typ der Datei.
 </ResponseField>
 
+<ResponseField name="file.size_bytes" field-type="number" required="true">
+Dateigröße in Bytes.
+</ResponseField>
+
 <ResponseField name="file.status" field-type="string" required="true">
-Anfänglicher Verarbeitungsstatus nach dem Upload.
+Aktueller Verarbeitungsstatus.
+</ResponseField>
+
+<ResponseField name="file.status_error" field-type="string | null" required="true">
+Fehlermeldung aus der Verarbeitung oder `null`.
+</ResponseField>
+
+<ResponseField name="file.char_count" field-type="number | null" required="true">
+Anzahl der extrahierten Zeichen oder `null`.
+</ResponseField>
+
+<ResponseField name="file.chunk_count" field-type="number | null" required="true">
+Anzahl der erzeugten Chunks oder `null`.
 </ResponseField>
 
 <ResponseField name="file.created_at" field-type="string" required="true">
-Zeitstempel, wann die Datei erstellt wurde.
+Zeitstempel der Erstellung.
 </ResponseField>
 
-## Wissensdatenbank-Datei löschen
+<ResponseField name="file.updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung.
+</ResponseField>
 
-Entfernen Sie eine Datei aus der Wissensdatenbank eines Assistenten.
+## Konten-KB-Datei löschen
 
+Löschen Sie eine Datei dauerhaft aus Ihrer Kontobibliothek.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl --request DELETE \
-  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
-  --cookie "sb-access-token=sb_example_session_token"
+  --url "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --header "Authorization: Bearer tk_example_kb_write_4rf8m2qa"
 ```
 
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer tk_example_kb_write_4rf8m2qa",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
 ```json
 {
-  "success": true,
-  "message": "File deleted"
+  "success": true
 }
 ```
+</Response>
+
+Ein Hard Delete entfernt die Datei aus der Datenbank, löscht gespeicherte Blobs und entfernt zugehörige Chunks aus der Vektor-Datenbank.
 
 ### Pfadparameter
 
-<ParamField path="assistantId" param-type="uuid" required="true">
-Assistentenkennung, der die Datei gehört.
-</ParamField>
-
 <ParamField path="fileId" param-type="uuid" required="true">
-Kennung der zu löschenden Wissensdatenbank-Datei.
+Kennung der dauerhaft zu löschenden Datei.
 </ParamField>
 
 ### Antwortfelder
@@ -247,92 +458,499 @@ Kennung der zu löschenden Wissensdatenbank-Datei.
 Gibt `true` zurück, wenn die Datei entfernt wurde.
 </ResponseField>
 
-<ResponseField name="message" field-type="string" required="true">
-Menschenlesbares Löschergebnis.
-</ResponseField>
+## Signierte Download-URL abrufen
 
-## Abrechnungsschätzung abrufen
+Erzeugen Sie eine zeitlich begrenzte URL, um die Originaldatei herunterzuladen.
 
-Rufen Sie die Abrechnungsschätzung für die Wissensdatenbank-Verarbeitung eines Assistenten ab.
-
+<Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl --request GET \
-  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/billing/estimate" \
-  --cookie "sb-access-token=sb_example_session_token"
+  --url "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/download" \
+  --header "Authorization: Bearer tk_example_kb_read_9xmk7q2r"
 ```
 
-Die Antwort enthält ein Erfolgsflag und ein `estimate`-Objekt.
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/download",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_example_kb_read_9xmk7q2r",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "url": "https://storage.talkturousercontent.com/kb/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/download?signature=kb_example_sig_72hs9",
+  "filename": "acme-pricing-guide.pdf"
+}
+```
+</Response>
+
+Die signierte URL ist 5 Minuten gültig.
 
 ### Pfadparameter
 
-<ParamField path="assistantId" param-type="uuid" required="true">
-Assistentenkennung, anhand derer die Schätzung berechnet wird.
+<ParamField path="fileId" param-type="uuid" required="true">
+Kennung der Datei, für die eine Download-URL erzeugt werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="url" field-type="string" required="true">
+Signierte Download-URL mit einer Gültigkeit von 5 Minuten.
+</ResponseField>
+
+<ResponseField name="filename" field-type="string" required="true">
+Dateiname der angeforderten Datei.
+</ResponseField>
+
+## KB-Datei neu verarbeiten
+
+Starten Sie die vollständige Parse-, Chunk-, Embedding- und Index-Pipeline für eine bestehende Datei erneut.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/reprocess" \
+  --header "Authorization: Bearer tk_example_kb_write_4rf8m2qa"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/reprocess",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer tk_example_kb_write_4rf8m2qa",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="fileId" param-type="uuid" required="true">
+Kennung der Datei, die erneut verarbeitet werden soll.
 </ParamField>
 
 ### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true">
-Gibt `true` zurück, wenn die Schätzung verfügbar ist.
+Gibt `true` zurück, wenn die Neuverarbeitung gestartet wurde.
 </ResponseField>
 
-<ResponseField name="estimate" field-type="object" required="true">
-Details der Abrechnungsschätzung für die Wissensdatenbank-Verarbeitung. Die Objektstruktur hängt von der aktuellen Abrechnungsimplementierung ab.
+## Semantische Suche
+
+Durchsuchen Sie die einem Assistenten zugeordneten und verarbeiteten Wissensdatenbank-Dateien semantisch.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/kb/search" \
+  --header "Authorization: Bearer tk_example_kb_read_9xmk7q2r" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "assistant_id": "9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2",
+    "query": "Wie funktioniert die Rückerstattungsfrist für Enterprise-Kunden?",
+    "top_k": 3
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/kb/search", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_example_kb_read_9xmk7q2r",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    assistant_id: "9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2",
+    query: "Wie funktioniert die Rückerstattungsfrist für Enterprise-Kunden?",
+    top_k: 3,
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200 Treffer,200 no_files_attached,200 no_ready_files">
+```json
+{
+  "success": true,
+  "hits": [
+    {
+      "rank": 1,
+      "file_id": "4f6c291e-a60d-4ff3-9cb2-52e2b65f6b31",
+      "filename": "returns-policy.docx",
+      "chunk_index": 12,
+      "page_number": 3,
+      "content": "Enterprise-Kunden können innerhalb von 45 Tagen nach Vertragsbeginn eine anteilige Rückerstattung beantragen, sofern keine produktspezifischen Ausschlüsse gelten.",
+      "similarity": 0.9321,
+      "match_type": "semantic",
+      "adjacent": [
+        "Anträge müssen schriftlich eingereicht werden.",
+        "Die Erstattung erfolgt innerhalb von 10 Werktagen."
+      ]
+    }
+  ]
+}
+```
+
+```json
+{
+  "success": true,
+  "hits": [],
+  "reason": "no_files_attached"
+}
+```
+
+```json
+{
+  "success": true,
+  "hits": [],
+  "reason": "no_ready_files"
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="assistant_id" param-type="uuid" required="true">
+Kennung des Assistenten. Der Assistent muss zu Ihrem Konto gehören.
+</ParamField>
+
+<ParamField body="query" param-type="string" required="true">
+Suchanfrage mit 1 bis 2000 Zeichen.
+</ParamField>
+
+<ParamField body="top_k" param-type="integer" required="false">
+Maximale Anzahl der Treffer. Gültige Werte liegen zwischen 1 und 20. Standard ist `6`.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Suche ausgeführt wurde.
 </ResponseField>
 
-## Eigenständiger Wissensdatenbank-Endpunkt
+<ResponseField name="hits" field-type="array" required="true">
+Liste der gefundenen Chunks. Die Liste kann leer sein.
+</ResponseField>
 
-Einige Deployments stellen möglicherweise einen separaten Endpunkt `GET /api/kb` für eigenständige Wissensdatenbank-Abfragen bereit.
+<ResponseField name="hits[].rank" field-type="number" required="true">
+Rang des Treffers in der Ergebnisliste.
+</ResponseField>
 
-<Callout kind="info">
+<ResponseField name="hits[].file_id" field-type="uuid" required="true">
+Kennung der Quelldatei.
+</ResponseField>
 
-Der Repository-Kontext für diese Seite bestätigt die assistentenspezifischen Endpunkte zur Verwaltung der Wissensdatenbank. Er liefert kein verifiziertes Anfrage- oder Antwortschema für `GET /api/kb`. Prüfen Sie Ihre deployte API oder interne Routendefinitionen, bevor Sie diesen Endpunkt in der Produktion verwenden.
+<ResponseField name="hits[].filename" field-type="string" required="true">
+Dateiname der Quelldatei.
+</ResponseField>
 
-</Callout>
+<ResponseField name="hits[].chunk_index" field-type="number" required="true">
+Index des passenden Chunks innerhalb der Datei.
+</ResponseField>
 
-Falls `GET /api/kb` in Ihrer Umgebung existiert, behandeln Sie ihn getrennt von der Dateiverwaltung für Assistenten. Er ersetzt nicht die oben dokumentierten Upload-, Listen- oder Lösch-Endpunkte.
+<ResponseField name="hits[].page_number" field-type="number | null" required="true">
+Seitenzahl des Treffers, falls für das Dateiformat verfügbar.
+</ResponseField>
+
+<ResponseField name="hits[].content" field-type="string" required="true">
+Inhalt des passenden Chunks.
+</ResponseField>
+
+<ResponseField name="hits[].similarity" field-type="number" required="true">
+Ähnlichkeitswert für den Treffer.
+</ResponseField>
+
+<ResponseField name="hits[].match_type" field-type="string" required="true">
+Art des Matches, zum Beispiel `semantic`.
+</ResponseField>
+
+<ResponseField name="hits[].adjacent" field-type="array" required="true">
+Benachbarte Textsegmente zur besseren Einordnung des Treffers.
+</ResponseField>
+
+<ResponseField name="reason" field-type="string" required="false">
+Optionaler Grund für leere Trefferlisten. Mögliche Werte sind `no_files_attached` und `no_ready_files`.
+</ResponseField>
+
+## Zugeordnete Dateien eines Assistenten auflisten
+
+Rufen Sie die Wissensdatenbank-Dateien ab, die einem bestimmten Assistenten bereits zugeordnet sind.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
+  --header "Authorization: Bearer tk_example_kb_read_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_example_kb_read_9xmk7q2r",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "files": [
+    {
+      "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+      "filename": "acme-pricing-guide.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 248193,
+      "status": "ready",
+      "status_error": null,
+      "char_count": 18342,
+      "chunk_count": 47,
+      "created_at": "2026-02-11T14:22:09.000Z",
+      "updated_at": "2026-02-11T14:23:41.000Z"
+    }
+  ]
+}
+```
+</Response>
+
+Die Antwortform entspricht der Kontenliste, ist aber auf einen einzelnen Assistenten beschränkt.
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Kennung des Assistenten, dessen zugeordnete Dateien aufgelistet werden sollen.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="files" field-type="array" required="true">
+Liste der diesem Assistenten zugeordneten Wissensdatenbank-Dateien.
+</ResponseField>
+
+<ResponseField name="files[].id" field-type="uuid" required="true">
+Eindeutige Dateikennung.
+</ResponseField>
+
+<ResponseField name="files[].filename" field-type="string" required="true">
+Ursprünglicher Dateiname.
+</ResponseField>
+
+<ResponseField name="files[].mime_type" field-type="string" required="true">
+Erkannter MIME-Typ der Datei.
+</ResponseField>
+
+<ResponseField name="files[].size_bytes" field-type="number" required="true">
+Dateigröße in Bytes.
+</ResponseField>
+
+<ResponseField name="files[].status" field-type="string" required="true">
+Verarbeitungsstatus der Datei.
+</ResponseField>
+
+<ResponseField name="files[].status_error" field-type="string | null" required="true">
+Fehler aus der Verarbeitung oder `null`.
+</ResponseField>
+
+<ResponseField name="files[].char_count" field-type="number | null" required="true">
+Anzahl der extrahierten Zeichen oder `null`.
+</ResponseField>
+
+<ResponseField name="files[].chunk_count" field-type="number | null" required="true">
+Anzahl der erzeugten Chunks oder `null`.
+</ResponseField>
+
+<ResponseField name="files[].created_at" field-type="string" required="true">
+Zeitstempel der Erstellung.
+</ResponseField>
+
+<ResponseField name="files[].updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung.
+</ResponseField>
+
+## Bestehende KB-Datei einem Assistenten zuordnen
+
+Ordnen Sie eine bereits in der Kontobibliothek vorhandene Datei einem Assistenten zu.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
+  --header "Authorization: Bearer tk_example_kb_write_4rf8m2qa" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "file_id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer tk_example_kb_write_4rf8m2qa",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      file_id: "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    }),
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+Die Zuordnung ist idempotent. Wenn die Datei bereits dem Assistenten zugeordnet ist, bleibt die Anfrage erfolgreich und erzeugt kein Duplikat.
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Kennung des Assistenten, dem die Datei zugeordnet werden soll.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="file_id" param-type="uuid" required="true">
+Kennung einer bestehenden Datei aus der Konten-Wissensdatenbank.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Datei zugeordnet ist oder bereits zugeordnet war.
+</ResponseField>
+
+## Datei von Assistent entfernen
+
+Entfernen Sie die Zuordnung einer Datei zu einem Assistenten, ohne die Datei aus der Kontobibliothek zu löschen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --header "Authorization: Bearer tk_example_kb_write_4rf8m2qa"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer tk_example_kb_write_4rf8m2qa",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Kennung des Assistenten, von dem die Datei entfernt werden soll.
+</ParamField>
+
+<ParamField path="fileId" param-type="uuid" required="true">
+Kennung der zu entfernenden Datei.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Zuordnung entfernt wurde.
+</ResponseField>
 
 ## Typischer Workflow
 
-Verwenden Sie die Wissensdatenbank-Endpunkte in dieser Reihenfolge, wenn Sie die Dokumentenverwaltung automatisieren:
+Verwenden Sie die Wissensdatenbank-Endpunkte in dieser Reihenfolge, wenn Sie Dokumente für Retrieval bereitstellen möchten:
 
 <Steps>
-<Step title="Datei hochladen" icon="upload">
+<Step title="Datei in die Kontobibliothek hochladen" icon="upload">
 
-Senden Sie eine `POST`-Anfrage mit `multipart/form-data` an den Wissensdatenbank-Endpunkt des Assistenten.
+Senden Sie die Datei an `POST /api/kb/files`.
 
-Erfolg sieht aus wie eine Antwort mit `success: true` und einem `file`-Objekt.
-
-</Step>
-<Step title="Verarbeitungsstatus abfragen" icon="check-circle">
-
-Rufen Sie `GET /api/assistants/{assistantId}/knowledge-base` auf und prüfen Sie den `status` jeder Datei.
-
-Ihr Workflow kann fortfahren, sobald die hochgeladene Datei in der Liste erscheint und der Status anzeigt, dass die Verarbeitung abgeschlossen ist.
+Erfolg sieht aus wie eine Antwort mit `success: true` und einem `file`-Objekt mit Status `pending`, oder mit `deduplicated: true`, wenn dieselbe Datei bereits vorhanden ist.
 
 </Step>
-<Step title="Verarbeitungskosten bei Bedarf schätzen" icon="bar-chart">
+<Step title="Verarbeitung abwarten" icon="check-circle">
 
-Rufen Sie `GET /api/assistants/{assistantId}/billing/estimate` vor oder nach dem Upload auf, wenn Sie Abrechnungstransparenz für die Wissensdatenbank-Nutzung des Assistenten benötigen.
+Rufen Sie `GET /api/kb/files` oder `GET /api/kb/files/{fileId}` auf und prüfen Sie das Feld `status`.
 
-Erfolg sieht aus wie eine Antwort mit `success: true` und einem `estimate`-Objekt.
+Ihr Workflow kann fortfahren, sobald die Datei den Status `ready` erreicht hat. Bei `failed` prüfen Sie `status_error`.
 
 </Step>
-<Step title="Veraltete Dateien entfernen" icon="trash">
+<Step title="Datei einem Assistenten zuordnen" icon="users">
 
-Löschen Sie Dateien, die der Assistent nicht mehr verwenden soll, mit `DELETE /api/assistants/{assistantId}/knowledge-base/{fileId}`.
+Ordnen Sie die verarbeitete Datei mit `POST /api/assistants/{assistantId}/knowledge-base` einem Assistenten zu.
 
-Eine erfolgreiche Löschung gibt `success: true` und eine Bestätigungsnachricht zurück.
+Erfolg sieht aus wie eine Antwort mit `success: true`.
+
+</Step>
+<Step title="Semantische Suche ausführen" icon="search">
+
+Senden Sie Ihre Suchanfrage an `POST /api/kb/search`, um Treffer aus den dem Assistenten zugeordneten Dateien abzurufen.
+
+Erfolg sieht aus wie eine Antwort mit `success: true` und einem `hits`-Array.
 
 </Step>
 </Steps>
-
-## Verwandte Endpunkte
-
-<Columns cols={2}>
-  <Card title="Tool-Konfigurationen" href="/de/api-reference/tool-configs" icon="settings" cta="Referenz ansehen">
-  Das Verhalten der Wissensdatenbank kann auch mit der Tool-Konfiguration des Assistenten interagieren.
-  </Card>
-  <Card title="Assistenten" href="/de/api-reference/assistants" icon="users" cta="Referenz ansehen">
-  Verwalten Sie die Assistenten-Ressource, der jede Wissensdatenbank-Datei gehört.
-  </Card>
-</Columns>
