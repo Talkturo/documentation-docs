@@ -8,6 +8,28 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-14" description="v2.5.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Detaillierte Carrier-Ablehnung pro Dokument** — Wenn ein Carrier ein Verifizierungsdokument ablehnt, siehst du jetzt genau, welches Dokument abgelehnt wurde und warum, und kannst nur dieses Dokument ersetzen, statt den gesamten Antrag neu einzureichen. Siehe [Telefonie](/de/telephony).
+  - **Carrier-Anforderungen im Vergleich** — Vor der Auswahl eines Carriers für die regulatorische Verifizierung siehst du eine Seiten-an-Seiten-Übersicht, was jeder Carrier verlangt — Anzahl der Positionen und Dokumente —, damit du die einfachere Option vorab wählen kannst. Siehe [Telefonie](/de/telephony).
+  - **Adressbasierte Stadt für Verifizierung** — Die Verifizierungsstadt wird jetzt aus der eingegebenen Adresse abgeleitet statt aus einem Dropdown-Menü. Das verhindert stille Fehler und unterstützt Unternehmen mit Sitz in beliebigen Städten. Eine „Weiteren Standort hinzufügen"-Schaltfläche ermöglicht Unternehmen mit mehreren Büros separate Verifizierungen einzureichen. Siehe [Telefonie](/de/telephony).
+  - **„Beim Carrier nachprüfen"-Schaltfläche** — Löse manuell eine Live-Statusabfrage beim Carrier für ausstehende Verifizierungen aus, anstatt auf die nächste automatische Synchronisation zu warten. Siehe [Telefonie](/de/telephony).
+
+  ## Verbesserungen
+
+  - **Vollständige Antragsdetails im Admin-Review** — Admin-Prüfer sehen jetzt alle eingereichten Formularfelder — Firmenname, Registernummer, Vertreterdetails, Adresse und Kommentare — neben den hochgeladenen Dokumenten. Eine Warnung hebt hervor, wenn die E-Mail-Domain des Vertreters nicht zur Unternehmensdomain passt, was eine häufige Ursache für regulatorische Ablehnungen ist. Siehe [Telefonie](/de/telephony).
+  - **TTS-Sprachkatalog-Synchronisation** — Behoben: Ein stiller Synchronisationsfehler, der den Sprachkatalog veralten ließ. Sprachanbieter werden jetzt nacheinander mit Live-Fortschrittsanzeige synchronisiert, und bestehende Stimmen sind vor versehentlichem Löschen während der Synchronisation geschützt. Siehe [Sprachbibliothek](/de/voice-library).
+  - **Zuverlässigkeit der Abrechnungs-Webhooks** — Abrechnungs-Webhooks haben jetzt ein erweitertes Laufzeitbudget und begrenzte externe API-Aufrufe, was die Wahrscheinlichkeit verpasster Abrechnungsereignisse in Spitzenzeiten verringert. Siehe [Abrechnung](/de/billing).
+
+  ## Bugfixes
+
+  - **Anrufpreis für LLM und TTS** — Behoben: LLM- und TTS-Anrufkosten wurden aufgrund fehlender Katalogeinträge still als null berechnet. Anrufe enthalten jetzt korrekt LLM-, TTS- und STT-Kosten. Siehe [Abrechnung](/de/billing).
+  - **Nachprüf-Schaltfläche bei Blockierung** — Die Schaltfläche „Beim Carrier nachprüfen" ist jetzt auch verfügbar, wenn ein Antrag blockiert auf eine Carrier-Antwort wartet — genau dann, wenn sie am nützlichsten ist.
+  - **Admin-Impersonation-Logout** — Behoben: Ein intermittierendes Problem, bei dem der Admin-Kontenwechsel dich abmeldete statt das Konto zu wechseln.
+  - **Scrollbarkeit des Prüfungsdialogs** — Der Admin-Verifizierungsprüfungsdialog scrollt jetzt, wenn der Inhalt den Bildschirm überschreitet, sodass Aktionsbuttons erreichbar bleiben.
+</Update>
+
 <Update label="2026-08-13" description="v2.4.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
