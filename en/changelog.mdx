@@ -8,6 +8,25 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-15" description="v2.6.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Switzerland available for phone number purchase** — Switzerland is now available for buying phone numbers. Regulatory verification is required, and number search automatically shows only countries the selected carrier serves. See [Telephony](/en/telephony).
+  - **Canton and state dropdowns in verification address** — Swiss cantons (26) and German federal states are now selectable from a dropdown instead of free-text entry, preventing rejections caused by misspelling. See [Telephony](/en/telephony).
+  - **Email-domain enforcement for verification** — The authorized representative's email must match your business website's domain. Submissions with mismatched domains are blocked before they reach the carrier, preventing a common cause of regulatory rejection. See [Telephony](/en/telephony).
+  - **Admin impersonation return banner** — Admins impersonating a user now see a banner with a one-click "Switch back" button to return to their admin account without signing in again.
+
+  ## Improvements
+
+  - **Verification limited to supported carriers** — Only carriers that can complete the verification process end-to-end are offered for regulatory verification, preventing you from selecting a carrier that can't process your filing. See [Telephony](/en/telephony).
+  - **Gmail integration: send-only OAuth scope** — Reduced Google OAuth permissions from full mailbox access to send-only, minimizing data access for compliance. See [Integrations](/en/integrations).
+
+  ## Bug Fixes
+
+  - **SIP trunk connectivity** — Fixed a critical issue where calls failed because the SIP endpoint pointed to the wrong server. Stale trunk URIs that were routing calls to a dead endpoint have been removed. See [Telephony](/en/telephony).
+  - **Post-approval number purchase** — Fixed a bug where the first phone number purchase after a compliance approval failed because the address reference wasn't saved during submission. See [Telephony](/en/telephony).
+</Update>
+
 <Update label="2026-08-14" description="v2.5.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 

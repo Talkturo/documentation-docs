@@ -8,6 +8,25 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-15" description="v2.6.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Schweiz für Telefonnummernkauf verfügbar** — Die Schweiz ist jetzt für den Kauf von Telefonnummern verfügbar. Eine regulatorische Verifizierung ist erforderlich, und die Nummernsuche zeigt automatisch nur Länder an, die der ausgewählte Carrier bedient. Siehe [Telefonie](/de/telephony).
+  - **Kanton- und Bundesland-Dropdowns im Verifizierungsadresse** — Schweizer Kantone (26) und deutsche Bundesländer sind jetzt über ein Dropdown auswählbar statt als Freitexteingabe, was Ablehnungen durch Tippfehler verhindert. Siehe [Telefonie](/de/telephony).
+  - **E-Mail-Domain-Prüfung bei der Verifizierung** — Die E-Mail-Adresse des autorisierten Vertreters muss zur Domain deiner Unternehmenswebsite passen. Anträge mit nicht übereinstimmenden Domains werden blockiert, bevor sie den Carrier erreichen, was eine häufige Ursache für regulatorische Ablehnungen verhindert. Siehe [Telefonie](/de/telephony).
+  - **Admin-Impersonation-Rückkehr-Banner** — Administratoren, die als anderer Benutzer agieren, sehen jetzt ein Banner mit einem Ein-Klick-„Zurück wechseln\"-Button, um zum Admin-Konto zurückzukehren, ohne sich erneut anmelden zu müssen.
+
+  ## Verbesserungen
+
+  - **Verifizierung auf unterstützte Carrier beschränkt** — Für die regulatorische Verifizierung werden nur Carrier angeboten, die den Verifizierungsprozess vollständig durchlaufen können, sodass du keinen Carrier auswählen kannst, der deinen Antrag nicht bearbeiten kann. Siehe [Telefonie](/de/telephony).
+  - **Gmail-Integration: Nur Senden-OAuth-Scope** — Google-OAuth-Berechtigungen vom vollständigen Postfachzugriff auf Nur-Senden reduziert, was den Datenzugriff für Compliance minimiert. Siehe [Integrationen](/de/integrations).
+
+  ## Bugfixes
+
+  - **SIP-Trunk-Konnektivität** — Behoben: Ein kritisches Problem, bei dem Anrufe fehlschlugen, weil der SIP-Endpunkt auf den falschen Server verwies. Veraltete Trunk-URIs, die Anrufe an einen toten Endpunkt leiteten, wurden entfernt. Siehe [Telefonie](/de/telephony).
+  - **Telefonnummernkauf nach Freigabe** — Behoben: Der erste Telefonnummernkauf nach einer Compliance-Freigabe schlug fehl, weil die Adressreferenz bei der Einreichung nicht gespeichert wurde. Siehe [Telefonie](/de/telephony).
+</Update>
+
 <Update label="2026-08-14" description="v2.5.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
