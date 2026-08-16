@@ -8,6 +8,29 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-16" description="v2.6.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Gmail-Integration für KI-Workflows** — Dein Sprachassistent kann jetzt während Anrufen echte E-Mails über dein verbundenes Gmail-Konto senden. Die E-Mails werden über eine dauerhafte Verbindung gesendet, sodass es keine Token-Aktualisierungsprobleme oder Unterbrechungen gibt. Siehe [Integrationen](/de/integrations).
+  - **Schweizer Telefonnummern** — Schweizer Telefonnummern sind jetzt käuflich. Eine regulatorische Verifizierung (KYC + Twilio-Bundle) ist erforderlich. Siehe [Telefonie](/de/telephony).
+  - **Österreichische Telefonnummern** — Österreichische Telefonnummern sind jetzt käuflich, mit allen 9 Bundesländern im Verifizierungsformular. Siehe [Telefonie](/de/telephony).
+  - **Aktionen-Tab in den Anrufdetails** — Ein neuer „Aktionen"-Tab in der Anrufdetailansicht zeigt jeden Workflow, den der KI-Assistent während eines Anrufs ausgeführt hat — inklusive Workflow-Name, Status, Zeitstempel, Dauer und Eingabewerte. Siehe [Anrufprotokolle](/de/call-logs).
+
+  ## Verbesserungen
+
+  - **Telefonnummernsuche pro Carrier** — Die verfügbaren Länder im Nummernsuch-Panel passen sich jetzt dem ausgewählten Carrier an, und der Länderfilter wird beim Wechseln des Carriers automatisch zurückgesetzt, damit du nie in einem nicht unterstützten Land hängen bleibst. Siehe [Telefonie](/de/telephony).
+  - **Regionsauswahl als Dropdown für Verifizierung** — Bundesland- und Regionsfelder im Verifizierungsformular verwenden jetzt Dropdown-Auswahlen statt Freitext, was Tippfehler verhindert, die Tage später zu Carrier-Ablehnungen führen. Siehe [Telefonie](/de/telephony).
+  - **E-Mail-Domain-Prüfung bei Verifizierungsformularen** — Die Senden-Schaltfläche ist jetzt deaktiviert, wenn die E-Mail-Adresse des Vertreters nicht zur Unternehmensdomain passt, mit einer klaren Fehlermeldung direkt im Formular — was eine häufige Ursache für Carrier-Ablehnungen vor dem Einreichen erkennt. Siehe [Telefonie](/de/telephony).
+  - **Workflow-Erstellung: Warnung bei ungenutzten Parametern** — Der Flow-Editor warnt dich jetzt, wenn ein deklarierter Tool-Parameter in keinem Aktionsschritt verwendet wird, und hilft dir, Fehler vor dem Veröffentlichen zu erkennen. Siehe [Integrationen](/de/integrations).
+  - **Admin-Impersonation-Banner** — Wenn ein Admin einen Workspace als anderer Benutzer ansieht, zeigt jetzt ein dauerhaftes Banner, wen er impersoniert, und bietet eine „Zurück wechseln"-Schaltfläche, um die Admin-Sitzung wiederherzustellen.
+
+  ## Bugfixes
+
+  - **Fehler beim Kauf deutscher Telefonnummern** — Behoben: Der Kauf einer deutschen Telefonnummer nach der Verifizierungsfreigabe schlug mit einem leeren Adressparameter fehl. Siehe [Telefonie](/de/telephony).
+  - **SIP-Anruf-Routing** — Behoben: Ein fehlerhaft konfigurierter SIP-Endpunkt führte dazu, dass alle SIP-gerouteten Anrufe mit einem „Trunk nicht gefunden"-Fehler fehlschlugen. Siehe [Telefonie](/de/telephony).
+  - **Admin-IP-Entsperrungs-Tool** — Behoben: Ein Fehler verhinderte, dass Admins IP-Adressen im Admin-Panel entsperren konnten.
+</Update>
+
 <Update label="2026-08-14" description="v2.5.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

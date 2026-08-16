@@ -8,6 +8,29 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-16" description="v2.6.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Gmail integration for AI workflows** — Your voice assistant can now send real emails from your connected Gmail account during calls. Emails are sent through a durable connection, so there are no token refresh issues or interruptions. See [Integrations](/en/integrations).
+  - **Switzerland phone numbers** — Swiss phone numbers are now available for purchase. Regulatory verification (KYC + Twilio bundle) is required. See [Telephony](/en/telephony).
+  - **Austria phone numbers** — Austrian phone numbers are now available for purchase, with all 9 federal states supported in the verification form. See [Telephony](/en/telephony).
+  - **Actions tab in call details** — A new "Actions" tab in the call detail view shows every workflow the AI assistant executed during a call — including workflow name, status, timestamp, duration, and input values. See [Call Logs](/en/call-logs).
+
+  ## Improvements
+
+  - **Per-carrier phone number search** — The available countries in the number search panel now adapt to the selected carrier, and the country filter auto-resets when switching carriers so you never get stuck on an unsupported country. See [Telephony](/en/telephony).
+  - **Region picker dropdowns for verification** — State and region fields in the verification form now use dropdown pickers instead of free text, preventing typos that cause carrier rejections days later. See [Telephony](/en/telephony).
+  - **Email domain enforcement on verification forms** — The submit button is now disabled if the representative's email address doesn't match the business domain, with a clear inline error message — catching a common cause of carrier rejections before you submit. See [Telephony](/en/telephony).
+  - **Workflow authoring: unused parameter warnings** — The flow editor now warns you when a declared tool parameter is never used in any action step, helping you catch mistakes before publishing. See [Integrations](/en/integrations).
+  - **Admin impersonation banner** — When an admin views a workspace as another user, a sticky banner now shows who they're impersonating and provides a one-click "Switch back" button to restore their admin session.
+
+  ## Bug Fixes
+
+  - **German phone number purchase failure** — Fixed an issue where purchasing a German phone number after verification approval failed with an empty address parameter. See [Telephony](/en/telephony).
+  - **SIP call routing** — Fixed a misconfigured SIP endpoint that caused all SIP-routed calls to fail with a "trunk not found" error. See [Telephony](/en/telephony).
+  - **Admin IP unblock tool** — Fixed an error that prevented admins from unblocking IP addresses in the admin panel.
+</Update>
+
 <Update label="2026-08-14" description="v2.5.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
