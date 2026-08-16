@@ -9,10 +9,10 @@ description: >-
 
 Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge aktualisieren, löschen und die zugeordneten Kontakte eines Unternehmens abfragen.
 
-Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung.
+Alle Endpunkte in diesem Abschnitt akzeptieren entweder Session-Cookie-Authentifizierung oder API-Key-Bearer-Token-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung oder mit einem gültigen API-Schlüssel.
 
 <Callout kind="info" collapsed="false">
-  Die Listenansicht unterstützt Seitennummerierung und Suche. Die Detailendpunkte arbeiten mit der Unternehmens-ID aus dem CRM.
+  Die Listenansicht unterstützt Filterung über `limit` und `offset` sowie Suche. Die Detailendpunkte arbeiten mit der Unternehmens-ID aus dem CRM.
 </Callout>
 
 ## Endpunktübersicht
@@ -32,8 +32,8 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
 
 <Request show-lines="true">
   ```bash
-  curl -X GET "https://api.talkturo.local/api/crm/companies?page=1&limit=20&search=Acme" \
-    -H "Cookie: sb-session=example_session_token"
+  curl -X GET "https://api.talkturo.local/api/crm/companies?teamId=3f6a2d91-5c4b-4a7f-9c11-2d8e4b7a6f20&search=Acme&industry=Manufacturing&limit=20&offset=0" \
+    -H "Authorization: Bearer ttrk_example_9xmk7q2r"
   ```
 </Request>
 
@@ -46,33 +46,54 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
         "id": "cmp_9f2c7a1d",
         "name": "Acme Industrial Group",
         "website": "https://acme-industrial.com",
-        "industry": "Manufacturing"
+        "industry": "Manufacturing",
+        "companySize": "201-500",
+        "addressLine1": "Industriestraße 18",
+        "city": "Hamburg",
+        "state": "HH",
+        "postalCode": "20457",
+        "country": "DE"
       },
       {
         "id": "cmp_2b7d1e4a",
         "name": "Acme Logistics GmbH",
         "website": "https://acme-logistics.de",
-        "industry": "Logistics"
+        "industry": "Logistics",
+        "companySize": "51-200",
+        "addressLine1": "Speicherstadt 7",
+        "city": "Hamburg",
+        "state": "HH",
+        "postalCode": "20457",
+        "country": "DE"
       }
     ],
     "total": 42,
-    "page": 1
+    "limit": 20,
+    "offset": 0
   }
   ```
 </Response>
 
 ### Query-Parameter
 
-<ParamField query="page" param-type="integer" required="false" deprecated="false" show-location="true">
-  Die Seitennummer der Ergebnisliste.
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false" deprecated="false" show-location="true">
-  Die maximale Anzahl der zurückgegebenen Unternehmen pro Seite.
+<ParamField query="teamId" param-type="string" required="false" deprecated="false" show-location="true">
+  Workspace-UUID. Standardmäßig wird `auth.accountId` verwendet.
 </ParamField>
 
 <ParamField query="search" param-type="string" required="false" deprecated="false" show-location="true">
-  Filtert die Liste nach einem Suchbegriff.
+  Filtert mit einer `ilike`-Suche auf `name` und `website`.
+</ParamField>
+
+<ParamField query="industry" param-type="string" required="false" deprecated="false" show-location="true">
+  Filtert die Liste nach Branche.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false" deprecated="false" show-location="true">
+  Die maximale Anzahl der zurückgegebenen Unternehmen. Standardwert ist `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false" deprecated="false" show-location="true">
+  Der Versatz für die Paginierung. Standardwert ist `0`.
 </ParamField>
 
 ### Antwortfelder
@@ -101,12 +122,40 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
   Branche des Unternehmens, falls hinterlegt.
 </ResponseField>
 
+<ResponseField name="companies[].companySize" field-type="string" required="false" deprecated="false">
+  Größenkategorie des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].addressLine1" field-type="string" required="false" deprecated="false">
+  Erste Adresszeile des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].city" field-type="string" required="false" deprecated="false">
+  Stadt des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].state" field-type="string" required="false" deprecated="false">
+  Bundesland oder Region des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].postalCode" field-type="string" required="false" deprecated="false">
+  Postleitzahl des Unternehmens.
+</ResponseField>
+
+<ResponseField name="companies[].country" field-type="string" required="false" deprecated="false">
+  Land des Unternehmens.
+</ResponseField>
+
 <ResponseField name="total" field-type="integer" required="true" deprecated="false">
   Gesamtzahl der Treffer über alle Seiten hinweg.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true" deprecated="false">
-  Die aktuelle Ergebnisseite.
+<ResponseField name="limit" field-type="integer" required="true" deprecated="false">
+  Das auf die Antwort angewendete Limit.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true" deprecated="false">
+  Der auf die Antwort angewendete Versatz.
 </ResponseField>
 
 ## Unternehmen erstellen
@@ -116,14 +165,26 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
 <Request show-lines="true">
   ```bash
   curl -X POST "https://api.talkturo.local/api/crm/companies" \
+    -H "Authorization: Bearer ttrk_example_9xmk7q2r" \
     -H "Content-Type: application/json" \
-    -H "Cookie: sb-session=example_session_token" \
     -d '{
+      "teamId": "3f6a2d91-5c4b-4a7f-9c11-2d8e4b7a6f20",
       "name": "Northwind Health Partners",
       "website": "https://northwind-health.com",
       "industry": "Healthcare",
+      "companySize": "51-200",
+      "addressLine1": "Friedrichstraße 120",
+      "addressLine2": "5. Etage",
+      "city": "Berlin",
+      "state": "BE",
+      "postalCode": "10117",
+      "country": "DE",
       "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
+      "notes": "Bestandskunde mit Fokus auf Partnervertrieb",
+      "customFields": {
+        "crmTier": "gold",
+        "renewalMonth": "September"
+      }
     }'
   ```
 </Request>
@@ -134,17 +195,33 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
     "success": true,
     "company": {
       "id": "cmp_c4a91e7b",
+      "teamId": "3f6a2d91-5c4b-4a7f-9c11-2d8e4b7a6f20",
       "name": "Northwind Health Partners",
       "website": "https://northwind-health.com",
       "industry": "Healthcare",
+      "companySize": "51-200",
+      "addressLine1": "Friedrichstraße 120",
+      "addressLine2": "5. Etage",
+      "city": "Berlin",
+      "state": "BE",
+      "postalCode": "10117",
+      "country": "DE",
       "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
+      "notes": "Bestandskunde mit Fokus auf Partnervertrieb",
+      "customFields": {
+        "crmTier": "gold",
+        "renewalMonth": "September"
+      }
     }
   }
   ```
 </Response>
 
 ### Request-Body
+
+<ParamField body="teamId" param-type="string" required="false" deprecated="false" show-location="true">
+  Workspace-UUID. Bei API-Key-Anfragen wird der Wert aus dem Schlüsselkontext abgeleitet.
+</ParamField>
 
 <ParamField body="name" param-type="string" required="true" deprecated="false" show-location="true">
   Name des Unternehmens.
@@ -158,12 +235,44 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
   Branche oder Marktsegment des Unternehmens.
 </ParamField>
 
+<ParamField body="companySize" param-type="string" required="false" deprecated="false" show-location="true">
+  Größenkategorie des Unternehmens.
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string" required="false" deprecated="false" show-location="true">
+  Erste Adresszeile.
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string" required="false" deprecated="false" show-location="true">
+  Zweite Adresszeile, zum Beispiel Gebäude oder Etage.
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false" deprecated="false" show-location="true">
+  Stadt des Unternehmens.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false" deprecated="false" show-location="true">
+  Bundesland oder Region.
+</ParamField>
+
+<ParamField body="postalCode" param-type="string" required="false" deprecated="false" show-location="true">
+  Postleitzahl.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false" deprecated="false" show-location="true">
+  Ländercode oder Ländername.
+</ParamField>
+
 <ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
   Telefonnummer des Unternehmens.
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Postanschrift oder Geschäftsadresse des Unternehmens.
+<ParamField body="notes" param-type="string" required="false" deprecated="false" show-location="true">
+  Interne Notizen zum Unternehmen.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false" deprecated="false" show-location="true">
+  Benutzerdefinierte Feldwerte als Schlüssel-Wert-Objekt.
 </ParamField>
 
 ### Antwortfelder
@@ -178,6 +287,46 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
 
 <ResponseField name="company.id" field-type="string" required="true" deprecated="false">
   Eindeutige ID des neuen Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.teamId" field-type="string" required="true" deprecated="false">
+  Workspace-UUID des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.companySize" field-type="string" required="false" deprecated="false">
+  Größenkategorie des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.addressLine1" field-type="string" required="false" deprecated="false">
+  Erste Adresszeile des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.addressLine2" field-type="string" required="false" deprecated="false">
+  Zweite Adresszeile des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.city" field-type="string" required="false" deprecated="false">
+  Stadt des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.state" field-type="string" required="false" deprecated="false">
+  Bundesland oder Region des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.postalCode" field-type="string" required="false" deprecated="false">
+  Postleitzahl des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.country" field-type="string" required="false" deprecated="false">
+  Land des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company.notes" field-type="string" required="false" deprecated="false">
+  Interne Notizen zum Unternehmen.
+</ResponseField>
+
+<ResponseField name="company.customFields" field-type="object" required="false" deprecated="false">
+  Benutzerdefinierte Feldwerte des Unternehmens.
 </ResponseField>
 
 <Callout kind="tip" collapsed="false">
@@ -220,6 +369,10 @@ Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehm
 
 ### Aktualisierbare Felder
 
+<ParamField body="teamId" param-type="string" required="false" deprecated="false" show-location="true">
+  Workspace-UUID, falls der Datensatz explizit einem Teamkontext zugeordnet werden soll.
+</ParamField>
+
 <ParamField body="name" param-type="string" required="false" deprecated="false" show-location="true">
   Aktualisierter Unternehmensname.
 </ParamField>
@@ -232,12 +385,44 @@ Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehm
   Aktualisierte Branchenangabe.
 </ParamField>
 
+<ParamField body="companySize" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Größenkategorie.
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte erste Adresszeile.
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte zweite Adresszeile.
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Stadt.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Region oder aktualisiertes Bundesland.
+</ParamField>
+
+<ParamField body="postalCode" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Postleitzahl.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisiertes Land.
+</ParamField>
+
 <ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
   Aktualisierte Telefonnummer.
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierte Geschäftsadresse.
+<ParamField body="notes" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte interne Notizen.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false" deprecated="false" show-location="true">
+  Aktualisierte benutzerdefinierte Feldwerte.
 </ParamField>
 
 ### Antwortstruktur

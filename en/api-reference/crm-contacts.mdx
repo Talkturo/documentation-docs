@@ -9,7 +9,7 @@ Use CRM contact endpoints to manage contact records, filter contact lists, and i
 
 <Callout kind="info">
 
-All CRM contact endpoints require session cookie authentication. Send requests from an authenticated browser session or a client that includes the Talkturo session cookie.
+CRM contact endpoints accept either session cookie authentication or API key Bearer token authentication. Send requests from an authenticated browser session, or include `Authorization: Bearer ttr_example_9xmk7q2r` in your request headers.
 
 </Callout>
 
@@ -26,20 +26,22 @@ All CRM contact endpoints require session cookie authentication. Send requests f
 
 ## List contacts
 
-Retrieve a paginated list of contacts. Use query parameters to search by text or narrow results to a company or campaign.
+Retrieve a contact list with limit and offset pagination. Use query parameters to search by text, filter by company, or narrow results by status and calling eligibility.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://app.talkturo.com/api/crm/contacts?page=1&limit=25&search=chen&companyId=cmp_9f3e21&campaignId=camp_7d2a44" \
-  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+curl -X GET "https://app.talkturo.com/api/crm/contacts?teamId=550e8400-e29b-41d4-a716-446655440000&limit=25&offset=0&search=chen&companyId=cmp_9f3e21&leadStatus=qualified&doNotCall=false&hasPhone=true" \
+  -H "Authorization: Bearer ttr_example_9xmk7q2r"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://app.talkturo.com/api/crm/contacts?page=1&limit=25&search=chen&companyId=cmp_9f3e21&campaignId=camp_7d2a44",
+  "https://app.talkturo.com/api/crm/contacts?teamId=550e8400-e29b-41d4-a716-446655440000&limit=25&offset=0&search=chen&companyId=cmp_9f3e21&leadStatus=qualified&doNotCall=false&hasPhone=true",
   {
     method: "GET",
-    credentials: "include",
+    headers: {
+      Authorization: "Bearer ttr_example_9xmk7q2r",
+    },
   }
 );
 
@@ -55,47 +57,64 @@ console.log(data);
   "contacts": [
     {
       "id": "8e1f5b9d-1e4b-4db1-92b2-4d93471f1af2",
-      "first_name": "Maya",
-      "last_name": "Chen",
+      "firstName": "Maya",
+      "lastName": "Chen",
       "email": "maya.chen@northstarhealth.co",
       "phone": "+14155550187",
-      "company_id": "cmp_9f3e21"
+      "companyId": "cmp_9f3e21",
+      "leadStatus": "qualified",
+      "doNotCall": false
     },
     {
       "id": "bd3cfaf2-d375-47b4-9495-3e66512a6e75",
-      "first_name": "Daniel",
-      "last_name": "Chen",
+      "firstName": "Daniel",
+      "lastName": "Chen",
       "email": "daniel.chen@northstarhealth.co",
       "phone": "+14155550199",
-      "company_id": "cmp_9f3e21"
+      "companyId": "cmp_9f3e21",
+      "leadStatus": "qualified",
+      "doNotCall": false
     }
   ],
   "total": 2,
-  "page": 1
+  "limit": 25,
+  "offset": 0
 }
 ```
 </Response>
 
 ### Query parameters
 
-<ParamField query="page" param-type="integer" required="false">
-Page number to return.
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false">
-Maximum number of contacts to return for the current page.
-</ParamField>
-
-<ParamField query="search" param-type="string" required="false">
-Free-text search term used to filter contacts.
+<ParamField query="teamId" param-type="string" required="false">
+Workspace UUID. Defaults to the authenticated account ID when omitted.
 </ParamField>
 
 <ParamField query="companyId" param-type="string" required="false">
 Filter contacts to a specific company.
 </ParamField>
 
-<ParamField query="campaignId" param-type="string" required="false">
-Filter contacts to a specific campaign.
+<ParamField query="search" param-type="string" required="false">
+Free-text search term applied with case-insensitive matching to `firstName`, `lastName`, `email`, and `phone`.
+</ParamField>
+
+<ParamField query="leadStatus" param-type="string" required="false">
+Filter contacts by exact lead status.
+</ParamField>
+
+<ParamField query="doNotCall" param-type="string" required="false" enum="true,false">
+Filter contacts by do-not-call status.
+</ParamField>
+
+<ParamField query="hasPhone" param-type="string" required="false" enum="true,false">
+Filter contacts by whether a phone number is present.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of contacts to return. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of matching contacts to skip before returning results. Defaults to `0`.
 </ParamField>
 
 ### Response fields
@@ -105,18 +124,18 @@ Returns `true` when the request succeeds.
 </ResponseField>
 
 <ResponseField name="contacts" field-type="array" required="true">
-Array of contact objects for the current page.
+Array of contact objects for the current result set.
 </ResponseField>
 
 <ResponseField name="contacts[].id" field-type="string" required="true">
 Unique contact identifier.
 </ResponseField>
 
-<ResponseField name="contacts[].first_name" field-type="string" required="true">
+<ResponseField name="contacts[].firstName" field-type="string" required="true">
 Contact first name.
 </ResponseField>
 
-<ResponseField name="contacts[].last_name" field-type="string" required="true">
+<ResponseField name="contacts[].lastName" field-type="string" required="true">
 Contact last name.
 </ResponseField>
 
@@ -128,16 +147,28 @@ Contact email address when available.
 Contact phone number when available.
 </ResponseField>
 
-<ResponseField name="contacts[].company_id" field-type="string" required="false">
+<ResponseField name="contacts[].companyId" field-type="string" required="false">
 Associated company ID when the contact belongs to a company.
+</ResponseField>
+
+<ResponseField name="contacts[].leadStatus" field-type="string" required="false">
+Lead status when set on the contact.
+</ResponseField>
+
+<ResponseField name="contacts[].doNotCall" field-type="boolean" required="false">
+Do-not-call flag for the contact.
 </ResponseField>
 
 <ResponseField name="total" field-type="integer" required="true">
 Total number of contacts that match the current filters.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
-Current page number in the paginated result.
+<ResponseField name="limit" field-type="integer" required="true">
+Maximum number of contacts returned in the current response.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Number of matching contacts skipped before this response.
 </ResponseField>
 
 ## Create contact
@@ -148,33 +179,59 @@ Create a single CRM contact by sending the contact fields in the request body. I
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/contacts" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Authorization: Bearer ttr_example_9xmk7q2r" \
   -d '{
-    "first_name": "Priya",
-    "last_name": "Natarajan",
-    "email": "priya.natarajan@lakesidepartners.com",
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "companyId": "cmp_4c8d12",
+    "firstName": "Priya",
+    "lastName": "Natarajan",
     "phone": "+14155550231",
-    "company_id": "cmp_4c8d12",
-    "job_title": "Operations Director",
-    "lead_source": "webinar"
+    "email": "priya.natarajan@lakesidepartners.com",
+    "phoneSecondary": "+14155550232",
+    "jobTitle": "Operations Director",
+    "leadStatus": "new",
+    "source": "webinar",
+    "timezone": "America/Chicago",
+    "preferredContactMethod": "phone",
+    "doNotCall": false,
+    "notes": "Requested a pricing follow-up next week.",
+    "customFields": {
+      "region": "Midwest"
+    },
+    "tags": ["webinar", "enterprise"],
+    "campaignId": "camp_7d2a44",
+    "campaignPriority": 2
   }'
 ```
 
 ```javascript
 const response = await fetch("https://app.talkturo.com/api/crm/contacts", {
   method: "POST",
-  credentials: "include",
   headers: {
     "Content-Type": "application/json",
+    Authorization: "Bearer ttr_example_9xmk7q2r",
   },
   body: JSON.stringify({
-    first_name: "Priya",
-    last_name: "Natarajan",
-    email: "priya.natarajan@lakesidepartners.com",
+    teamId: "550e8400-e29b-41d4-a716-446655440000",
+    companyId: "cmp_4c8d12",
+    firstName: "Priya",
+    lastName: "Natarajan",
     phone: "+14155550231",
-    company_id: "cmp_4c8d12",
-    job_title: "Operations Director",
-    lead_source: "webinar",
+    email: "priya.natarajan@lakesidepartners.com",
+    phoneSecondary: "+14155550232",
+    jobTitle: "Operations Director",
+    leadStatus: "new",
+    source: "webinar",
+    timezone: "America/Chicago",
+    preferredContactMethod: "phone",
+    doNotCall: false,
+    notes: "Requested a pricing follow-up next week.",
+    customFields: {
+      region: "Midwest",
+    },
+    tags: ["webinar", "enterprise"],
+    campaignId: "camp_7d2a44",
+    campaignPriority: 2,
   }),
 });
 
@@ -189,13 +246,24 @@ console.log(data);
   "success": true,
   "contact": {
     "id": "2c7f1c6c-4d67-45f0-bf0e-5c9d3d2f2e41",
-    "first_name": "Priya",
-    "last_name": "Natarajan",
-    "email": "priya.natarajan@lakesidepartners.com",
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "companyId": "cmp_4c8d12",
+    "firstName": "Priya",
+    "lastName": "Natarajan",
     "phone": "+14155550231",
-    "company_id": "cmp_4c8d12",
-    "job_title": "Operations Director",
-    "lead_source": "webinar"
+    "email": "priya.natarajan@lakesidepartners.com",
+    "phoneSecondary": "+14155550232",
+    "jobTitle": "Operations Director",
+    "leadStatus": "new",
+    "source": "webinar",
+    "timezone": "America/Chicago",
+    "preferredContactMethod": "phone",
+    "doNotCall": false,
+    "notes": "Requested a pricing follow-up next week.",
+    "customFields": {
+      "region": "Midwest"
+    },
+    "tags": ["webinar", "enterprise"]
   }
 }
 ```
@@ -203,28 +271,76 @@ console.log(data);
 
 ### Request body
 
-<ParamField body="first_name" param-type="string" required="true">
+<ParamField body="teamId" param-type="string" required="false">
+Workspace UUID. When you authenticate with an API key, the API infers this value if you omit it.
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="true">
+Company ID to associate with the contact.
+</ParamField>
+
+<ParamField body="firstName" param-type="string" required="true">
 Contact first name.
 </ParamField>
 
-<ParamField body="last_name" param-type="string" required="true">
+<ParamField body="lastName" param-type="string" required="true">
 Contact last name.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="true">
+Primary contact phone number in E.164 format.
 </ParamField>
 
 <ParamField body="email" param-type="string" required="false">
 Contact email address.
 </ParamField>
 
-<ParamField body="phone" param-type="string" required="false">
-Contact phone number.
+<ParamField body="phoneSecondary" param-type="string" required="false">
+Secondary phone number in E.164 format.
 </ParamField>
 
-<ParamField body="company_id" param-type="string" required="false">
-Company ID to associate with the contact.
+<ParamField body="jobTitle" param-type="string" required="false">
+Job title for the contact.
 </ParamField>
 
-<ParamField body="custom fields" param-type="object" required="false">
-Any additional custom fields supported by your CRM configuration. Send each custom field as a top-level property in the request body.
+<ParamField body="leadStatus" param-type="string" required="false">
+Lead status to assign to the contact.
+</ParamField>
+
+<ParamField body="source" param-type="string" required="false">
+Lead source or acquisition channel.
+</ParamField>
+
+<ParamField body="timezone" param-type="string" required="false">
+IANA time zone for the contact.
+</ParamField>
+
+<ParamField body="preferredContactMethod" param-type="string" required="false">
+Preferred outreach method such as phone, email, or SMS.
+</ParamField>
+
+<ParamField body="doNotCall" param-type="boolean" required="false">
+Marks the contact as do-not-call.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Free-form notes saved on the contact record.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Additional custom fields supported by your CRM configuration.
+</ParamField>
+
+<ParamField body="tags" param-type="array[string]" required="false">
+List of tags to assign to the contact.
+</ParamField>
+
+<ParamField body="campaignId" param-type="string" required="false">
+Campaign ID to enroll the contact in after creation.
+</ParamField>
+
+<ParamField body="campaignPriority" param-type="number" required="false">
+Enrollment priority. Send this field only when `campaignId` is also set.
 </ParamField>
 
 ### Response fields
@@ -241,24 +357,68 @@ Created contact record.
 Unique contact identifier.
 </ResponseField>
 
-<ResponseField name="contact.first_name" field-type="string" required="true">
+<ResponseField name="contact.teamId" field-type="string" required="true">
+Workspace UUID that owns the contact.
+</ResponseField>
+
+<ResponseField name="contact.companyId" field-type="string" required="true">
+Associated company ID.
+</ResponseField>
+
+<ResponseField name="contact.firstName" field-type="string" required="true">
 Contact first name.
 </ResponseField>
 
-<ResponseField name="contact.last_name" field-type="string" required="true">
+<ResponseField name="contact.lastName" field-type="string" required="true">
 Contact last name.
+</ResponseField>
+
+<ResponseField name="contact.phone" field-type="string" required="true">
+Primary contact phone number.
 </ResponseField>
 
 <ResponseField name="contact.email" field-type="string" required="false">
 Contact email address when provided.
 </ResponseField>
 
-<ResponseField name="contact.phone" field-type="string" required="false">
-Contact phone number when provided.
+<ResponseField name="contact.phoneSecondary" field-type="string" required="false">
+Secondary contact phone number when provided.
 </ResponseField>
 
-<ResponseField name="contact.company_id" field-type="string" required="false">
-Associated company ID when provided.
+<ResponseField name="contact.jobTitle" field-type="string" required="false">
+Job title when provided.
+</ResponseField>
+
+<ResponseField name="contact.leadStatus" field-type="string" required="false">
+Lead status when provided.
+</ResponseField>
+
+<ResponseField name="contact.source" field-type="string" required="false">
+Lead source when provided.
+</ResponseField>
+
+<ResponseField name="contact.timezone" field-type="string" required="false">
+Time zone when provided.
+</ResponseField>
+
+<ResponseField name="contact.preferredContactMethod" field-type="string" required="false">
+Preferred contact method when provided.
+</ResponseField>
+
+<ResponseField name="contact.doNotCall" field-type="boolean" required="false">
+Do-not-call flag when provided.
+</ResponseField>
+
+<ResponseField name="contact.notes" field-type="string" required="false">
+Saved notes when provided.
+</ResponseField>
+
+<ResponseField name="contact.customFields" field-type="object" required="false">
+Custom field values when provided.
+</ResponseField>
+
+<ResponseField name="contact.tags" field-type="array" required="false">
+Assigned tags when provided.
 </ResponseField>
 
 ## Get a contact
@@ -285,11 +445,11 @@ Contact record for the requested ID.
 Unique contact identifier.
 </ResponseField>
 
-<ResponseField name="contact.first_name" field-type="string" required="true">
+<ResponseField name="contact.firstName" field-type="string" required="true">
 Contact first name.
 </ResponseField>
 
-<ResponseField name="contact.last_name" field-type="string" required="true">
+<ResponseField name="contact.lastName" field-type="string" required="true">
 Contact last name.
 </ResponseField>
 
@@ -301,7 +461,7 @@ Contact email address when available.
 Contact phone number when available.
 </ResponseField>
 
-<ResponseField name="contact.company_id" field-type="string" required="false">
+<ResponseField name="contact.companyId" field-type="string" required="false">
 Associated company ID when the contact belongs to a company.
 </ResponseField>
 
@@ -317,28 +477,76 @@ Contact ID as a UUID.
 
 ### Request body
 
-<ParamField body="first_name" param-type="string" required="false">
+<ParamField body="teamId" param-type="string" required="false">
+Workspace UUID for the contact being updated.
+</ParamField>
+
+<ParamField body="companyId" param-type="string" required="false">
+Updated associated company ID.
+</ParamField>
+
+<ParamField body="firstName" param-type="string" required="false">
 Updated first name.
 </ParamField>
 
-<ParamField body="last_name" param-type="string" required="false">
+<ParamField body="lastName" param-type="string" required="false">
 Updated last name.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false">
+Updated primary phone number in E.164 format.
 </ParamField>
 
 <ParamField body="email" param-type="string" required="false">
 Updated email address.
 </ParamField>
 
-<ParamField body="phone" param-type="string" required="false">
-Updated phone number.
+<ParamField body="phoneSecondary" param-type="string" required="false">
+Updated secondary phone number in E.164 format.
 </ParamField>
 
-<ParamField body="company_id" param-type="string" required="false">
-Updated associated company ID.
+<ParamField body="jobTitle" param-type="string" required="false">
+Updated job title.
 </ParamField>
 
-<ParamField body="custom fields" param-type="object" required="false">
-Any custom contact fields to update. Send each field as a top-level property in the request body.
+<ParamField body="leadStatus" param-type="string" required="false">
+Updated lead status.
+</ParamField>
+
+<ParamField body="source" param-type="string" required="false">
+Updated lead source.
+</ParamField>
+
+<ParamField body="timezone" param-type="string" required="false">
+Updated time zone.
+</ParamField>
+
+<ParamField body="preferredContactMethod" param-type="string" required="false">
+Updated preferred contact method.
+</ParamField>
+
+<ParamField body="doNotCall" param-type="boolean" required="false">
+Updated do-not-call flag.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Updated notes.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Any custom contact fields to update.
+</ParamField>
+
+<ParamField body="tags" param-type="array[string]" required="false">
+Updated list of tags.
+</ParamField>
+
+<ParamField body="campaignId" param-type="string" required="false">
+Campaign ID to enroll the contact in.
+</ParamField>
+
+<ParamField body="campaignPriority" param-type="number" required="false">
+Enrollment priority when `campaignId` is set.
 </ParamField>
 
 ### Response fields
@@ -375,11 +583,11 @@ Deletion result message. The response returns a success message such as `Contact
 
 Import many contacts in a single request. Send either structured JSON with a `contacts` array or CSV data, depending on your import flow.
 
-<Request tabs="JSON import,cSV import" default-tab="1">
+<Request tabs="JSON import,CSV import" default-tab="1">
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/contacts/import" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Authorization: Bearer ttr_example_9xmk7q2r" \
   -d '{
     "contacts": [
       {
@@ -405,7 +613,7 @@ curl -X POST "https://app.talkturo.com/api/crm/contacts/import" \
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/contacts/import" \
   -H "Content-Type: text/csv" \
-  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Authorization: Bearer ttr_example_9xmk7q2r" \
   --data-binary $'first_name,last_name,email,phone,company_id,region\nAlicia,Moreno,alicia.moreno@brightpath.io,+14155550311,cmp_12ab45,West\nMarcus,Reed,marcus.reed@brightpath.io,+14155550329,cmp_12ab45,Central'
 ```
 </Request>
@@ -475,6 +683,6 @@ Contact create, update, and import endpoints accept custom fields in addition to
 
 <Callout kind="info">
 
-Send custom fields as top-level properties in the JSON body. Keep field names consistent with your CRM configuration so imported and updated data maps to the expected contact fields.
+Send custom fields as top-level properties in the JSON body for import requests, or inside the `customFields` object for create and update requests. Keep field names consistent with your CRM configuration so imported and updated data maps to the expected contact fields.
 
 </Callout>

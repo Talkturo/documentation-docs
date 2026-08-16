@@ -5,19 +5,21 @@ description: Check credit balances, deduct usage credits, create checkout sessio
 
 ## Credits endpoints
 
-Use the credits API to read an account balance, record usage deductions, and start credit purchases through Stripe. The balance, deduction, and checkout endpoints support dual authentication, while account management endpoints for auto-reload and history use session authentication.
+Use the credits API to read an account balance, record usage deductions, and start credit purchases through Stripe. The balance and deduction endpoints support dual authentication, while account management endpoints for auto-reload, checkout, grants, plans, and history use session authentication.
 
 <Callout kind="info">
 
 **Authentication**
+
 - `GET /api/credits`
 - `POST /api/credits`
-- `POST /api/credits/checkout`
 
 These endpoints use dual authentication. Authenticate with either an API key or a signed-in session cookie.
 
 The following endpoints require a session-authenticated browser request:
-- `GET` and `POST` `/api/credits/auto-reload`
+
+- `GET` and `PATCH` `/api/credits/auto-reload`
+- `POST` `/api/credits/checkout`
 - `POST` `/api/credits/claim-grants`
 - `GET` `/api/credits/plans`
 - `GET` `/api/credits/statement`
@@ -31,9 +33,9 @@ The following endpoints require a session-authenticated browser request:
 | --- | --- | --- | --- |
 | `GET` | `/api/credits` | API key or session | Get the current credit balance for an account |
 | `POST` | `/api/credits` | API key or session | Deduct credits for usage tracking |
-| `POST` | `/api/credits/checkout` | API key or session | Create an embedded Stripe checkout session for a credit purchase |
 | `GET` | `/api/credits/auto-reload` | Session | Get auto-reload settings |
-| `POST` | `/api/credits/auto-reload` | Session | Update auto-reload settings |
+| `PATCH` | `/api/credits/auto-reload` | Session | Update auto-reload settings |
+| `POST` | `/api/credits/checkout` | Session | Create a Stripe checkout session for a credit top-up |
 | `POST` | `/api/credits/claim-grants` | Session | Claim pending credit grants |
 | `GET` | `/api/credits/plans` | Session | List available credit purchase plans |
 | `GET` | `/api/credits/statement` | Session | Get credit statement history |
@@ -226,13 +228,13 @@ Account UUID to charge.
 
 <ParamField body="amount" param-type="number" required="true">
 
-Number of credits to deduct.
+Number of credits to deduct. Use a positive value.
 
 </ParamField>
 
 <ParamField body="description" param-type="string" required="false">
 
-Human-readable description of the usage event or billing reason.
+Human-readable description of the usage event or billing reason. If you omit `description`, the API uses `Credit usage`.
 
 </ParamField>
 
@@ -276,42 +278,11 @@ A deduction returns HTTP `402` when the account does not have enough credits to 
 
 ### Auto-reload behavior after a deduction
 
-If auto-reload is enabled and the remaining balance drops below `auto_reload_threshold`, the API attempts to trigger a reload after the deduction succeeds. The deduction response still returns immediately with `autoReloadTriggered` so your application can decide whether to notify the account owner or pause high-cost actions until the balance refreshes.
+If auto-reload is enabled and the remaining balance drops below `auto_reload_threshold`, the API triggers a background reload attempt after the deduction succeeds. The deduction response still returns immediately with `autoReloadTriggered`, so your application can decide whether to notify the account owner or pause high-cost actions until the balance refreshes.
 
 ## Create a checkout session
 
-Start a credit purchase with `POST /api/credits/checkout`. Use either a predefined `planId` or a custom purchase amount and credit quantity.
-
-<Request tabs="cURL,JavaScript" default-tab="1">
-```bash
-curl -X POST "https://api.talkturo.com/api/credits/checkout" \
-  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "accountId": "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
-    "accountSlug": "acme-sales",
-    "planId": "credits_growth_500"
-  }'
-```
-
-```javascript
-const response = await fetch("https://api.talkturo.com/api/credits/checkout", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
-  },
-  body: JSON.stringify({
-    accountId: "8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
-    accountSlug: "acme-sales",
-    planId: "credits_growth_500",
-  }),
-});
-
-const data = await response.json();
-console.log(data);
-```
-</Request>
+Start a credit top-up with `POST /api/credits/checkout`. This endpoint requires a signed-in browser session.
 
 <Response tabs="200">
 ```json
@@ -417,9 +388,9 @@ Purchase amount returned by the API.
 
 Use the following endpoints from a signed-in browser session when you need account-level credits management and history screens.
 
-### Get or update auto-reload
+### Get or configure auto-reload
 
-`GET /api/credits/auto-reload` reads the current auto-reload settings. `POST /api/credits/auto-reload` updates those settings for the signed-in account.
+`GET /api/credits/auto-reload` reads the current auto-reload settings. `PATCH /api/credits/auto-reload` updates those settings for the signed-in account.
 
 <ParamField body="auto_reload_enabled" param-type="boolean" required="false" show-location="false">
 

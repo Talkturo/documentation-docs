@@ -9,7 +9,7 @@ Use the CRM Opportunities endpoints to track deals, pipeline stage, associated c
 
 <Callout kind="info">
 
-All CRM Opportunities endpoints require an authenticated **session cookie**. These endpoints do not accept API key authentication.
+All CRM Opportunities endpoints require authentication. These endpoints accept either session cookie authentication or API key Bearer token authentication.
 
 </Callout>
 
@@ -30,7 +30,7 @@ Retrieve a paginated list of opportunities and narrow the results by search term
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl -X GET "https://app.talkturo.com/api/crm/opportunities?page=1&limit=25&search=renewal&companyId=cmp_7f3d21a9" \
-  -H "Cookie: sb-access-token=example_session_cookie"
+  -H "Authorization: Bearer ttro_example_9xmk7q2r"
 ```
 
 ```javascript
@@ -144,7 +144,7 @@ Create a new sales opportunity with a required title and optional deal metadata.
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/opportunities" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-access-token=example_session_cookie" \
+  -H "Authorization: Bearer ttro_example_9xmk7q2r" \
   -d '{
     "title": "Enterprise Expansion - Northwind Health",
     "value": 48000,

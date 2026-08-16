@@ -22,10 +22,10 @@ All endpoints on this page require **session cookie authentication**. Send reque
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/api/assistants/[assistantId]/telephony/test-call` | Start a test outbound SIP call |
-| `GET` `POST` | `/api/assistants/[assistantId]/telephony/inbound` | Read or configure inbound telephony |
-| `GET` `POST` | `/api/assistants/[assistantId]/telephony/outbound` | Read or configure outbound telephony |
+| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/inbound` | Read or configure inbound telephony |
+| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/outbound` | Read or configure outbound telephony |
 | `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/settings` | Read or update full telephony settings |
-| `GET` `POST` | `/api/assistants/[assistantId]/telephony/phone-numbers` | List or manage phone numbers attached to the assistant |
+| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/phone-numbers` | List or manage phone numbers attached to the assistant |
 | `POST` | `/api/assistants/[assistantId]/telephony/assign-phone-numbers` | Assign phone numbers to the assistant |
 | `GET` | `/api/assistants/[assistantId]/telephony/compliance-templates` | List available compliance templates |
 
@@ -167,7 +167,7 @@ When the request passes validation, Talkturo runs the call setup in this order:
 
 If the request succeeds, the response includes both the room name and SIP call identifier.
 
-## GET and POST inbound
+## GET and PATCH inbound
 
 Use the inbound endpoint to read or configure inbound telephony for an assistant. The exact response shape and accepted POST body fields depend on the assistant's telephony configuration in your workspace.
 
@@ -182,13 +182,13 @@ Assistant UUID.
 ### Methods
 
 - **`GET`** — returns the current inbound telephony configuration.
-- **`POST`** — creates or updates inbound telephony configuration for the assistant.
+- **`PATCH`** — updates inbound telephony configuration for the assistant.
 
 ### Expected behavior
 
 Use this endpoint when you need to control how an assistant handles incoming calls. Typical workflows include enabling inbound handling, attaching numbers intended to receive calls, and storing inbound-specific settings.
 
-## GET and POST outbound
+## GET and PATCH outbound
 
 Use the outbound endpoint to read or configure outbound telephony for an assistant. This endpoint controls the assistant state required for making calls, including the outbound configuration used by the test-call route.
 
@@ -203,7 +203,7 @@ Assistant UUID.
 ### Methods
 
 - **`GET`** — returns the current outbound telephony configuration.
-- **`POST`** — creates or updates outbound telephony configuration for the assistant.
+- **`PATCH`** — updates outbound telephony configuration for the assistant.
 
 ### Expected behavior
 
@@ -230,7 +230,7 @@ Assistant UUID.
 
 Use the settings endpoint when you need the full telephony configuration rather than inbound-only or outbound-only values. `PATCH` is the right choice for partial updates because it avoids replacing the entire settings object.
 
-## GET and POST phone-numbers
+## GET and PATCH phone-numbers
 
 List or manage the phone numbers attached to an assistant. Use this endpoint to inspect the assistant's current telephony inventory before assigning numbers or placing outbound test calls.
 
@@ -245,7 +245,21 @@ Assistant UUID.
 ### Methods
 
 - **`GET`** — returns phone numbers attached to the assistant.
-- **`POST`** — manages phone numbers for the assistant.
+- **`PATCH`** — manages phone numbers for the assistant.
+
+### Request body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Account slug used to validate account membership and scope the phone-number assignment.
+
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="string[]" required="true">
+
+Array of phone number IDs to attach to the assistant.
+
+</ParamField>
 
 ### Expected behavior
 
@@ -260,6 +274,20 @@ Assign one or more phone numbers to an assistant. Use this endpoint when numbers
 <ParamField path="assistantId" param-type="string" required="true">
 
 Assistant UUID.
+
+</ParamField>
+
+### Request body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Account slug used to validate account membership and scope the phone-number assignment.
+
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="string[]" required="true">
+
+Array of phone number IDs to assign to the assistant.
 
 </ParamField>
 

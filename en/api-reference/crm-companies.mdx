@@ -9,7 +9,7 @@ Use the CRM Companies endpoints to store organization records, attach custom fie
 
 <Callout kind="info">
 
-All CRM Companies endpoints require session cookie authentication. Send requests from an authenticated Talkturo session.
+All CRM Companies endpoints accept either session cookie authentication or API key Bearer token authentication.
 
 </Callout>
 
@@ -52,35 +52,77 @@ Industry label for the company.
 
 </ResponseField>
 
+<ResponseField name="companySize" field-type="string">
+
+Company size label when provided.
+
+</ResponseField>
+
 <ResponseField name="phone" field-type="string">
 
 Primary phone number for the company.
 
 </ResponseField>
 
-<ResponseField name="address" field-type="string">
+<ResponseField name="addressLine1" field-type="string">
 
-Company address.
+First line of the company street address.
+
+</ResponseField>
+
+<ResponseField name="addressLine2" field-type="string">
+
+Second line of the company street address.
+
+</ResponseField>
+
+<ResponseField name="city" field-type="string">
+
+City for the company address.
+
+</ResponseField>
+
+<ResponseField name="state" field-type="string">
+
+State or region for the company address.
+
+</ResponseField>
+
+<ResponseField name="postalCode" field-type="string">
+
+Postal or ZIP code for the company address.
+
+</ResponseField>
+
+<ResponseField name="country" field-type="string">
+
+Country for the company address.
+
+</ResponseField>
+
+<ResponseField name="notes" field-type="string">
+
+Freeform notes stored on the company record.
 
 </ResponseField>
 
 ## List companies
 
-Retrieve a paginated list of companies. Use `search` to filter results by a search term.
+Retrieve a paginated list of companies. Use `search` to filter results by company name or website.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://app.talkturo.com/api/crm/companies?page=1&limit=25&search=Acme" \
-  -H "Cookie: sb-session=example_session_cookie"
+curl -X GET "https://app.talkturo.com/api/crm/companies?limit=25&offset=0&search=Acme&industry=Manufacturing&teamId=2f6c1a91-0a41-4f91-b7e3-4d7d8d31d6a2" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://app.talkturo.com/api/crm/companies?page=1&limit=25&search=Acme",
+  "https://app.talkturo.com/api/crm/companies?limit=25&offset=0&search=Acme&industry=Manufacturing&teamId=2f6c1a91-0a41-4f91-b7e3-4d7d8d31d6a2",
   {
     method: "GET",
-    credentials: "include",
     headers: {
+      "Authorization": "Bearer tk_example_9xmk7q2r",
       "Content-Type": "application/json"
     }
   }
@@ -101,41 +143,68 @@ console.log(data);
       "name": "Acme Manufacturing",
       "website": "https://acmemanufacturing.com",
       "industry": "Manufacturing",
+      "companySize": "201-500",
       "phone": "+1-415-555-0142",
-      "address": "1450 Market Street, San Francisco, CA 94103"
+      "addressLine1": "1450 Market Street",
+      "addressLine2": "Suite 300",
+      "city": "San Francisco",
+      "state": "CA",
+      "postalCode": "94103",
+      "country": "US",
+      "notes": "Priority expansion account"
     },
     {
       "id": "d948c0e2-7ed3-4d94-a26b-c73db7fc32ea",
       "name": "Northwind Health",
       "website": "https://northwindhealth.com",
       "industry": "Healthcare",
+      "companySize": "51-200",
       "phone": "+1-312-555-0188",
-      "address": "210 W Madison St, Chicago, IL 60606"
+      "addressLine1": "210 W Madison St",
+      "addressLine2": "Floor 12",
+      "city": "Chicago",
+      "state": "IL",
+      "postalCode": "60606",
+      "country": "US",
+      "notes": "Requested quarterly check-ins"
     }
   ],
   "total": 2,
-  "page": 1
+  "limit": 25,
+  "offset": 0
 }
 ```
 </Response>
 
 ### Query parameters
 
-<ParamField query="page" param-type="integer" required="false">
+<ParamField query="teamId" param-type="string" required="false">
 
-Page number to return.
-
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false">
-
-Maximum number of companies to return per page.
+Workspace UUID. Defaults to the authenticated account ID.
 
 </ParamField>
 
 <ParamField query="search" param-type="string" required="false">
 
-Search term used to filter company records.
+Search term used to filter company records by `name` or `website`.
+
+</ParamField>
+
+<ParamField query="industry" param-type="string" required="false">
+
+Filter company records by industry.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximum number of companies to return per page. Defaults to `50`.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Number of company records to skip before returning results. Defaults to `0`.
 
 </ParamField>
 
@@ -149,7 +218,7 @@ Returns `true` when the request succeeds.
 
 <ResponseField name="companies" field-type="array" required="true">
 
-Array of company records for the current page.
+Array of company records for the current result set.
 
 </ResponseField>
 
@@ -159,9 +228,15 @@ Total number of matching company records.
 
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
+<ResponseField name="limit" field-type="integer" required="true">
 
-Current page number in the paginated result.
+Maximum number of company records returned in the response.
+
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+
+Number of company records skipped before this result set.
 
 </ResponseField>
 
@@ -173,33 +248,53 @@ Create a new company record by sending the company name and any additional field
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/companies" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=example_session_cookie" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
   -d '{
+    "teamId": "2f6c1a91-0a41-4f91-b7e3-4d7d8d31d6a2",
     "name": "Acme Manufacturing",
     "website": "https://acmemanufacturing.com",
     "industry": "Manufacturing",
+    "companySize": "201-500",
+    "addressLine1": "1450 Market Street",
+    "addressLine2": "Suite 300",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94103",
+    "country": "US",
     "phone": "+1-415-555-0142",
-    "address": "1450 Market Street, San Francisco, CA 94103",
-    "employee_count": 240,
-    "account_owner": "Maya Patel"
+    "notes": "Priority expansion account",
+    "customFields": {
+      "accountOwner": "Maya Patel",
+      "renewalMonth": "September"
+    }
   }'
 ```
 
 ```javascript
 const response = await fetch("https://app.talkturo.com/api/crm/companies", {
   method: "POST",
-  credentials: "include",
   headers: {
+    "Authorization": "Bearer tk_example_9xmk7q2r",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
+    teamId: "2f6c1a91-0a41-4f91-b7e3-4d7d8d31d6a2",
     name: "Acme Manufacturing",
     website: "https://acmemanufacturing.com",
     industry: "Manufacturing",
+    companySize: "201-500",
+    addressLine1: "1450 Market Street",
+    addressLine2: "Suite 300",
+    city: "San Francisco",
+    state: "CA",
+    postalCode: "94103",
+    country: "US",
     phone: "+1-415-555-0142",
-    address: "1450 Market Street, San Francisco, CA 94103",
-    employee_count: 240,
-    account_owner: "Maya Patel"
+    notes: "Priority expansion account",
+    customFields: {
+      accountOwner: "Maya Patel",
+      renewalMonth: "September"
+    }
   })
 });
 
@@ -217,16 +312,31 @@ console.log(data);
     "name": "Acme Manufacturing",
     "website": "https://acmemanufacturing.com",
     "industry": "Manufacturing",
+    "companySize": "201-500",
+    "addressLine1": "1450 Market Street",
+    "addressLine2": "Suite 300",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94103",
+    "country": "US",
     "phone": "+1-415-555-0142",
-    "address": "1450 Market Street, San Francisco, CA 94103",
-    "employee_count": 240,
-    "account_owner": "Maya Patel"
+    "notes": "Priority expansion account",
+    "customFields": {
+      "accountOwner": "Maya Patel",
+      "renewalMonth": "September"
+    }
   }
 }
 ```
 </Response>
 
 ### Body parameters
+
+<ParamField body="teamId" param-type="string" required="false">
+
+Workspace UUID. When you authenticate with an API key, the API infers this value if you omit it.
+
+</ParamField>
 
 <ParamField body="name" param-type="string" required="true">
 
@@ -246,21 +356,63 @@ Industry label for the company.
 
 </ParamField>
 
+<ParamField body="companySize" param-type="string" required="false">
+
+Company size label.
+
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string" required="false">
+
+First line of the company street address.
+
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string" required="false">
+
+Second line of the company street address.
+
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false">
+
+City for the company address.
+
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false">
+
+State or region for the company address.
+
+</ParamField>
+
+<ParamField body="postalCode" param-type="string" required="false">
+
+Postal or ZIP code for the company address.
+
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false">
+
+Country for the company address.
+
+</ParamField>
+
 <ParamField body="phone" param-type="string" required="false">
 
 Primary company phone number.
 
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false">
+<ParamField body="notes" param-type="string" required="false">
 
-Company address.
+Freeform notes for the company record.
 
 </ParamField>
 
-<ParamField body="custom fields" param-type="object" required="false">
+<ParamField body="customFields" param-type="object" required="false">
 
-Any additional CRM fields to store on the company record. Custom field names and value types depend on your CRM configuration.
+Additional CRM fields to store on the company record. Custom field names and value types depend on your CRM configuration.
 
 </ParamField>
 
@@ -336,19 +488,61 @@ Updated industry label.
 
 </ParamField>
 
+<ParamField body="companySize" param-type="string" required="false">
+
+Updated company size label.
+
+</ParamField>
+
+<ParamField body="addressLine1" param-type="string" required="false">
+
+Updated first address line.
+
+</ParamField>
+
+<ParamField body="addressLine2" param-type="string" required="false">
+
+Updated second address line.
+
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false">
+
+Updated city.
+
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false">
+
+Updated state or region.
+
+</ParamField>
+
+<ParamField body="postalCode" param-type="string" required="false">
+
+Updated postal or ZIP code.
+
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false">
+
+Updated country.
+
+</ParamField>
+
 <ParamField body="phone" param-type="string" required="false">
 
 Updated primary phone number.
 
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false">
+<ParamField body="notes" param-type="string" required="false">
 
-Updated company address.
+Updated freeform notes.
 
 </ParamField>
 
-<ParamField body="custom fields" param-type="object" required="false">
+<ParamField body="customFields" param-type="object" required="false">
 
 Additional company fields to update. Include only the custom fields you want to change.
 
@@ -440,6 +634,6 @@ Contact last name.
 
 ## Common patterns
 
-Use `GET /api/crm/companies` when you need pagination and search across company records. Use `GET /api/crm/companies/{id}` when you already have the company ID and need the full record.
+Use `GET /api/crm/companies` when you need pagination, search, or industry filtering across company records. Use `GET /api/crm/companies/{id}` when you already have the company ID and need the full record.
 
-Create and update requests accept standard fields plus custom CRM fields. If your workspace defines additional fields on companies, include them directly in the JSON body using the field names configured in your CRM.
+Create and update requests accept standard fields plus custom CRM fields. If your workspace defines additional fields on companies, include them in the JSON body under `customFields` using the field names configured in your CRM.

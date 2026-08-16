@@ -1,30 +1,31 @@
 ---
 title: Telefonnummern
-description: Suchen, kaufen, abrufen und freigeben von Telefonnummern für Talkturo-Telefonie sowie Carrier-Webhook-Endpunkte für KYC- und Compliance-Statusaktualisierungen.
+description: Suchen, kaufen, auflisten, abrufen und freigeben von Telefonnummern für Talkturo-Telefonie sowie Carrier-Webhook-Endpunkte für KYC- und Compliance-Statusaktualisierungen.
 ---
 
 ## Telefonnummern mit der Talkturo-Telefonie verwalten
 
-Mit den Endpunkten für Telefonnummern suchen Sie verfügbare Rufnummern, kaufen neue Nummern, rufen vorhandene Nummern ab, geben nicht mehr benötigte Nummern frei und verarbeiten Carrier-Webhooks für KYC- und Compliance-Statusänderungen. Diese Endpunkte decken den vollständigen Lebenszyklus einer Telefonnummer innerhalb der Talkturo-Telefonie ab.
+Mit den Endpunkten für Telefonnummern suchen Sie verfügbare Rufnummern, kaufen neue Nummern, listen bereits gekaufte Nummern auf, rufen vorhandene Nummern ab, geben nicht mehr benötigte Nummern frei und verarbeiten Carrier-Webhooks für KYC- und Compliance-Statusänderungen. Diese Endpunkte decken den vollständigen Lebenszyklus einer Telefonnummer innerhalb der Talkturo-Telefonie ab.
 
-Für alle regulären Telefonnummern-Endpunkte ist eine authentifizierte Sitzung per Session-Cookie erforderlich. Die beiden Webhook-Endpunkte bilden die Ausnahme, da sie von externen Carriern aufgerufen werden.
+Für alle regulären Telefonnummern-Endpunkte ist entweder eine authentifizierte Sitzung per Session-Cookie oder ein API-Key per Bearer-Token erforderlich. Die beiden Webhook-Endpunkte bilden die Ausnahme, da sie von externen Carriern aufgerufen werden.
 
 <Callout kind="info">
 
-Verwenden Sie diese Endpunkte für die Verwaltung von Telefonnummern in Ihrem Account. Wenn Sie Telefonnummern einem Assistant zuweisen oder allgemeine Telephony-Einstellungen verwalten möchten, siehe [Telephony](/de/api-reference/telephony).
+Verwenden Sie diese Endpunkte für die Verwaltung von Telefonnummern in Ihrem Account. Wenn Sie allgemeine Telephony-Einstellungen verwalten möchten, siehe [Telephony](/de/api-reference/telephony).
 
 </Callout>
 
 ## Authentifizierung
 
-Die folgenden Endpunkte erfordern Session-Cookie-Authentifizierung:
+Die folgenden Endpunkte akzeptieren Session-Cookie- oder Bearer-Token-Authentifizierung:
 
-- `GET /api/phone-numbers/search`
+- `POST /api/phone-numbers/search`
 - `POST /api/phone-numbers/purchase`
+- `GET /api/phone-numbers/purchase`
 - `GET /api/phone-numbers/{id}`
 - `DELETE /api/phone-numbers/{id}`
 
-Die folgenden Webhook-Endpunkte akzeptieren Anfragen von Carriern und verwenden kein Session-Cookie:
+Die folgenden Webhook-Endpunkte akzeptieren Anfragen von Carriern und verwenden kein Session-Cookie und kein API-Key-Bearer-Token:
 
 - `POST /api/phone-numbers/telnyx-webhook`
 - `POST /api/phone-numbers/twilio-webhook`
@@ -33,25 +34,36 @@ Die folgenden Webhook-Endpunkte akzeptieren Anfragen von Carriern und verwenden 
 
 | Methode | Pfad | Authentifizierung | Zweck |
 | --- | --- | --- | --- |
-| `GET` | `/api/phone-numbers/search` | Session-Cookie | Verfügbare Telefonnummern beim Carrier suchen |
-| `POST` | `/api/phone-numbers/purchase` | Session-Cookie | Eine Telefonnummer kaufen und bereitstellen |
-| `GET` | `/api/phone-numbers/{id}` | Session-Cookie | Eine bestimmte Telefonnummer abrufen |
-| `DELETE` | `/api/phone-numbers/{id}` | Session-Cookie | Eine Telefonnummer freigeben |
+| `POST` | `/api/phone-numbers/search` | Session-Cookie oder Bearer-Token | Verfügbare Telefonnummern beim Carrier suchen |
+| `POST` | `/api/phone-numbers/purchase` | Session-Cookie oder Bearer-Token | Eine Telefonnummer kaufen und bereitstellen |
+| `GET` | `/api/phone-numbers/purchase` | Session-Cookie oder Bearer-Token | Gekaufte Telefonnummern für ein Team auflisten |
+| `GET` | `/api/phone-numbers/{id}` | Session-Cookie oder Bearer-Token | Eine bestimmte Telefonnummer abrufen |
+| `DELETE` | `/api/phone-numbers/{id}` | Session-Cookie oder Bearer-Token | Eine Telefonnummer freigeben |
 | `POST` | `/api/phone-numbers/telnyx-webhook` | ED25519-Signatur | KYC- und Compliance-Status von Telnyx verarbeiten |
 | `POST` | `/api/phone-numbers/twilio-webhook` | Keine direkte Signaturprüfung | Bundle-Status von Twilio verarbeiten |
 
 ## Verfügbare Telefonnummern suchen
 
-Rufen Sie `GET /api/phone-numbers/search` auf, um freie Telefonnummern anhand von Region, Muster oder gewünschten Funktionen zu finden.
+Rufen Sie `POST /api/phone-numbers/search` auf, um freie Telefonnummern anhand von Land, Nummerntyp, Vorwahl und Carrier-Konfiguration zu finden.
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/phone-numbers/search?areaCode=415&countryCode=US&phoneNumberPattern=555&features=sms,voice" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+curl -X POST "https://api.talkturo.com/api/phone-numbers/search" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tt_api_example_9xmk7q2r" \
+  -d '{
+    "filters": {
+      "countryCode": "US",
+      "numberType": "local",
+      "areaCode": "415"
+    },
+    "teamId": "8f4b7d7f-2a91-4fd2-9d5f-2ab0e6c73d11",
+    "carrier": "talkturo"
+  }'
 ```
 </Request>
 
-<Response tabs="200" default-tab="1">
+<Response tabs="200,400,403,409" default-tab="1">
 ```json
 {
   "success": true,
@@ -73,27 +85,73 @@ curl -X GET "https://api.talkturo.com/api/phone-numbers/search?areaCode=415&coun
         "voice"
       ]
     }
-  ]
+  ],
+  "carrier": "talkturo",
+  "provider": "talkturo",
+  "pricing": {
+    "upfrontCredits": 25,
+    "monthlyCredits": 8
+  },
+  "billing": "credits",
+  "verifiedLocalities": [
+    "San Francisco"
+  ],
+  "addressRequirements": [],
+  "count": 2
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "countryCode is required"
+}
+```
+
+```json
+{
+  "success": false,
+  "requiresVerification": true,
+  "error": "KYC verification required before searching numbers"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Carrier is not configured for this team"
 }
 ```
 </Response>
 
-### Query-Parameter
+### Request-Body
 
-<ParamField query="areaCode" param-type="string" required="false">
-Filtert verfügbare Nummern nach Vorwahl.
+<ParamField body="filters" param-type="object" required="true">
+Enthält die Suchkriterien für verfügbare Telefonnummern.
 </ParamField>
 
-<ParamField query="countryCode" param-type="string" required="false">
-Filtert verfügbare Nummern nach Ländercode.
+<ParamField body="countryCode" param-type="string" required="true" show-location="false">
+ISO-3166-Alpha-2-Ländercode, nach dem gesucht werden soll.
 </ParamField>
 
-<ParamField query="phoneNumberPattern" param-type="string" required="false">
-Sucht nach Nummern, die ein bestimmtes Ziffernmuster enthalten.
+<ParamField body="numberType" param-type="string" required="false" show-location="false" enum="local,mobile,toll-free">
+Typ der gesuchten Telefonnummer. Standard ist `local`.
 </ParamField>
 
-<ParamField query="features" param-type="string" required="false">
-Filtert nach gewünschten Funktionen. Der Endpunkt akzeptiert diesen Wert als Query-Parameter, um verfügbare Nummern nach Carrier-Funktionen einzugrenzen.
+<ParamField body="areaCode" param-type="string" required="false" show-location="false">
+Filtert lokale Nummern nach Vorwahl.
+</ParamField>
+
+<ParamField body="teamId" param-type="string" required="false">
+Team-Kennung für die Suche. Bei API-Key-basierten Anfragen kann das Team abhängig von der Key-Konfiguration bereits feststehen.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false" enum="talkturo,talkturo_2">
+Carrier, gegen den die Suche ausgeführt werden soll.
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="false">
+Veralteter Alias für `carrier`. Verwenden Sie für neue Integrationen `carrier`.
 </ParamField>
 
 ### Antwortfelder
@@ -106,6 +164,40 @@ Gibt an, ob die Suche erfolgreich war.
 Liste der verfügbaren Telefonnummern, die den angegebenen Filtern entsprechen.
 </ResponseField>
 
+<ResponseField name="carrier" field-type="string" required="true">
+Carrier, der für die Suche verwendet wurde.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string" required="true">
+Rückgabewert für bestehende Clients. Entspricht dem verwendeten Carrier.
+</ResponseField>
+
+<ResponseField name="pricing" field-type="object" required="true">
+Preisangaben für die gefundenen Nummern in Credits.
+</ResponseField>
+
+<ResponseField name="billing" field-type="string" required="true">
+Abrechnungsmodus für die gefundenen Nummern. Mögliche Werte sind `byoa`, `exempt` und `credits`.
+</ResponseField>
+
+<ResponseField name="verifiedLocalities" field-type="array" required="true">
+Orte, für die bereits die erforderlichen Verifizierungen vorliegen.
+</ResponseField>
+
+<ResponseField name="addressRequirements" field-type="array" required="true">
+Zusätzliche Adressanforderungen, die vor dem Kauf erfüllt sein müssen.
+</ResponseField>
+
+<ResponseField name="count" field-type="number" required="true">
+Anzahl der zurückgegebenen Nummern.
+</ResponseField>
+
+<Callout kind="alert">
+
+Wenn `countryCode` fehlt, antwortet der Endpunkt mit `400`. Wenn für den ausgewählten Carrier eine KYC-Prüfung erforderlich ist, antwortet der Endpunkt mit `403` und `requiresVerification: true`. Wenn der Carrier für das Team nicht eingerichtet ist, antwortet der Endpunkt mit `409`.
+
+</Callout>
+
 ## Telefonnummer kaufen
 
 Rufen Sie `POST /api/phone-numbers/purchase` auf, um eine verfügbare Telefonnummer einem Account zuzuordnen und zu provisionieren.
@@ -114,10 +206,17 @@ Rufen Sie `POST /api/phone-numbers/purchase` auf, um eine verfügbare Telefonnum
 ```bash
 curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Authorization: Bearer tt_api_example_9xmk7q2r" \
   -d '{
     "phoneNumber": "+14155550188",
-    "accountSlug": "acme-support"
+    "teamId": "8f4b7d7f-2a91-4fd2-9d5f-2ab0e6c73d11",
+    "carrier": "talkturo",
+    "numberType": "local",
+    "region": {
+      "state": "CA",
+      "locality": "San Francisco",
+      "rateCenter": "SNFCISCO"
+    }
   }'
 ```
 </Request>
@@ -139,11 +238,43 @@ curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
 ### Request-Body
 
 <ParamField body="phoneNumber" param-type="string" required="true">
-Die zu kaufende Telefonnummer im internationalen Format.
+Die zu kaufende Telefonnummer im E.164-Format.
 </ParamField>
 
-<ParamField body="accountSlug" param-type="string" required="true">
-Der Slug des Accounts, dem die Telefonnummer zugeordnet werden soll.
+<ParamField body="teamId" param-type="string" required="true">
+Die Team-Kennung, der die Telefonnummer zugeordnet werden soll. Bei API-Key-basierten Anfragen kann der Wert aus dem API-Key-Kontext abgeleitet werden.
+</ParamField>
+
+<ParamField body="connectionId" param-type="string" required="false">
+Optionale Verbindungskennung, über die die Nummer provisioniert werden soll.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false">
+Carrier für den Kaufvorgang.
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="false">
+Veralteter Alias für `carrier`. Verwenden Sie für neue Integrationen `carrier`.
+</ParamField>
+
+<ParamField body="numberType" param-type="string" required="false">
+Typ der zu kaufenden Nummer.
+</ParamField>
+
+<ParamField body="region" param-type="object" required="false">
+Optionale Regionaldaten, die für bestimmte lokale Nummern erforderlich sein können.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false" show-location="false">
+Bundesstaat oder Region innerhalb von `region`.
+</ParamField>
+
+<ParamField body="locality" param-type="string" required="false" show-location="false">
+Ort innerhalb von `region`.
+</ParamField>
+
+<ParamField body="rateCenter" param-type="string" required="false" show-location="false">
+Rate Center innerhalb von `region`.
 </ParamField>
 
 ### Antwortfelder
@@ -156,6 +287,55 @@ Gibt an, ob der Kauf erfolgreich war.
 Die bereitgestellte Telefonnummer mit den zugehörigen Metadaten.
 </ResponseField>
 
+## Gekaufte Telefonnummern auflisten
+
+Rufen Sie `GET /api/phone-numbers/purchase` auf, um die bereits gekauften Telefonnummern eines Teams abzurufen.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/phone-numbers/purchase?teamId=8f4b7d7f-2a91-4fd2-9d5f-2ab0e6c73d11" \
+  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "phoneNumbers": [
+    {
+      "id": "pn_2f6c9a41",
+      "phoneNumber": "+14155550188",
+      "accountSlug": "acme-support",
+      "status": "active"
+    },
+    {
+      "id": "pn_5ad1ee73",
+      "phoneNumber": "+14155550199",
+      "accountSlug": "acme-support",
+      "status": "pending"
+    }
+  ]
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="teamId" param-type="string" required="true">
+Die Team-Kennung, deren gekaufte Telefonnummern aufgelistet werden sollen.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Abfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="phoneNumbers" field-type="array" required="true">
+Liste der bereits gekauften Telefonnummern des Teams.
+</ResponseField>
+
 ## Telefonnummer abrufen
 
 Rufen Sie `GET /api/phone-numbers/{id}` auf, um die Details einer bestimmten Telefonnummer abzurufen.
@@ -163,7 +343,7 @@ Rufen Sie `GET /api/phone-numbers/{id}` auf, um die Details einer bestimmten Tel
 <Request tabs="cURL" default-tab="1">
 ```bash
 curl -X GET "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+  -H "Authorization: Bearer tt_api_example_9xmk7q2r"
 ```
 </Request>
 
@@ -204,7 +384,7 @@ Rufen Sie `DELETE /api/phone-numbers/{id}` auf, um eine Telefonnummer aus Ihrem 
 <Request tabs="cURL" default-tab="1">
 ```bash
 curl -X DELETE "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+  -H "Authorization: Bearer tt_api_example_9xmk7q2r"
 ```
 </Request>
 
