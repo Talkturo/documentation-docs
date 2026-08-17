@@ -8,6 +8,27 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-16" description="v2.6.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Schweiz und Österreich jetzt für Telefonnummernkäufe verfügbar** — Kaufe lokale Telefonnummern in der Schweiz und Österreich mit vollständiger Regulatory-Compliance-Unterstützung, einschließlich KYC-Verifizierung und von Carriern genehmigter Dokumenteinreichung. Siehe [Telefonie](/de/telephony).
+  - **Länderkataloge pro Carrier** — Die verfügbaren Länder für die Telefonnummernsuche passen sich jetzt an deinen gewählten Carrier an, sodass du nur Länder siehst, die dieser Carrier tatsächlich unterstützt. Siehe [Telefonie](/de/telephony).
+  - **Admin-„Zurück wechseln"-Banner** — Wenn ein Admin dein Konto per Impersonation einsehen kann, erscheint ein dauerhaftes Banner mit einer Ein-Klick-Schaltfläche, um zur Admin-Sitzung zurückzukehren, ohne sich erneut anmelden zu müssen.
+
+  ## Verbesserungen
+
+  - **Regionsauswahl für Schweiz, Deutschland und Österreich** — Das Feld für die Region in der Compliance-Verifizierung verwendet jetzt ein Dropdown mit Kantonen und Bundesländern statt Freitext, was Tippfehler verhindert, die zu regulatorischen Ablehnungen führen. Siehe [Telefonie](/de/telephony).
+  - **E-Mail-Domain-Prüfung bei Einreichung** — Regulatorische Einreichungen werden jetzt vor dem Senden blockiert, wenn die E-Mail-Domain des Vertreters nicht zur Unternehmens-Website passt, und verhindern so Anträge, die vom Carrier abgelehnt werden. Siehe [Telefonie](/de/telephony).
+  - **Gmail-Integration-Scope eingeschränkt** — Die Gmail-Integration fordert jetzt nur noch Sendeberechtigung statt vollständigen Postfachzugriff an, was den OAuth-Scope auf das Notwendige reduziert. Siehe [Integrationen](/de/integrations).
+  - **Carrierspezifische Verifizierungsverfügbarkeit** — Compliance-Verifizierung wird jetzt nur für Carrier mit einem bestätigten End-to-End-Genehmigungsprozess angeboten, sodass du keinen Antrag startest, der nicht abgeschlossen werden kann. Siehe [Telefonie](/de/telephony).
+
+  ## Bugfixes
+
+  - **LiveKit-SIP-Routing wiederhergestellt** — Behoben: Ein falsch konfigurierter SIP-Endpunkt führte zu Anruffehlern. Veraltete Trunk-URIs werden jetzt automatisch bereinigt, um das Routing zu toten Endpunkten zu verhindern. Siehe [Telefonie](/de/telephony).
+  - **Deutsche Telefonnummernkäufe freigegeben** — Behoben: Eine fehlende Adressreferenz führte dazu, dass der erste Nummernkauf nach Verifizierung in Deutschland fehlschlug. Siehe [Telefonie](/de/telephony).
+  - **Admin-IP-Entsperrung** — Behoben: Ein Abfrageproblem verhinderte, dass Admins IP-Beschränkungen entfernen konnten.
+</Update>
+
 <Update label="2026-08-14" description="v2.5.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

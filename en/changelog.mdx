@@ -8,6 +8,27 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-16" description="v2.6.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Switzerland and Austria now available for phone number purchases** — Purchase local phone numbers in Switzerland and Austria with full regulatory compliance support, including KYC verification and carrier-approved document submission. See [Telephony](/en/telephony).
+  - **Per-carrier country catalogues** — Available countries for phone number search now adapt to your selected carrier, so you only see countries that carrier supports. See [Telephony](/en/telephony).
+  - **Admin "Switch back" banner** — When an admin views your account via impersonation, a sticky banner appears with a one-click button to return to their admin session without signing in again.
+
+  ## Improvements
+
+  - **Region picker for Switzerland, Germany, and Austria** — The region field in compliance verification now uses a dropdown of cantons and federal states instead of free text, preventing spelling errors that cause regulatory rejections. See [Telephony](/en/telephony).
+  - **Email domain enforcement at submission** — Regulatory submissions are now blocked before sending if the representative's email domain doesn't match the business website, preventing filings that carriers will reject. See [Telephony](/en/telephony).
+  - **Gmail integration scope narrowed** — The Gmail integration now requests only send permission instead of full mailbox access, reducing the OAuth scope to what's needed. See [Integrations](/en/integrations).
+  - **Carrier-specific verification availability** — Compliance verification is now offered only for carriers with a proven end-to-end approval process, so you won't start a filing that can't be completed. See [Telephony](/en/telephony).
+
+  ## Bug Fixes
+
+  - **LiveKit SIP routing restored** — Fixed a misconfigured SIP endpoint that caused calls to fail, and stale trunk URIs are now automatically pruned to prevent routing to dead endpoints. See [Telephony](/en/telephony).
+  - **German phone number purchases unblocked** — Fixed a missing address reference that caused the first post-approval number purchase in Germany to fail. See [Telephony](/en/telephony).
+  - **Admin IP unblocking** — Fixed a query issue that prevented admins from removing IP restrictions.
+</Update>
+
 <Update label="2026-08-14" description="v2.5.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
