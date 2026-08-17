@@ -1,13 +1,13 @@
 ---
 title: Telefonnummern
-description: Suchen, kaufen, abrufen und freigeben von Telefonnummern für Talkturo-Telefonie sowie Carrier-Webhook-Endpunkte für KYC- und Compliance-Statusaktualisierungen.
+description: Suchen, kaufen, auflisten, abrufen und freigeben von Telefonnummern für Talkturo-Telefonie sowie Carrier-Webhooks für Compliance-Status.
 ---
 
 ## Telefonnummern mit der Talkturo-Telefonie verwalten
 
-Mit den Endpunkten für Telefonnummern suchen Sie verfügbare Rufnummern, kaufen neue Nummern, rufen vorhandene Nummern ab, geben nicht mehr benötigte Nummern frei und verarbeiten Carrier-Webhooks für KYC- und Compliance-Statusänderungen. Diese Endpunkte decken den vollständigen Lebenszyklus einer Telefonnummer innerhalb der Talkturo-Telefonie ab.
+Mit den Endpunkten für Telefonnummern suchen Sie verfügbare Rufnummern, kaufen neue Nummern, listen bereits gekaufte Nummern auf, rufen vorhandene Nummern ab, geben nicht mehr benötigte Nummern frei und verarbeiten Carrier-Webhooks für KYC- und Compliance-Statusänderungen. Diese Endpunkte decken den vollständigen Lebenszyklus einer Telefonnummer innerhalb der Talkturo-Telefonie ab.
 
-Für alle regulären Telefonnummern-Endpunkte ist eine authentifizierte Sitzung per Session-Cookie erforderlich. Die beiden Webhook-Endpunkte bilden die Ausnahme, da sie von externen Carriern aufgerufen werden.
+Für alle regulären Telefonnummern-Endpunkte können Sie entweder einen API-Schlüssel oder eine authentifizierte Sitzung verwenden. Die beiden Webhook-Endpunkte bilden die Ausnahme, da sie von externen Carriern aufgerufen werden.
 
 <Callout kind="info">
 
@@ -17,14 +17,15 @@ Verwenden Sie diese Endpunkte für die Verwaltung von Telefonnummern in Ihrem Ac
 
 ## Authentifizierung
 
-Die folgenden Endpunkte erfordern Session-Cookie-Authentifizierung:
+Die folgenden Endpunkte unterstützen API-Schlüssel oder Sitzung:
 
-- `GET /api/phone-numbers/search`
+- `POST /api/phone-numbers/search`
 - `POST /api/phone-numbers/purchase`
+- `GET /api/phone-numbers/purchase`
 - `GET /api/phone-numbers/{id}`
 - `DELETE /api/phone-numbers/{id}`
 
-Die folgenden Webhook-Endpunkte akzeptieren Anfragen von Carriern und verwenden kein Session-Cookie:
+Die folgenden Webhook-Endpunkte akzeptieren Anfragen von Carriern und verwenden keine reguläre Account-Authentifizierung:
 
 - `POST /api/phone-numbers/telnyx-webhook`
 - `POST /api/phone-numbers/twilio-webhook`
@@ -33,21 +34,40 @@ Die folgenden Webhook-Endpunkte akzeptieren Anfragen von Carriern und verwenden 
 
 | Methode | Pfad | Authentifizierung | Zweck |
 | --- | --- | --- | --- |
-| `GET` | `/api/phone-numbers/search` | Session-Cookie | Verfügbare Telefonnummern beim Carrier suchen |
-| `POST` | `/api/phone-numbers/purchase` | Session-Cookie | Eine Telefonnummer kaufen und bereitstellen |
-| `GET` | `/api/phone-numbers/{id}` | Session-Cookie | Eine bestimmte Telefonnummer abrufen |
-| `DELETE` | `/api/phone-numbers/{id}` | Session-Cookie | Eine Telefonnummer freigeben |
+| `POST` | `/api/phone-numbers/search` | API-Schlüssel oder Sitzung | Verfügbare Telefonnummern beim Carrier suchen |
+| `POST` | `/api/phone-numbers/purchase` | API-Schlüssel oder Sitzung | Eine Telefonnummer kaufen und bereitstellen |
+| `GET` | `/api/phone-numbers/purchase` | API-Schlüssel oder Sitzung | Bereits gekaufte Telefonnummern auflisten |
+| `GET` | `/api/phone-numbers/{id}` | API-Schlüssel oder Sitzung | Eine bestimmte Telefonnummer abrufen |
+| `DELETE` | `/api/phone-numbers/{id}` | API-Schlüssel oder Sitzung | Eine Telefonnummer freigeben |
 | `POST` | `/api/phone-numbers/telnyx-webhook` | ED25519-Signatur | KYC- und Compliance-Status von Telnyx verarbeiten |
 | `POST` | `/api/phone-numbers/twilio-webhook` | Keine direkte Signaturprüfung | Bundle-Status von Twilio verarbeiten |
 
 ## Verfügbare Telefonnummern suchen
 
-Rufen Sie `GET /api/phone-numbers/search` auf, um freie Telefonnummern anhand von Region, Muster oder gewünschten Funktionen zu finden.
+Rufen Sie `POST /api/phone-numbers/search` auf, um freie Telefonnummern anhand von Filter, Berechtigung und gewünschter Preisgestaltung zu finden.
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/phone-numbers/search?areaCode=415&countryCode=US&phoneNumberPattern=555&features=sms,voice" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+curl -X POST "https://app.talkturo.com/api/phone-numbers/search" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -d '{
+    "countryCode": "US",
+    "region": "CA",
+    "numberType": "local",
+    "features": ["sms", "voice"],
+    "filters": {
+      "contains": "555",
+      "areaCode": "415"
+    },
+    "pricing": {
+      "upfrontCreditsMax": 20,
+      "monthlyCreditsMax": 5
+    },
+    "eligibility": {
+      "verifiedLocalities": ["San Francisco"]
+    }
+  }'
 ```
 </Request>
 
@@ -59,41 +79,69 @@ curl -X GET "https://api.talkturo.com/api/phone-numbers/search?areaCode=415&coun
     {
       "phoneNumber": "+14155550188",
       "countryCode": "US",
-      "areaCode": "415",
+      "region": "CA",
+      "locality": "San Francisco",
+      "numberType": "local",
       "features": [
         "sms",
         "voice"
-      ]
+      ],
+      "provider": "telnyx",
+      "carrier": "Onvoy",
+      "pricing": {
+        "upfrontCredits": 10,
+        "monthlyCredits": 2
+      }
     },
     {
       "phoneNumber": "+14155550199",
       "countryCode": "US",
-      "areaCode": "415",
+      "region": "CA",
+      "locality": "San Francisco",
+      "numberType": "local",
       "features": [
         "voice"
-      ]
+      ],
+      "provider": "twilio",
+      "carrier": "Bandwidth",
+      "pricing": {
+        "upfrontCredits": 12,
+        "monthlyCredits": 3
+      }
     }
   ]
 }
 ```
 </Response>
 
-### Query-Parameter
+### Request-Body
 
-<ParamField query="areaCode" param-type="string" required="false">
-Filtert verfügbare Nummern nach Vorwahl.
-</ParamField>
-
-<ParamField query="countryCode" param-type="string" required="false">
+<ParamField body="countryCode" param-type="string" required="false">
 Filtert verfügbare Nummern nach Ländercode.
 </ParamField>
 
-<ParamField query="phoneNumberPattern" param-type="string" required="false">
-Sucht nach Nummern, die ein bestimmtes Ziffernmuster enthalten.
+<ParamField body="region" param-type="string" required="false">
+Filtert verfügbare Nummern nach Region.
 </ParamField>
 
-<ParamField query="features" param-type="string" required="false">
-Filtert nach gewünschten Funktionen. Der Endpunkt akzeptiert diesen Wert als Query-Parameter, um verfügbare Nummern nach Carrier-Funktionen einzugrenzen.
+<ParamField body="numberType" param-type="string" required="false">
+Filtert verfügbare Nummern nach Nummerntyp, zum Beispiel `local`, `mobile` oder `toll_free`.
+</ParamField>
+
+<ParamField body="features" param-type="array" required="false">
+Filtert nach gewünschten Funktionen wie `sms` oder `voice`.
+</ParamField>
+
+<ParamField body="filters" param-type="object" required="false">
+Zusätzliche Filter für die Nummernsuche, zum Beispiel enthaltene Ziffernfolgen oder Vorwahl.
+</ParamField>
+
+<ParamField body="pricing" param-type="object" required="false">
+Grenzt Ergebnisse anhand der Preisgestaltung ein, einschließlich maximaler einmaliger und monatlicher Credits.
+</ParamField>
+
+<ParamField body="eligibility" param-type="object" required="false">
+Begrenzt Ergebnisse auf Nummern, die zu Ihren Berechtigungsdaten passen, einschließlich verifizierter Standorte.
 </ParamField>
 
 ### Antwortfelder
@@ -108,16 +156,16 @@ Liste der verfügbaren Telefonnummern, die den angegebenen Filtern entsprechen.
 
 ## Telefonnummer kaufen
 
-Rufen Sie `POST /api/phone-numbers/purchase` auf, um eine verfügbare Telefonnummer einem Account zuzuordnen und zu provisionieren.
+Rufen Sie `POST /api/phone-numbers/purchase` auf, um eine verfügbare Telefonnummer einem Team zuzuordnen und zu provisionieren.
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
+curl -X POST "https://app.talkturo.com/api/phone-numbers/purchase" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
   -d '{
     "phoneNumber": "+14155550188",
-    "accountSlug": "acme-support"
+    "teamId": "team_7c9a2b11"
   }'
 ```
 </Request>
@@ -129,8 +177,11 @@ curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
   "phoneNumber": {
     "id": "pn_2f6c9a41",
     "phoneNumber": "+14155550188",
-    "accountSlug": "acme-support",
-    "status": "active"
+    "teamId": "team_7c9a2b11",
+    "provider": "telnyx",
+    "status": "active",
+    "is_trial": false,
+    "trial_expires_at": null
   }
 }
 ```
@@ -142,8 +193,8 @@ curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
 Die zu kaufende Telefonnummer im internationalen Format.
 </ParamField>
 
-<ParamField body="accountSlug" param-type="string" required="true">
-Der Slug des Accounts, dem die Telefonnummer zugeordnet werden soll.
+<ParamField body="teamId" param-type="string" required="true">
+Die Kennung des Teams, dem die Telefonnummer zugeordnet werden soll.
 </ParamField>
 
 ### Antwortfelder
@@ -156,14 +207,63 @@ Gibt an, ob der Kauf erfolgreich war.
 Die bereitgestellte Telefonnummer mit den zugehörigen Metadaten.
 </ResponseField>
 
+## Gekaufte Telefonnummern auflisten
+
+Rufen Sie `GET /api/phone-numbers/purchase` auf, um alle für Ihren Zugriff verfügbaren gekauften Telefonnummern abzurufen.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X GET "https://app.talkturo.com/api/phone-numbers/purchase" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "phoneNumbers": [
+    {
+      "id": "pn_2f6c9a41",
+      "phoneNumber": "+14155550188",
+      "teamId": "team_7c9a2b11",
+      "provider": "telnyx",
+      "status": "active",
+      "is_trial": false,
+      "trial_expires_at": null
+    },
+    {
+      "id": "pn_5a1d8e73",
+      "phoneNumber": "+14155550199",
+      "teamId": "team_7c9a2b11",
+      "provider": "twilio",
+      "status": "provisioning",
+      "is_trial": true,
+      "trial_expires_at": "2025-01-15T00:00:00.000Z"
+    }
+  ]
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Abfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="phoneNumbers" field-type="array" required="true">
+Liste der gekauften Telefonnummern, auf die Sie Zugriff haben.
+</ResponseField>
+
 ## Telefonnummer abrufen
 
 Rufen Sie `GET /api/phone-numbers/{id}` auf, um die Details einer bestimmten Telefonnummer abzurufen.
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+curl -X GET "https://app.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
 ```
 </Request>
 
@@ -174,8 +274,11 @@ curl -X GET "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
   "phoneNumber": {
     "id": "pn_2f6c9a41",
     "phoneNumber": "+14155550188",
-    "accountSlug": "acme-support",
-    "status": "active"
+    "teamId": "team_7c9a2b11",
+    "provider": "telnyx",
+    "status": "active",
+    "is_trial": false,
+    "trial_expires_at": null
   }
 }
 ```
@@ -203,8 +306,8 @@ Rufen Sie `DELETE /api/phone-numbers/{id}` auf, um eine Telefonnummer aus Ihrem 
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X DELETE "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+curl -X DELETE "https://app.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
 ```
 </Request>
 
@@ -228,6 +331,16 @@ Die eindeutige Kennung der freizugebenden Telefonnummer.
 Gibt an, ob die Telefonnummer erfolgreich freigegeben wurde.
 </ResponseField>
 
+## Allgemeine Antwortmuster
+
+Die regulären Telefonnummern-Endpunkte geben ein einheitliches Erfolgsformat mit einem `success`-Feld zurück. Endpunkte, die eine einzelne Ressource liefern, verwenden zusätzlich `phoneNumber`, während Listenendpunkte `phoneNumbers` oder `numbers` zurückgeben.
+
+<Callout kind="info">
+
+Carrier-Webhooks folgen einem anderen Antwortmuster. Nach erfolgreicher Verarbeitung antworten sie immer mit `200`, damit der Carrier keine unnötigen Wiederholungsversuche startet.
+
+</Callout>
+
 ## Telnyx-Webhook für KYC-Status
 
 `POST /api/phone-numbers/telnyx-webhook` verarbeitet Statusaktualisierungen von Telnyx für KYC- und Compliance-Prüfungen.
@@ -240,7 +353,7 @@ Dieser Endpunkt prüft eine ED25519-Signatur gegen den konfigurierten öffentlic
 
 <Request tabs="HTTP" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/phone-numbers/telnyx-webhook" \
+curl -X POST "https://app.talkturo.com/api/phone-numbers/telnyx-webhook" \
   -H "Content-Type: application/json" \
   -H "Telnyx-Signature-Ed25519: 4f8f7f4f2fb1d5e8a03ef9b4df2ac7f1a0d75c2d6d1f2e8c9a3e7b5f4d2c1a9e" \
   -H "Telnyx-Timestamp: 1731002201" \
@@ -277,7 +390,7 @@ Dieser Endpunkt vertraut dem eingehenden Statusfeld nicht direkt. Stattdessen li
 
 <Request tabs="HTTP" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/phone-numbers/twilio-webhook" \
+curl -X POST "https://app.talkturo.com/api/phone-numbers/twilio-webhook" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "BundleSID=BU7f3b0d9c5a1e44e6a8c2f11d9a7b3c4"
 ```
@@ -293,13 +406,19 @@ curl -X POST "https://api.talkturo.com/api/phone-numbers/twilio-webhook" \
 ```
 </Response>
 
-## Verwandte Themen
+## Verwandte API-Bereiche
 
-<Columns cols={1}>
+<Columns cols={2}>
   <Card
     title="Telephony"
     href="/de/api-reference/telephony"
     icon="phone"
+    cta="Zur API-Referenz"
+  />
+  <Card
+    title="Assistants"
+    href="/de/api-reference/assistants"
+    icon="users"
     cta="Zur API-Referenz"
   />
 </Columns>
