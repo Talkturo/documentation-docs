@@ -1,0 +1,221 @@
+---
+title: Voice Cloning
+description: Clone a custom text-to-speech voice from an audio sample using DashScope voice enrollment, and persist the cloned voice to a workspace for use in assistant configurations.
+---
+
+## Clone a custom voice
+
+Clone a custom TTS voice from an audio sample using DashScope voice enrollment. The cloned voice is stored in the workspace voice library and can be assigned to assistants for speech generation.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated session cookie. The signed-in user must be the workspace owner or have membership in the target workspace.
+
+</Callout>
+
+<Callout kind="alert">
+
+Send voice samples only from users who have explicitly consented to voice cloning. Voice samples may contain biometric data and should be handled under your organization's privacy and retention policies.
+
+</Callout>
+
+### Endpoint
+
+| Method | Path | Base URL | Authentication |
+| --- | --- | --- | --- |
+| `POST` | `/api/voice-cloning` | `https://api.talkturo.com` | Session cookie |
+
+### Clone a voice
+
+Send a JSON payload with the workspace ID, a display name, and a base64-encoded audio sample.
+
+<Request tabs="cURL,JavaScript" default-tab="1" show-lines="true">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/voice-cloning" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=sb_example_session_token" \
+  -d '{
+    "accountId": "3f2a7b9e-5f41-4b31-9f86-2f6f5d2b8c11",
+    "preferred_name": "SupportVoice_EN",
+    "audio_base64": "UklGRlJYAwBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0Y...",
+    "audio_mime_type": "audio/wav",
+    "language": "en"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/voice-cloning", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountId: "3f2a7b9e-5f41-4b31-9f86-2f6f5d2b8c11",
+    preferred_name: "SupportVoice_EN",
+    audio_base64: "UklGRlJYAwBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0Y...",
+    audio_mime_type: "audio/wav",
+    language: "en"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,400,403,502,503" default-tab="1">
+
+```json
+{
+  "success": true,
+  "voice": {
+    "id": "8f3ecf16-e389-42e8-a45d-5e018f89d1f0",
+    "provider": "dashscope",
+    "voice_id": "voice_a9k3m2q7p4",
+    "name": "SupportVoice_EN",
+    "description": null,
+    "language": "en",
+    "preview_url": null,
+    "metadata": {
+      "target_model": "qwen3-tts-vc-realtime-2026-01-15"
+    },
+    "voice_model": "qwen3-tts-vc-realtime-2026-01-15",
+    "account_id": "3f2a7b9e-5f41-4b31-9f86-2f6f5d2b8c11",
+    "voice_type": "cloned"
+  }
+}
+```
+
+```json
+{
+  "error": "accountId is required"
+}
+```
+
+```json
+{
+  "error": "Unauthorized - no access to this account"
+}
+```
+
+```json
+{
+  "error": "Failed to create voice",
+  "details": "DashScope returned an enrollment error"
+}
+```
+
+```json
+{
+  "error": "Voice cloning is not configured"
+}
+```
+
+</Response>
+
+A successful response returns the persisted workspace voice record, not only the upstream enrollment result. If the request succeeds, you can use the returned `voice_id` and stored voice record in later assistant or TTS workflows.
+
+### Body parameters
+
+<ParamField body="accountId" param-type="string" required="true">
+Workspace UUID that will own the cloned voice.
+</ParamField>
+
+<ParamField body="preferred_name" param-type="string" required="true">
+Display name for the cloned voice. Talkturo stores this value as the voice name after applying provider-specific sanitization rules.
+</ParamField>
+
+<ParamField body="audio_base64" param-type="string" required="true">
+Base64-encoded audio sample used for voice enrollment.
+</ParamField>
+
+<ParamField body="audio_mime_type" param-type="string" required="false">
+MIME type for the audio sample. If omitted, the API uses `audio/wav`. The server combines this value with `audio_base64` to build the audio data URI sent to DashScope.
+</ParamField>
+
+<ParamField body="language" param-type="string" required="false">
+Optional language hint for voice enrollment, such as `en` or `zh`.
+</ParamField>
+
+<Callout kind="info">
+
+`preferred_name` is truncated to 32 characters for display. For the upstream enrollment request, Talkturo sanitizes the name to only `a-z`, `A-Z`, `0-9`, and `_`, then limits it to 16 characters.
+
+</Callout>
+
+### Response fields
+
+The `voice` object contains the cloned voice record saved to the workspace voice library.
+
+<ResponseField name="id" field-type="string" required="true">
+Unique Talkturo voice record ID.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string" required="true">
+Voice provider name. This endpoint returns `dashscope`.
+</ResponseField>
+
+<ResponseField name="voice_id" field-type="string" required="true">
+Provider-issued voice ID returned by DashScope enrollment.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Stored display name for the cloned voice.
+</ResponseField>
+
+<ResponseField name="description" field-type="null" required="true">
+Voice description. This endpoint currently stores `null`.
+</ResponseField>
+
+<ResponseField name="language" field-type="string | null" required="true">
+Language hint associated with the voice, if provided.
+</ResponseField>
+
+<ResponseField name="preview_url" field-type="null" required="true">
+Preview audio URL. This endpoint currently stores `null`.
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object" required="true">
+Additional provider metadata for the stored voice record.
+</ResponseField>
+
+<ResponseField name="metadata.target_model" field-type="string" required="true">
+DashScope target model used for synthesis with the cloned voice. The current value is `qwen3-tts-vc-realtime-2026-01-15`.
+</ResponseField>
+
+<ResponseField name="voice_model" field-type="string" required="true">
+Voice model stored with the cloned voice record. This endpoint currently uses `qwen3-tts-vc-realtime-2026-01-15`.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Workspace UUID that owns the cloned voice.
+</ResponseField>
+
+<ResponseField name="voice_type" field-type="string" required="true">
+Voice classification. This endpoint returns `cloned`.
+</ResponseField>
+
+### Error responses
+
+Use the status code and error message together to determine whether the request failed validation, authorization, provider enrollment, or persistence.
+
+| Status | Error message | Meaning |
+| --- | --- | --- |
+| `400` | `accountId is required` | The request body did not include `accountId`. |
+| `400` | `audio_base64 is required` | The request body did not include the audio sample. |
+| `403` | `Unauthorized - no access to this account` | The signed-in user does not belong to the target workspace. |
+| `502` | `Failed to create voice` | DashScope rejected the enrollment request. The response may include raw provider details. |
+| `502` | `Invalid response from voice service` | DashScope responded, but Talkturo could not extract a valid voice identifier. |
+| `503` | `Voice cloning is not configured` | The DashScope API key is not configured on the server. |
+| `500` | `Failed to save voice` | Voice enrollment succeeded, but Talkturo could not persist the workspace voice record. |
+| `500` | Provider or server error message | An unexpected server error interrupted the request. |
+
+### Related endpoints
+
+<Columns cols={2}>
+  <Card title="TTS Voices" href="/en/api-reference/tts-voices" icon="database" cta="View endpoint" />
+  <Card title="Assistants" href="/en/api-reference/assistants" icon="users" cta="View endpoint" />
+</Columns>

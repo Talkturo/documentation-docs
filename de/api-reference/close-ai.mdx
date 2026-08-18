@@ -1,0 +1,1090 @@
+---
+title: "Close AI"
+description: "Verwalten Sie Close AI Desktop-Sitzungen, Prompt-Vorlagen, Team-Analytics-Dashboards und Vertriebsskripte über REST-Endpunkte für die Talkturo Desktop-Erfahrung."
+---
+
+## Close AI-Endpunkte
+
+Verwalten Sie Close AI Desktop-Sitzungen, Prompt-Vorlagen, teamweite Analytics-Dashboards und verzweigte Vertriebsskripte über REST-Endpunkte, die für die Close AI Desktop-Erfahrung entwickelt wurden.
+
+<Callout kind="info">
+
+Alle Close AI-Endpunkte erfordern ein authentifiziertes Sitzungs-Cookie. Row-Level-Security-Richtlinien erzwingen benutzerspezifischen Zugriff auf Sitzungen, Prompts, Dashboards und Skripte.
+
+</Callout>
+
+### Endpunktübersicht
+
+| Methode | Pfad |
+| --- | --- |
+| GET | `https://api.talkturo.com/close-ai/sessions` |
+| GET | `https://api.talkturo.com/close-ai/sessions/:id` |
+| PATCH | `https://api.talkturo.com/close-ai/sessions/:id` |
+| DELETE | `https://api.talkturo.com/close-ai/sessions/:id` |
+| GET | `https://api.talkturo.com/close-ai/prompts` |
+| POST | `https://api.talkturo.com/close-ai/prompts` |
+| GET | `https://api.talkturo.com/close-ai/dashboard` |
+| GET | `https://api.talkturo.com/close-ai/scripts` |
+| POST | `https://api.talkturo.com/close-ai/scripts` |
+| PUT | `https://api.talkturo.com/close-ai/scripts/:id` |
+| DELETE | `https://api.talkturo.com/close-ai/scripts/:id` |
+
+## Sitzungen
+
+Rufen Sie gespeicherte Close AI Desktop-Sitzungen ab, lesen Sie eine einzelne Sitzung, aktualisieren Sie den sichtbaren Titel oder löschen Sie nicht mehr benötigte Aufzeichnungen.
+
+### Sitzungen auflisten
+
+Gibt die Sitzungen zurück, auf die der authentifizierte Benutzer Zugriff hat.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/close-ai/sessions" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/close-ai/sessions", {
+  method: "GET",
+  headers: {
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+[
+  {
+    "id": "9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31",
+    "title": "Q2 outbound planning",
+    "created_at": "2025-02-12T14:20:31.114Z",
+    "updated_at": "2025-02-12T15:04:02.221Z",
+    "user_id": "usr_a1b2c3d4",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Summarize the next steps for the Acme account."
+      },
+      {
+        "role": "assistant",
+        "content": "Prepare a renewal brief, confirm procurement timing, and schedule a follow-up call."
+      }
+    ]
+  }
+]
+```
+
+</Response>
+
+#### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung der Sitzung.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Angezeigter Titel der Sitzung.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt, zu dem die Sitzung erstellt wurde, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung der Sitzung, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+Kennung des Benutzers, dem die Sitzung gehört.
+</ResponseField>
+
+<ResponseField name="messages" field-type="array" required="true">
+Chronologische Nachrichtenliste, die in der Sitzung gespeichert ist.
+</ResponseField>
+
+<ExpandableGroup>
+<Expandable title="Details zum Nachrichtenobjekt">
+
+<ResponseField name="role" field-type="string" required="true">
+Rolle des Nachrichtenautors, typischerweise `user` oder `assistant`.
+</ResponseField>
+
+<ResponseField name="content" field-type="string" required="true">
+Textinhalt der gespeicherten Nachricht.
+</ResponseField>
+
+</Expandable>
+</ExpandableGroup>
+
+### Einzelne Sitzung abrufen
+
+Gibt eine einzelne Sitzung anhand ihrer Kennung zurück.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/close-ai/sessions/9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r"
+```
+
+```javascript
+const sessionId = "9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31";
+
+const response = await fetch(`https://api.talkturo.com/close-ai/sessions/${sessionId}`, {
+  method: "GET",
+  headers: {
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "id": "9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31",
+  "title": "Q2 outbound planning",
+  "created_at": "2025-02-12T14:20:31.114Z",
+  "updated_at": "2025-02-12T15:04:02.221Z",
+  "user_id": "usr_a1b2c3d4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Summarize the next steps for the Acme account."
+    },
+    {
+      "role": "assistant",
+      "content": "Prepare a renewal brief, confirm procurement timing, and schedule a follow-up call."
+    }
+  ]
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige Kennung der Sitzung, die Sie abrufen möchten.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung der Sitzung.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Angezeigter Titel der Sitzung.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt, zu dem die Sitzung erstellt wurde, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung der Sitzung, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+Kennung des Benutzers, dem die Sitzung gehört.
+</ResponseField>
+
+<ResponseField name="messages" field-type="array" required="true">
+Chronologische Nachrichtenliste, die in der Sitzung gespeichert ist.
+</ResponseField>
+
+### Sitzungstitel aktualisieren
+
+Aktualisiert den sichtbaren Titel einer gespeicherten Sitzung.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X PATCH "https://api.talkturo.com/close-ai/sessions/9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r" \
+  -d '{
+    "title": "Enterprise renewal prep"
+  }'
+```
+
+```javascript
+const sessionId = "9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31";
+
+const response = await fetch(`https://api.talkturo.com/close-ai/sessions/${sessionId}`, {
+  method: "PATCH",
+  headers: {
+    "Content-Type": "application/json",
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+  body: JSON.stringify({
+    title: "Enterprise renewal prep",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "id": "9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31",
+  "title": "Enterprise renewal prep",
+  "created_at": "2025-02-12T14:20:31.114Z",
+  "updated_at": "2025-02-12T15:16:48.337Z",
+  "user_id": "usr_a1b2c3d4",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Summarize the next steps for the Acme account."
+    },
+    {
+      "role": "assistant",
+      "content": "Prepare a renewal brief, confirm procurement timing, and schedule a follow-up call."
+    }
+  ]
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige Kennung der zu aktualisierenden Sitzung.
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="title" param-type="string" required="true">
+Neuer sichtbarer Titel der Sitzung.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung der Sitzung.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Aktualisierter Sitzungstitel.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt, zu dem die Sitzung erstellt wurde, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung der Sitzung, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+Kennung des Benutzers, dem die Sitzung gehört.
+</ResponseField>
+
+<ResponseField name="messages" field-type="array" required="true">
+Chronologische Nachrichtenliste, die in der Sitzung gespeichert ist.
+</ResponseField>
+
+### Sitzung löschen
+
+Entfernt eine gespeicherte Sitzung dauerhaft.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X DELETE "https://api.talkturo.com/close-ai/sessions/9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r"
+```
+
+```javascript
+const sessionId = "9f1b0b8d-5f7a-4de3-9d85-8f688f6f7c31";
+
+const response = await fetch(`https://api.talkturo.com/close-ai/sessions/${sessionId}`, {
+  method: "DELETE",
+  headers: {
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige Kennung der zu löschenden Sitzung.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true`, wenn die Sitzung erfolgreich gelöscht wurde.
+</ResponseField>
+
+## Prompts
+
+Rufen Sie gespeicherte Prompt-Vorlagen ab und erstellen Sie neue Vorgaben für die Close AI Desktop-Erfahrung.
+
+### Prompt-Vorlagen auflisten
+
+Gibt die Prompt-Vorlagen zurück, die dem authentifizierten Benutzer zur Verfügung stehen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/close-ai/prompts" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/close-ai/prompts", {
+  method: "GET",
+  headers: {
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+[
+  {
+    "id": "prm_01jv5rj8z7x4d9m2pk6w1q0n3",
+    "title": "Pipeline handoff summary",
+    "prompt": "Summarize the current account state for the next account executive.",
+    "created_at": "2025-02-10T09:44:11.002Z",
+    "updated_at": "2025-02-10T09:44:11.002Z",
+    "user_id": "usr_a1b2c3d4"
+  }
+]
+```
+
+</Response>
+
+#### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung der Prompt-Vorlage.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Angezeigter Name der Prompt-Vorlage.
+</ResponseField>
+
+<ResponseField name="prompt" field-type="string" required="true">
+Gespeicherter Prompt-Text, der in Close AI Desktop verwendet wird.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt, zu dem die Prompt-Vorlage erstellt wurde, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung der Prompt-Vorlage, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+Kennung des Benutzers, dem die Prompt-Vorlage gehört.
+</ResponseField>
+
+### Prompt-Vorlage erstellen
+
+Speichert eine neue Prompt-Vorlage für den authentifizierten Benutzer.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/close-ai/prompts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r" \
+  -d '{
+    "title": "Pipeline handoff summary",
+    "prompt": "Summarize the current account state for the next account executive."
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/close-ai/prompts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+  body: JSON.stringify({
+    title: "Pipeline handoff summary",
+    prompt: "Summarize the current account state for the next account executive.",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="201" default-tab="1">
+
+```json
+{
+  "id": "prm_01jv5rj8z7x4d9m2pk6w1q0n3",
+  "title": "Pipeline handoff summary",
+  "prompt": "Summarize the current account state for the next account executive.",
+  "created_at": "2025-02-10T09:44:11.002Z",
+  "updated_at": "2025-02-10T09:44:11.002Z",
+  "user_id": "usr_a1b2c3d4"
+}
+```
+
+</Response>
+
+#### Body-Parameter
+
+<ParamField body="title" param-type="string" required="true">
+Angezeigter Name der neuen Prompt-Vorlage.
+</ParamField>
+
+<ParamField body="prompt" param-type="string" required="true">
+Prompt-Inhalt, der für die Wiederverwendung gespeichert wird.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung der Prompt-Vorlage.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Angezeigter Name der Prompt-Vorlage.
+</ResponseField>
+
+<ResponseField name="prompt" field-type="string" required="true">
+Gespeicherter Prompt-Text, der in Close AI Desktop verwendet wird.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt, zu dem die Prompt-Vorlage erstellt wurde, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung der Prompt-Vorlage, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+Kennung des Benutzers, dem die Prompt-Vorlage gehört.
+</ResponseField>
+
+## Dashboard
+
+Rufen Sie aggregierte Analytics für die Close AI Desktop-Nutzung im Team ab.
+
+### Analytics abrufen
+
+Gibt die Dashboard-Zusammenfassung für den authentifizierten Benutzer und dessen Team zurück.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/close-ai/dashboard" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/close-ai/dashboard", {
+  method: "GET",
+  headers: {
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "total_sessions": 184,
+  "total_prompts": 27,
+  "total_scripts": 14,
+  "active_users": 9
+}
+```
+
+</Response>
+
+#### Antwortfelder
+
+<ResponseField name="total_sessions" field-type="number" required="true">
+Gesamtzahl der im Dashboard erfassten Sitzungen.
+</ResponseField>
+
+<ResponseField name="total_prompts" field-type="number" required="true">
+Gesamtzahl der gespeicherten Prompt-Vorlagen.
+</ResponseField>
+
+<ResponseField name="total_scripts" field-type="number" required="true">
+Gesamtzahl der gespeicherten Vertriebsskripte.
+</ResponseField>
+
+<ResponseField name="active_users" field-type="number" required="true">
+Anzahl der aktiven Benutzer, die in die Team-Analytics einfließen.
+</ResponseField>
+
+<ExpandableGroup>
+<Expandable title="Hinweise zum Dashboard-Umfang">
+
+Die Dashboard-Antwort enthält aggregierte Kennzahlen. Einzelne Sitzungs-, Prompt- und Skriptdatensätze erhalten Sie über die jeweiligen Ressourcen-Endpunkte.
+
+</Expandable>
+</ExpandableGroup>
+
+## Skripte
+
+Verwalten Sie verzweigte Vertriebsskripte, die in der Close AI Desktop-Erfahrung verwendet werden.
+
+### Skripte auflisten
+
+Gibt alle Skripte zurück, die für den authentifizierten Benutzer sichtbar sind.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/close-ai/scripts" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/close-ai/scripts", {
+  method: "GET",
+  headers: {
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+[
+  {
+    "id": "scr_01jv5rq2v6m8n3k4d7p9x1z5y",
+    "title": "Pricing objection flow",
+    "description": "Branching talk track for enterprise pricing pushback.",
+    "content": {
+      "nodes": [
+        {
+          "id": "intro",
+          "label": "Acknowledge concern"
+        },
+        {
+          "id": "roi",
+          "label": "Reframe around ROI"
+        }
+      ],
+      "edges": [
+        {
+          "from": "intro",
+          "to": "roi"
+        }
+      ]
+    },
+    "created_at": "2025-02-08T11:22:09.550Z",
+    "updated_at": "2025-02-08T11:22:09.550Z",
+    "user_id": "usr_a1b2c3d4"
+  }
+]
+```
+
+</Response>
+
+#### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung des Skripts.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Angezeigter Name des Skripts.
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="true">
+Kurzbeschreibung des Skriptzwecks.
+</ResponseField>
+
+<ResponseField name="content" field-type="object" required="true">
+Verzweigte Skriptstruktur, einschließlich Knoten und Verbindungen.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt, zu dem das Skript erstellt wurde, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung des Skripts, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+Kennung des Benutzers, dem das Skript gehört.
+</ResponseField>
+
+<ExpandableGroup>
+<Expandable title="Details zur Skriptstruktur">
+
+<ResponseField name="nodes" field-type="array" required="true">
+Liste der Skriptknoten, aus denen der Gesprächsablauf besteht.
+</ResponseField>
+
+<ResponseField name="edges" field-type="array" required="true">
+Liste der Verbindungen zwischen Skriptknoten.
+</ResponseField>
+
+</Expandable>
+</ExpandableGroup>
+
+### Skript erstellen
+
+Speichert ein neues Vertriebsskript.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/close-ai/scripts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r" \
+  -d '{
+    "title": "Pricing objection flow",
+    "description": "Branching talk track for enterprise pricing pushback.",
+    "content": {
+      "nodes": [
+        {
+          "id": "intro",
+          "label": "Acknowledge concern"
+        },
+        {
+          "id": "roi",
+          "label": "Reframe around ROI"
+        }
+      ],
+      "edges": [
+        {
+          "from": "intro",
+          "to": "roi"
+        }
+      ]
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/close-ai/scripts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+  body: JSON.stringify({
+    title: "Pricing objection flow",
+    description: "Branching talk track for enterprise pricing pushback.",
+    content: {
+      nodes: [
+        {
+          id: "intro",
+          label: "Acknowledge concern",
+        },
+        {
+          id: "roi",
+          label: "Reframe around ROI",
+        },
+      ],
+      edges: [
+        {
+          from: "intro",
+          to: "roi",
+        },
+      ],
+    },
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="201" default-tab="1">
+
+```json
+{
+  "id": "scr_01jv5rq2v6m8n3k4d7p9x1z5y",
+  "title": "Pricing objection flow",
+  "description": "Branching talk track for enterprise pricing pushback.",
+  "content": {
+    "nodes": [
+      {
+        "id": "intro",
+        "label": "Acknowledge concern"
+      },
+      {
+        "id": "roi",
+        "label": "Reframe around ROI"
+      }
+    ],
+    "edges": [
+      {
+        "from": "intro",
+        "to": "roi"
+      }
+    ]
+  },
+  "created_at": "2025-02-08T11:22:09.550Z",
+  "updated_at": "2025-02-08T11:22:09.550Z",
+  "user_id": "usr_a1b2c3d4"
+}
+```
+
+</Response>
+
+#### Body-Parameter
+
+<ParamField body="title" param-type="string" required="true">
+Angezeigter Name des neuen Skripts.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="true">
+Kurzbeschreibung, die Zweck und Einsatzbereich des Skripts erklärt.
+</ParamField>
+
+<ParamField body="content" param-type="object" required="true">
+Verzweigte Skriptdefinition mit Knoten und Verbindungen.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung des Skripts.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Angezeigter Name des Skripts.
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="true">
+Kurzbeschreibung des Skriptzwecks.
+</ResponseField>
+
+<ResponseField name="content" field-type="object" required="true">
+Verzweigte Skriptstruktur, einschließlich Knoten und Verbindungen.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt, zu dem das Skript erstellt wurde, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung des Skripts, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+Kennung des Benutzers, dem das Skript gehört.
+</ResponseField>
+
+### Skript aktualisieren
+
+Aktualisiert ein vorhandenes Vertriebsskript.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X PUT "https://api.talkturo.com/close-ai/scripts/scr_01jv5rq2v6m8n3k4d7p9x1z5y" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r" \
+  -d '{
+    "title": "Pricing objection flow",
+    "description": "Updated branching talk track for enterprise pricing pushback.",
+    "content": {
+      "nodes": [
+        {
+          "id": "intro",
+          "label": "Acknowledge concern"
+        },
+        {
+          "id": "roi",
+          "label": "Reframe around ROI"
+        },
+        {
+          "id": "proof",
+          "label": "Share proof point"
+        }
+      ],
+      "edges": [
+        {
+          "from": "intro",
+          "to": "roi"
+        },
+        {
+          "from": "roi",
+          "to": "proof"
+        }
+      ]
+    }
+  }'
+```
+
+```javascript
+const scriptId = "scr_01jv5rq2v6m8n3k4d7p9x1z5y";
+
+const response = await fetch(`https://api.talkturo.com/close-ai/scripts/${scriptId}`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+  body: JSON.stringify({
+    title: "Pricing objection flow",
+    description: "Updated branching talk track for enterprise pricing pushback.",
+    content: {
+      nodes: [
+        {
+          id: "intro",
+          label: "Acknowledge concern",
+        },
+        {
+          id: "roi",
+          label: "Reframe around ROI",
+        },
+        {
+          id: "proof",
+          label: "Share proof point",
+        },
+      ],
+      edges: [
+        {
+          from: "intro",
+          to: "roi",
+        },
+        {
+          from: "roi",
+          to: "proof",
+        },
+      ],
+    },
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "id": "scr_01jv5rq2v6m8n3k4d7p9x1z5y",
+  "title": "Pricing objection flow",
+  "description": "Updated branching talk track for enterprise pricing pushback.",
+  "content": {
+    "nodes": [
+      {
+        "id": "intro",
+        "label": "Acknowledge concern"
+      },
+      {
+        "id": "roi",
+        "label": "Reframe around ROI"
+      },
+      {
+        "id": "proof",
+        "label": "Share proof point"
+      }
+    ],
+    "edges": [
+      {
+        "from": "intro",
+        "to": "roi"
+      },
+      {
+        "from": "roi",
+        "to": "proof"
+      }
+    ]
+  },
+  "created_at": "2025-02-08T11:22:09.550Z",
+  "updated_at": "2025-02-08T12:03:44.882Z",
+  "user_id": "usr_a1b2c3d4"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige Kennung des zu aktualisierenden Skripts.
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="title" param-type="string" required="true">
+Angezeigter Name des Skripts.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="true">
+Aktualisierte Kurzbeschreibung des Skriptzwecks.
+</ParamField>
+
+<ParamField body="content" param-type="object" required="true">
+Aktualisierte verzweigte Skriptdefinition mit Knoten und Verbindungen.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung des Skripts.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Angezeigter Name des Skripts.
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="true">
+Aktualisierte Kurzbeschreibung des Skriptzwecks.
+</ResponseField>
+
+<ResponseField name="content" field-type="object" required="true">
+Aktualisierte verzweigte Skriptstruktur, einschließlich Knoten und Verbindungen.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt, zu dem das Skript erstellt wurde, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung des Skripts, als ISO-8601-Zeitstempel.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+Kennung des Benutzers, dem das Skript gehört.
+</ResponseField>
+
+### Skript löschen
+
+Entfernt ein Vertriebsskript dauerhaft.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X DELETE "https://api.talkturo.com/close-ai/scripts/scr_01jv5rq2v6m8n3k4d7p9x1z5y" \
+  -H "Cookie: tt_session=tt_session_example_9xmk7q2r"
+```
+
+```javascript
+const scriptId = "scr_01jv5rq2v6m8n3k4d7p9x1z5y";
+
+const response = await fetch(`https://api.talkturo.com/close-ai/scripts/${scriptId}`, {
+  method: "DELETE",
+  headers: {
+    Cookie: "tt_session=tt_session_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Eindeutige Kennung des zu löschenden Skripts.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true`, wenn das Skript erfolgreich gelöscht wurde.
+</ResponseField>
+
+<ExpandableGroup>
+<Expandable title="Hinweise zur Skriptmodellierung">
+
+Verwenden Sie `content.nodes`, um Gesprächsschritte zu definieren, und `content.edges`, um Übergänge zwischen diesen Schritten abzubilden. Halten Sie Knotenkennungen stabil, wenn Sie bestehende Skripte aktualisieren.
+
+</Expandable>
+</ExpandableGroup>
+
+## Verwandte Endpunkte
+
+<Columns cols={2}>
+<Card
+  title="Desktop-Authentifizierung"
+  href="/de/api-reference/desktop"
+  icon="lock"
+  cta="Desktop-API anzeigen"
+/>
+<Card
+  title="Assistants"
+  href="/de/api-reference/assistants"
+  icon="users"
+  cta="Assistants-API anzeigen"
+/>
+</Columns>

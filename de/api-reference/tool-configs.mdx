@@ -1,0 +1,1011 @@
+---
+title: Werkzeugkonfigurationen
+description: Weisen Sie Assistenten Zapier-Webhooks, benutzerdefinierte HTTP-Webhooks und TurboFlow-Workflows über Werkzeugkonfigurations-Endpunkte zu — verwalten Sie Aktivierung, Konfigurationsobjekte und Lebenszyklus pro Assistent.
+---
+
+## Werkzeugkonfigurationen verwalten
+
+Weisen Sie Assistenten externe Werkzeuge zu, damit der KI-Agent diese während Gesprächen aufrufen kann. Konfigurieren Sie Zapier-Webhook-Integrationen, benutzerdefinierte HTTP-Webhook-Endpunkte mit KI-generierten Parametern und TurboFlow-Workflow-Trigger über dedizierte Endpunkte.
+
+<Callout kind="info">
+
+Alle Werkzeugkonfigurations-Endpunkte erfordern ein authentifiziertes Sitzungs-Cookie. Der angemeldete Benutzer muss Mitglied des Workspace sein, dem der Assistent gehört.
+
+</Callout>
+
+## Endpunktübersicht
+
+| Methode | Endpunkt |
+|---|---|
+| GET | `/api/assistants/:assistantId/tool-configs/:toolType` |
+| POST | `/api/assistants/:assistantId/tool-configs/:toolType` |
+| DELETE | `/api/assistants/:assistantId/tool-configs/:toolType` |
+| GET | `/api/assistants/:assistantId/tool-configs/custom_webhook` |
+| POST | `/api/assistants/:assistantId/tool-configs/custom_webhook` |
+| DELETE | `/api/assistants/:assistantId/tool-configs/custom_webhook` |
+| POST | `/api/assistants/:assistantId/tools/workflow` |
+
+## Integrations-Werkzeugkonfigurationen
+
+Verwalten Sie integrationsbasierte Werkzeugkonfigurationen über den dynamischen `toolType`-Endpunkt. Diese Route deckt die Zapier-Werkzeugkonfiguration ab.
+
+### Zapier-Werkzeugkonfiguration abrufen
+
+Rufen Sie die aktive Zapier-Werkzeugkonfiguration eines Assistenten ab oder zielen Sie mit einer Abfrage auf eine bestimmte Konfiguration.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request GET \
+  --url "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/zapier" \
+  --cookie "talkturo_session=sess_example_a9k3lm2p"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/zapier",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Cookie: "talkturo_session=sess_example_a9k3lm2p",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "id": "cfg_9m2x8k1p",
+  "assistant_id": "asst_7f3d2a91",
+  "account_id": "acc_2d8k4m7q",
+  "tool_type": "zapier",
+  "config": {
+    "integration_id": "int_4n9v1q3z"
+  },
+  "is_enabled": true,
+  "created_at": "2026-05-20T14:32:18.000Z",
+  "updated_at": "2026-05-20T14:32:18.000Z"
+}
+```
+
+```json
+{
+  "error": "Tool config not found"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die eindeutige Kennung des Assistenten.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true">
+Der Werkzeugtyp. Verwenden Sie für diese Route `zapier`.
+</ParamField>
+
+#### Query-Parameter
+
+<ParamField query="configId" param-type="string" required="false">
+Gibt eine bestimmte Werkzeugkonfiguration anhand ihrer Kennung zurück. Wenn dieser Parameter gesetzt ist, ignoriert die Antwort den Standardfilter für `is_enabled`.
+</ParamField>
+
+<ParamField query="all" param-type="string" required="false" enum="true">
+Gibt alle aktivierten Konfigurationen dieses Werkzeugtyps für den Assistenten als Array unter `configs` zurück.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige Kennung der Werkzeugkonfiguration.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Die Kennung des Assistenten, dem die Konfiguration zugewiesen ist.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Die Kennung des Workspace-Kontos, zu dem der Assistent gehört.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="true">
+Der Typ des zugewiesenen Werkzeugs.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="true">
+Das werkzeugspezifische Konfigurationsobjekt.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="true">
+Gibt an, ob diese Werkzeugkonfiguration für den Assistenten aktiv ist.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitstempel der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+### Zapier-Werkzeugkonfiguration erstellen oder aktualisieren
+
+Erstellen Sie eine neue Zapier-Zuordnung oder aktualisieren Sie eine vorhandene Konfiguration für denselben Assistenten.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request POST \
+  --url "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/zapier" \
+  --cookie "talkturo_session=sess_example_a9k3lm2p" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "config": {
+      "integration_id": "int_4n9v1q3z"
+    },
+    "is_enabled": true
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/zapier",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "talkturo_session=sess_example_a9k3lm2p",
+    },
+    body: JSON.stringify({
+      config: {
+        integration_id: "int_4n9v1q3z",
+      },
+      is_enabled: true,
+    }),
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "id": "cfg_9m2x8k1p",
+  "assistant_id": "asst_7f3d2a91",
+  "account_id": "acc_2d8k4m7q",
+  "tool_type": "zapier",
+  "config": {
+    "integration_id": "int_4n9v1q3z"
+  },
+  "is_enabled": true,
+  "created_at": "2026-05-20T14:32:18.000Z",
+  "updated_at": "2026-05-20T15:11:04.000Z"
+}
+```
+
+```json
+{
+  "error": "Invalid request data",
+  "details": [
+    {
+      "code": "invalid_type",
+      "expected": "object",
+      "received": "undefined",
+      "path": [
+        "config"
+      ],
+      "message": "Required"
+    }
+  ]
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die eindeutige Kennung des Assistenten.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true">
+Der Werkzeugtyp. Verwenden Sie für diese Route `zapier`.
+</ParamField>
+
+#### Query-Parameter
+
+<ParamField query="configId" param-type="string" required="false">
+Die Kennung der zu aktualisierenden Konfiguration. Wenn dieser Parameter gesetzt ist, wird die Konfiguration mit dieser Kennung aktualisiert, anstatt eine doppelte Konfiguration zu prüfen.
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="config" param-type="object" required="true">
+Freiform-JSON-Objekt mit den werkzeugspezifischen Konfigurationswerten.
+</ParamField>
+
+<ParamField body="is_enabled" param-type="boolean" required="false">
+Aktiviert oder deaktiviert die Werkzeugkonfiguration. Der Standardwert ist `true`.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige Kennung der gespeicherten Werkzeugkonfiguration.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Die Kennung des Assistenten, dem die Konfiguration zugewiesen ist.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Die Kennung des Workspace-Kontos, zu dem der Assistent gehört.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="true">
+Der Typ des gespeicherten Werkzeugs.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="true">
+Das gespeicherte Konfigurationsobjekt.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="true">
+Gibt an, ob diese Werkzeugkonfiguration aktiv ist.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitstempel der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<Callout kind="info">
+
+Das Feld `config` ist ein Freiform-JSON-Objekt. Die API speichert die übergebenen Werte und validiert nicht für jeden Werkzeugtyp eine feste Struktur auf Schema-Ebene.
+
+</Callout>
+
+### Zapier-Werkzeugkonfiguration löschen
+
+Löschen Sie eine Zapier-Werkzeugkonfiguration für den Assistenten. Wenn Sie `configId` übergeben, löscht die API genau diese Konfiguration.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request DELETE \
+  --url "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/zapier?configId=cfg_9m2x8k1p" \
+  --cookie "talkturo_session=sess_example_a9k3lm2p"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/zapier?configId=cfg_9m2x8k1p",
+  {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      Cookie: "talkturo_session=sess_example_a9k3lm2p",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,500" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "Failed to delete tool configuration"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die eindeutige Kennung des Assistenten.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true">
+Der Werkzeugtyp. Verwenden Sie für diese Route `zapier`.
+</ParamField>
+
+#### Query-Parameter
+
+<ParamField query="configId" param-type="string" required="false">
+Die Kennung der zu löschenden Konfiguration. Ohne diesen Parameter löscht die API die Konfigurationen für den angegebenen Werkzeugtyp des Assistenten.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Konfiguration erfolgreich gelöscht wurde.
+</ResponseField>
+
+<ExpandableGroup>
+<Expandable title="Form des Zapier-Konfigurationsobjekts" default-open="false">
+
+Das Zapier-Konfigurationsobjekt verweist in der Regel auf eine vorhandene Kontointegration.
+
+```json
+{
+  "integration_id": "int_4n9v1q3z"
+}
+```
+
+</Expandable>
+<Expandable title="GET-Verhalten nach Query-Parameter" default-open="false">
+
+Die Route verhält sich je nach Abfrage unterschiedlich:
+
+- Mit `configId` gibt die API genau eine Konfiguration nach Kennung zurück.
+- Mit `all=true` gibt die API ein Objekt mit dem Feld `configs` zurück.
+- Ohne Query-Parameter gibt die API die erste aktivierte Konfiguration dieses Werkzeugtyps zurück.
+
+</Expandable>
+</ExpandableGroup>
+
+## Benutzerdefinierte Webhook-Werkzeugkonfigurationen
+
+Verwalten Sie benutzerdefinierte HTTP-Webhook-Werkzeuge über einen dedizierten Endpunkt. Diese Konfigurationen unterstützen statische und KI-generierte Header-, Query- und Body-Parameter.
+
+### Benutzerdefinierte Webhook-Konfigurationen abrufen
+
+Rufen Sie alle Webhook-Werkzeugkonfigurationen für einen Assistenten ab.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request GET \
+  --url "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/custom_webhook" \
+  --cookie "talkturo_session=sess_example_a9k3lm2p"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/custom_webhook",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Cookie: "talkturo_session=sess_example_a9k3lm2p",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,500" default-tab="1">
+
+```json
+{
+  "configs": [
+    {
+      "id": "cfg_6q4n2v8m",
+      "assistant_id": "asst_7f3d2a91",
+      "account_id": "acc_2d8k4m7q",
+      "tool_type": "custom_webhook",
+      "config": {
+        "tool_name": "lookup_customer_balance",
+        "tool_prompt": "Ruft den aktuellen Saldo für einen Kunden ab.",
+        "url": "https://api.billinghub.io/v1/customers/balance",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Authorization",
+            "value_type": "static",
+            "value": "Bearer whsec_example_7k2m9p"
+          }
+        ],
+        "query_params": [
+          {
+            "key": "region",
+            "value_type": "static",
+            "value": "eu-central",
+            "required": true
+          }
+        ],
+        "body_params": [
+          {
+            "key": "customer_id",
+            "value_type": "ai_generated",
+            "ai_prompt": "Extrahiere die Kundenkennung aus der letzten Benutzeranfrage.",
+            "required": true
+          }
+        ],
+        "response_handling": {
+          "success_message": "Saldo erfolgreich abgerufen.",
+          "error_message": "Saldo konnte nicht abgerufen werden.",
+          "parse_response": true
+        }
+      },
+      "is_enabled": true,
+      "created_at": "2026-05-20T16:08:11.000Z",
+      "updated_at": "2026-05-20T16:08:11.000Z"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Failed to fetch tool configs"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die eindeutige Kennung des Assistenten.
+</ParamField>
+
+#### Query-Parameter
+
+<ParamField query="configId" param-type="string" required="false">
+Gibt eine bestimmte Webhook-Konfiguration anhand ihrer Kennung zurück. Wenn dieser Parameter fehlt, gibt die API alle Webhook-Konfigurationen für den Assistenten zurück.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="configs" field-type="array" required="true">
+Array von Webhook-Werkzeugkonfigurationen, wenn kein `configId`-Parameter gesetzt ist.
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige Kennung einer Webhook-Werkzeugkonfiguration.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Die Kennung des Assistenten, dem die Konfiguration zugewiesen ist.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Die Kennung des Workspace-Kontos, zu dem der Assistent gehört.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="true">
+Der Werkzeugtyp. Für diese Route ist der Wert `custom_webhook`.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="true">
+Das Webhook-Konfigurationsobjekt.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="true">
+Gibt an, ob die Webhook-Konfiguration aktiv ist.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitstempel der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+### Benutzerdefinierte Webhook-Konfiguration erstellen
+
+Erstellen Sie eine neue benutzerdefinierte Webhook-Werkzeugkonfiguration für einen Assistenten.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request POST \
+  --url "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/custom_webhook" \
+  --cookie "talkturo_session=sess_example_a9k3lm2p" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "account_id": "acc_2d8k4m7q",
+    "config": {
+      "tool_name": "lookup_customer_balance",
+      "tool_prompt": "Ruft den aktuellen Saldo für einen Kunden ab.",
+      "url": "https://api.billinghub.io/v1/customers/balance",
+      "method": "POST",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value_type": "static",
+          "value": "Bearer whsec_example_7k2m9p"
+        }
+      ],
+      "query_params": [
+        {
+          "key": "region",
+          "value_type": "static",
+          "value": "eu-central",
+          "required": true
+        }
+      ],
+      "body_params": [
+        {
+          "key": "customer_id",
+          "value_type": "ai_generated",
+          "ai_prompt": "Extrahiere die Kundenkennung aus der letzten Benutzeranfrage.",
+          "required": true
+        }
+      ],
+      "response_handling": {
+        "success_message": "Saldo erfolgreich abgerufen.",
+        "error_message": "Saldo konnte nicht abgerufen werden.",
+        "parse_response": true
+      }
+    },
+    "is_enabled": true
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/custom_webhook",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "talkturo_session=sess_example_a9k3lm2p",
+    },
+    body: JSON.stringify({
+      account_id: "acc_2d8k4m7q",
+      config: {
+        tool_name: "lookup_customer_balance",
+        tool_prompt: "Ruft den aktuellen Saldo für einen Kunden ab.",
+        url: "https://api.billinghub.io/v1/customers/balance",
+        method: "POST",
+        headers: [
+          {
+            key: "Authorization",
+            value_type: "static",
+            value: "Bearer whsec_example_7k2m9p",
+          },
+        ],
+        query_params: [
+          {
+            key: "region",
+            value_type: "static",
+            value: "eu-central",
+            required: true,
+          },
+        ],
+        body_params: [
+          {
+            key: "customer_id",
+            value_type: "ai_generated",
+            ai_prompt: "Extrahiere die Kundenkennung aus der letzten Benutzeranfrage.",
+            required: true,
+          },
+        ],
+        response_handling: {
+          success_message: "Saldo erfolgreich abgerufen.",
+          error_message: "Saldo konnte nicht abgerufen werden.",
+          parse_response: true,
+        },
+      },
+      is_enabled: true,
+    }),
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="201,400" default-tab="1">
+
+```json
+{
+  "id": "cfg_6q4n2v8m",
+  "assistant_id": "asst_7f3d2a91",
+  "account_id": "acc_2d8k4m7q",
+  "tool_type": "custom_webhook",
+  "config": {
+    "tool_name": "lookup_customer_balance",
+    "tool_prompt": "Ruft den aktuellen Saldo für einen Kunden ab.",
+    "url": "https://api.billinghub.io/v1/customers/balance",
+    "method": "POST",
+    "headers": [
+      {
+        "key": "Authorization",
+        "value_type": "static",
+        "value": "Bearer whsec_example_7k2m9p"
+      }
+    ],
+    "query_params": [
+      {
+        "key": "region",
+        "value_type": "static",
+        "value": "eu-central",
+        "required": true
+      }
+    ],
+    "body_params": [
+      {
+        "key": "customer_id",
+        "value_type": "ai_generated",
+        "ai_prompt": "Extrahiere die Kundenkennung aus der letzten Benutzeranfrage.",
+        "required": true
+      }
+    ],
+    "response_handling": {
+      "success_message": "Saldo erfolgreich abgerufen.",
+      "error_message": "Saldo konnte nicht abgerufen werden.",
+      "parse_response": true
+    }
+  },
+  "is_enabled": true,
+  "created_at": "2026-05-20T16:08:11.000Z",
+  "updated_at": "2026-05-20T16:08:11.000Z"
+}
+```
+
+```json
+{
+  "error": "Invalid request data"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die eindeutige Kennung des Assistenten.
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="account_id" param-type="string" required="true">
+Die Kennung des Workspace-Kontos, in dem die Webhook-Konfiguration erstellt wird.
+</ParamField>
+
+<ParamField body="config" param-type="object" required="true">
+Das vollständige Konfigurationsobjekt des benutzerdefinierten Webhooks.
+</ParamField>
+
+<ParamField body="is_enabled" param-type="boolean" required="false">
+Aktiviert oder deaktiviert die Webhook-Konfiguration. Der Standardwert ist `true`.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige Kennung der gespeicherten Webhook-Werkzeugkonfiguration.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Die Kennung des Assistenten, dem die Konfiguration zugewiesen ist.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Die Kennung des Workspace-Kontos, zu dem der Assistent gehört.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="true">
+Der Werkzeugtyp. Für diese Route ist der Wert `custom_webhook`.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="true">
+Das gespeicherte Webhook-Konfigurationsobjekt.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="true">
+Gibt an, ob diese Webhook-Konfiguration aktiv ist.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitstempel der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+### Benutzerdefinierte Webhook-Konfiguration löschen
+
+Löschen Sie eine bestimmte benutzerdefinierte Webhook-Konfiguration anhand ihrer Kennung.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request DELETE \
+  --url "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/custom_webhook?configId=cfg_6q4n2v8m" \
+  --cookie "talkturo_session=sess_example_a9k3lm2p"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tool-configs/custom_webhook?configId=cfg_6q4n2v8m",
+  {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      Cookie: "talkturo_session=sess_example_a9k3lm2p",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "Config ID is required for deletion"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die eindeutige Kennung des Assistenten.
+</ParamField>
+
+#### Query-Parameter
+
+<ParamField query="configId" param-type="string" required="true">
+Die Kennung der zu löschenden Webhook-Konfiguration.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Webhook-Konfiguration erfolgreich gelöscht wurde.
+</ResponseField>
+
+<ExpandableGroup>
+<Expandable title="Form des benutzerdefinierten Webhook-Konfigurationsobjekts" default-open="false">
+
+Das Konfigurationsobjekt unterstützt statische und KI-generierte Werte für Header, Query-Parameter und Body-Parameter.
+
+```json
+{
+  "tool_name": "lookup_customer_balance",
+  "tool_prompt": "Ruft den aktuellen Saldo für einen Kunden ab.",
+  "url": "https://api.billinghub.io/v1/customers/balance",
+  "method": "POST",
+  "headers": [
+    {
+      "key": "Authorization",
+      "value_type": "static",
+      "value": "Bearer whsec_example_7k2m9p"
+    }
+  ],
+  "query_params": [
+    {
+      "key": "region",
+      "value_type": "static",
+      "value": "eu-central",
+      "required": true
+    }
+  ],
+  "body_params": [
+    {
+      "key": "customer_id",
+      "value_type": "ai_generated",
+      "ai_prompt": "Extrahiere die Kundenkennung aus der letzten Benutzeranfrage.",
+      "required": true
+    }
+  ],
+  "response_handling": {
+    "success_message": "Saldo erfolgreich abgerufen.",
+    "error_message": "Saldo konnte nicht abgerufen werden.",
+    "parse_response": true
+  }
+}
+```
+
+</Expandable>
+<Expandable title="Feldbedeutung für Webhook-Parameter" default-open="false">
+
+Jeder Eintrag in `headers`, `query_params` und `body_params` verwendet dieselbe Struktur:
+
+- `key` definiert den Namen des Parameters oder Headers.
+- `value_type` ist entweder `static` oder `ai_generated`.
+- `value` enthält den festen Wert für `static`.
+- `ai_prompt` beschreibt, wie das Modell den Wert für `ai_generated` erzeugen soll.
+- `required` markiert Parameter, die bei der Ausführung vorhanden sein müssen.
+
+</Expandable>
+</ExpandableGroup>
+
+## Workflow-Werkzeugkonfigurationen
+
+Verknüpfen Sie einen Assistenten mit einem TurboFlow-Workflow, damit der Agent den Flow als Werkzeug auslösen kann.
+
+### Workflow-Werkzeugkonfiguration erstellen
+
+Erstellen Sie eine Workflow-Werkzeugkonfiguration über den dedizierten Workflow-Endpunkt.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request POST \
+  --url "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tools/workflow" \
+  --cookie "talkturo_session=sess_example_a9k3lm2p" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "flow_id": "flow_3c8k1m9q"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_7f3d2a91/tools/workflow",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "talkturo_session=sess_example_a9k3lm2p",
+    },
+    body: JSON.stringify({
+      flow_id: "flow_3c8k1m9q",
+    }),
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "id": "cfg_5p1v7n3k",
+  "assistant_id": "asst_7f3d2a91",
+  "account_id": "acc_2d8k4m7q",
+  "tool_type": "workflow",
+  "config": {
+    "flow_id": "flow_3c8k1m9q"
+  },
+  "is_enabled": true,
+  "created_at": "2026-05-20T17:02:44.000Z",
+  "updated_at": "2026-05-20T17:02:44.000Z"
+}
+```
+
+```json
+{
+  "error": "Invalid request data"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die eindeutige Kennung des Assistenten.
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="flow_id" param-type="string" required="true">
+Die Kennung des TurboFlow-Workflows, der als Werkzeug verknüpft werden soll.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige Kennung der gespeicherten Workflow-Werkzeugkonfiguration.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Die Kennung des Assistenten, dem die Konfiguration zugewiesen ist.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Die Kennung des Workspace-Kontos, zu dem der Assistent gehört.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="true">
+Der Werkzeugtyp. Für diese Route ist der Wert `workflow`.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="true">
+Das gespeicherte Workflow-Konfigurationsobjekt.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="true">
+Gibt an, ob diese Workflow-Werkzeugkonfiguration aktiv ist.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitstempel der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<ExpandableGroup>
+<Expandable title="Form des Workflow-Konfigurationsobjekts" default-open="false">
+
+Das Workflow-Konfigurationsobjekt enthält die Kennung des auszuführenden Flows.
+
+```json
+{
+  "flow_id": "flow_3c8k1m9q"
+}
+```
+
+</Expandable>
+<Expandable title="Verhalten des Workflow-Endpunkts" default-open="false">
+
+Der Workflow-Endpunkt verwendet eine dedizierte Route statt des dynamischen `toolType`-Pfads.
+
+- Die Route akzeptiert nur `POST`.
+- Die gespeicherte Werkzeugkonfiguration verwendet `tool_type` mit dem Wert `workflow`.
+- Im gespeicherten `config`-Objekt bleibt nur `flow_id` erhalten.
+
+</Expandable>
+</ExpandableGroup>
+
+## Verwandte Endpunkte
+
+<Columns cols={2}>
+  <Card
+    title="Assistenten"
+    href="/de/api-reference/assistants"
+    icon="users"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="TurboFlow"
+    href="/de/api-reference/turboflow"
+    icon="workflow"
+    cta="Zur Referenz"
+  />
+</Columns>

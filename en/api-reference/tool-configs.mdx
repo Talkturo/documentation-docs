@@ -1,0 +1,915 @@
+---
+title: Tool Configs
+description: Attach Zapier webhooks, custom HTTP webhooks, and TurboFlow workflows to assistants through tool configuration endpoints — manage tool enablement, config objects, and lifecycle per assistant.
+---
+
+## Manage tool configs
+
+Attach external tools to assistants so the AI agent can call them during conversations. Configure Zapier webhook integrations, custom HTTP webhook endpoints with AI-generated parameters, and TurboFlow workflow triggers through dedicated endpoints.
+
+<Callout kind="info">
+
+All tool config endpoints require an authenticated session cookie. The signed-in user must belong to the workspace that owns the assistant.
+
+</Callout>
+
+### Endpoint summary
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `https://api.talkturo.com/api/assistants/{assistantId}/tool-configs/zapier` | Fetch the first enabled Zapier config, one config by ID, or all enabled Zapier configs |
+| `POST` | `https://api.talkturo.com/api/assistants/{assistantId}/tool-configs/zapier` | Create or update a Zapier tool config |
+| `DELETE` | `https://api.talkturo.com/api/assistants/{assistantId}/tool-configs/zapier` | Delete one Zapier config or all Zapier configs for the assistant |
+| `GET` | `https://api.talkturo.com/api/assistants/{assistantId}/tool-configs/custom_webhook` | Fetch the first enabled custom webhook config, one config by ID, or all enabled custom webhook configs |
+| `POST` | `https://api.talkturo.com/api/assistants/{assistantId}/tool-configs/custom_webhook` | Create a custom webhook tool config |
+| `DELETE` | `https://api.talkturo.com/api/assistants/{assistantId}/tool-configs/custom_webhook` | Delete one custom webhook config by ID |
+| `POST` | `https://api.talkturo.com/api/assistants/{assistantId}/tools/workflow` | Attach a TurboFlow workflow to an assistant |
+
+<Callout kind="info">
+
+The `config` field stores a free-form JSON object. Its required keys and nested structure depend on the tool type you create.
+
+</Callout>
+
+## Integration tool configs
+
+Use the `zapier` tool type to attach a Zapier integration to an assistant. The `toolType` route currently supports the `zapier` value in the database.
+
+### Get a Zapier config
+
+Fetch one enabled Zapier config, a specific config by ID, or all enabled Zapier configs for the assistant.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request GET \
+  --url "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/zapier?all=true" \
+  --header "Cookie: tt_session=tt_session_example_f82b9c1a7d"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/zapier?all=true",
+  {
+    method: "GET",
+    headers: {
+      Cookie: "tt_session=tt_session_example_f82b9c1a7d"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "configs": [
+    {
+      "id": "8c0f4e9d-1b44-4db4-a143-1be528a37e62",
+      "assistant_id": "asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701",
+      "account_id": "1d3d81d8-0d84-4c2a-8f90-8d6c5b0c9a11",
+      "tool_type": "zapier",
+      "config": {
+        "integration_id": "5eeaeb73-1f36-4f7f-a20f-6c0d3fd0c5d2"
+      },
+      "is_enabled": true,
+      "created_at": "2026-06-03T14:22:11.221Z",
+      "updated_at": "2026-06-03T14:22:11.221Z"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Tool config not found"
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant identifier.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true">
+Tool type to query. For this route, use `zapier`.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="configId" param-type="string" required="false">
+Fetch a specific config row by UUID. When you pass `configId`, the API returns a single config object instead of a `configs` array.
+</ParamField>
+
+<ParamField query="all" param-type="boolean" required="false">
+Set to `true` to return all enabled configs for the tool type as `{ configs: [...] }`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="id" field-type="string" required="true">
+Unique tool config identifier.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Assistant that owns the config.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Workspace account that owns the assistant.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="true">
+Tool type stored for the config. For this route, the value is `zapier`.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="true">
+Tool-specific configuration object.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="true">
+Whether the tool config is enabled.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Creation timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Last update timestamp in ISO 8601 format.
+</ResponseField>
+
+### Create or update a Zapier config
+
+Create a Zapier config by posting a free-form `config` object. If a matching config already exists, the API updates that row and returns the saved record.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request POST \
+  --url "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/zapier" \
+  --header "Content-Type: application/json" \
+  --header "Cookie: tt_session=tt_session_example_f82b9c1a7d" \
+  --data '{
+    "config": {
+      "integration_id": "5eeaeb73-1f36-4f7f-a20f-6c0d3fd0c5d2"
+    },
+    "is_enabled": true
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/zapier",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "tt_session=tt_session_example_f82b9c1a7d"
+    },
+    body: JSON.stringify({
+      config: {
+        integration_id: "5eeaeb73-1f36-4f7f-a20f-6c0d3fd0c5d2"
+      },
+      is_enabled: true
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "id": "8c0f4e9d-1b44-4db4-a143-1be528a37e62",
+  "assistant_id": "asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701",
+  "account_id": "1d3d81d8-0d84-4c2a-8f90-8d6c5b0c9a11",
+  "tool_type": "zapier",
+  "config": {
+    "integration_id": "5eeaeb73-1f36-4f7f-a20f-6c0d3fd0c5d2"
+  },
+  "is_enabled": true,
+  "created_at": "2026-06-03T14:22:11.221Z",
+  "updated_at": "2026-06-03T14:22:11.221Z"
+}
+```
+
+```json
+{
+  "error": "Invalid request data",
+  "details": [
+    {
+      "code": "invalid_type",
+      "expected": "object",
+      "received": "undefined",
+      "path": [
+        "config"
+      ],
+      "message": "Required"
+    }
+  ]
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant identifier.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true">
+Tool type to create or update. Use `zapier`.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="configId" param-type="string" required="false">
+Existing config UUID to update without triggering duplicate checks against the same row.
+</ParamField>
+
+#### Body parameters
+
+<ParamField body="config" param-type="object" required="true">
+Free-form configuration object for the tool. For Zapier, the config commonly includes `integration_id`.
+</ParamField>
+
+<ParamField body="is_enabled" param-type="boolean" required="false">
+Whether to enable the config. Defaults to `true`.
+</ParamField>
+
+### Delete a Zapier config
+
+Delete one Zapier config by `configId`, or delete all Zapier configs for the assistant when you omit `configId`.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request DELETE \
+  --url "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/zapier?configId=8c0f4e9d-1b44-4db4-a143-1be528a37e62" \
+  --header "Cookie: tt_session=tt_session_example_f82b9c1a7d"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/zapier?configId=8c0f4e9d-1b44-4db4-a143-1be528a37e62",
+  {
+    method: "DELETE",
+    headers: {
+      Cookie: "tt_session=tt_session_example_f82b9c1a7d"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,500" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "Failed to delete tool configuration"
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant identifier.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true">
+Tool type to delete. Use `zapier`.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="configId" param-type="string" required="false">
+Specific config UUID to delete. If omitted, the API deletes all configs for the `zapier` tool type on the assistant.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the delete operation succeeds.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Zapier route behavior" default-open="false">
+
+The `zapier` route uses the generic `tool-configs/[toolType]` handler. `GET` returns enabled configs, `POST` accepts a free-form `config` object and optional `is_enabled`, and `DELETE` can remove one row or all rows for that tool type.
+
+  </Expandable>
+  <Expandable title="Supported tool types in the database" default-open="false">
+
+Current database constraints allow `zapier`, `custom_webhook`, and `workflow`. Use the dedicated routes for `custom_webhook` and `workflow` instead of the generic `toolType` route.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Custom webhook tool configs
+
+Use the dedicated `custom_webhook` route to attach arbitrary HTTP endpoints to an assistant. Custom webhooks support static parameters and AI-generated values in headers, query parameters, and request bodies.
+
+### Get a custom webhook config
+
+Fetch one custom webhook config by ID, all enabled custom webhook configs, or the first enabled config for the assistant.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request GET \
+  --url "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/custom_webhook?all=true" \
+  --header "Cookie: tt_session=tt_session_example_f82b9c1a7d"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/custom_webhook?all=true",
+  {
+    method: "GET",
+    headers: {
+      Cookie: "tt_session=tt_session_example_f82b9c1a7d"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "configs": [
+    {
+      "id": "f7527f57-4f41-4ca2-95da-1a3829fddac3",
+      "assistant_id": "asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701",
+      "account_id": "1d3d81d8-0d84-4c2a-8f90-8d6c5b0c9a11",
+      "tool_type": "custom_webhook",
+      "config": {
+        "tool_name": "lookup_order_status",
+        "tool_prompt": "Look up an order status before answering shipping questions.",
+        "url": "https://orders.acme-ops.net/api/status",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Authorization",
+            "value_type": "static",
+            "value": "Bearer whsec_example_4e9f2a7b"
+          }
+        ],
+        "query_params": [],
+        "body_params": [
+          {
+            "key": "order_number",
+            "value_type": "ai_generated",
+            "ai_prompt": "Extract the customer's order number from the conversation.",
+            "required": true
+          }
+        ],
+        "response_handling": {
+          "success_message": "Order status retrieved.",
+          "error_message": "Order lookup failed.",
+          "parse_response": true
+        }
+      },
+      "is_enabled": true,
+      "created_at": "2026-06-03T15:01:48.901Z",
+      "updated_at": "2026-06-03T15:01:48.901Z"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Tool config not found"
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant identifier.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="configId" param-type="string" required="false">
+Fetch a specific custom webhook config row by UUID.
+</ParamField>
+
+<ParamField query="all" param-type="boolean" required="false">
+Set to `true` to return all enabled custom webhook configs as `{ configs: [...] }`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="id" field-type="string" required="true">
+Unique tool config identifier.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Assistant that owns the config.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Workspace account that owns the assistant.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="true">
+Stored tool type. The value is `custom_webhook`.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="true">
+Custom webhook definition, including request construction and response handling settings.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="true">
+Whether the webhook config is enabled.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Creation timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Last update timestamp in ISO 8601 format.
+</ResponseField>
+
+### Create a custom webhook config
+
+Create a custom webhook tool with HTTP method, endpoint URL, request parameters, and response handling rules. This route returns `201 Created` on success.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request POST \
+  --url "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/custom_webhook" \
+  --header "Content-Type: application/json" \
+  --header "Cookie: tt_session=tt_session_example_f82b9c1a7d" \
+  --data '{
+    "account_id": "1d3d81d8-0d84-4c2a-8f90-8d6c5b0c9a11",
+    "config": {
+      "tool_name": "lookup_order_status",
+      "tool_prompt": "Look up an order status before answering shipping questions.",
+      "url": "https://orders.acme-ops.net/api/status",
+      "method": "POST",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value_type": "static",
+          "value": "Bearer whsec_example_4e9f2a7b"
+        }
+      ],
+      "query_params": [],
+      "body_params": [
+        {
+          "key": "order_number",
+          "value_type": "ai_generated",
+          "ai_prompt": "Extract the customer's order number from the conversation.",
+          "required": true
+        }
+      ],
+      "response_handling": {
+        "success_message": "Order status retrieved.",
+        "error_message": "Order lookup failed.",
+        "parse_response": true
+      }
+    },
+    "is_enabled": true
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/custom_webhook",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "tt_session=tt_session_example_f82b9c1a7d"
+    },
+    body: JSON.stringify({
+      account_id: "1d3d81d8-0d84-4c2a-8f90-8d6c5b0c9a11",
+      config: {
+        tool_name: "lookup_order_status",
+        tool_prompt: "Look up an order status before answering shipping questions.",
+        url: "https://orders.acme-ops.net/api/status",
+        method: "POST",
+        headers: [
+          {
+            key: "Authorization",
+            value_type: "static",
+            value: "Bearer whsec_example_4e9f2a7b"
+          }
+        ],
+        query_params: [],
+        body_params: [
+          {
+            key: "order_number",
+            value_type: "ai_generated",
+            ai_prompt: "Extract the customer's order number from the conversation.",
+            required: true
+          }
+        ],
+        response_handling: {
+          success_message: "Order status retrieved.",
+          error_message: "Order lookup failed.",
+          parse_response: true
+        }
+      },
+      is_enabled: true
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="201,400" default-tab="1">
+
+```json
+{
+  "id": "f7527f57-4f41-4ca2-95da-1a3829fddac3",
+  "assistant_id": "asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701",
+  "account_id": "1d3d81d8-0d84-4c2a-8f90-8d6c5b0c9a11",
+  "tool_type": "custom_webhook",
+  "config": {
+    "tool_name": "lookup_order_status",
+    "tool_prompt": "Look up an order status before answering shipping questions.",
+    "url": "https://orders.acme-ops.net/api/status",
+    "method": "POST",
+    "headers": [
+      {
+        "key": "Authorization",
+        "value_type": "static",
+        "value": "Bearer whsec_example_4e9f2a7b"
+      }
+    ],
+    "query_params": [],
+    "body_params": [
+      {
+        "key": "order_number",
+        "value_type": "ai_generated",
+        "ai_prompt": "Extract the customer's order number from the conversation.",
+        "required": true
+      }
+    ],
+    "response_handling": {
+      "success_message": "Order status retrieved.",
+      "error_message": "Order lookup failed.",
+      "parse_response": true
+    }
+  },
+  "is_enabled": true,
+  "created_at": "2026-06-03T15:01:48.901Z",
+  "updated_at": "2026-06-03T15:01:48.901Z"
+}
+```
+
+```json
+{
+  "error": "Invalid request data"
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant identifier.
+</ParamField>
+
+#### Body parameters
+
+<ParamField body="account_id" param-type="string" required="true">
+Workspace account identifier that owns the tool config.
+</ParamField>
+
+<ParamField body="config" param-type="object" required="true">
+Custom webhook configuration object.
+</ParamField>
+
+<ParamField body="is_enabled" param-type="boolean" required="false">
+Whether to enable the config. Defaults to `true`.
+</ParamField>
+
+<ExpandableGroup>
+  <Expandable title="Custom webhook config shape" default-open="false">
+
+<ParamField body="tool_name" param-type="string" required="true" show-location="false">
+Function name exposed to the assistant.
+</ParamField>
+
+<ParamField body="tool_prompt" param-type="string" required="false" show-location="false">
+Instructions that help the model decide when to call the webhook.
+</ParamField>
+
+<ParamField body="url" param-type="string" required="true" show-location="false">
+Destination HTTP endpoint.
+</ParamField>
+
+<ParamField body="method" param-type="string" required="true" show-location="false" enum="GET,POST">
+HTTP method for the webhook request.
+</ParamField>
+
+<ParamField body="headers" param-type="array" required="true" show-location="false">
+Array of header definitions.
+</ParamField>
+
+<ParamField body="query_params" param-type="array" required="true" show-location="false">
+Array of query parameter definitions.
+</ParamField>
+
+<ParamField body="body_params" param-type="array" required="true" show-location="false">
+Array of request body parameter definitions.
+</ParamField>
+
+<ParamField body="response_handling" param-type="object" required="true" show-location="false">
+Messages and parsing settings used after the webhook responds.
+</ParamField>
+
+  </Expandable>
+  <Expandable title="Parameter entry shape for headers, query_params, and body_params" default-open="false">
+
+<ParamField body="key" param-type="string" required="true" show-location="false">
+Parameter name sent to the remote endpoint.
+</ParamField>
+
+<ParamField body="value_type" param-type="string" required="true" show-location="false" enum="static,ai_generated">
+How the parameter value is supplied.
+</ParamField>
+
+<ParamField body="value" param-type="string" required="false" show-location="false">
+Static parameter value when `value_type` is `static`.
+</ParamField>
+
+<ParamField body="ai_prompt" param-type="string" required="false" show-location="false">
+Prompt used to generate the parameter value when `value_type` is `ai_generated`.
+</ParamField>
+
+<ParamField body="required" param-type="boolean" required="false" show-location="false">
+Whether the parameter must be present before the webhook runs.
+</ParamField>
+
+  </Expandable>
+  <Expandable title="Response handling shape" default-open="false">
+
+<ParamField body="success_message" param-type="string" required="true" show-location="false">
+Message used when the webhook completes successfully.
+</ParamField>
+
+<ParamField body="error_message" param-type="string" required="true" show-location="false">
+Message used when the webhook call fails.
+</ParamField>
+
+<ParamField body="parse_response" param-type="boolean" required="true" show-location="false">
+Whether the assistant should parse the remote response body.
+</ParamField>
+
+  </Expandable>
+</ExpandableGroup>
+
+### Delete a custom webhook config
+
+Delete one custom webhook config by UUID. This route requires `configId`.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request DELETE \
+  --url "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/custom_webhook?configId=f7527f57-4f41-4ca2-95da-1a3829fddac3" \
+  --header "Cookie: tt_session=tt_session_example_f82b9c1a7d"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tool-configs/custom_webhook?configId=f7527f57-4f41-4ca2-95da-1a3829fddac3",
+  {
+    method: "DELETE",
+    headers: {
+      Cookie: "tt_session=tt_session_example_f82b9c1a7d"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "Config ID is required for deletion"
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant identifier.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="configId" param-type="string" required="true">
+Custom webhook config UUID to delete.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the delete operation succeeds.
+</ResponseField>
+
+## Workflow tool configs
+
+Use the workflow route to attach a TurboFlow workflow to an assistant. The stored config contains the workflow identifier.
+
+### Create a workflow config
+
+Attach a workflow by posting a `flow_id`. The API accepts `name` and `description` in the request body, but stores only `flow_id` in the config object.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request POST \
+  --url "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tools/workflow" \
+  --header "Content-Type: application/json" \
+  --header "Cookie: tt_session=tt_session_example_f82b9c1a7d" \
+  --data '{
+    "flow_id": "3f2a6dcb-8868-4df4-8911-b7a73a6e4e2f"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701/tools/workflow",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "tt_session=tt_session_example_f82b9c1a7d"
+    },
+    body: JSON.stringify({
+      flow_id: "3f2a6dcb-8868-4df4-8911-b7a73a6e4e2f"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "id": "4f4fef2f-8b58-41d9-b569-31f0a5d6a0ef",
+  "assistant_id": "asst_9f3c2d11-0e7d-4d36-8f3c-0e14a8b2f701",
+  "account_id": "1d3d81d8-0d84-4c2a-8f90-8d6c5b0c9a11",
+  "tool_type": "workflow",
+  "config": {
+    "flow_id": "3f2a6dcb-8868-4df4-8911-b7a73a6e4e2f"
+  },
+  "is_enabled": true,
+  "created_at": "2026-06-03T15:20:31.114Z",
+  "updated_at": "2026-06-03T15:20:31.114Z"
+}
+```
+
+```json
+{
+  "error": "Invalid request data"
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant identifier.
+</ParamField>
+
+#### Body parameters
+
+<ParamField body="flow_id" param-type="string" required="true">
+TurboFlow workflow UUID to attach.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="false">
+Accepted by the endpoint but ignored when the config is stored.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+Accepted by the endpoint but ignored when the config is stored.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="id" field-type="string" required="true">
+Unique tool config identifier.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Assistant that owns the config.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Workspace account that owns the assistant.
+</ResponseField>
+
+<ResponseField name="tool_type" field-type="string" required="true">
+Stored tool type. The value is `workflow`.
+</ResponseField>
+
+<ResponseField name="config" field-type="object" required="true">
+Workflow config object containing `flow_id`.
+</ResponseField>
+
+<ResponseField name="is_enabled" field-type="boolean" required="true">
+Whether the workflow config is enabled.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Creation timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Last update timestamp in ISO 8601 format.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Workflow route behavior" default-open="false">
+
+The workflow endpoint validates `flow_id` as a UUID. The saved config object contains only `flow_id`, even if you send `name` or `description` in the request body.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Related endpoints
+
+<Columns cols={2}>
+  <Card
+    title="Assistants"
+    href="/en/api-reference/assistants"
+    icon="users"
+    cta="Open endpoint reference"
+  />
+  <Card
+    title="TurboFlow"
+    href="/en/api-reference/turboflow"
+    icon="workflow"
+    cta="Open endpoint reference"
+  />
+</Columns>

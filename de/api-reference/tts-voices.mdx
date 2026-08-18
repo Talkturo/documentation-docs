@@ -1,0 +1,129 @@
+---
+title: TTS-Stimmen
+description: Verfügbare Text-to-Speech-Stimmen aller unterstützten TTS-Anbieter auflisten, nach Anbieter filtern und sowohl System- als auch Workspace-geklonte Stimmen über einen einzigen Endpunkt abrufen.
+---
+
+## TTS-Stimmen-Endpunkt
+
+Listen Sie in Talkturo verfügbare TTS-Stimmen auf, einschließlich System-Stimmen aller unterstützten Anbieter und workspace-spezifischer geklonter Stimmen. Filtern Sie nach Anbieter oder rufen Sie den gesamten Katalog in einer einzigen Anfrage ab.
+
+| Methode | Endpunkt | Auth |
+| --- | --- | --- |
+| `GET` | `https://api.talkturo.com/api/tts-voices` | Keine |
+
+## TTS-Stimmen auflisten
+
+Rufen Sie verfügbare Stimmen aus allen unterstützten TTS-Anbietern ab. Die Antwort enthält sowohl systemweite Stimmen als auch geklonte Stimmen, die zu einem bestimmten Workspace gehören.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://api.talkturo.com/api/tts-voices?provider=elevenlabs&accountId=550e8400-e29b-41d4-a716-446655440000"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/tts-voices?provider=elevenlabs&accountId=550e8400-e29b-41d4-a716-446655440000"
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "voices": [
+    {
+      "id": "21m00Tcm4TlvDq8ikWAM",
+      "name": "Rachel",
+      "provider": "elevenlabs",
+      "gender": "female",
+      "preview_url": "https://storage.googleapis.com/voice-previews/rachel.mp3",
+      "account_id": null
+    },
+    {
+      "id": "cln_9x7k2m4p8q1r5t6u",
+      "name": "Sales Demo Voice",
+      "provider": "elevenlabs",
+      "gender": "female",
+      "preview_url": "https://storage.googleapis.com/voice-previews/sales-demo-voice.mp3",
+      "account_id": "550e8400-e29b-41d4-a716-446655440000"
+    }
+  ]
+}
+```
+
+</Response>
+
+## Query-Parameter
+
+Verwenden Sie Query-Parameter, um den Katalog auf einen Anbieter oder einen bestimmten Workspace einzugrenzen.
+
+<ParamField query="provider" param-type="string" required="false">
+Filtert Stimmen nach TTS-Anbieter. Wenn Sie diesen Parameter weglassen, gibt der Endpunkt Stimmen aller unterstützten Anbieter zurück.
+</ParamField>
+
+<ParamField query="accountId" param-type="UUID" required="false">
+Bezieht workspace-spezifische geklonte Stimmen für das angegebene Workspace-Konto in die Antwort ein. Wenn Sie diesen Parameter weglassen, gibt die Antwort nur System-Stimmen zurück.
+</ParamField>
+
+## Response-Felder
+
+Die Antwort enthält ein `voices`-Array. Jedes Objekt im Array beschreibt eine verfügbare TTS-Stimme.
+
+<ResponseField name="voices" field-type="array" required="true">
+Array verfügbarer TTS-Stimmen.
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Kennung der Stimme beim zugrunde liegenden TTS-Anbieter oder im Klon-System.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Anzeigename der Stimme.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string" required="true">
+TTS-Anbieter, der die Stimme bereitstellt, zum Beispiel `elevenlabs`.
+</ResponseField>
+
+<ResponseField name="gender" field-type="string" required="false">
+Geschlechtsbezeichnung der Stimme, wenn sie vom Anbieter verfügbar ist.
+</ResponseField>
+
+<ResponseField name="preview_url" field-type="string" required="false">
+Öffentliche URL zu einer Audio-Vorschau der Stimme.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="false">
+Workspace-ID, zu der die geklonte Stimme gehört. System-Stimmen verwenden hier `null`.
+</ResponseField>
+
+<Callout kind="info">
+
+System-Stimmen und geklonte Stimmen verwenden dasselbe Response-Schema. Bei System-Stimmen ist `account_id` auf `null` gesetzt. Bei geklonten Stimmen enthält `account_id` die UUID des Workspace, zu dem die Stimme gehört.
+
+</Callout>
+
+## Verwandte Endpunkte
+
+Verwenden Sie diese Endpunkte, um geklonte Stimmen zu erstellen oder Stimmen mit Assistenten zu verknüpfen.
+
+<Columns cols={2}>
+  <Card
+    title="Voice Cloning"
+    href="/de/api-reference/voice-cloning"
+    icon="mic"
+    cta="Endpunkt öffnen"
+  />
+  <Card
+    title="Assistants"
+    href="/de/api-reference/assistants"
+    icon="users"
+    cta="Endpunkt öffnen"
+  />
+</Columns>

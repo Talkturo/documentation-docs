@@ -285,6 +285,26 @@
                     "title": "Webhooks",
                     "path": "en/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "TTS Voices",
+                    "path": "en/api-reference/tts-voices",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Voice Cloning",
+                    "path": "en/api-reference/voice-cloning",
+                    "icon": "audio-lines"
+                  },
+                  {
+                    "title": "Close AI",
+                    "path": "en/api-reference/close-ai",
+                    "icon": "monitor"
+                  },
+                  {
+                    "title": "Tool Configs",
+                    "path": "en/api-reference/tool-configs",
+                    "icon": "wrench"
                   }
                 ]
               },
@@ -655,6 +675,26 @@
                     "title": "Webhooks",
                     "path": "de/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "TTS-Stimmen",
+                    "path": "de/api-reference/tts-voices",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Voice Cloning",
+                    "path": "de/api-reference/voice-cloning",
+                    "icon": "audio-lines"
+                  },
+                  {
+                    "title": "Close AI",
+                    "path": "de/api-reference/close-ai",
+                    "icon": "monitor"
+                  },
+                  {
+                    "title": "Werkzeugkonfigurationen",
+                    "path": "de/api-reference/tool-configs",
+                    "icon": "wrench"
                   }
                 ]
               },

@@ -1,0 +1,182 @@
+---
+title: TTS Voices
+description: List available text-to-speech voices from all supported TTS providers, filter by provider, and retrieve both system and workspace-cloned voices through a single endpoint.
+---
+
+## TTS voices endpoint
+
+List TTS voices available in Talkturo, including system voices from all supported providers and workspace-specific cloned voices. Filter by provider or retrieve the complete catalog in one request.
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| `GET` | `https://api.talkturo.com/api/tts-voices` | None |
+
+<Callout kind="info">
+
+This endpoint is public and does not require authentication. If you omit `accountId`, the response includes system voices only.
+
+</Callout>
+
+## List TTS voices
+
+Send a `GET` request to return all matching voices. Add `provider` to narrow the result set, or add `accountId` to include cloned voices from a specific workspace alongside system voices.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/tts-voices?provider=dashscope&accountId=7f3c2c8a-0d0f-4b72-a5f3-1c8c6d55e9a1"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/tts-voices?provider=dashscope&accountId=7f3c2c8a-0d0f-4b72-a5f3-1c8c6d55e9a1"
+);
+
+const voices = await response.json();
+console.log(voices);
+```
+
+</Request>
+
+<Response tabs="200,500" default-tab="1">
+
+```json
+[
+  {
+    "id": "4c1dc5c5-6f06-4c0d-8de9-6d2f88f55e91",
+    "provider": "dashscope",
+    "voice_id": "sambert-zhichu-v1",
+    "name": "Zhichu",
+    "description": "Mandarin conversational voice",
+    "language": "zh-CN",
+    "preview_url": "https://cdn.talkturo.com/voices/dashscope/zhichu-preview.mp3",
+    "metadata": {
+      "gender": "female",
+      "style": "conversational"
+    },
+    "voice_model": "sambert-v1",
+    "account_id": null,
+    "voice_type": "standard"
+  },
+  {
+    "id": "8ab4ef3e-42a6-4be5-8d48-620efcb8d7c3",
+    "provider": "dashscope",
+    "voice_id": "clone_olivia_sales",
+    "name": "Olivia Sales",
+    "description": "Workspace cloned sales voice",
+    "language": "en-US",
+    "preview_url": "https://cdn.talkturo.com/voices/cloned/olivia-sales-preview.mp3",
+    "metadata": {
+      "source": "voice-cloning"
+    },
+    "voice_model": "custom-v2",
+    "account_id": "7f3c2c8a-0d0f-4b72-a5f3-1c8c6d55e9a1",
+    "voice_type": "cloned"
+  }
+]
+```
+
+```json
+{
+  "error": "Failed to load voices"
+}
+```
+
+</Response>
+
+A successful response returns a JSON array of voice objects. This endpoint does not paginate results, so each request returns all matching rows.
+
+## Query parameters
+
+Use query parameters to filter the catalog or include workspace-specific cloned voices.
+
+<ParamField query="provider" param-type="string" required="false">
+
+Filter voices by TTS provider name. Pass a provider such as `dashscope`, `cartesia`, or `inworld`, or pass `all` to return voices from every provider. If you omit `provider`, the endpoint also returns all providers.
+
+</ParamField>
+
+<ParamField query="accountId" param-type="string UUID" required="false">
+
+Include cloned voices for the specified workspace in addition to system voices. If you omit `accountId`, the response contains system voices only.
+
+</ParamField>
+
+## Response fields
+
+Each item in the response array represents one available voice.
+
+<ResponseField name="id" field-type="string" required="true">
+Unique voice record identifier.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string" required="true">
+TTS provider name for the voice, such as `dashscope`, `cartesia`, or `inworld`.
+</ResponseField>
+
+<ResponseField name="voice_id" field-type="string" required="true">
+Provider-specific voice identifier used internally when generating speech.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Display name of the voice.
+</ResponseField>
+
+<ResponseField name="description" field-type="string | null" required="true">
+Optional human-readable description of the voice.
+</ResponseField>
+
+<ResponseField name="language" field-type="string | null" required="true">
+Language or locale code for the voice, when available.
+</ResponseField>
+
+<ResponseField name="preview_url" field-type="string | null" required="true">
+URL for an audio preview of the voice, if a preview is available.
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object" required="true">
+Provider-specific or platform-specific metadata associated with the voice.
+</ResponseField>
+
+<ResponseField name="voice_model" field-type="string | null" required="true">
+Underlying model name for the voice, when provided by the TTS service.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string | null" required="true">
+Workspace identifier for cloned voices. System voices always return `null`.
+</ResponseField>
+
+<ResponseField name="voice_type" field-type="string" required="true">
+Voice classification. Returns `standard` for system voices or `cloned` for workspace-cloned voices.
+</ResponseField>
+
+<Callout kind="info">
+
+System voices always have `account_id` set to `null`. Cloned voices always have `account_id` set to the workspace UUID that owns the voice. When you provide `accountId`, the endpoint combines system voices with cloned voices from that workspace and sorts the result by provider ascending, then name ascending.
+
+</Callout>
+
+## Error response
+
+The endpoint returns `500` if the voice list cannot be loaded.
+
+<ResponseField name="error" field-type="string" required="true">
+Error message describing the failure. The current value is `Failed to load voices`.
+</ResponseField>
+
+## Related endpoints
+
+<Columns cols={2}>
+  <Card
+    title="Voice Cloning"
+    href="/en/api-reference/voice-cloning"
+    icon="mic"
+    cta="View endpoint"
+  />
+  <Card
+    title="Assistants"
+    href="/en/api-reference/assistants"
+    icon="bot"
+    cta="View endpoint"
+  />
+</Columns>

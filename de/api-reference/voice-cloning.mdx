@@ -1,0 +1,203 @@
+---
+title: Voice Cloning
+description: Klonen Sie eine benutzerdefinierte Text-to-Speech-Stimme aus einer Audioaufnahme über die DashScope-Stimmenregistrierung und speichern Sie die geklonte Stimme in einem Workspace für die Verwendung in Assistentenkonfigurationen.
+---
+
+## Voice Cloning
+
+Klonen Sie eine benutzerdefinierte TTS-Stimme aus einer Audioaufnahme über die DashScope-Stimmenregistrierung. Die geklonte Stimme wird in der Workspace-Stimmbibliothek gespeichert und kann Assistenten für die Sprachsynthese zugewiesen werden.
+
+<Callout kind="info">
+
+Dieser Endpunkt erfordert ein authentifiziertes Sitzungs-Cookie. Der angemeldete Benutzer muss Eigentümer des Workspace sein oder Mitglied im Ziel-Workspace sein.
+
+</Callout>
+
+<Callout kind="alert">
+
+Senden Sie Stimmproben nur von Benutzern, die ausdrücklich dem Klonen ihrer Stimme zugestimmt haben. Stimmproben können biometrische Daten enthalten und sollten gemäß den Datenschutz- und Aufbewahrungsrichtlinien Ihrer Organisation behandelt werden.
+
+</Callout>
+
+| Methode | Endpunkt |
+| --- | --- |
+| `POST` | `https://api.talkturo.com/api/voice-cloning` |
+
+### Eine Stimme klonen
+
+Senden Sie den Workspace, einen Anzeigenamen und eine Base64-kodierte Audioaufnahme, um eine neue benutzerdefinierte Stimme zu erstellen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/voice-cloning" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: talkturo_session=session_example_9xmk7q2r" \
+  -d '{
+    "accountId": "550e8400-e29b-41d4-a716-446655440000",
+    "preferred_name": "CustomerSupportVoice",
+    "audio_base64": "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=",
+    "audio_mime_type": "audio/wav",
+    "language": "en"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/voice-cloning", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Cookie": "talkturo_session=session_example_9xmk7q2r"
+  },
+  body: JSON.stringify({
+    accountId: "550e8400-e29b-41d4-a716-446655440000",
+    preferred_name: "CustomerSupportVoice",
+    audio_base64: "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=",
+    audio_mime_type: "audio/wav",
+    language: "en"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="201,400,401,403,500" default-tab="1">
+
+```json
+{
+  "voice": {
+    "voice_id": "voice_7f3c2d91",
+    "name": "CustomerSupportVoice",
+    "display_name": "CustomerSupportVoice",
+    "provider": "dashscope",
+    "language": "en",
+    "status": "ready",
+    "account_id": "550e8400-e29b-41d4-a716-446655440000",
+    "created_at": "2025-02-14T10:22:31.000Z",
+    "updated_at": "2025-02-14T10:22:31.000Z"
+  }
+}
+```
+
+```json
+{
+  "error": "Invalid request body"
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Failed to clone voice"
+}
+```
+
+</Response>
+
+### Body-Parameter
+
+<ParamField body="accountId" param-type="string" required="true">
+Die UUID des Workspace, in dem die geklonte Stimme gespeichert wird.
+</ParamField>
+
+<ParamField body="preferred_name" param-type="string" required="true">
+Der bevorzugte Anzeigename für die Stimme. Dieser Name wird zum Generieren des provider-spezifischen Stimmennamens verwendet und in der Workspace-Stimmbibliothek angezeigt.
+</ParamField>
+
+<ParamField body="audio_base64" param-type="string" required="true">
+Die Base64-kodierte Audioaufnahme, die für das Stimmklonen verwendet wird.
+</ParamField>
+
+<ParamField body="audio_mime_type" param-type="string" required="false">
+Der MIME-Typ der Audioaufnahme. Standard ist `audio/wav`.
+</ParamField>
+
+<ParamField body="language" param-type="string" required="false">
+Der Sprachcode für die Stimme. Wenn kein Wert angegeben ist, verwendet der Endpunkt den Standardwert des Providers.
+</ParamField>
+
+<Callout kind="info">
+
+`preferred_name` wird vor dem Senden an die Anbieter-API bereinigt. Der Anzeigename wird für die Darstellung auf 32 Zeichen gekürzt. Für den API-Aufruf wird der Name auf das Muster `a-zA-Z0-9_` bereinigt und auf maximal 16 Zeichen begrenzt.
+
+</Callout>
+
+### Antwortfelder
+
+<ResponseField name="voice.voice_id" field-type="string">
+Die eindeutige Kennung der geklonten Stimme.
+</ResponseField>
+
+<ResponseField name="voice.name" field-type="string">
+Der provider-spezifische interne Name der Stimme.
+</ResponseField>
+
+<ResponseField name="voice.display_name" field-type="string">
+Der Anzeigename der Stimme in der Workspace-Stimmbibliothek.
+</ResponseField>
+
+<ResponseField name="voice.provider" field-type="string">
+Der Sprachprovider, der die Stimme hostet.
+</ResponseField>
+
+<ResponseField name="voice.language" field-type="string">
+Der Sprachcode, der der Stimme zugeordnet ist.
+</ResponseField>
+
+<ResponseField name="voice.status" field-type="string">
+Der aktuelle Status der Stimme, z. B. `ready`.
+</ResponseField>
+
+<ResponseField name="voice.account_id" field-type="string">
+Die Workspace-ID, zu der die Stimme gehört.
+</ResponseField>
+
+<ResponseField name="voice.created_at" field-type="string">
+Der ISO-8601-Zeitstempel, zu dem die Stimme erstellt wurde.
+</ResponseField>
+
+<ResponseField name="voice.updated_at" field-type="string">
+Der ISO-8601-Zeitstempel der letzten Aktualisierung der Stimme.
+</ResponseField>
+
+### Fehlerantworten
+
+Der Endpunkt gibt Standard-HTTP-Fehlercodes zurück, wenn die Anfrage nicht verarbeitet werden kann.
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | Der Request-Body ist ungültig oder erforderliche Felder fehlen. |
+| `401` | Das Sitzungs-Cookie fehlt oder ist ungültig. |
+| `403` | Der authentifizierte Benutzer hat keinen Zugriff auf den angegebenen Workspace. |
+| `500` | Der Voice-Cloning-Vorgang beim Provider oder die interne Speicherung ist fehlgeschlagen. |
+
+### Verwandte Endpunkte
+
+<Columns cols={2}>
+  <Card
+    title="TTS Voices"
+    href="/de/api-reference/tts-voices"
+    icon="audio-lines"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="Assistants"
+    href="/de/api-reference/assistants"
+    icon="users"
+    cta="Zur Referenz"
+  />
+</Columns>

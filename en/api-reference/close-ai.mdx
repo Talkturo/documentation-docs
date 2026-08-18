@@ -1,0 +1,1635 @@
+---
+title: Close AI
+description: Manage Close AI desktop sessions, prompt presets, team analytics dashboards, and sales scripts through REST endpoints for the Talkturo desktop experience.
+---
+
+## Close AI endpoints
+
+Manage Close AI desktop sessions, prompt presets, team-wide analytics dashboards, and branching sales scripts through REST endpoints designed for the Close AI desktop experience.
+
+<Callout kind="info">
+
+All Close AI endpoints require an authenticated session cookie. Row-level security policies enforce user-scoped access across sessions, prompts, dashboards, and scripts.
+
+</Callout>
+
+## Endpoint overview
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/close-ai/sessions` | List Close AI sessions for the current user |
+| `GET` | `/api/close-ai/sessions/[sessionId]` | Get one session with transcripts, messages, summary, and analysis |
+| `PATCH` | `/api/close-ai/sessions/[sessionId]` | Rename or clear a session title |
+| `DELETE` | `/api/close-ai/sessions/[sessionId]` | Delete a session |
+| `GET` | `/api/close-ai/prompts` | List saved prompt presets |
+| `POST` | `/api/close-ai/prompts` | Create a prompt preset |
+| `GET` | `/api/close-ai/dashboard` | Retrieve team analytics for a workspace |
+| `GET` | `/api/close-ai/scripts` | List workspace sales scripts |
+| `POST` | `/api/close-ai/scripts` | Create a sales script |
+| `PUT` | `/api/close-ai/scripts` | Update a sales script |
+| `DELETE` | `/api/close-ai/scripts` | Delete a sales script |
+
+## Sessions
+
+Use session endpoints to list recorded Close AI activity, inspect one session in detail, update the session title, or remove a session.
+
+### List sessions
+
+`GET https://api.talkturo.com/api/close-ai/sessions` returns paginated sessions for the authenticated user.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/close-ai/sessions?limit=25&offset=0&q=demo&account=acme-revenue" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/sessions?limit=25&offset=0&q=demo&account=acme-revenue",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "sessions": [
+    {
+      "id": "ses_8f2d3ab1",
+      "user_id": "usr_19c4f2aa",
+      "account_id": "acc_4a90de31",
+      "title": "Acme renewal follow-up",
+      "session_type": "desktop_call",
+      "started_at": "2025-02-10T16:30:00.000Z",
+      "ended_at": "2025-02-10T17:02:00.000Z",
+      "status": "completed",
+      "duration_seconds": 1920,
+      "updated_at": "2025-02-10T17:05:18.000Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+</Response>
+
+#### Query parameters
+
+<ParamField query="limit" param-type="integer" required="false">
+Number of sessions to return. Accepts values from `1` to `100`. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of sessions to skip before returning results. Defaults to `0`.
+</ParamField>
+
+<ParamField query="q" param-type="string" required="false">
+Case-insensitive title search. The API matches session titles with an `ILIKE` filter.
+</ParamField>
+
+<ParamField query="account" param-type="string" required="false">
+Workspace slug used to filter sessions by `account_id` or shared sessions with no workspace assignment.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="sessions" field-type="array" required="true">
+List of matching session records.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Total number of sessions returned for the current query.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Session object fields">
+
+<ResponseField name="id" field-type="string" required="true">
+Unique session identifier.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+User ID that owns the session.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string | null" required="true">
+Workspace ID associated with the session, or `null` for sessions without a workspace.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Session title shown in the Close AI desktop experience.
+</ResponseField>
+
+<ResponseField name="session_type" field-type="string" required="true">
+Session category recorded by the desktop app.
+</ResponseField>
+
+<ResponseField name="started_at" field-type="string" required="true">
+ISO 8601 timestamp for when the session started.
+</ResponseField>
+
+<ResponseField name="ended_at" field-type="string | null" required="true">
+ISO 8601 timestamp for when the session ended.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Processing or completion state for the session.
+</ResponseField>
+
+<ResponseField name="duration_seconds" field-type="integer | null" required="true">
+Session duration in seconds.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+ISO 8601 timestamp for the last session update.
+</ResponseField>
+
+  </Expandable>
+</ExpandableGroup>
+
+### Get a session
+
+`GET https://api.talkturo.com/api/close-ai/sessions/[sessionId]` returns the session record plus transcripts, AI messages, summary output, and analysis output.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/close-ai/sessions/ses_8f2d3ab1" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/sessions/ses_8f2d3ab1",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "session": {
+    "id": "ses_8f2d3ab1",
+    "user_id": "usr_19c4f2aa",
+    "account_id": "acc_4a90de31",
+    "title": "Acme renewal follow-up",
+    "session_type": "desktop_call",
+    "started_at": "2025-02-10T16:30:00.000Z",
+    "ended_at": "2025-02-10T17:02:00.000Z",
+    "status": "completed",
+    "duration_seconds": 1920,
+    "updated_at": "2025-02-10T17:05:18.000Z"
+  },
+  "transcripts": [
+    {
+      "id": "trn_1420ab",
+      "session_id": "ses_8f2d3ab1",
+      "start_at": 0,
+      "end_at": 6,
+      "speaker": "rep",
+      "text": "Thanks for taking the call today.",
+      "lang": "en",
+      "created_at": "2025-02-10T16:30:07.000Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg_8821c1",
+      "session_id": "ses_8f2d3ab1",
+      "sent_at": "2025-02-10T16:45:00.000Z",
+      "role": "assistant",
+      "content": "Ask a follow-up about timeline risk.",
+      "tokens": 42,
+      "model": "gpt-4.1-mini",
+      "created_at": "2025-02-10T16:45:00.000Z"
+    }
+  ],
+  "summary": {
+    "session_id": "ses_8f2d3ab1",
+    "generated_at": "2025-02-10T17:03:00.000Z",
+    "model": "gpt-4.1",
+    "text": "The prospect is interested but blocked on procurement timing.",
+    "tldr": "Positive call with timeline risk.",
+    "bullet_json": [
+      "Prospect confirmed budget is approved.",
+      "Security review starts next week."
+    ],
+    "action_json": [
+      "Send procurement checklist.",
+      "Book follow-up with legal contact."
+    ],
+    "tokens_used": 1280,
+    "updated_at": "2025-02-10T17:03:02.000Z"
+  },
+  "analysis": {
+    "session_id": "ses_8f2d3ab1",
+    "close_score": 84,
+    "score_breakdown": {
+      "discovery": 88,
+      "objection_handling": 79,
+      "next_steps": 86
+    },
+    "strengths": [
+      "Good agenda control",
+      "Clear recap"
+    ],
+    "weaknesses": [
+      "Missed one pricing objection"
+    ],
+    "risks": [
+      "Procurement delay"
+    ],
+    "objections": [
+      "Security review timing"
+    ],
+    "questions": [
+      "Who signs the MSA"
+    ],
+    "personality": {
+      "buyer_style": "analytical"
+    },
+    "talk_metrics": {
+      "rep_share_pct": 53,
+      "buyer_share_pct": 47
+    },
+    "script_coverage": {
+      "coverage_pct": 76
+    },
+    "language": "en",
+    "model": "gpt-4.1",
+    "generated_at": "2025-02-10T17:03:10.000Z"
+  }
+}
+```
+
+```json
+{
+  "error": "Not found"
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="sessionId" param-type="string" required="true">
+Session identifier.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="session" field-type="object" required="true">
+Top-level session record.
+</ResponseField>
+
+<ResponseField name="transcripts" field-type="array" required="true">
+Transcript segments captured for the session.
+</ResponseField>
+
+<ResponseField name="messages" field-type="array" required="true">
+Assistant and system messages generated during the session.
+</ResponseField>
+
+<ResponseField name="summary" field-type="object | null" required="true">
+Generated summary output for the session, or `null` when summary generation has not completed.
+</ResponseField>
+
+<ResponseField name="analysis" field-type="object | null" required="true">
+Generated coaching and scoring output for the session, or `null` when analysis is not available.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Transcript object fields">
+
+<ResponseField name="id" field-type="string" required="true">
+Unique transcript segment identifier.
+</ResponseField>
+
+<ResponseField name="session_id" field-type="string" required="true">
+Session identifier for the transcript segment.
+</ResponseField>
+
+<ResponseField name="start_at" field-type="number" required="true">
+Segment start time.
+</ResponseField>
+
+<ResponseField name="end_at" field-type="number" required="true">
+Segment end time.
+</ResponseField>
+
+<ResponseField name="speaker" field-type="string" required="true">
+Speaker label for the segment.
+</ResponseField>
+
+<ResponseField name="text" field-type="string" required="true">
+Transcript text.
+</ResponseField>
+
+<ResponseField name="lang" field-type="string" required="true">
+Detected language code.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+ISO 8601 timestamp when the transcript segment was stored.
+</ResponseField>
+
+  </Expandable>
+
+  <Expandable title="Message object fields">
+
+<ResponseField name="id" field-type="string" required="true">
+Unique message identifier.
+</ResponseField>
+
+<ResponseField name="session_id" field-type="string" required="true">
+Session identifier for the message.
+</ResponseField>
+
+<ResponseField name="sent_at" field-type="string" required="true">
+ISO 8601 timestamp when the message was sent.
+</ResponseField>
+
+<ResponseField name="role" field-type="string" required="true">
+Message role such as assistant or system.
+</ResponseField>
+
+<ResponseField name="content" field-type="string" required="true">
+Message body text.
+</ResponseField>
+
+<ResponseField name="tokens" field-type="integer | null" required="true">
+Token count associated with the message.
+</ResponseField>
+
+<ResponseField name="model" field-type="string | null" required="true">
+Model used to generate the message.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+ISO 8601 timestamp when the message record was created.
+</ResponseField>
+
+  </Expandable>
+
+  <Expandable title="Summary object fields">
+
+<ResponseField name="session_id" field-type="string" required="true">
+Session identifier for the summary.
+</ResponseField>
+
+<ResponseField name="generated_at" field-type="string" required="true">
+ISO 8601 timestamp when the summary was generated.
+</ResponseField>
+
+<ResponseField name="model" field-type="string" required="true">
+Model used to generate the summary.
+</ResponseField>
+
+<ResponseField name="text" field-type="string" required="true">
+Full natural-language summary.
+</ResponseField>
+
+<ResponseField name="tldr" field-type="string" required="true">
+Short summary version.
+</ResponseField>
+
+<ResponseField name="bullet_json" field-type="array" required="true">
+Structured bullet-point summary output.
+</ResponseField>
+
+<ResponseField name="action_json" field-type="array" required="true">
+Structured follow-up actions extracted from the session.
+</ResponseField>
+
+<ResponseField name="tokens_used" field-type="integer | null" required="true">
+Total model tokens consumed for summary generation.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+ISO 8601 timestamp for the last summary update.
+</ResponseField>
+
+  </Expandable>
+
+  <Expandable title="Analysis object fields">
+
+<ResponseField name="session_id" field-type="string" required="true">
+Session identifier for the analysis.
+</ResponseField>
+
+<ResponseField name="close_score" field-type="number | null" required="true">
+Overall Close AI score for the session.
+</ResponseField>
+
+<ResponseField name="score_breakdown" field-type="object | null" required="true">
+Per-category scoring details.
+</ResponseField>
+
+<ResponseField name="strengths" field-type="array | null" required="true">
+Positive coaching observations.
+</ResponseField>
+
+<ResponseField name="weaknesses" field-type="array | null" required="true">
+Areas that need improvement.
+</ResponseField>
+
+<ResponseField name="risks" field-type="array | null" required="true">
+Detected deal or call risks.
+</ResponseField>
+
+<ResponseField name="objections" field-type="array | null" required="true">
+Objections raised during the session.
+</ResponseField>
+
+<ResponseField name="questions" field-type="array | null" required="true">
+Questions identified in the session.
+</ResponseField>
+
+<ResponseField name="personality" field-type="object | null" required="true">
+Personality analysis output.
+</ResponseField>
+
+<ResponseField name="talk_metrics" field-type="object | null" required="true">
+Talk-time and pacing metrics.
+</ResponseField>
+
+<ResponseField name="script_coverage" field-type="object | null" required="true">
+Script adherence and coverage metrics.
+</ResponseField>
+
+<ResponseField name="language" field-type="string | null" required="true">
+Primary language detected for the analysis.
+</ResponseField>
+
+<ResponseField name="model" field-type="string | null" required="true">
+Model used to generate the analysis.
+</ResponseField>
+
+<ResponseField name="generated_at" field-type="string" required="true">
+ISO 8601 timestamp when the analysis was generated.
+</ResponseField>
+
+  </Expandable>
+</ExpandableGroup>
+
+### Update a session title
+
+`PATCH https://api.talkturo.com/api/close-ai/sessions/[sessionId]` updates the session title. Send an empty string to clear the title.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X PATCH "https://api.talkturo.com/api/close-ai/sessions/ses_8f2d3ab1" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie" \
+  -d '{
+    "title": "Q1 expansion follow-up"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/sessions/ses_8f2d3ab1",
+  {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    },
+    body: JSON.stringify({
+      title: "Q1 expansion follow-up"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "ok": true,
+  "title": "Q1 expansion follow-up"
+}
+```
+
+```json
+{
+  "error": "Not found"
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="sessionId" param-type="string" required="true">
+Session identifier.
+</ParamField>
+
+#### Body parameters
+
+<ParamField body="title" param-type="string" required="true">
+New session title. Send an empty string to clear the title.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Returns `true` when the title update succeeds.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Stored session title after the update.
+</ResponseField>
+
+### Delete a session
+
+`DELETE https://api.talkturo.com/api/close-ai/sessions/[sessionId]` permanently removes a session.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X DELETE "https://api.talkturo.com/api/close-ai/sessions/ses_8f2d3ab1" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/sessions/ses_8f2d3ab1",
+  {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "ok": true,
+  "deleted": true
+}
+```
+
+</Response>
+
+#### Path parameters
+
+<ParamField path="sessionId" param-type="string" required="true">
+Session identifier.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Returns `true` when the delete request succeeds.
+</ResponseField>
+
+<ResponseField name="deleted" field-type="boolean" required="true">
+Returns `true` when the session record was deleted.
+</ResponseField>
+
+## Prompts
+
+Use prompt endpoints to read saved presets or create reusable prompt templates for Close AI workflows.
+
+### List prompt presets
+
+`GET https://api.talkturo.com/api/close-ai/prompts` returns presets ordered by default status and most recent update.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/close-ai/prompts?templates=true" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/prompts?templates=true",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "presets": [
+    {
+      "id": "prm_b1271e20",
+      "user_id": "usr_19c4f2aa",
+      "title": "Discovery follow-up",
+      "prompt": "Summarize the next steps, objections, and open risks from this call.",
+      "is_default": true,
+      "is_template": false,
+      "created_at": "2025-02-01T14:10:00.000Z",
+      "updated_at": "2025-02-11T09:30:00.000Z"
+    }
+  ]
+}
+```
+
+</Response>
+
+#### Query parameters
+
+<ParamField query="templates" param-type="string" required="false">
+Set to `"true"` to return only presets where `is_template` is `true`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="presets" field-type="array" required="true">
+List of prompt presets ordered by `is_default` descending, then `updated_at` descending.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Prompt preset fields">
+
+<ResponseField name="id" field-type="string" required="true">
+Unique preset identifier.
+</ResponseField>
+
+<ResponseField name="user_id" field-type="string" required="true">
+User ID that owns the preset.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Preset title.
+</ResponseField>
+
+<ResponseField name="prompt" field-type="string" required="true">
+Prompt body text.
+</ResponseField>
+
+<ResponseField name="is_default" field-type="boolean" required="true">
+Marks the preset used as the default choice for the user.
+</ResponseField>
+
+<ResponseField name="is_template" field-type="boolean" required="true">
+Marks the preset as a reusable template.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+ISO 8601 timestamp when the preset was created.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+ISO 8601 timestamp for the last preset update.
+</ResponseField>
+
+  </Expandable>
+</ExpandableGroup>
+
+### Create a prompt preset
+
+`POST https://api.talkturo.com/api/close-ai/prompts` creates a saved preset for the authenticated user.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/close-ai/prompts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie" \
+  -d '{
+    "title": "Procurement risk review",
+    "prompt": "Review this call and extract procurement blockers, owner questions, and next actions.",
+    "is_default": false,
+    "is_template": true
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/prompts",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    },
+    body: JSON.stringify({
+      title: "Procurement risk review",
+      prompt: "Review this call and extract procurement blockers, owner questions, and next actions.",
+      is_default: false,
+      is_template: true
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="201" default-tab="1">
+
+```json
+{
+  "preset": {
+    "id": "prm_31aa90bc",
+    "user_id": "usr_19c4f2aa",
+    "title": "Procurement risk review",
+    "prompt": "Review this call and extract procurement blockers, owner questions, and next actions.",
+    "is_default": false,
+    "is_template": true,
+    "created_at": "2025-02-11T10:22:00.000Z",
+    "updated_at": "2025-02-11T10:22:00.000Z"
+  }
+}
+```
+
+</Response>
+
+#### Body parameters
+
+<ParamField body="title" param-type="string" required="true">
+Preset title. Must contain `1` to `200` characters.
+</ParamField>
+
+<ParamField body="prompt" param-type="string" required="true">
+Prompt text. Must contain `1` to `20000` characters.
+</ParamField>
+
+<ParamField body="is_default" param-type="boolean" required="false">
+Marks the new preset as the user's default preset. When set to `true`, the API clears the default flag from all other presets.
+</ParamField>
+
+<ParamField body="is_template" param-type="boolean" required="false">
+Marks the preset as a reusable template. Defaults to `false`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="preset" field-type="object" required="true">
+Created prompt preset.
+</ResponseField>
+
+<Callout kind="info">
+
+If you create a preset with `is_default` set to `true`, Close AI removes the default flag from every other preset for that user.
+
+</Callout>
+
+## Dashboard
+
+Use the dashboard endpoint to retrieve aggregated Close AI analytics for one workspace over a defined time window.
+
+### Get dashboard analytics
+
+`GET https://api.talkturo.com/api/close-ai/dashboard` returns KPIs, coaching signals, objection analysis, question analysis, talk metrics, script coverage, trends, and member-level breakdowns.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/close-ai/dashboard?account=acme-revenue&days=30" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/dashboard?account=acme-revenue&days=30",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "kpis": {
+    "calls": 128,
+    "callsDeltaPct": 14.5,
+    "avgCloseScore": 81.7,
+    "avgDurationSeconds": 1742,
+    "activeMembers": 9,
+    "analyzedCount": 120
+  },
+  "coaching": {
+    "evaluations": 120,
+    "strengths": 342,
+    "weaknesses": 96,
+    "risks": 41
+  },
+  "objections": {
+    "total": 78,
+    "byCategory": [
+      {
+        "category": "security",
+        "count": 24
+      }
+    ],
+    "byType": [
+      {
+        "type": "timing",
+        "count": 18
+      }
+    ],
+    "byIntensity": [
+      {
+        "intensity": "medium",
+        "count": 27
+      }
+    ]
+  },
+  "questions": {
+    "open": 188,
+    "closed": 94,
+    "deep": 56,
+    "missed": 21
+  },
+  "personality": [
+    {
+      "profile": "analytical",
+      "count": 44
+    }
+  ],
+  "language": {
+    "avgTalkSharePct": 52.8,
+    "avgWpm": 143.2,
+    "avgPatiencePct": 67.4,
+    "avgLongestMonologueSeconds": 38.1
+  },
+  "script": {
+    "calls": 103,
+    "avgCoveragePct": 74.2,
+    "avgOrderDeviationPct": 16.4,
+    "blocks": [
+      {
+        "block": "Discovery",
+        "coveragePct": 88.1
+      }
+    ]
+  },
+  "scores": {
+    "distribution": [
+      {
+        "range": "80-89",
+        "count": 47
+      }
+    ],
+    "avg": 81.7
+  },
+  "durationDistribution": [
+    {
+      "range": "20-30m",
+      "count": 38
+    }
+  ],
+  "trends": [
+    {
+      "date": "2025-02-01",
+      "calls": 5,
+      "avgCloseScore": 79.4
+    }
+  ],
+  "members": [
+    {
+      "userId": "usr_19c4f2aa",
+      "name": "Jane Chen",
+      "calls": 17,
+      "avgCloseScore": 84.1
+    }
+  ]
+}
+```
+
+</Response>
+
+#### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug to analyze.
+</ParamField>
+
+<ParamField query="days" param-type="integer" required="false">
+Number of trailing days to include. Accepts values from `1` to `365`. Defaults to `30`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="kpis" field-type="object" required="true">
+Top-level KPI metrics for the selected workspace and time range.
+</ResponseField>
+
+<ResponseField name="coaching" field-type="object" required="true">
+Aggregated coaching counts such as strengths, weaknesses, and risks.
+</ResponseField>
+
+<ResponseField name="objections" field-type="object" required="true">
+Objection totals and grouped breakdowns.
+</ResponseField>
+
+<ResponseField name="questions" field-type="object" required="true">
+Question-type counts captured across analyzed sessions.
+</ResponseField>
+
+<ResponseField name="personality" field-type="array" required="true">
+Personality profile distribution across sessions.
+</ResponseField>
+
+<ResponseField name="language" field-type="object" required="true">
+Talk-share, pace, patience, and monologue metrics.
+</ResponseField>
+
+<ResponseField name="script" field-type="object" required="true">
+Script coverage and sequence metrics.
+</ResponseField>
+
+<ResponseField name="scores" field-type="object" required="true">
+Close score distribution and average score.
+</ResponseField>
+
+<ResponseField name="durationDistribution" field-type="array" required="true">
+Grouped session durations.
+</ResponseField>
+
+<ResponseField name="trends" field-type="array" required="true">
+Time-series analytics for the selected range.
+</ResponseField>
+
+<ResponseField name="members" field-type="array" required="true">
+Member-level performance breakdowns.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Common nested dashboard fields">
+
+<ResponseField name="kpis.calls" field-type="integer" required="true">
+Total calls in the selected range.
+</ResponseField>
+
+<ResponseField name="kpis.callsDeltaPct" field-type="number" required="true">
+Percentage change in call volume versus the comparison period.
+</ResponseField>
+
+<ResponseField name="kpis.avgCloseScore" field-type="number | null" required="true">
+Average Close AI score across analyzed sessions.
+</ResponseField>
+
+<ResponseField name="kpis.avgDurationSeconds" field-type="number | null" required="true">
+Average session duration in seconds.
+</ResponseField>
+
+<ResponseField name="kpis.activeMembers" field-type="integer" required="true">
+Number of active members represented in the data set.
+</ResponseField>
+
+<ResponseField name="kpis.analyzedCount" field-type="integer" required="true">
+Number of sessions with completed analysis.
+</ResponseField>
+
+<ResponseField name="language.avgTalkSharePct" field-type="number | null" required="true">
+Average talk-share percentage for the primary speaker.
+</ResponseField>
+
+<ResponseField name="language.avgWpm" field-type="number | null" required="true">
+Average speaking rate in words per minute.
+</ResponseField>
+
+<ResponseField name="language.avgPatiencePct" field-type="number | null" required="true">
+Average patience metric as a percentage.
+</ResponseField>
+
+<ResponseField name="language.avgLongestMonologueSeconds" field-type="number | null" required="true">
+Average longest uninterrupted monologue length.
+</ResponseField>
+
+<ResponseField name="scores.avg" field-type="number | null" required="true">
+Average overall Close AI score.
+</ResponseField>
+
+  </Expandable>
+</ExpandableGroup>
+
+## Scripts
+
+Use script endpoints to manage branching sales scripts tied to a workspace.
+
+### List scripts
+
+`GET https://api.talkturo.com/api/close-ai/scripts` returns all scripts for a workspace.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/close-ai/scripts?account=acme-revenue" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/scripts?account=acme-revenue",
+  {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "scripts": [
+    {
+      "id": "scr_6c4e9f10",
+      "name": "Enterprise discovery",
+      "content": {
+        "sections": [
+          {
+            "id": "sec_intro",
+            "name": "Intro",
+            "type": "script",
+            "content": "Set agenda and confirm timing.",
+            "next": [
+              {
+                "id": "edge_intro_budget",
+                "condition": "buyer confirms budget",
+                "targetId": "sec_budget"
+              }
+            ],
+            "position": {
+              "x": 120,
+              "y": 80
+            }
+          }
+        ],
+        "prompts": [
+          {
+            "id": "pr_script_1",
+            "trigger": "pricing_objection",
+            "text": "Clarify what budget was approved and who owns the decision.",
+            "enabled": true
+          }
+        ]
+      },
+      "is_active": true,
+      "updated_at": "2025-02-11T11:10:00.000Z"
+    }
+  ]
+}
+```
+
+</Response>
+
+#### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug used to scope returned scripts.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="scripts" field-type="array" required="true">
+List of workspace scripts.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Script object fields">
+
+<ResponseField name="id" field-type="string" required="true">
+Unique script identifier.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Script name.
+</ResponseField>
+
+<ResponseField name="content" field-type="object | null" required="true">
+Branching script definition, or `null` when the script has no saved content yet.
+</ResponseField>
+
+<ResponseField name="is_active" field-type="boolean" required="true">
+Marks the active script for the workspace.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+ISO 8601 timestamp for the last script update.
+</ResponseField>
+
+  </Expandable>
+
+  <Expandable title="Script content fields">
+
+<ResponseField name="sections" field-type="array" required="true">
+Graph nodes used by the script editor.
+</ResponseField>
+
+<ResponseField name="prompts" field-type="array" required="true">
+Prompt rules associated with the script.
+</ResponseField>
+
+<ResponseField name="sections[].id" field-type="string" required="true">
+Unique section identifier inside the script graph.
+</ResponseField>
+
+<ResponseField name="sections[].name" field-type="string" required="true">
+Section name shown in the editor.
+</ResponseField>
+
+<ResponseField name="sections[].type" field-type="string" required="true">
+Section type. Supported values are `script` and `info`.
+</ResponseField>
+
+<ResponseField name="sections[].content" field-type="string" required="true">
+Script text or informational content for the section.
+</ResponseField>
+
+<ResponseField name="sections[].next" field-type="array" required="true">
+Outgoing transitions from the section.
+</ResponseField>
+
+<ResponseField name="sections[].position" field-type="object | null" required="false">
+Optional editor coordinates for the section.
+</ResponseField>
+
+<ResponseField name="sections[].next[].id" field-type="string" required="true">
+Unique transition identifier.
+</ResponseField>
+
+<ResponseField name="sections[].next[].condition" field-type="string" required="true">
+Condition label for the transition.
+</ResponseField>
+
+<ResponseField name="sections[].next[].targetId" field-type="string" required="true">
+Identifier of the target section.
+</ResponseField>
+
+<ResponseField name="prompts[].id" field-type="string" required="true">
+Unique prompt rule identifier.
+</ResponseField>
+
+<ResponseField name="prompts[].trigger" field-type="string" required="true">
+Event or condition that activates the prompt.
+</ResponseField>
+
+<ResponseField name="prompts[].text" field-type="string" required="true">
+Prompt text shown when the trigger fires.
+</ResponseField>
+
+<ResponseField name="prompts[].enabled" field-type="boolean" required="true">
+Whether the prompt rule is active.
+</ResponseField>
+
+  </Expandable>
+</ExpandableGroup>
+
+### Create a script
+
+`POST https://api.talkturo.com/api/close-ai/scripts` creates a new script in the target workspace.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/close-ai/scripts?account=acme-revenue" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie" \
+  -d '{
+    "name": "Mid-market discovery"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/scripts?account=acme-revenue",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    },
+    body: JSON.stringify({
+      name: "Mid-market discovery"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "script": {
+    "id": "scr_0dc6e1b3",
+    "name": "Mid-market discovery",
+    "content": null,
+    "is_active": false,
+    "updated_at": "2025-02-11T11:40:00.000Z"
+  }
+}
+```
+
+</Response>
+
+#### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug where the script will be created.
+</ParamField>
+
+#### Body parameters
+
+<ParamField body="name" param-type="string" required="false">
+Script name. Defaults to `Untitled script` when omitted.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="script" field-type="object" required="true">
+Created script record.
+</ResponseField>
+
+### Update a script
+
+`PUT https://api.talkturo.com/api/close-ai/scripts` updates the script record, content graph, or active state.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X PUT "https://api.talkturo.com/api/close-ai/scripts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie" \
+  -d '{
+    "id": "scr_6c4e9f10",
+    "name": "Enterprise discovery v2",
+    "is_active": true,
+    "content": {
+      "sections": [
+        {
+          "id": "sec_intro",
+          "name": "Intro",
+          "type": "script",
+          "content": "Set agenda and confirm timing.",
+          "next": [
+            {
+              "id": "edge_intro_budget",
+              "condition": "buyer confirms budget",
+              "targetId": "sec_budget"
+            }
+          ],
+          "position": {
+            "x": 120,
+            "y": 80
+          }
+        }
+      ],
+      "prompts": [
+        {
+          "id": "pr_script_1",
+          "trigger": "pricing_objection",
+          "text": "Clarify what budget was approved and who owns the decision.",
+          "enabled": true
+        }
+      ]
+    }
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/scripts",
+  {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    },
+    body: JSON.stringify({
+      id: "scr_6c4e9f10",
+      name: "Enterprise discovery v2",
+      is_active: true,
+      content: {
+        sections: [
+          {
+            id: "sec_intro",
+            name: "Intro",
+            type: "script",
+            content: "Set agenda and confirm timing.",
+            next: [
+              {
+                id: "edge_intro_budget",
+                condition: "buyer confirms budget",
+                targetId: "sec_budget"
+              }
+            ],
+            position: {
+              x: 120,
+              y: 80
+            }
+          }
+        ],
+        prompts: [
+          {
+            id: "pr_script_1",
+            trigger: "pricing_objection",
+            text: "Clarify what budget was approved and who owns the decision.",
+            enabled: true
+          }
+        ]
+      }
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "script": {
+    "id": "scr_6c4e9f10",
+    "name": "Enterprise discovery v2",
+    "content": {
+      "sections": [
+        {
+          "id": "sec_intro",
+          "name": "Intro",
+          "type": "script",
+          "content": "Set agenda and confirm timing.",
+          "next": [
+            {
+              "id": "edge_intro_budget",
+              "condition": "buyer confirms budget",
+              "targetId": "sec_budget"
+            }
+          ],
+          "position": {
+            "x": 120,
+            "y": 80
+          }
+        }
+      ],
+      "prompts": [
+        {
+          "id": "pr_script_1",
+          "trigger": "pricing_objection",
+          "text": "Clarify what budget was approved and who owns the decision.",
+          "enabled": true
+        }
+      ]
+    },
+    "is_active": true,
+    "updated_at": "2025-02-11T11:55:00.000Z"
+  }
+}
+```
+
+</Response>
+
+#### Body parameters
+
+<ParamField body="id" param-type="string" required="true">
+Script UUID to update.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="false">
+Updated script name.
+</ParamField>
+
+<ParamField body="content" param-type="object" required="false">
+Updated script graph. The object contains `sections` and `prompts`.
+</ParamField>
+
+<ParamField body="is_active" param-type="boolean" required="false">
+Marks the script as active. Setting `true` deactivates every other script in the same workspace.
+</ParamField>
+
+<ExpandableGroup>
+  <Expandable title="Content object body fields">
+
+<ParamField body="content.sections" param-type="array" required="false" show-location="false">
+Section nodes for the branching script graph.
+</ParamField>
+
+<ParamField body="content.prompts" param-type="array" required="false" show-location="false">
+Prompt rules associated with the script.
+</ParamField>
+
+<ParamField body="content.sections[].id" param-type="string" required="true" show-location="false">
+Section identifier.
+</ParamField>
+
+<ParamField body="content.sections[].name" param-type="string" required="true" show-location="false">
+Section name.
+</ParamField>
+
+<ParamField body="content.sections[].type" param-type="string" required="true" enum="script,info" show-location="false">
+Section type.
+</ParamField>
+
+<ParamField body="content.sections[].content" param-type="string" required="true" show-location="false">
+Section body text.
+</ParamField>
+
+<ParamField body="content.sections[].next" param-type="array" required="true" show-location="false">
+Outgoing transitions for the section.
+</ParamField>
+
+<ParamField body="content.sections[].position" param-type="object" required="false" show-location="false">
+Optional editor coordinates for the node.
+</ParamField>
+
+<ParamField body="content.sections[].position.x" param-type="number" required="false" show-location="false">
+Horizontal editor coordinate.
+</ParamField>
+
+<ParamField body="content.sections[].position.y" param-type="number" required="false" show-location="false">
+Vertical editor coordinate.
+</ParamField>
+
+<ParamField body="content.sections[].next[].id" param-type="string" required="true" show-location="false">
+Transition identifier.
+</ParamField>
+
+<ParamField body="content.sections[].next[].condition" param-type="string" required="true" show-location="false">
+Condition label for the transition.
+</ParamField>
+
+<ParamField body="content.sections[].next[].targetId" param-type="string" required="true" show-location="false">
+Destination section identifier.
+</ParamField>
+
+<ParamField body="content.prompts[].id" param-type="string" required="true" show-location="false">
+Prompt rule identifier.
+</ParamField>
+
+<ParamField body="content.prompts[].trigger" param-type="string" required="true" show-location="false">
+Trigger name for the prompt rule.
+</ParamField>
+
+<ParamField body="content.prompts[].text" param-type="string" required="true" show-location="false">
+Prompt text.
+</ParamField>
+
+<ParamField body="content.prompts[].enabled" param-type="boolean" required="true" show-location="false">
+Whether the prompt rule is enabled.
+</ParamField>
+
+  </Expandable>
+</ExpandableGroup>
+
+<Callout kind="info">
+
+When you set `is_active` to `true`, the API deactivates all other scripts in the same workspace.
+
+</Callout>
+
+#### Response fields
+
+<ResponseField name="script" field-type="object" required="true">
+Updated script record.
+</ResponseField>
+
+### Delete a script
+
+`DELETE https://api.talkturo.com/api/close-ai/scripts` deletes a script by query parameter.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X DELETE "https://api.talkturo.com/api/close-ai/scripts?id=scr_6c4e9f10" \
+  -H "Cookie: sb-access-token=tt_example_session_cookie"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/close-ai/scripts?id=scr_6c4e9f10",
+  {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      "Cookie": "sb-access-token=tt_example_session_cookie"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "ok": true
+}
+```
+
+</Response>
+
+#### Query parameters
+
+<ParamField query="id" param-type="string" required="true">
+Script identifier to delete.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Returns `true` when the script was deleted.
+</ResponseField>
+
+## Related endpoints
+
+<Columns cols={2}>
+  <Card
+    title="Desktop auth"
+    href="/en/api-reference/desktop"
+    icon="lock"
+    cta="Open reference"
+  />
+  <Card
+    title="Assistants"
+    href="/en/api-reference/assistants"
+    icon="code"
+    cta="Open reference"
+  />
+</Columns>
