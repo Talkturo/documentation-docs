@@ -14,10 +14,10 @@ Basis-Pfad: `/api/assistants/[assistantId]/telephony`
 | Methode | Pfad | Beschreibung |
 | --- | --- | --- |
 | `POST` | `/telephony/test-call` | Startet einen ausgehenden SIP-Testanruf. Body: `accountSlug`, `fromNumber`, `toNumber` |
-| `GET` / `POST` | `/telephony/inbound` | Liest oder konfiguriert eingehende Telefonie |
-| `GET` / `POST` | `/telephony/outbound` | Liest oder konfiguriert ausgehende Telefonie |
-| `GET` / `PATCH` | `/telephony/settings` | Liest oder aktualisiert die vollständigen Telefonie-Einstellungen |
-| `GET` / `POST` | `/telephony/phone-numbers` | Listet Telefonnummern auf oder verwaltet sie |
+| `POST` | `/telephony/inbound` | Schaltet eingehende Telefonie ein oder aus |
+| `POST` | `/telephony/outbound` | Schaltet ausgehende Telefonie ein oder aus |
+| `POST` | `/telephony/settings` | Speichert die vollständigen Telefonie-Einstellungen |
+| `GET` / `PATCH` | `/telephony/phone-numbers` | Listet Telefonnummern auf oder ersetzt Zuweisungen |
 | `POST` | `/telephony/assign-phone-numbers` | Weist Telefonnummern zu |
 | `GET` | `/telephony/compliance-templates` | Listet verfügbare Compliance-Vorlagen auf |
 
@@ -138,49 +138,263 @@ graph TD
 
 Wenn alle drei Schritte erfolgreich sind, enthält die Antwort `roomName` und `sipCallId`. Daran erkennen Sie, dass der Assistent bereitgestellt und der ausgehende Anruf initiiert wurde.
 
-## Eingehende Telefonie lesen oder konfigurieren
+## POST inbound
 
-`GET /telephony/inbound` liest die aktuelle Konfiguration für eingehende Telefonie. `POST /telephony/inbound` erstellt oder aktualisiert die Inbound-Konfiguration für den Assistenten.
+`POST /telephony/inbound` schaltet eingehende Anrufe für einen Assistenten ein oder aus. Bei Aktivierung wird ein LiveKit Inbound-SIP-Trunk und eine Dispatch-Regel bereitgestellt. Bei Deaktivierung werden diese entfernt.
 
-### Was dieser Endpunkt abdeckt
+### Pfadparameter
 
-Mit der Inbound-Konfiguration steuern Sie, ob ein Assistent eingehende Anrufe annehmen kann und welche Telefonnummern dabei verwendet werden. Verwenden Sie `GET`, wenn Sie den aktuellen Zustand anzeigen möchten, und `POST`, wenn Sie Änderungen speichern möchten.
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant-UUID.
+</ParamField>
 
-<Callout kind="tip">
+### Body-Parameter
 
-Lesen Sie zuerst die aktuelle Konfiguration mit `GET /telephony/inbound`, bevor Sie Änderungen schreiben. So vermeiden Sie, dass bestehende Werte versehentlich überschrieben werden.
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Workspace-Slug.
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean" required="true">
+Auf `true` setzen, um eingehende Anrufe zu aktivieren, oder auf `false`, um sie zu deaktivieren.
+</ParamField>
+
+<Callout kind="alert">
+
+Wenn `enabled` auf `true` gesetzt ist, muss der Assistent mindestens eine aktive Telefonnummer zugewiesen haben. Die API gibt `400` zurück, wenn keine aktiven Nummern gefunden werden.
 
 </Callout>
 
-## Ausgehende Telefonie lesen oder konfigurieren
+### Antwortfelder
 
-`GET /telephony/outbound` liest die aktuelle Konfiguration für ausgehende Telefonie. `POST /telephony/outbound` erstellt oder aktualisiert die Outbound-Konfiguration des Assistenten.
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Wechsel abgeschlossen ist.
+</ResponseField>
 
-### Was dieser Endpunkt abdeckt
+<ResponseField name="assistant" field-type="object" required="true">
+Aktualisierter Assistant-Datensatz.
+</ResponseField>
 
-Mit der Outbound-Konfiguration legen Sie fest, ob ein Assistent ausgehende Anrufe initiieren darf und welche zugehörigen Einstellungen dafür verwendet werden. Der Testanruf-Endpunkt hängt direkt von dieser Konfiguration ab.
+<ResponseField name="assistant.inbound_enabled" field-type="boolean" required="true">
+Aktueller Inbound-Status.
+</ResponseField>
 
-Wenn ausgehende Anrufe nicht aktiviert sind oder keine gültige Outbound-Trunk-Konfiguration vorhanden ist, schlägt `POST /telephony/test-call` bereits in der Vorprüfung fehl.
+<ResponseField name="assistant.livekit_inbound_trunk_id" field-type="string">
+LiveKit Inbound-Trunk-ID. `null` bei deaktiviertem Inbound.
+</ResponseField>
 
-## Vollständige Telefonie-Einstellungen lesen oder aktualisieren
+<ResponseField name="assistant.livekit_dispatch_rule_id" field-type="string">
+LiveKit Dispatch-Regel-ID. `null` bei deaktiviertem Inbound.
+</ResponseField>
 
-`GET /telephony/settings` gibt die vollständigen Telefonie-Einstellungen für den Assistenten zurück. `PATCH /telephony/settings` aktualisiert diese Einstellungen teilweise, ohne dass Sie den gesamten Datensatz erneut senden müssen.
+## POST outbound
 
-### Wann Sie `settings` statt `inbound` oder `outbound` verwenden sollten
+`POST /telephony/outbound` schaltet ausgehende Anrufe für einen Assistenten ein oder aus. Bei Aktivierung wird ein LiveKit Outbound-SIP-Trunk bereitgestellt. Bei Deaktivierung wird dieser entfernt.
 
-Verwenden Sie `settings`, wenn Sie die komplette Telefoniekonfiguration an einer Stelle prüfen oder mehrere zusammenhängende Werte auf einmal aktualisieren möchten. Für fokussierte Änderungen an nur eingehender oder nur ausgehender Telefonie bleiben `inbound` und `outbound` meist die klarere Wahl.
+### Pfadparameter
 
-Diese Trennung hilft, einfache Oberflächen schlank zu halten und trotzdem einen Endpunkt für vollständige Konfigurationsansichten bereitzustellen.
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant-UUID.
+</ParamField>
 
-## Telefonnummern für einen Assistenten auflisten oder verwalten
+### Body-Parameter
 
-`GET /telephony/phone-numbers` listet die Telefonnummern eines Assistenten auf. `POST /telephony/phone-numbers` verwaltet Telefonnummern im Kontext dieses Assistenten.
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Workspace-Slug.
+</ParamField>
 
-### Typische Verwendung
+<ParamField body="enabled" param-type="boolean" required="true">
+Auf `true` setzen, um ausgehende Anrufe zu aktivieren, oder auf `false`, um sie zu deaktivieren.
+</ParamField>
 
-Nutzen Sie diesen Endpunkt, wenn Sie im Kontext eines einzelnen Assistenten arbeiten und sehen möchten, welche Nummern aktuell verbunden sind. Für kontoübergreifende Listen steht zusätzlich `GET /api/assistant-phone-numbers` zur Verfügung.
+<Callout kind="alert">
 
-Wenn Sie Nummern neu zuweisen möchten, verwenden Sie anschließend den separaten Zuweisungs-Endpunkt.
+Wenn `enabled` auf `true` gesetzt ist, muss der Assistent mindestens eine aktive Telefonnummer zugewiesen haben und die `telnyx_fqdn_connection_id` sowie die Outbound-Voice-Profile müssen konfiguriert sein. Die API gibt `400` zurück, wenn Voraussetzungen fehlen.
+
+</Callout>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Wechsel abgeschlossen ist.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Aktualisierter Assistant-Datensatz.
+</ResponseField>
+
+<ResponseField name="assistant.outbound_enabled" field-type="boolean" required="true">
+Aktueller Outbound-Status.
+</ResponseField>
+
+<ResponseField name="assistant.livekit_outbound_trunk_id" field-type="string">
+LiveKit Outbound-Trunk-ID. `null` bei deaktiviertem Outbound.
+</ResponseField>
+
+## POST settings
+
+`POST /telephony/settings` ist der Hauptendpunkt für Telefonie-Einstellungen. Er weist Telefonnummern zu, setzt die Telnyx-FQDN-Verbindung, aktiviert oder deaktiviert ein- und ausgehende Anrufe, stellt LiveKit-SIP-Trunks bereit und konfiguriert optional Anrufbeantworter-Erkennung und Compliance-Briefing.
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant-UUID.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Workspace-Slug.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+Array von Telefonnummer-UUIDs, die dem Assistenten zugewiesen werden sollen.
+</ParamField>
+
+<ParamField body="inboundEnabled" param-type="boolean" required="true">
+Schaltet eingehende Anrufe ein oder aus.
+</ParamField>
+
+<ParamField body="outboundEnabled" param-type="boolean" required="true">
+Schaltet ausgehende Anrufe ein oder aus.
+</ParamField>
+
+<ParamField body="inboundCompanyId" param-type="string">
+Unternehmen-UUID für Inbound-Routing. Zur Laufzeit erforderlich, wenn `inboundEnabled` auf `true` gesetzt ist.
+</ParamField>
+
+<ParamField body="telnyxConnectionId" param-type="string">
+Telnyx-FQDN-Verbindungs-ID. Nullbar, da Twilio-basierte Assistenten sie nicht verwenden.
+</ParamField>
+
+<ParamField body="destinationCountry" param-type="string" enum="ae,au,br,ch,de,fr,gb,il,in,jp,sa,sg,us,za">
+ISO-Ländercode für LiveKit-Outbound-Region-Pinning. Setzen Sie `null` für automatisches Routing.
+</ParamField>
+
+<ParamField body="voicemail" param-type="object">
+Anrufbeantworter-Erkennungseinstellungen. Weglassen, um unverändert zu lassen.
+</ParamField>
+
+<ParamField body="voicemail.detectionEnabled" param-type="boolean">
+Aktiviert die Anrufbeantworter-Erkennung.
+</ParamField>
+
+<ParamField body="voicemail.action" param-type="string">
+Anrufbeantworter-Aktion mit maximal 40 Zeichen.
+</ParamField>
+
+<ParamField body="voicemail.message" param-type="string">
+Anrufbeantworter-Nachrichtentext mit maximal 2000 Zeichen.
+</ParamField>
+
+<ParamField body="compliance" param-type="object">
+Compliance-Briefing-Einstellungen. Weglassen, um unverändert zu lassen.
+</ParamField>
+
+<ParamField body="compliance.enabled" param-type="boolean">
+Aktiviert das Compliance-Briefing.
+</ParamField>
+
+<ParamField body="compliance.templateId" param-type="string">
+Compliance-Vorlagen-UUID.
+</ParamField>
+
+<ParamField body="compliance.briefingText" param-type="string">
+Compliance-Briefing-Text mit maximal 2000 Zeichen.
+</ParamField>
+
+<ParamField body="compliance.language" param-type="string">
+Briefing-Sprache mit maximal 20 Zeichen.
+</ParamField>
+
+<ParamField body="compliance.requireAck" param-type="boolean">
+Legt fest, ob eine Bestätigung des Anrufers erforderlich ist.
+</ParamField>
+
+<ParamField body="compliance.fallbackPolicy" param-type="string" enum="retry,block,continue">
+Fallback-Richtlinie bei fehlgeschlagener Bestätigung.
+</ParamField>
+
+<ParamField body="compliance.ackTimeoutSeconds" param-type="integer">
+Bestätigungs-Timeout in Sekunden im Bereich von 3 bis 60.
+</ParamField>
+
+<Callout kind="info">
+
+Wenn Compliance aktiviert ist, muss entweder `templateId` nicht `null` sein oder `briefingText` darf nicht leer sein. Die API validiert diese Querschnittsanforderung vor dem Speichern.
+
+</Callout>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn Einstellungen gespeichert sind.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Aktualisierter Assistant-Datensatz mit `inbound_enabled`, `outbound_enabled`, `telnyx_fqdn_connection_id`, `inbound_company_id` und `destination_country`.
+</ResponseField>
+
+<ResponseField name="assignedActive" field-type="integer" required="true">
+Anzahl aktiver Telefonnummern nach dem Speichern.
+</ResponseField>
+
+## GET und PATCH phone-numbers
+
+`GET /telephony/phone-numbers` listet dem Assistenten verfügbare Telefonnummern auf. `PATCH /telephony/phone-numbers` ersetzt die Telefonnummer-Zuweisungen des Assistenten. Die `GET`-Methode gibt Nummern zurück, die aktiv und entweder nicht zugewiesen oder bereits diesem Assistenten zugewiesen sind.
+
+<Callout kind="info">
+
+Die `GET`- und `PATCH`-Methoden auf diesem Endpunkt unterstützen sowohl Session-Cookie- als auch API-Schlüssel-Authentifizierung. Alle anderen Telefonie-Routen auf dieser Seite erfordern ausschließlich Session-Cookie-Authentifizierung.
+
+</Callout>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant-UUID.
+</ParamField>
+
+### GET-Abfrageparameter
+
+<ParamField query="accountSlug" param-type="string">
+Optionale Konto-Slug-Überschreibung. Bei Verwendung von API-Schlüssel-Authentifizierung überschreibt dies das dem Schlüssel zugeordnete Konto.
+</ParamField>
+
+### PATCH-Body-Parameter
+
+<ParamField body="accountSlug" param-type="string">
+Optionale Konto-Slug-Überschreibung.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+Array von Telefonnummer-UUIDs, die zugewiesen werden sollen. Ersetzt alle aktuellen Zuweisungen.
+</ParamField>
+
+<Callout kind="alert">
+
+`PATCH` ersetzt alle aktuellen Telefonnummer-Zuweisungen. Geben Sie die vollständige Menge der UUIDs an, die zugewiesen werden sollen, nicht nur neue Hinzufügungen.
+
+</Callout>
+
+### GET-Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Array von Telefonnummer-Objekten. Jedes enthält `id`, `phone_number`, `status`, `is_trial`, `assistant_id`, `provider`, `accountKey`, `accountLabel` und `accountSid`.
+</ResponseField>
+
+### PATCH-Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Zuweisung abgeschlossen ist.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Bestätigungsmeldung.
+</ResponseField>
 
 ## Telefonnummern zuweisen
 
@@ -209,7 +423,7 @@ Alle Telefonie-Endpunkte in diesem Abschnitt sind einem einzelnen Assistenten un
 <ExpandableGroup>
   <Expandable title="Authentifizierung">
 
-  Diese Routen erfordern eine authentifizierte Browser-Sitzung. Sie sind nicht als externe API-Key-Endpunkte für serverseitige Integrationen dokumentiert.
+  Die `GET`- und `PATCH`-Methoden für Telefonnummern unterstützen zusätzlich API-Schlüssel-Authentifizierung. Alle anderen Telefonie-Routen erfordern Session-Cookie-Authentifizierung.
 
   </Expandable>
 

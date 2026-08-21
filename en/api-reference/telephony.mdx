@@ -22,10 +22,10 @@ All endpoints on this page require **session cookie authentication**. Send reque
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/api/assistants/[assistantId]/telephony/test-call` | Start a test outbound SIP call |
-| `GET` `POST` | `/api/assistants/[assistantId]/telephony/inbound` | Read or configure inbound telephony |
-| `GET` `POST` | `/api/assistants/[assistantId]/telephony/outbound` | Read or configure outbound telephony |
-| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/settings` | Read or update full telephony settings |
-| `GET` `POST` | `/api/assistants/[assistantId]/telephony/phone-numbers` | List or manage phone numbers attached to the assistant |
+| `POST` | `/api/assistants/[assistantId]/telephony/inbound` | Toggle inbound calling on or off |
+| `POST` | `/api/assistants/[assistantId]/telephony/outbound` | Toggle outbound calling on or off |
+| `POST` | `/api/assistants/[assistantId]/telephony/settings` | Save full telephony settings |
+| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/phone-numbers` | List or assign phone numbers |
 | `POST` | `/api/assistants/[assistantId]/telephony/assign-phone-numbers` | Assign phone numbers to the assistant |
 | `GET` | `/api/assistants/[assistantId]/telephony/compliance-templates` | List available compliance templates |
 
@@ -167,30 +167,9 @@ When the request passes validation, Talkturo runs the call setup in this order:
 
 If the request succeeds, the response includes both the room name and SIP call identifier.
 
-## GET and POST inbound
+## POST inbound
 
-Use the inbound endpoint to read or configure inbound telephony for an assistant. The exact response shape and accepted POST body fields depend on the assistant's telephony configuration in your workspace.
-
-### Path parameters
-
-<ParamField path="assistantId" param-type="string" required="true">
-
-Assistant UUID.
-
-</ParamField>
-
-### Methods
-
-- **`GET`** — returns the current inbound telephony configuration.
-- **`POST`** — creates or updates inbound telephony configuration for the assistant.
-
-### Expected behavior
-
-Use this endpoint when you need to control how an assistant handles incoming calls. Typical workflows include enabling inbound handling, attaching numbers intended to receive calls, and storing inbound-specific settings.
-
-## GET and POST outbound
-
-Use the outbound endpoint to read or configure outbound telephony for an assistant. This endpoint controls the assistant state required for making calls, including the outbound configuration used by the test-call route.
+Toggle inbound calling on or off for an assistant. When enabled, provisions a LiveKit inbound SIP trunk and dispatch rule. When disabled, tears them down.
 
 ### Path parameters
 
@@ -200,18 +179,61 @@ Assistant UUID.
 
 </ParamField>
 
-### Methods
+### Body parameters
 
-- **`GET`** — returns the current outbound telephony configuration.
-- **`POST`** — creates or updates outbound telephony configuration for the assistant.
+<ParamField body="accountSlug" param-type="string" required="true">
 
-### Expected behavior
+The workspace slug.
 
-Use this endpoint before initiating outbound calls. A valid outbound setup is a prerequisite for `POST /telephony/test-call`, which verifies outbound enablement and trunk configuration before dialing.
+</ParamField>
 
-## GET and PATCH settings
+<ParamField body="enabled" param-type="boolean" required="true">
 
-Read or update the assistant's full telephony settings from a single endpoint. Use `GET` to retrieve the current settings object and `PATCH` to update only the fields you want to change.
+Set to `true` to provision and enable inbound calling; `false` to deprovision and disable.
+
+</ParamField>
+
+<Callout kind="alert">
+
+When `enabled` is `true`, the assistant must have at least one active phone number assigned. The API returns `400` if no active numbers are found.
+
+</Callout>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the toggle completes.
+
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+
+Updated assistant record.
+
+</ResponseField>
+
+<ResponseField name="assistant.inbound_enabled" field-type="boolean" required="true">
+
+Current inbound enabled state.
+
+</ResponseField>
+
+<ResponseField name="assistant.livekit_inbound_trunk_id" field-type="string" required="false">
+
+LiveKit inbound trunk ID. `null` when inbound is disabled.
+
+</ResponseField>
+
+<ResponseField name="assistant.livekit_dispatch_rule_id" field-type="string" required="false">
+
+LiveKit dispatch rule ID. `null` when inbound is disabled.
+
+</ResponseField>
+
+## POST outbound
+
+Toggle outbound calling on or off for an assistant. When enabled, provisions a LiveKit outbound SIP trunk. When disabled, tears it down.
 
 ### Path parameters
 
@@ -221,18 +243,55 @@ Assistant UUID.
 
 </ParamField>
 
-### Methods
+### Body parameters
 
-- **`GET`** — returns full telephony settings for the assistant.
-- **`PATCH`** — updates telephony settings for the assistant.
+<ParamField body="accountSlug" param-type="string" required="true">
 
-### Expected behavior
+The workspace slug.
 
-Use the settings endpoint when you need the full telephony configuration rather than inbound-only or outbound-only values. `PATCH` is the right choice for partial updates because it avoids replacing the entire settings object.
+</ParamField>
 
-## GET and POST phone-numbers
+<ParamField body="enabled" param-type="boolean" required="true">
 
-List or manage the phone numbers attached to an assistant. Use this endpoint to inspect the assistant's current telephony inventory before assigning numbers or placing outbound test calls.
+Set to `true` to provision and enable outbound calling; `false` to deprovision and disable.
+
+</ParamField>
+
+<Callout kind="alert">
+
+When `enabled` is `true`, the assistant must have at least one active phone number assigned and the `telnyx_fqdn_connection_id` and outbound voice profile must be configured. The API returns `400` if prerequisites are missing.
+
+</Callout>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the toggle completes.
+
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+
+Updated assistant record.
+
+</ResponseField>
+
+<ResponseField name="assistant.outbound_enabled" field-type="boolean" required="true">
+
+Current outbound enabled state.
+
+</ResponseField>
+
+<ResponseField name="assistant.livekit_outbound_trunk_id" field-type="string" required="false">
+
+LiveKit outbound trunk ID. `null` when outbound is disabled.
+
+</ResponseField>
+
+## POST settings
+
+The main telephony settings endpoint. Assigns phone numbers, sets the Telnyx FQDN connection, enables or disables inbound and outbound calling, provisions LiveKit SIP trunks, and optionally configures voicemail detection and compliance briefing.
 
 ### Path parameters
 
@@ -242,14 +301,221 @@ Assistant UUID.
 
 </ParamField>
 
-### Methods
+### Body parameters
 
-- **`GET`** — returns phone numbers attached to the assistant.
-- **`POST`** — manages phone numbers for the assistant.
+<ParamField body="accountSlug" param-type="string" required="true">
 
-### Expected behavior
+Workspace slug.
 
-Use the `GET` method to confirm that a number is already attached before using it as `fromNumber` in a test call. The `POST` method is available for phone-number management flows tied to the assistant.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+
+Array of phone-number UUIDs to assign to the assistant.
+
+</ParamField>
+
+<ParamField body="inboundEnabled" param-type="boolean" required="true">
+
+Toggle inbound calling.
+
+</ParamField>
+
+<ParamField body="outboundEnabled" param-type="boolean" required="true">
+
+Toggle outbound calling.
+
+</ParamField>
+
+<ParamField body="inboundCompanyId" param-type="string" required="false">
+
+Company UUID for inbound routing. Required at runtime when `inboundEnabled` is `true`.
+
+</ParamField>
+
+<ParamField body="telnyxConnectionId" param-type="string" required="false">
+
+Telnyx FQDN connection ID. Nullable because Twilio-based assistants do not use it.
+
+</ParamField>
+
+<ParamField body="destinationCountry" param-type="string" required="false">
+
+ISO country code for LiveKit outbound region pinning. Allowed values: `ae`, `au`, `br`, `ch`, `de`, `fr`, `gb`, `il`, `in`, `jp`, `sa`, `sg`, `us`, `za`. Set to `null` for auto-routing.
+
+</ParamField>
+
+<ParamField body="voicemail" param-type="object" required="false">
+
+Voicemail detection settings. Omit to leave unchanged.
+
+</ParamField>
+
+<ParamField body="voicemail.detectionEnabled" param-type="boolean" required="false">
+
+Enable voicemail detection.
+
+</ParamField>
+
+<ParamField body="voicemail.action" param-type="string" required="false">
+
+Voicemail action, max 40 characters.
+
+</ParamField>
+
+<ParamField body="voicemail.message" param-type="string" required="false">
+
+Voicemail message text, max 2000 characters.
+
+</ParamField>
+
+<ParamField body="compliance" param-type="object" required="false">
+
+Compliance briefing settings. Omit to leave unchanged.
+
+</ParamField>
+
+<ParamField body="compliance.enabled" param-type="boolean" required="false">
+
+Enable compliance briefing.
+
+</ParamField>
+
+<ParamField body="compliance.templateId" param-type="string" required="false">
+
+Compliance template UUID.
+
+</ParamField>
+
+<ParamField body="compliance.briefingText" param-type="string" required="false">
+
+Compliance briefing text, max 2000 characters.
+
+</ParamField>
+
+<ParamField body="compliance.language" param-type="string" required="false">
+
+Briefing language, max 20 characters.
+
+</ParamField>
+
+<ParamField body="compliance.requireAck" param-type="boolean" required="false">
+
+Require caller acknowledgment.
+
+</ParamField>
+
+<ParamField body="compliance.fallbackPolicy" param-type="string" required="false">
+
+Fallback policy when acknowledgment fails. Allowed values: `retry`, `block`, `continue`.
+
+</ParamField>
+
+<ParamField body="compliance.ackTimeoutSeconds" param-type="integer" required="false">
+
+Acknowledgment timeout in seconds, range 3–60.
+
+</ParamField>
+
+<Callout kind="info">
+
+When compliance is enabled, either `templateId` must be non-null or `briefingText` must be non-empty. The API validates this cross-field requirement before saving.
+
+</Callout>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when settings are saved.
+
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+
+Updated assistant record with `inbound_enabled`, `outbound_enabled`, `telnyx_fqdn_connection_id`, `inbound_company_id`, and `destination_country`.
+
+</ResponseField>
+
+<ResponseField name="assignedActive" field-type="integer" required="true">
+
+Count of active phone numbers after the save.
+
+</ResponseField>
+
+## GET and PATCH phone-numbers
+
+List phone numbers available to the assistant, or assign phone numbers to the assistant. The `GET` method returns numbers that are active and either unassigned or already assigned to this assistant. The `PATCH` method replaces the assistant's phone-number assignments.
+
+<Callout kind="info">
+
+The `GET` and `PATCH` methods on this endpoint support both session cookie and API key authentication. All other telephony routes on this page require session cookie authentication only.
+
+</Callout>
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+Assistant UUID.
+
+</ParamField>
+
+### GET query parameters
+
+<ParamField query="accountSlug" param-type="string" required="false">
+
+Optional account slug override. When using API key auth, this overrides the key's associated account.
+
+</ParamField>
+
+### PATCH body parameters
+
+<ParamField body="accountSlug" param-type="string" required="false">
+
+Optional account slug override.
+
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+
+Array of phone-number UUIDs to assign. Replaces all current assignments.
+
+</ParamField>
+
+<Callout kind="alert">
+
+`PATCH` replaces all current phone-number assignments. Include the full set of UUIDs you want assigned, not just new additions.
+
+</Callout>
+
+### GET response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true`.
+
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+
+Array of phone number objects. Each includes `id`, `phone_number`, `status`, `is_trial`, `assistant_id`, `provider`, `accountKey`, `accountLabel`, and `accountSid`.
+
+</ResponseField>
+
+### PATCH response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when assignment completes.
+
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+
+Confirmation message.
+
+</ResponseField>
 
 ## POST assign-phone-numbers
 
