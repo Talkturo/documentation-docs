@@ -8,6 +8,28 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-21" description="v2.7.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Nearby area suggestions for phone number search** — When your verified city has no available phone numbers, you'll now see suggestions for neighbouring dialling areas that do have stock, so you can find a suitable number without starting over. See [Telephony](/en/telephony).
+  - **Resubmit rejected compliance filings** — Rejected verification filings can now be fixed and resubmitted directly. Previously approved documents carry forward into the new draft, so you only need to update what was rejected. See [Telephony](/en/telephony).
+  - **Read-only view for in-review and approved filings** — All compliance filings — including those under review or already approved — can now be opened in read-only mode from their card, so you can review submitted details at any time. See [Telephony](/en/telephony).
+
+  ## Improvements
+
+  - **Direct carrier filing replaces internal review** — Compliance verifications are now submitted directly to the carrier instead of waiting for internal review. Carrier status is read live, so you see the current state of every filing without delay. See [Telephony](/en/telephony).
+  - **Verified-area guidance for German number search** — Phone number searches now guide you toward your verified city's area code, with clear notices when you're searching outside your approved area. See [Telephony](/en/telephony).
+  - **Unified compliance status banner** — A single, live status banner now appears over search results, replacing the previous multi-state display. Draft filings show a "Continue verification" button so you can pick up where you left off. See [Telephony](/en/telephony).
+  - **Buy modal stays open for faster bulk purchases** — The phone number purchase modal now stays open after each purchase, defaults to the recommended carrier, and shows a badge for active filters — making it quicker to buy multiple numbers in one session. See [Telephony](/en/telephony).
+  - **Loading indicators on all carrier actions** — All compliance and verification buttons now show a spinner while waiting for a carrier response, so you always know when an action is in progress. See [Telephony](/en/telephony).
+  - **Admin verification links to carrier console** — Bundle identifiers in the admin verification table are now clickable links that open the carrier's console directly, so admins can check carrier-side details without switching tools. See [Telephony](/en/telephony).
+
+  ## Bug Fixes
+
+  - **Phone number city data in production builds** — Fixed a build issue that prevented city and area code data from loading correctly in production, causing phone number searches to fail in deployed environments. See [Telephony](/en/telephony).
+  - **Admin telephony state for customer workspaces** — Super admins viewing a customer's workspace now see the real carrier state instead of an incorrect "setup required" message. See [Telephony](/en/telephony).
+</Update>
+
 <Update label="2026-08-16" description="v2.6.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
