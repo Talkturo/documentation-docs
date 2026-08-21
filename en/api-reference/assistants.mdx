@@ -24,7 +24,7 @@ Send your API key in the `Authorization` header as a bearer token.
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/assistants" \
+curl -X POST "https://app.talkturo.com/api/assistants" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
   -H "Content-Type: application/json" \
   -d '{
@@ -58,7 +58,7 @@ Create a new assistant under an account by sending the account slug and assistan
 <Request tabs="cURL,JavaScript,Python" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/assistants" \
+curl -X POST "https://app.talkturo.com/api/assistants" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
   -H "Content-Type: application/json" \
   -d '{
@@ -69,7 +69,7 @@ curl -X POST "https://api.talkturo.com/api/assistants" \
 ```
 
 ```javascript
-const response = await fetch("https://api.talkturo.com/api/assistants", {
+const response = await fetch("https://app.talkturo.com/api/assistants", {
   method: "POST",
   headers: {
     "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
@@ -90,7 +90,7 @@ console.log(data);
 import requests
 
 response = requests.post(
-    "https://api.talkturo.com/api/assistants",
+    "https://app.talkturo.com/api/assistants",
     headers={
         "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
         "Content-Type": "application/json"
@@ -174,7 +174,7 @@ Update an existing assistant by assistant ID. The update endpoint accepts `accou
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl -X PATCH "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
+curl -X PATCH "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
   -H "Content-Type: application/json" \
   -d '{
@@ -187,7 +187,7 @@ curl -X PATCH "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
+  "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
   {
     method: "PATCH",
     headers: {
@@ -258,7 +258,7 @@ The updated assistant record.
 
 <Callout kind="info">
 
-If you send `transcriptor_options`, Talkturo validates those options against the selected provider and model before saving the update.
+If you send `transcriptor_options`, Talkturo validates them against the effective STT provider and model before saving the update. If you send `voice_options`, Talkturo validates them against the configured voice provider. Invalid options return a `400` response with `error: "invalid_transcriptor_options"` or `error: "invalid_voice_options"` and an `issues` array describing the problems.
 
 </Callout>
 
@@ -271,7 +271,7 @@ Delete an assistant permanently by ID. Talkturo checks ownership before removing
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X DELETE "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
+curl -X DELETE "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
 ```
 
@@ -316,18 +316,18 @@ Deleting an assistant is irreversible. Remove it only after you confirm that no 
 
 ## Clone an assistant
 
-Clone an existing assistant to duplicate its configuration into a new assistant record. Use cloning when you want a starting point for a variant instead of rebuilding settings manually.
+Clone an existing assistant to duplicate its configuration into a new assistant record. The cloned assistant copies the original's prompt, voice, model, and transcription settings but does not inherit phone numbers, telephony trunks, or tool configurations. Use cloning when you want a starting point for a variant instead of rebuilding settings manually.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone" \
+curl -X POST "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone",
+  "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone",
   {
     method: "POST",
     headers: {
@@ -349,7 +349,7 @@ console.log(data);
   "success": true,
   "assistant": {
     "id": "0f3f8bc6-5e95-4344-88d2-8e5660ec9bf1",
-    "name": "Inbound Sales Assistant Copy",
+    "name": "Inbound Sales Assistant (Copy)",
     "created_at": "2025-02-18T14:39:12.442Z",
     "updated_at": "2025-02-18T14:39:12.442Z"
   }
@@ -386,23 +386,27 @@ After cloning, update the new assistant if you need to change the name, prompts,
 
 ## Retrieve usage statistics
 
-Fetch usage data for a single assistant. Use this endpoint for monitoring, dashboards, or account-level reporting workflows.
+Fetch usage data for a single assistant within a specific account. Use this endpoint for monitoring, dashboards, or account-level reporting workflows.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated session cookie. API keys are not supported. The caller must be a member of the account identified by `accountId`.
+
+</Callout>
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats" \
-  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+curl -X GET "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2" \
+  -H "Cookie: talkturo_session=session_example_4f7b2d1c9a8e6f5d3b1a"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats",
+  "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2",
   {
     method: "GET",
-    headers: {
-      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
-    }
+    credentials: "include"
   }
 );
 
@@ -417,11 +421,24 @@ console.log(data);
 ```json
 {
   "success": true,
-  "stats": {
-    "total_calls": 148,
-    "total_minutes": 912,
-    "last_call_at": "2025-02-18T13:54:22.019Z"
-  }
+  "totalCalls": 148,
+  "totalMinutes": 912.4,
+  "avgDurationMinutes": 6.3,
+  "completedCallsWithDuration": 120,
+  "successRatePercent": 82.5,
+  "successEvaluatedCount": 120,
+  "timeline": {
+    "today": 2,
+    "last7Days": 15,
+    "last30Days": 45,
+    "last365Days": 148
+  },
+  "dailySeries": [
+    {
+      "date": "2026-02-18",
+      "count": 3
+    }
+  ]
 }
 ```
 
@@ -437,17 +454,262 @@ console.log(data);
 The assistant UUID whose usage statistics you want to retrieve.
 </ParamField>
 
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+The account UUID used to scope the usage query. The authenticated session user must belong to this account.
+</ParamField>
+
 ### Response fields
 
 <ResponseField name="success" field-type="boolean" required="true">
 Returns `true` when usage statistics are returned successfully.
 </ResponseField>
 
-<ResponseField name="stats" field-type="object" required="true">
-An object containing usage data for the assistant.
+<ResponseField name="totalCalls" field-type="integer" required="true">
+The total number of calls associated with the assistant in the selected account scope.
 </ResponseField>
 
-The shape of `stats` depends on the usage data Talkturo returns for that assistant. Build your client to read the fields your reporting workflow requires and tolerate additional fields over time.
+<ResponseField name="totalMinutes" field-type="number" required="true">
+The total completed call duration in minutes.
+</ResponseField>
+
+<ResponseField name="avgDurationMinutes" field-type="number" required="true">
+The average duration in minutes across calls that include duration data.
+</ResponseField>
+
+<ResponseField name="completedCallsWithDuration" field-type="integer" required="true">
+The number of completed calls included in duration-based calculations.
+</ResponseField>
+
+<ResponseField name="successRatePercent" field-type="number" required="true">
+The success rate as a percentage for calls that were evaluated for success.
+</ResponseField>
+
+<ResponseField name="successEvaluatedCount" field-type="integer" required="true">
+The number of calls included in the success rate calculation.
+</ResponseField>
+
+<ResponseField name="timeline" field-type="object" required="true">
+Aggregate counts across standard time windows.
+</ResponseField>
+
+<ResponseField name="dailySeries" field-type="array" required="true">
+Daily call counts represented as objects with `date` and `count` fields.
+</ResponseField>
+
+Build your client against the camelCase field names in the response. The endpoint returns usage metrics at the top level rather than under a nested `stats` object.
+
+## Estimate billing costs
+
+Estimate per-minute credit costs for an assistant based on its STT, LLM, and TTS configuration. Use query parameters to test model or provider overrides before saving assistant changes.
+
+<Callout kind="info">
+
+This endpoint requires an authenticated session cookie. API keys are not supported. The caller must be a member of the account identified by `accountId`.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/billing/estimate?accountId=8f6b7a40-8f86-4cfd-a7ec-0b0b52f5c8d2&llm_provider=openai&llm_model=gpt-4o-mini&stt_provider=deepgram&stt_model=nova-3&tts_provider=openai&tts_model=gpt-4o-mini-tts&is_realtime=true" \
+  -H "Cookie: talkturo_session=session_example_4f7b2d1c9a8e6f5d3b1a"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "catalog": {
+    "currency": "credits"
+  },
+  "assumptions": {
+    "chars_per_minute": 900,
+    "prompt_tokens_per_minute": 750,
+    "completion_tokens_per_minute": 680
+  },
+  "assistant": {
+    "stt": {
+      "provider": "deepgram",
+      "model": "nova-3"
+    },
+    "llm": {
+      "provider": "openai",
+      "model": "gpt-4o-mini"
+    },
+    "tts": {
+      "provider": "openai",
+      "model": "gpt-4o-mini-tts"
+    }
+  },
+  "rates": {
+    "stt": 0.18,
+    "tts": 0.24,
+    "llm_prompt": 0.12,
+    "llm_completion": 0.16,
+    "telephony": 0.5
+  },
+  "breakdown_credits_per_minute": {
+    "stt": 0.18,
+    "tts": 0.24,
+    "llm": 0.28,
+    "telephony": 0.5,
+    "realtime": 0.35
+  },
+  "telephony_provider": "twilio",
+  "is_realtime": true,
+  "estimated_credits_per_minute": 1.55
+}
+```
+
+</Response>
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/billing/estimate`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose billing estimate you want to calculate.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+The account UUID used to resolve assistant ownership and billing context.
+</ParamField>
+
+<ParamField query="llm_provider" param-type="string" required="false">
+Override the assistant's configured LLM provider for this estimate.
+</ParamField>
+
+<ParamField query="llm_model" param-type="string" required="false">
+Override the assistant's configured LLM model for this estimate.
+</ParamField>
+
+<ParamField query="stt_provider" param-type="string" required="false">
+Override the assistant's configured STT provider for this estimate.
+</ParamField>
+
+<ParamField query="stt_model" param-type="string" required="false">
+Override the assistant's configured STT model for this estimate.
+</ParamField>
+
+<ParamField query="tts_provider" param-type="string" required="false">
+Override the assistant's configured TTS provider for this estimate.
+</ParamField>
+
+<ParamField query="tts_model" param-type="string" required="false">
+Override the assistant's configured TTS model for this estimate.
+</ParamField>
+
+<ParamField query="is_realtime" param-type="boolean" required="false">
+Set to `true` to estimate realtime pricing when the assistant uses realtime audio generation or transport.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the billing estimate is calculated successfully.
+</ResponseField>
+
+<ResponseField name="catalog" field-type="object" required="true">
+Pricing catalog metadata used to build the estimate.
+</ResponseField>
+
+<ResponseField name="assumptions" field-type="object" required="true">
+Token and character throughput assumptions applied to the per-minute estimate.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+The effective assistant configuration after applying any query parameter overrides.
+</ResponseField>
+
+<ResponseField name="rates" field-type="object" required="true">
+Underlying pricing rates used for STT, LLM, TTS, and telephony cost calculations.
+</ResponseField>
+
+<ResponseField name="breakdown_credits_per_minute" field-type="object" required="true">
+Per-minute cost breakdown by subsystem. Realtime responses also include `breakdown_credits_per_minute.realtime`.
+</ResponseField>
+
+<ResponseField name="telephony_provider" field-type="string" required="true">
+The telephony provider included in the estimate.
+</ResponseField>
+
+<ResponseField name="estimated_credits_per_minute" field-type="number" required="true">
+The total estimated credit cost per minute for the effective assistant configuration.
+</ResponseField>
+
+<ResponseField name="is_realtime" field-type="boolean" required="false">
+Returned as `true` when the estimate includes realtime pricing adjustments.
+</ResponseField>
+
+Use this endpoint before updating an assistant when you want to compare model combinations without changing the saved configuration.
+
+## Test assistant webhook
+
+Queue a synthetic test event to verify webhook delivery configuration. This endpoint inserts a synthetic `call.ended` event and schedules normal webhook delivery for the assistant.
+
+<Callout kind="info">
+
+The assistant must already have `webhook_enabled` set to `true`, plus valid `webhook_url` and `webhook_secret` values.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/webhooks/test" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "delivery_id": "whd_7f2a16b8f9d84f56b31c2a4e9087d114",
+  "message": "Test event queued"
+}
+```
+
+</Response>
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/webhooks/test`
+
+### Authentication
+
+Authenticate with either a Talkturo API key or an authenticated session. The caller must be an account member.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID whose webhook configuration you want to test.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the test event is queued successfully.
+</ResponseField>
+
+<ResponseField name="delivery_id" field-type="string" required="true">
+The delivery identifier for the queued synthetic webhook event.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+A confirmation message. The value is `Test event queued`.
+</ResponseField>
 
 ## Common response shape
 
@@ -463,8 +725,8 @@ Indicates whether the request completed successfully.
 Returned by the create, update, and clone endpoints.
 </ResponseField>
 
-<ResponseField name="stats" field-type="object" required="false">
-Returned by the usage statistics endpoint.
+<ResponseField name="totalCalls" field-type="integer" required="false">
+Returned by the usage statistics endpoint as a top-level field.
 </ResponseField>
 
 <ResponseField name="message" field-type="string" required="false">
@@ -480,3 +742,5 @@ Returned by the delete endpoint.
 | `DELETE` | ` /api/assistants/{assistantId} ` | Delete an assistant |
 | `POST` | ` /api/assistants/{assistantId}/clone ` | Clone an assistant |
 | `GET` | ` /api/assistants/{assistantId}/usage-stats ` | Retrieve usage statistics |
+| `GET` | ` /api/assistants/{assistantId}/billing/estimate ` | Estimate billing costs |
+| `POST` | ` /api/assistants/{assistantId}/webhooks/test ` | Test assistant webhook |

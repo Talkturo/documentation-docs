@@ -1,21 +1,33 @@
 ---
 title: Knowledge Base
-description: Upload, list, and delete knowledge base files for AI voice assistants via the Talkturo API — manage documents that power retrieval-based answers during calls.
+description: Upload account-level knowledge base files, attach them to assistants, and search processed content through the Talkturo API.
 ---
 
 ## Knowledge base endpoints
 
-Manage assistant-specific knowledge base files with session-authenticated endpoints under `/api/assistants/{assistantId}/knowledge-base`. Uploaded files are stored per assistant and processed for retrieval during calls.
+Manage knowledge base files in two layers:
+
+- **Account-level files** under `/api/kb/files` store the source documents for your workspace.
+- **Assistant attachments** under `/api/assistants/{assistantId}/knowledge-base` control which account-level files a specific assistant can use during retrieval.
+
+Upload files at the account level first. After a file finishes processing, attach it to one or more assistants.
 
 <Callout kind="info">
 
-These endpoints require an authenticated browser session. They do not use API key authentication.
+Most knowledge base management endpoints support either an authenticated browser session or API key authentication through `withApiAuth`.
+
+- Use API keys with **`kb:read`** scope to list or read files.
+- Use API keys with **`kb:write`** scope to upload, delete, reprocess, or attach files.
+- Two endpoints are **session-only**:
+  - `GET /api/kb/files/{fileId}/download`
+  - `POST /api/kb/search`
+  - `DELETE /api/assistants/{assistantId}/knowledge-base/{fileId}`
 
 </Callout>
 
 <Callout kind="alert">
 
-Upload requests use `multipart/form-data` and must include a file field. File processing happens after upload, so a newly uploaded file may appear with a non-ready `status` before it becomes available for retrieval.
+Assistant-level `POST /api/assistants/{assistantId}/knowledge-base` does **not** upload a file. It attaches an existing account-level file by `file_id`.
 
 </Callout>
 
@@ -23,29 +35,38 @@ Upload requests use `multipart/form-data` and must include a file field. File pr
 
 | Method | Path | Purpose | Auth |
 | --- | --- | --- | --- |
-| `GET` | `/api/assistants/{assistantId}/knowledge-base` | List knowledge base files for an assistant | Session cookie |
-| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Upload a knowledge base file | Session cookie |
-| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Delete a knowledge base file | Session cookie |
-| `GET` | `/api/assistants/{assistantId}/billing/estimate` | Get knowledge base processing cost estimate | Session cookie |
-| `GET` | `/api/kb` | Standalone knowledge base query endpoint, if enabled in your deployment | Check your deployment |
+| `GET` | `/api/kb/files` | List account-level knowledge base files | API key with `kb:read` or session cookie |
+| `POST` | `/api/kb/files` | Upload an account-level knowledge base file | API key with `kb:write` or session cookie |
+| `GET` | `/api/kb/files/{fileId}` | Get a single account-level file record | API key with `kb:read` or session cookie |
+| `DELETE` | `/api/kb/files/{fileId}` | Delete an account-level file record | API key with `kb:write` or session cookie |
+| `POST` | `/api/kb/files/{fileId}/reprocess` | Re-enqueue a file for processing | API key with `kb:write` or session cookie |
+| `GET` | `/api/kb/files/{fileId}/download` | Get a signed download URL | Session cookie |
+| `POST` | `/api/kb/search` | Run semantic search across knowledge base content | Session cookie |
+| `GET` | `/api/assistants/{assistantId}/knowledge-base` | List files attached to an assistant | API key with `kb:read` or session cookie |
+| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Attach an existing account-level file to an assistant | API key with `kb:write` or session cookie |
+| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Detach a file from an assistant | Session cookie |
 
-## List knowledge base files
+## List account-level knowledge base files
 
-Return all knowledge base files attached to an assistant.
+Return all knowledge base files available in your account.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl --request GET \
-  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
-  --cookie "sb-access-token=sb_example_session_token"
+  --url "https://app.talkturo.com/api/kb/files?include=attachment_count" \
+  --header "Authorization: Bearer tt_key_example_kb_read_7qm2d9" \
+  --header "Accept: application/json"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  "https://app.talkturo.com/api/kb/files?include=attachment_count",
   {
     method: "GET",
-    credentials: "include",
+    headers: {
+      Authorization: "Bearer tt_key_example_kb_read_7qm2d9",
+      Accept: "application/json",
+    },
   }
 );
 
@@ -62,18 +83,602 @@ console.log(data);
     {
       "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
       "filename": "acme-pricing-guide.pdf",
-      "size": 248193,
-      "type": "application/pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 248193,
       "status": "processed",
-      "created_at": "2026-02-11T14:22:09.000Z"
+      "status_error": null,
+      "char_count": 18542,
+      "chunk_count": 41,
+      "created_at": "2026-02-11T14:22:09.000Z",
+      "updated_at": "2026-02-11T14:23:18.000Z",
+      "attachment_count": 2
     },
     {
       "id": "4f6c291e-a60d-4ff3-9cb2-52e2b65f6b31",
       "filename": "returns-policy.docx",
-      "size": 91344,
-      "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "size_bytes": 91344,
       "status": "processing",
-      "created_at": "2026-02-11T14:24:51.000Z"
+      "status_error": null,
+      "char_count": 0,
+      "chunk_count": 0,
+      "created_at": "2026-02-11T14:24:51.000Z",
+      "updated_at": "2026-02-11T14:24:53.000Z",
+      "attachment_count": 0
+    }
+  ]
+}
+```
+</Response>
+
+Use the optional `include=attachment_count` query when you need to know how many assistants currently use each file.
+
+### Query parameters
+
+<ParamField query="include" param-type="string" required="false" enum="attachment_count">
+Adds computed fields to each file record. Use `attachment_count` to include how many assistants currently reference each file.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="files" field-type="array" required="true">
+List of account-level knowledge base files.
+</ResponseField>
+
+<ResponseField name="files[].id" field-type="uuid" required="true">
+Unique file identifier.
+</ResponseField>
+
+<ResponseField name="files[].filename" field-type="string" required="true">
+Original uploaded filename.
+</ResponseField>
+
+<ResponseField name="files[].mime_type" field-type="string" required="true">
+Detected MIME type for the file.
+</ResponseField>
+
+<ResponseField name="files[].size_bytes" field-type="number" required="true">
+File size in bytes.
+</ResponseField>
+
+<ResponseField name="files[].status" field-type="string" required="true">
+Processing state for the file.
+</ResponseField>
+
+<ResponseField name="files[].status_error" field-type="string" required="false">
+Processing error message when the file fails to process. Otherwise `null`.
+</ResponseField>
+
+<ResponseField name="files[].char_count" field-type="number" required="true">
+Total extracted character count from the processed file.
+</ResponseField>
+
+<ResponseField name="files[].chunk_count" field-type="number" required="true">
+Number of retrieval chunks generated from the file.
+</ResponseField>
+
+<ResponseField name="files[].created_at" field-type="string" required="true">
+Timestamp when the file record was created.
+</ResponseField>
+
+<ResponseField name="files[].updated_at" field-type="string" required="true">
+Timestamp when the file record was last updated.
+</ResponseField>
+
+<ResponseField name="files[].attachment_count" field-type="number" required="false">
+Number of assistants that currently reference the file. Present only when you request `include=attachment_count`.
+</ResponseField>
+
+## Upload an account-level knowledge base file
+
+Upload a source document to your account before attaching it to an assistant.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/kb/files" \
+  --header "Authorization: Bearer tt_key_example_kb_write_4mn8pz" \
+  --form "file=@./docs/acme-support-playbook.pdf;type=application/pdf"
+```
+
+```javascript
+const formData = new FormData();
+formData.append("file", fileInput.files[0]);
+
+const response = await fetch("https://app.talkturo.com/api/kb/files", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tt_key_example_kb_write_4mn8pz",
+  },
+  body: formData,
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "credits_charged": 0,
+  "file": {
+    "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    "filename": "acme-support-playbook.pdf",
+    "mime_type": "application/pdf",
+    "size_bytes": 248193,
+    "status": "pending"
+  }
+}
+```
+</Response>
+
+A successful upload means Talkturo accepted the file and queued it for processing. The file may remain in `pending` or `processing` status before it becomes searchable or attachable for production use.
+
+<Callout kind="info">
+
+Upload behavior follows these rules:
+
+- Accepted MIME types: `application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `text/plain`, `text/markdown`
+- Maximum file size: 1 GB
+- First 50 MB of total account knowledge base storage is free
+- Each additional 50 MB costs 1 credit
+- Duplicate uploads are deduplicated by SHA-256 hash
+
+</Callout>
+
+### Body parameters
+
+<ParamField body="file" param-type="binary" required="true">
+The source document to upload as a `multipart/form-data` field.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file is accepted.
+</ResponseField>
+
+<ResponseField name="credits_charged" field-type="number" required="true">
+Credits charged for the upload based on total account knowledge base storage.
+</ResponseField>
+
+<ResponseField name="file" field-type="object" required="true">
+Metadata for the uploaded file.
+</ResponseField>
+
+<ResponseField name="file.id" field-type="uuid" required="true">
+Unique file identifier.
+</ResponseField>
+
+<ResponseField name="file.filename" field-type="string" required="true">
+Original uploaded filename.
+</ResponseField>
+
+<ResponseField name="file.mime_type" field-type="string" required="true">
+Detected MIME type for the uploaded file.
+</ResponseField>
+
+<ResponseField name="file.size_bytes" field-type="number" required="true">
+File size in bytes.
+</ResponseField>
+
+<ResponseField name="file.status" field-type="string" required="true">
+Initial processing state after upload. New uploads start in `pending`.
+</ResponseField>
+
+## Get a single account-level file
+
+Return the current metadata for one account-level knowledge base file.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --header "Authorization: Bearer tt_key_example_kb_read_7qm2d9" \
+  --header "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tt_key_example_kb_read_7qm2d9",
+      Accept: "application/json",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "file": {
+    "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    "filename": "acme-pricing-guide.pdf",
+    "mime_type": "application/pdf",
+    "size_bytes": 248193,
+    "status": "processed",
+    "status_error": null,
+    "char_count": 18542,
+    "chunk_count": 41,
+    "created_at": "2026-02-11T14:22:09.000Z",
+    "updated_at": "2026-02-11T14:23:18.000Z"
+  }
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="fileId" param-type="uuid" required="true">
+Account-level knowledge base file identifier.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file exists and can be read.
+</ResponseField>
+
+<ResponseField name="file" field-type="object" required="true">
+Knowledge base file metadata.
+</ResponseField>
+
+<ResponseField name="file.id" field-type="uuid" required="true">
+Unique file identifier.
+</ResponseField>
+
+<ResponseField name="file.filename" field-type="string" required="true">
+Original uploaded filename.
+</ResponseField>
+
+<ResponseField name="file.mime_type" field-type="string" required="true">
+Detected MIME type for the file.
+</ResponseField>
+
+<ResponseField name="file.size_bytes" field-type="number" required="true">
+File size in bytes.
+</ResponseField>
+
+<ResponseField name="file.status" field-type="string" required="true">
+Current processing state.
+</ResponseField>
+
+<ResponseField name="file.status_error" field-type="string" required="false">
+Processing error message when present. Otherwise `null`.
+</ResponseField>
+
+<ResponseField name="file.char_count" field-type="number" required="true">
+Total extracted character count.
+</ResponseField>
+
+<ResponseField name="file.chunk_count" field-type="number" required="true">
+Number of generated retrieval chunks.
+</ResponseField>
+
+<ResponseField name="file.created_at" field-type="string" required="true">
+Timestamp when the file record was created.
+</ResponseField>
+
+<ResponseField name="file.updated_at" field-type="string" required="true">
+Timestamp when the file record was last updated.
+</ResponseField>
+
+## Delete an account-level file
+
+Remove a file record from the account-level knowledge base.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --header "Authorization: Bearer tt_key_example_kb_write_4mn8pz"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer tt_key_example_kb_write_4mn8pz",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="fileId" param-type="uuid" required="true">
+Account-level knowledge base file identifier to delete.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file record is deleted.
+</ResponseField>
+
+## Reprocess an account-level file
+
+Re-enqueue a file when you need to rerun extraction and chunking.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/reprocess" \
+  --header "Authorization: Bearer tt_key_example_kb_write_4mn8pz" \
+  --header "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/reprocess",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer tt_key_example_kb_write_4mn8pz",
+      Accept: "application/json",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="fileId" param-type="uuid" required="true">
+Account-level knowledge base file identifier to reprocess.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file is re-enqueued for processing.
+</ResponseField>
+
+## Get a signed download URL
+
+Return a temporary URL for downloading the original uploaded file.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/download" \
+  --cookie "sb-access-token=sb_example_session_token"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/download",
+  {
+    method: "GET",
+    credentials: "include",
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "download_url": "https://storage.talkturo.com/kb-downloads/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714?signature=example_signed_download_token"
+}
+```
+</Response>
+
+<Callout kind="info">
+
+This endpoint requires a browser session. API key authentication does not work for downloads.
+
+</Callout>
+
+### Path parameters
+
+<ParamField path="fileId" param-type="uuid" required="true">
+Account-level knowledge base file identifier to download.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when a signed URL is created.
+</ResponseField>
+
+<ResponseField name="download_url" field-type="string" required="true">
+Temporary signed URL for downloading the original file.
+</ResponseField>
+
+## Search knowledge base content
+
+Run semantic search across processed knowledge base chunks.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/kb/search" \
+  --cookie "sb-access-token=sb_example_session_token" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "accountId": "acc_7k29qm41xv",
+    "query": "What is Acme Healths return window for unopened devices?",
+    "assistantId": "9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2",
+    "limit": 3
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/kb/search", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    accountId: "acc_7k29qm41xv",
+    query: "What is Acme Healths return window for unopened devices?",
+    assistantId: "9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2",
+    limit: 3,
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "results": [
+    {
+      "chunk_text": "Unopened Acme Health devices may be returned within 30 days of delivery with proof of purchase.",
+      "file_id": "4f6c291e-a60d-4ff3-9cb2-52e2b65f6b31",
+      "filename": "returns-policy.docx",
+      "similarity": 0.9421
+    },
+    {
+      "chunk_text": "Opened devices are eligible for replacement only when a hardware defect is confirmed by support.",
+      "file_id": "4f6c291e-a60d-4ff3-9cb2-52e2b65f6b31",
+      "filename": "returns-policy.docx",
+      "similarity": 0.8914
+    }
+  ]
+}
+```
+</Response>
+
+<Callout kind="info">
+
+This endpoint requires a browser session. API key authentication does not work for semantic search.
+
+</Callout>
+
+### Body parameters
+
+<ParamField body="accountId" param-type="string" required="true">
+Account identifier that owns the knowledge base files to search.
+</ParamField>
+
+<ParamField body="query" param-type="string" required="true">
+Natural-language search query.
+</ParamField>
+
+<ParamField body="assistantId" param-type="uuid" required="false">
+Optional assistant identifier to scope search behavior to a specific assistant context.
+</ParamField>
+
+<ParamField body="limit" param-type="number" required="false">
+Maximum number of results to return.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="results" field-type="array" required="true">
+Semantic search matches sorted by similarity.
+</ResponseField>
+
+<ResponseField name="results[].chunk_text" field-type="string" required="true">
+Matched chunk text returned for the query.
+</ResponseField>
+
+<ResponseField name="results[].file_id" field-type="uuid" required="true">
+Identifier of the source knowledge base file.
+</ResponseField>
+
+<ResponseField name="results[].filename" field-type="string" required="true">
+Filename of the source knowledge base file.
+</ResponseField>
+
+<ResponseField name="results[].similarity" field-type="number" required="true">
+Similarity score for the match.
+</ResponseField>
+
+## List assistant knowledge base attachments
+
+Return the account-level files currently attached to an assistant.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
+  --header "Authorization: Bearer tt_key_example_kb_read_7qm2d9" \
+  --header "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tt_key_example_kb_read_7qm2d9",
+      Accept: "application/json",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "files": [
+    {
+      "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+      "filename": "acme-pricing-guide.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 248193,
+      "status": "processed",
+      "status_error": null,
+      "char_count": 18542,
+      "chunk_count": 41,
+      "created_at": "2026-02-11T14:22:09.000Z",
+      "updated_at": "2026-02-11T14:23:18.000Z"
     }
   ]
 }
@@ -93,54 +698,139 @@ Returns `true` when the request succeeds.
 </ResponseField>
 
 <ResponseField name="files" field-type="array" required="true">
-List of knowledge base files attached to the assistant.
+List of account-level knowledge base files attached to the assistant.
 </ResponseField>
 
 <ResponseField name="files[].id" field-type="uuid" required="true">
-Unique file identifier. Use this value when deleting a file.
+Unique file identifier.
 </ResponseField>
 
 <ResponseField name="files[].filename" field-type="string" required="true">
 Original uploaded filename.
 </ResponseField>
 
-<ResponseField name="files[].size" field-type="number" required="true">
+<ResponseField name="files[].mime_type" field-type="string" required="true">
+Detected MIME type for the file.
+</ResponseField>
+
+<ResponseField name="files[].size_bytes" field-type="number" required="true">
 File size in bytes.
 </ResponseField>
 
-<ResponseField name="files[].type" field-type="string" required="true">
-Detected file MIME type.
+<ResponseField name="files[].status" field-type="string" required="true">
+Processing state for the file.
 </ResponseField>
 
-<ResponseField name="files[].status" field-type="string" required="true">
-Processing state for the file. Use this field to determine whether the file is still being processed or is ready for retrieval use.
+<ResponseField name="files[].status_error" field-type="string" required="false">
+Processing error message when present. Otherwise `null`.
+</ResponseField>
+
+<ResponseField name="files[].char_count" field-type="number" required="true">
+Total extracted character count.
+</ResponseField>
+
+<ResponseField name="files[].chunk_count" field-type="number" required="true">
+Number of generated retrieval chunks.
 </ResponseField>
 
 <ResponseField name="files[].created_at" field-type="string" required="true">
 Timestamp when the file was uploaded.
 </ResponseField>
 
-## Upload a knowledge base file
+<ResponseField name="files[].updated_at" field-type="string" required="true">
+Timestamp when the file record was last updated.
+</ResponseField>
 
-Upload a file to an assistant's knowledge base with `multipart/form-data`.
+## Attach a file to an assistant
+
+Attach an existing account-level knowledge base file to an assistant.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl --request POST \
   --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
-  --cookie "sb-access-token=sb_example_session_token" \
-  --form "file=@./docs/acme-support-playbook.pdf"
+  --header "Authorization: Bearer tt_key_example_kb_write_4mn8pz" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "file_id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714"
+  }'
 ```
 
 ```javascript
-const formData = new FormData();
-formData.append("file", fileInput.files[0]);
-
 const response = await fetch(
   "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
   {
     method: "POST",
-    body: formData,
+    headers: {
+      Authorization: "Bearer tt_key_example_kb_write_4mn8pz",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      file_id: "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    }),
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,200 already attached">
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "success": true,
+  "idempotent": true
+}
+```
+</Response>
+
+If the file is already attached, the endpoint succeeds and returns `idempotent: true` instead of creating a duplicate attachment.
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Assistant identifier that will use the file.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="file_id" param-type="uuid" required="true">
+Identifier of an existing account-level knowledge base file to attach.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the attachment exists after the request completes.
+</ResponseField>
+
+<ResponseField name="idempotent" field-type="boolean" required="false">
+Returns `true` when the file was already attached to the assistant.
+</ResponseField>
+
+## Detach a file from an assistant
+
+Remove an attached file from an assistant without deleting the account-level file.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --cookie "sb-access-token=sb_example_session_token"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+  {
+    method: "DELETE",
     credentials: "include",
   }
 );
@@ -153,175 +843,64 @@ console.log(data);
 <Response tabs="200">
 ```json
 {
-  "success": true,
-  "file": {
-    "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
-    "filename": "acme-support-playbook.pdf",
-    "size": 248193,
-    "type": "application/pdf",
-    "status": "processing",
-    "created_at": "2026-02-11T14:22:09.000Z"
-  }
+  "success": true
 }
 ```
 </Response>
 
-A successful upload confirms the file was accepted and queued for processing. Check the file `status` from the list endpoint if your workflow needs to wait until processing finishes.
-
-### Path parameters
-
-<ParamField path="assistantId" param-type="uuid" required="true">
-Assistant identifier that will own the uploaded file.
-</ParamField>
-
-### Body parameters
-
-<ParamField body="file" param-type="binary" required="true">
-The file to upload, sent as a `multipart/form-data` field.
-</ParamField>
-
-### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the upload is accepted.
-</ResponseField>
-
-<ResponseField name="file" field-type="object" required="true">
-Metadata for the uploaded file.
-</ResponseField>
-
-<ResponseField name="file.id" field-type="uuid" required="true">
-Unique file identifier.
-</ResponseField>
-
-<ResponseField name="file.filename" field-type="string" required="true">
-Original uploaded filename.
-</ResponseField>
-
-<ResponseField name="file.size" field-type="number" required="true">
-File size in bytes.
-</ResponseField>
-
-<ResponseField name="file.type" field-type="string" required="true">
-Detected file MIME type.
-</ResponseField>
-
-<ResponseField name="file.status" field-type="string" required="true">
-Initial processing state after upload.
-</ResponseField>
-
-<ResponseField name="file.created_at" field-type="string" required="true">
-Timestamp when the file was created.
-</ResponseField>
-
-## Delete a knowledge base file
-
-Remove a file from an assistant's knowledge base.
-
-```bash
-curl --request DELETE \
-  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
-  --cookie "sb-access-token=sb_example_session_token"
-```
-
-```json
-{
-  "success": true,
-  "message": "File deleted"
-}
-```
-
-### Path parameters
-
-<ParamField path="assistantId" param-type="uuid" required="true">
-Assistant identifier that owns the file.
-</ParamField>
-
-<ParamField path="fileId" param-type="uuid" required="true">
-Knowledge base file identifier to delete.
-</ParamField>
-
-### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the file is removed.
-</ResponseField>
-
-<ResponseField name="message" field-type="string" required="true">
-Human-readable deletion result.
-</ResponseField>
-
-## Get billing estimate
-
-Retrieve the billing estimate for knowledge base processing for an assistant.
-
-```bash
-curl --request GET \
-  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/billing/estimate" \
-  --cookie "sb-access-token=sb_example_session_token"
-```
-
-The response returns a success flag and an `estimate` object.
-
-### Path parameters
-
-<ParamField path="assistantId" param-type="uuid" required="true">
-Assistant identifier used to calculate the estimate.
-</ParamField>
-
-### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the estimate is available.
-</ResponseField>
-
-<ResponseField name="estimate" field-type="object" required="true">
-Billing estimate details for knowledge base processing. The object shape depends on the current billing implementation.
-</ResponseField>
-
-## Standalone knowledge base endpoint
-
-Some deployments may expose a separate `GET /api/kb` endpoint for standalone knowledge base queries.
-
 <Callout kind="info">
 
-The repository context for this page confirms assistant-scoped knowledge base management endpoints. It does not provide a verified request or response schema for `GET /api/kb`. Check your deployed API or internal route definitions before relying on this endpoint in production.
+This detach endpoint requires a browser session.
 
 </Callout>
 
-If `GET /api/kb` exists in your environment, treat it as separate from assistant file management. It is not a replacement for the upload, list, or delete endpoints documented above.
+### Path parameters
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Assistant identifier that owns the attachment.
+</ParamField>
+
+<ParamField path="fileId" param-type="uuid" required="true">
+Knowledge base file identifier to detach from the assistant.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file is detached from the assistant.
+</ResponseField>
 
 ## Typical workflow
 
 Use the knowledge base endpoints in this order when automating document management:
 
 <Steps>
-<Step title="Upload the file" icon="upload">
+<Step title="Upload the file to your account" icon="upload">
 
-Send a `POST` request with `multipart/form-data` to the assistant knowledge base endpoint.
+Send `POST /api/kb/files` with `multipart/form-data` and a `file` field.
 
-Success looks like a response with `success: true` and a `file` object.
-
-</Step>
-<Step title="Poll for processing status" icon="check-circle">
-
-Call `GET /api/assistants/{assistantId}/knowledge-base` and inspect each file's `status`.
-
-Your workflow can continue once the uploaded file appears in the list and its status indicates processing is complete.
+Success looks like a response with `success: true`, `credits_charged`, and a `file` object whose initial `status` is `pending`.
 
 </Step>
-<Step title="Estimate processing cost when needed" icon="bar-chart">
+<Step title="Wait for processing to finish" icon="check-circle">
 
-Call `GET /api/assistants/{assistantId}/billing/estimate` before or after upload if you need billing visibility for the assistant's knowledge base usage.
+Call `GET /api/kb/files` or `GET /api/kb/files/{fileId}` and inspect the file `status`.
 
-Success looks like a response with `success: true` and an `estimate` object.
+Your workflow can continue once the file reaches a ready state such as `processed` and `status_error` remains empty.
 
 </Step>
-<Step title="Remove outdated files" icon="trash">
+<Step title="Attach the file to an assistant" icon="plus">
 
-Delete files you no longer want the assistant to use by sending `DELETE /api/assistants/{assistantId}/knowledge-base/{fileId}`.
+Send `POST /api/assistants/{assistantId}/knowledge-base` with a JSON body containing `file_id`.
 
-A successful deletion returns `success: true` and a confirmation message.
+A successful attach returns `success: true`. If the file was already attached, the response also includes `idempotent: true`.
+
+</Step>
+<Step title="Search processed content" icon="search">
+
+Send `POST /api/kb/search` with your `accountId`, query text, and optional `assistantId`.
+
+Success looks like a response with a `results` array containing matched chunks and similarity scores.
 
 </Step>
 </Steps>
@@ -329,10 +908,10 @@ A successful deletion returns `success: true` and a confirmation message.
 ## Related endpoints
 
 <Columns cols={2}>
-  <Card title="Tool configs" href="/en/api-reference/tool-configs" icon="settings" cta="View reference">
-  Knowledge base behavior may also interact with assistant tool configuration.
-  </Card>
   <Card title="Assistants" href="/en/api-reference/assistants" icon="users" cta="View reference">
-  Manage the assistant resource that owns each knowledge base file.
+  Billing estimates and assistant configuration live on the Assistants API.
+  </Card>
+  <Card title="Assistants" href="/en/api-reference/assistants" icon="settings" cta="View reference">
+  Manage the assistant resource that owns each knowledge base attachment.
   </Card>
 </Columns>

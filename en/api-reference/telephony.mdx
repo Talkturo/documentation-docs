@@ -5,11 +5,15 @@ description: Configure inbound and outbound telephony, assign phone numbers, run
 
 ## Telephony endpoints
 
-Manage an assistant's calling configuration, attached phone numbers, outbound test calls, and compliance templates from the telephony API. All telephony routes are scoped to a single assistant and require an authenticated browser session.
+Manage an assistant's calling configuration, attached phone numbers, outbound test calls, and compliance templates from the telephony API. Most telephony routes require an authenticated browser session, while assistant phone-number reads and updates also support API key authentication.
 
 <Callout kind="info">
 
-All endpoints on this page require **session cookie authentication**. Send requests from an authenticated Talkturo session. These routes are available under `/api/assistants/[assistantId]/telephony/`.
+All endpoints on this page are available under `/api/assistants/[assistantId]/telephony/`.
+
+**Authentication**
+- **Session cookie authentication** is required for `test-call`, `inbound`, `outbound`, `settings`, `assign-phone-numbers`, and `compliance-templates`.
+- **API key authentication** is also accepted for `GET` and `PATCH` on `/api/assistants/[assistantId]/telephony/phone-numbers`.
 
 </Callout>
 
@@ -24,8 +28,8 @@ All endpoints on this page require **session cookie authentication**. Send reque
 | `POST` | `/api/assistants/[assistantId]/telephony/test-call` | Start a test outbound SIP call |
 | `GET` `POST` | `/api/assistants/[assistantId]/telephony/inbound` | Read or configure inbound telephony |
 | `GET` `POST` | `/api/assistants/[assistantId]/telephony/outbound` | Read or configure outbound telephony |
-| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/settings` | Read or update full telephony settings |
-| `GET` `POST` | `/api/assistants/[assistantId]/telephony/phone-numbers` | List or manage phone numbers attached to the assistant |
+| `GET` `POST` | `/api/assistants/[assistantId]/telephony/settings` | Read or update full telephony settings |
+| `GET` `PATCH` | `/api/assistants/[assistantId]/telephony/phone-numbers` | List or manage phone numbers attached to the assistant |
 | `POST` | `/api/assistants/[assistantId]/telephony/assign-phone-numbers` | Assign phone numbers to the assistant |
 | `GET` | `/api/assistants/[assistantId]/telephony/compliance-templates` | List available compliance templates |
 
@@ -169,7 +173,7 @@ If the request succeeds, the response includes both the room name and SIP call i
 
 ## GET and POST inbound
 
-Use the inbound endpoint to read or configure inbound telephony for an assistant. The exact response shape and accepted POST body fields depend on the assistant's telephony configuration in your workspace.
+Use the inbound endpoint to read or configure inbound telephony for an assistant. Use `POST` to enable or disable inbound calling and provision the related LiveKit resources.
 
 ### Path parameters
 
@@ -184,9 +188,86 @@ Assistant UUID.
 - **`GET`** — returns the current inbound telephony configuration.
 - **`POST`** — creates or updates inbound telephony configuration for the assistant.
 
+### Request body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Account slug used to validate account membership before updating inbound telephony.
+
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean" required="true">
+
+Enable or disable inbound telephony for the assistant.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/inbound" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=rt_example_93kmd8pz" \
+  --data '{
+    "accountSlug": "acme-sales",
+    "enabled": true
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/inbound",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=rt_example_93kmd8pz"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      enabled: true
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190",
+    "inbound_enabled": true,
+    "outbound_enabled": false,
+    "livekit_inbound_trunk_id": "lk_trunk_in_82dfc7a1",
+    "livekit_dispatch_rule_id": "lk_rule_4a91f0cc"
+  }
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the inbound telephony update succeeded.
+
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+
+Assistant telephony state after the inbound update.
+
+</ResponseField>
+
 ### Expected behavior
 
-Use this endpoint when you need to control how an assistant handles incoming calls. Typical workflows include enabling inbound handling, attaching numbers intended to receive calls, and storing inbound-specific settings.
+Use this endpoint when you need to control how an assistant handles incoming calls. Typical workflows include enabling inbound handling and provisioning the inbound trunk and dispatch rule used for call routing.
 
 ## GET and POST outbound
 
@@ -205,13 +286,89 @@ Assistant UUID.
 - **`GET`** — returns the current outbound telephony configuration.
 - **`POST`** — creates or updates outbound telephony configuration for the assistant.
 
+### Request body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Account slug used to validate account membership before updating outbound telephony.
+
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean" required="true">
+
+Enable or disable outbound telephony for the assistant.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/outbound" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=rt_example_93kmd8pz" \
+  --data '{
+    "accountSlug": "acme-sales",
+    "enabled": true
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/outbound",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=rt_example_93kmd8pz"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      enabled: true
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190",
+    "inbound_enabled": true,
+    "outbound_enabled": true,
+    "livekit_outbound_trunk_id": "lk_trunk_out_3f1b5d8e"
+  }
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the outbound telephony update succeeded.
+
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+
+Assistant telephony state after the outbound update.
+
+</ResponseField>
+
 ### Expected behavior
 
 Use this endpoint before initiating outbound calls. A valid outbound setup is a prerequisite for `POST /telephony/test-call`, which verifies outbound enablement and trunk configuration before dialing.
 
-## GET and PATCH settings
+## GET and POST settings
 
-Read or update the assistant's full telephony settings from a single endpoint. Use `GET` to retrieve the current settings object and `PATCH` to update only the fields you want to change.
+Read or replace the assistant's full telephony settings from a single endpoint. Use `GET` to retrieve the current settings object and `POST` to submit the full settings payload.
 
 ### Path parameters
 
@@ -224,15 +381,263 @@ Assistant UUID.
 ### Methods
 
 - **`GET`** — returns full telephony settings for the assistant.
-- **`PATCH`** — updates telephony settings for the assistant.
+- **`POST`** — replaces telephony settings for the assistant.
+
+### Request body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Account slug used to validate account membership and resolve billing context for telephony provisioning.
+
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="string[]" required="false">
+
+Full set of phone number UUIDs that should remain assigned to the assistant.
+
+</ParamField>
+
+<ParamField body="inboundEnabled" param-type="boolean" required="false">
+
+Enable or disable inbound telephony.
+
+</ParamField>
+
+<ParamField body="outboundEnabled" param-type="boolean" required="false">
+
+Enable or disable outbound telephony.
+
+</ParamField>
+
+<ParamField body="inboundCompanyId" param-type="string | null" required="false">
+
+Company UUID used for inbound configuration, or `null` to clear it.
+
+</ParamField>
+
+<ParamField body="telnyxConnectionId" param-type="string | null" required="false">
+
+Carrier connection identifier, or `null` to remove the current connection.
+
+</ParamField>
+
+<ParamField body="destinationCountry" param-type="string | null" required="false">
+
+Destination country as a lowercase ISO country code such as `us`, `de`, or `gb`.
+
+</ParamField>
+
+<ParamField body="voicemail" param-type="object" required="false">
+
+Voicemail settings object.
+
+</ParamField>
+
+<ParamField body="voicemail.detectionEnabled" param-type="boolean" required="false" show-location="false">
+
+Enable voicemail detection during outbound calls.
+
+</ParamField>
+
+<ParamField body="voicemail.action" param-type="string | null" required="false" show-location="false">
+
+Action to take when voicemail is detected, or `null` if no action is configured.
+
+</ParamField>
+
+<ParamField body="voicemail.message" param-type="string | null" required="false" show-location="false">
+
+Voicemail message content, or `null` if no message is configured.
+
+</ParamField>
+
+<ParamField body="compliance" param-type="object" required="false">
+
+Compliance settings object.
+
+</ParamField>
+
+<ParamField body="compliance.enabled" param-type="boolean" required="false" show-location="false">
+
+Enable or disable compliance checks for telephony flows that require them.
+
+</ParamField>
+
+<ParamField body="compliance.templateId" param-type="string | null" required="false" show-location="false">
+
+Compliance template UUID, or `null` if no template is selected.
+
+</ParamField>
+
+<ParamField body="compliance.briefingText" param-type="string | null" required="false" show-location="false">
+
+Optional briefing text presented as part of the compliance flow.
+
+</ParamField>
+
+<ParamField body="compliance.language" param-type="string | null" required="false" show-location="false">
+
+Language code for compliance messaging, or `null` to use the default behavior.
+
+</ParamField>
+
+<ParamField body="compliance.requireAck" param-type="boolean" required="false" show-location="false">
+
+Require an acknowledgment before continuing the call flow.
+
+</ParamField>
+
+<ParamField body="compliance.fallbackPolicy" param-type="string" required="false" enum="retry,block,continue" show-location="false">
+
+Fallback behavior when the compliance flow cannot complete.
+
+</ParamField>
+
+<ParamField body="compliance.ackTimeoutSeconds" param-type="integer" required="false" show-location="false">
+
+Acknowledgment timeout in seconds. Valid values are `3` through `60`.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/settings" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=rt_example_93kmd8pz" \
+  --data '{
+    "accountSlug": "acme-sales",
+    "phoneNumberIds": [
+      "4af1a693-4d17-48be-8f1b-8121111e7a90",
+      "1d1e5f18-1a81-4f0b-bcc0-931f0e2ec7f4"
+    ],
+    "inboundEnabled": true,
+    "outboundEnabled": true,
+    "inboundCompanyId": "0d94c0b2-b18b-4022-bf44-2014c9a2d9b7",
+    "telnyxConnectionId": "telnyx_conn_8f22d61c",
+    "destinationCountry": "us",
+    "voicemail": {
+      "detectionEnabled": true,
+      "action": "drop_message",
+      "message": "Hello, this is Jane Chen from Acme Sales following up on your request."
+    },
+    "compliance": {
+      "enabled": true,
+      "templateId": "a5c1c1e4-7cf7-4668-9454-c9e9fd1f994c",
+      "briefingText": "This call may be recorded for quality assurance.",
+      "language": "en",
+      "requireAck": true,
+      "fallbackPolicy": "retry",
+      "ackTimeoutSeconds": 10
+    }
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/settings",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=rt_example_93kmd8pz"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      phoneNumberIds: [
+        "4af1a693-4d17-48be-8f1b-8121111e7a90",
+        "1d1e5f18-1a81-4f0b-bcc0-931f0e2ec7f4"
+      ],
+      inboundEnabled: true,
+      outboundEnabled: true,
+      inboundCompanyId: "0d94c0b2-b18b-4022-bf44-2014c9a2d9b7",
+      telnyxConnectionId: "telnyx_conn_8f22d61c",
+      destinationCountry: "us",
+      voicemail: {
+        detectionEnabled: true,
+        action: "drop_message",
+        message: "Hello, this is Jane Chen from Acme Sales following up on your request."
+      },
+      compliance: {
+        enabled: true,
+        templateId: "a5c1c1e4-7cf7-4668-9454-c9e9fd1f994c",
+        briefingText: "This call may be recorded for quality assurance.",
+        language: "en",
+        requireAck: true,
+        fallbackPolicy: "retry",
+        ackTimeoutSeconds: 10
+      }
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,402" default-tab="1">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190",
+    "inbound_enabled": true,
+    "outbound_enabled": true,
+    "livekit_inbound_trunk_id": "lk_trunk_in_82dfc7a1",
+    "livekit_outbound_trunk_id": "lk_trunk_out_3f1b5d8e",
+    "livekit_dispatch_rule_id": "lk_rule_4a91f0cc",
+    "telnyx_connection_id": "telnyx_conn_8f22d61c",
+    "destination_country": "us"
+  },
+  "assignedActive": 2
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Insufficient credits"
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the settings update succeeded.
+
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+
+Updated assistant record returned after telephony provisioning and persistence complete.
+
+</ResponseField>
+
+<ResponseField name="assignedActive" field-type="integer" required="true">
+
+Count of active phone numbers assigned to the assistant after the update.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+`POST /telephony/settings` can trigger telephony provisioning side effects. The endpoint provisions or tears down LiveKit SIP trunks and dispatch rules, and attaches numbers to carrier connections.
+
+If the account does not have enough credits, the API returns `402`. If the carrier is unavailable, the API returns `409`. If LiveKit provisioning fails, the API returns `500` and rolls back the enabled flags.
+
+</Callout>
 
 ### Expected behavior
 
-Use the settings endpoint when you need the full telephony configuration rather than inbound-only or outbound-only values. `PATCH` is the right choice for partial updates because it avoids replacing the entire settings object.
+Use the settings endpoint when you need to update the assistant's full telephony configuration in one request. This route replaces the current settings body rather than applying a partial patch.
 
-## GET and POST phone-numbers
+## GET and PATCH phone-numbers
 
-List or manage the phone numbers attached to an assistant. Use this endpoint to inspect the assistant's current telephony inventory before assigning numbers or placing outbound test calls.
+List or replace the phone numbers attached to an assistant. Use this endpoint to inspect the assistant's current telephony inventory before assigning numbers or placing outbound test calls.
 
 ### Path parameters
 
@@ -244,12 +649,92 @@ Assistant UUID.
 
 ### Methods
 
-- **`GET`** — returns phone numbers attached to the assistant.
-- **`POST`** — manages phone numbers for the assistant.
+- **`GET`** — returns unassigned numbers plus numbers already assigned to this assistant.
+- **`PATCH`** — replaces the assistant's full phone-number assignment set.
+
+### Request body
+
+<ParamField body="accountSlug" param-type="string" required="false">
+
+Optional account slug used to scope the phone-number assignment update.
+
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="string[]" required="true">
+
+Full set of phone number UUIDs that should remain assigned to the assistant after the update.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PATCH "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/phone-numbers" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: dkai_example_9xmk7q2r" \
+  --data '{
+    "accountSlug": "acme-sales",
+    "phoneNumberIds": [
+      "4af1a693-4d17-48be-8f1b-8121111e7a90",
+      "1d1e5f18-1a81-4f0b-bcc0-931f0e2ec7f4"
+    ]
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/6f8f2a40-89bf-4fd8-94ab-c7c8a7d1e190/telephony/phone-numbers",
+  {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": "dkai_example_9xmk7q2r"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      phoneNumberIds: [
+        "4af1a693-4d17-48be-8f1b-8121111e7a90",
+        "1d1e5f18-1a81-4f0b-bcc0-931f0e2ec7f4"
+      ]
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "phoneNumberIds": [
+    "4af1a693-4d17-48be-8f1b-8121111e7a90",
+    "1d1e5f18-1a81-4f0b-bcc0-931f0e2ec7f4"
+  ]
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the phone-number update succeeded.
+
+</ResponseField>
+
+<ResponseField name="phoneNumberIds" field-type="array" required="true">
+
+The full set of phone number UUIDs assigned to the assistant after replacement.
+
+</ResponseField>
 
 ### Expected behavior
 
-Use the `GET` method to confirm that a number is already attached before using it as `fromNumber` in a test call. The `POST` method is available for phone-number management flows tied to the assistant.
+Use the `GET` method to review available numbers before assignment. The `PATCH` method replaces the full set, so omit any number you want removed from the assistant.
 
 ## POST assign-phone-numbers
 
@@ -303,7 +788,9 @@ A successful telephony integration usually follows this order:
 ### Common failure cases
 
 - **`401` or `403`** — the request was sent without a valid authenticated session or without access to the target account.
-- **`402`** — the account does not have enough credits to run an outbound test call.
+- **`402`** — the account does not have enough credits to run an outbound test call or complete telephony settings provisioning.
+- **`409`** — the carrier is unavailable while applying telephony settings.
+- **`500`** — LiveKit provisioning failed during the settings update, and Talkturo rolled back the enabled flags.
 - **Validation failure on test-call** — outbound telephony is disabled, the outbound trunk is missing or invalid, or `fromNumber` is not active and assigned to the assistant.
 
 ## Related telephony context

@@ -22,7 +22,7 @@ Send your API key in the `Authorization` header as a bearer token. Talkturo acce
 <CodeGroup tabs="cURL">
 
 ```bash
-curl -X GET "https://api.talkturo.com/api/test-api-key" \
+curl -X GET "https://app.talkturo.com/api/test-api-key" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r8f4c1v6n3p7s2d5h8j1k4m6q9w2e5r8t1y4u7"
 ```
 
@@ -100,7 +100,7 @@ Desktop app routes accept a Supabase access token in the `Authorization` header.
 <CodeGroup tabs="cURL">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/auth/sign-out" \
+curl -X POST "https://app.talkturo.com/api/auth/sign-out" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.desktop_example_token"
 ```
 
@@ -115,7 +115,7 @@ Call `GET /api/test-api-key` to confirm that your credentials are valid and acce
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X GET "https://api.talkturo.com/api/test-api-key" \
+curl -X GET "https://app.talkturo.com/api/test-api-key" \
   -H "Authorization: Bearer tk_test_example_4f7a9c2d8m1q5r6s3t9v2w4x7y1z8b5n6p3k9h2j4u6"
 ```
 

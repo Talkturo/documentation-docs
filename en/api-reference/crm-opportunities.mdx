@@ -9,7 +9,7 @@ Use the CRM Opportunities endpoints to track deals, pipeline stage, associated c
 
 <Callout kind="info">
 
-All CRM Opportunities endpoints require an authenticated **session cookie**. These endpoints do not accept API key authentication.
+The list and create endpoints accept API key or authenticated session access. The get, update, and delete endpoints require an authenticated **session cookie** and do not accept API key authentication.
 
 </Callout>
 
@@ -17,33 +17,37 @@ All CRM Opportunities endpoints require an authenticated **session cookie**. The
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/crm/opportunities` | List opportunities with pagination and filters |
-| `POST` | `/api/crm/opportunities` | Create a new opportunity |
-| `GET` | `/api/crm/opportunities/{id}` | Retrieve one opportunity by ID |
-| `PATCH` | `/api/crm/opportunities/{id}` | Update an existing opportunity |
-| `DELETE` | `/api/crm/opportunities/{id}` | Delete an opportunity |
+| `GET` | `/api/crm/opportunities` | List opportunities with pagination and filters. Accepts API key or session authentication. |
+| `POST` | `/api/crm/opportunities` | Create a new opportunity. Accepts API key or session authentication. |
+| `GET` | `/api/crm/opportunities/{id}` | Retrieve one opportunity by ID. Requires session authentication. |
+| `PUT` | `/api/crm/opportunities/{id}` | Update an existing opportunity. Requires session authentication. |
+| `DELETE` | `/api/crm/opportunities/{id}` | Delete an opportunity. Requires session authentication. |
 
 ## List opportunities
 
-Retrieve a paginated list of opportunities and narrow the results by search term, contact, or company.
+Retrieve a paginated list of opportunities and narrow the results by team, company, stage, or owner.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://app.talkturo.com/api/crm/opportunities?page=1&limit=25&search=renewal&companyId=cmp_7f3d21a9" \
-  -H "Cookie: sb-access-token=example_session_cookie"
+curl -X GET "https://app.talkturo.com/api/crm/opportunities?teamId=550e8400-e29b-41d4-a716-446655440000&limit=25&offset=0&companyId=cmp_7f3d21a9&stage=proposal&ownerUserId=usr_4a8b29de" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
 ```
 
 ```javascript
 const params = new URLSearchParams({
-  page: "1",
+  teamId: "550e8400-e29b-41d4-a716-446655440000",
   limit: "25",
-  search: "renewal",
-  companyId: "cmp_7f3d21a9"
+  offset: "0",
+  companyId: "cmp_7f3d21a9",
+  stage: "proposal",
+  ownerUserId: "usr_4a8b29de"
 });
 
-const response = await fetch(`/api/crm/opportunities?${params}`, {
+const response = await fetch(`https://app.talkturo.com/api/crm/opportunities?${params}`, {
   method: "GET",
-  credentials: "include"
+  headers: {
+    Authorization: "Bearer tk_example_9xmk7q2r"
+  }
 });
 
 const data = await response.json();
@@ -58,40 +62,84 @@ console.log(data);
   "opportunities": [
     {
       "id": "opp_2d91c6f4",
-      "title": "Q3 Platform Renewal",
-      "value": 24000,
+      "teamId": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Q3 Platform Renewal",
+      "amount": 24000,
+      "currency": "USD",
       "stage": "proposal",
-      "contact_id": "cnt_91b4a2e7",
-      "company_id": "cmp_7f3d21a9",
-      "expected_close_date": "2026-09-30"
+      "probability": 65,
+      "expectedCloseDate": "2026-09-30",
+      "ownerUserId": "usr_4a8b29de",
+      "notes": "Renewal includes 150 additional seats.",
+      "company": {
+        "id": "cmp_7f3d21a9",
+        "name": "Northwind Health"
+      },
+      "primary_contact": {
+        "id": "cnt_91b4a2e7",
+        "firstName": "Maya",
+        "lastName": "Patel",
+        "email": "maya.patel@northwindhealth.com"
+      }
     }
   ],
-  "total": 1,
-  "page": 1
+  "stageTotals": {
+    "lead": {
+      "count": 4,
+      "value": 18000
+    },
+    "qualified": {
+      "count": 6,
+      "value": 94000
+    },
+    "proposal": {
+      "count": 3,
+      "value": 72000
+    },
+    "negotiation": {
+      "count": 2,
+      "value": 51000
+    },
+    "won": {
+      "count": 8,
+      "value": 210000
+    },
+    "lost": {
+      "count": 1,
+      "value": 12000
+    }
+  },
+  "count": 24,
+  "limit": 25,
+  "offset": 0
 }
 ```
 </Response>
 
 ### Query parameters
 
-<ParamField query="page" param-type="integer" required="false">
-Page number to return. The response includes the current page in the `page` field.
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false">
-Maximum number of opportunities to return per page.
-</ParamField>
-
-<ParamField query="search" param-type="string" required="false">
-Search term used to filter opportunities.
-</ParamField>
-
-<ParamField query="contactId" param-type="string" required="false">
-Return only opportunities associated with the specified contact.
+<ParamField query="teamId" param-type="string" required="true">
+Team UUID used to scope the opportunity list.
 </ParamField>
 
 <ParamField query="companyId" param-type="string" required="false">
 Return only opportunities associated with the specified company.
+</ParamField>
+
+<ParamField query="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
+Return only opportunities in the specified pipeline stage.
+</ParamField>
+
+<ParamField query="ownerUserId" param-type="string" required="false">
+Return only opportunities assigned to the specified owner.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of opportunities to return per request. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of opportunities to skip before returning results. Defaults to `0`.
 </ParamField>
 
 ### Response fields
@@ -101,74 +149,220 @@ Returns `true` when the request succeeds.
 </ResponseField>
 
 <ResponseField name="opportunities" field-type="array" required="true">
-Array of opportunity records for the current page.
+Array of opportunity records for the current result set.
 </ResponseField>
 
 <ResponseField name="opportunities[].id" field-type="string" required="true">
 Unique identifier for the opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].title" field-type="string" required="true">
-Opportunity title.
+<ResponseField name="opportunities[].teamId" field-type="string" required="true">
+Team UUID that owns the opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].value" field-type="number" required="false">
-Monetary value associated with the opportunity.
+<ResponseField name="opportunities[].name" field-type="string" required="true">
+Opportunity name.
 </ResponseField>
 
-<ResponseField name="opportunities[].stage" field-type="string" required="false">
+<ResponseField name="opportunities[].amount" field-type="number" required="false">
+Monetary amount associated with the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].currency" field-type="string" required="false">
+Currency code stored with the opportunity amount.
+</ResponseField>
+
+<ResponseField name="opportunities[].stage" field-type="string" required="true">
 Current pipeline stage for the opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].contact_id" field-type="string" required="false">
-ID of the related contact, if one is associated.
+<ResponseField name="opportunities[].probability" field-type="number" required="false">
+Probability percentage for the opportunity.
 </ResponseField>
 
-<ResponseField name="opportunities[].company_id" field-type="string" required="false">
-ID of the related company, if one is associated.
+<ResponseField name="opportunities[].expectedCloseDate" field-type="string" required="false">
+Expected close date for the opportunity.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
-Total number of matching opportunities across all pages.
+<ResponseField name="opportunities[].ownerUserId" field-type="string" required="false">
+User ID of the opportunity owner.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
-Current page number returned by the API.
+<ResponseField name="opportunities[].notes" field-type="string" required="false">
+Free-form notes stored on the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].company" field-type="object" required="false">
+Associated company summary, if the opportunity is linked to a company.
+</ResponseField>
+
+<ResponseField name="opportunities[].company.id" field-type="string" required="true">
+Unique identifier for the related company.
+</ResponseField>
+
+<ResponseField name="opportunities[].company.name" field-type="string" required="true">
+Company name.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact" field-type="object" required="false">
+Associated primary contact summary, if one is linked to the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.id" field-type="string" required="true">
+Unique identifier for the related contact.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.firstName" field-type="string" required="false">
+Primary contact first name.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.lastName" field-type="string" required="false">
+Primary contact last name.
+</ResponseField>
+
+<ResponseField name="opportunities[].primary_contact.email" field-type="string" required="false">
+Primary contact email address.
+</ResponseField>
+
+<ResponseField name="stageTotals" field-type="object" required="true">
+Per-stage rollup of opportunity counts and values for the filtered result set.
+</ResponseField>
+
+<ResponseField name="stageTotals.lead" field-type="object" required="true">
+Summary for opportunities in the `lead` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.qualified" field-type="object" required="true">
+Summary for opportunities in the `qualified` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.proposal" field-type="object" required="true">
+Summary for opportunities in the `proposal` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.negotiation" field-type="object" required="true">
+Summary for opportunities in the `negotiation` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.won" field-type="object" required="true">
+Summary for opportunities in the `won` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.lost" field-type="object" required="true">
+Summary for opportunities in the `lost` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.lead.count" field-type="integer" required="true">
+Number of matching opportunities in the `lead` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.lead.value" field-type="number" required="true">
+Total amount for matching opportunities in the `lead` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.qualified.count" field-type="integer" required="true">
+Number of matching opportunities in the `qualified` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.qualified.value" field-type="number" required="true">
+Total amount for matching opportunities in the `qualified` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.proposal.count" field-type="integer" required="true">
+Number of matching opportunities in the `proposal` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.proposal.value" field-type="number" required="true">
+Total amount for matching opportunities in the `proposal` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.negotiation.count" field-type="integer" required="true">
+Number of matching opportunities in the `negotiation` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.negotiation.value" field-type="number" required="true">
+Total amount for matching opportunities in the `negotiation` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.won.count" field-type="integer" required="true">
+Number of matching opportunities in the `won` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.won.value" field-type="number" required="true">
+Total amount for matching opportunities in the `won` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.lost.count" field-type="integer" required="true">
+Number of matching opportunities in the `lost` stage.
+</ResponseField>
+
+<ResponseField name="stageTotals.lost.value" field-type="number" required="true">
+Total amount for matching opportunities in the `lost` stage.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Total number of matching opportunities returned by the query.
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true">
+Page size applied to the response.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Starting offset used for the response.
 </ResponseField>
 
 ## Create opportunity
 
-Create a new sales opportunity with a required title and optional deal metadata.
+Create a new sales opportunity with a required name and optional deal metadata.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/opportunities" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-access-token=example_session_cookie" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
   -d '{
-    "title": "Enterprise Expansion - Northwind Health",
-    "value": 48000,
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "companyId": "cmp_7f3d21a9",
+    "primaryContactId": "cnt_91b4a2e7",
+    "name": "Enterprise Expansion - Northwind Health",
     "stage": "qualified",
-    "contact_id": "cnt_91b4a2e7",
-    "company_id": "cmp_7f3d21a9",
-    "expected_close_date": "2026-10-15"
+    "amount": 48000,
+    "currency": "USD",
+    "probability": 70,
+    "expectedCloseDate": "2026-10-15",
+    "ownerUserId": "usr_4a8b29de",
+    "notes": "Expansion opportunity for the Q4 rollout.",
+    "customFields": {
+      "contractTerm": "24 months",
+      "region": "North America"
+    }
   }'
 ```
 
 ```javascript
-const response = await fetch("/api/crm/opportunities", {
+const response = await fetch("https://app.talkturo.com/api/crm/opportunities", {
   method: "POST",
-  credentials: "include",
   headers: {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    Authorization: "Bearer tk_example_9xmk7q2r"
   },
   body: JSON.stringify({
-    title: "Enterprise Expansion - Northwind Health",
-    value: 48000,
+    teamId: "550e8400-e29b-41d4-a716-446655440000",
+    companyId: "cmp_7f3d21a9",
+    primaryContactId: "cnt_91b4a2e7",
+    name: "Enterprise Expansion - Northwind Health",
     stage: "qualified",
-    contact_id: "cnt_91b4a2e7",
-    company_id: "cmp_7f3d21a9",
-    expected_close_date: "2026-10-15"
+    amount: 48000,
+    currency: "USD",
+    probability: 70,
+    expectedCloseDate: "2026-10-15",
+    ownerUserId: "usr_4a8b29de",
+    notes: "Expansion opportunity for the Q4 rollout.",
+    customFields: {
+      contractTerm: "24 months",
+      region: "North America"
+    }
   })
 });
 
@@ -183,12 +377,29 @@ console.log(data);
   "success": true,
   "opportunity": {
     "id": "opp_6c52a1ef",
-    "title": "Enterprise Expansion - Northwind Health",
-    "value": 48000,
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Enterprise Expansion - Northwind Health",
+    "amount": 48000,
+    "currency": "USD",
     "stage": "qualified",
-    "contact_id": "cnt_91b4a2e7",
-    "company_id": "cmp_7f3d21a9",
-    "expected_close_date": "2026-10-15"
+    "probability": 70,
+    "expectedCloseDate": "2026-10-15",
+    "ownerUserId": "usr_4a8b29de",
+    "notes": "Expansion opportunity for the Q4 rollout.",
+    "company": {
+      "id": "cmp_7f3d21a9",
+      "name": "Northwind Health"
+    },
+    "primary_contact": {
+      "id": "cnt_91b4a2e7",
+      "firstName": "Maya",
+      "lastName": "Patel",
+      "email": "maya.patel@northwindhealth.com"
+    },
+    "customFields": {
+      "contractTerm": "24 months",
+      "region": "North America"
+    }
   }
 }
 ```
@@ -196,33 +407,57 @@ console.log(data);
 
 ### Request body
 
-<ParamField body="title" param-type="string" required="true">
-Name of the opportunity.
+<ParamField body="teamId" param-type="string" required="true">
+Team UUID that owns the opportunity.
 </ParamField>
 
-<ParamField body="value" param-type="number" required="false">
-Monetary value of the opportunity.
-</ParamField>
-
-<ParamField body="stage" param-type="string" required="false">
-Pipeline stage to assign when the opportunity is created.
-</ParamField>
-
-<ParamField body="contact_id" param-type="string" required="false">
-Related contact ID.
-</ParamField>
-
-<ParamField body="company_id" param-type="string" required="false">
+<ParamField body="companyId" param-type="string" required="false">
 Related company ID.
 </ParamField>
 
-<ParamField body="expected_close_date" param-type="string" required="false">
+<ParamField body="primaryContactId" param-type="string" required="false">
+Related primary contact ID.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+Name of the opportunity.
+</ParamField>
+
+<ParamField body="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
+Pipeline stage to assign when the opportunity is created. Defaults to `lead`.
+</ParamField>
+
+<ParamField body="amount" param-type="number" required="false">
+Monetary amount of the opportunity.
+</ParamField>
+
+<ParamField body="currency" param-type="string" required="false">
+Currency code for the opportunity amount.
+</ParamField>
+
+<ParamField body="probability" param-type="number" required="false">
+Probability percentage for the opportunity.
+</ParamField>
+
+<ParamField body="expectedCloseDate" param-type="string" required="false">
 Expected close date for the opportunity.
+</ParamField>
+
+<ParamField body="ownerUserId" param-type="string" required="false">
+User ID to assign as the opportunity owner.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Free-form notes for the opportunity.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Custom field values to store alongside the standard opportunity properties.
 </ParamField>
 
 <Callout kind="info">
 
-The create endpoint also accepts additional custom fields in the request body. Include those fields alongside the standard opportunity properties.
+Set `stage` to one of `lead`, `qualified`, `proposal`, `negotiation`, `won`, or `lost`. If you omit `stage`, the API creates the opportunity in `lead`.
 
 </Callout>
 
@@ -240,28 +475,76 @@ The newly created opportunity record.
 Unique identifier for the new opportunity.
 </ResponseField>
 
-<ResponseField name="opportunity.title" field-type="string" required="true">
-Opportunity title.
+<ResponseField name="opportunity.teamId" field-type="string" required="true">
+Team UUID that owns the opportunity.
 </ResponseField>
 
-<ResponseField name="opportunity.value" field-type="number" required="false">
-Monetary value stored for the opportunity.
+<ResponseField name="opportunity.name" field-type="string" required="true">
+Opportunity name.
 </ResponseField>
 
-<ResponseField name="opportunity.stage" field-type="string" required="false">
+<ResponseField name="opportunity.amount" field-type="number" required="false">
+Monetary amount stored for the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.currency" field-type="string" required="false">
+Currency code stored for the opportunity.
+</ResponseField>
+
+<ResponseField name="opportunity.stage" field-type="string" required="true">
 Current pipeline stage.
 </ResponseField>
 
-<ResponseField name="opportunity.contact_id" field-type="string" required="false">
-Related contact ID, if provided.
+<ResponseField name="opportunity.probability" field-type="number" required="false">
+Probability percentage stored for the opportunity.
 </ResponseField>
 
-<ResponseField name="opportunity.company_id" field-type="string" required="false">
-Related company ID, if provided.
-</ResponseField>
-
-<ResponseField name="opportunity.expected_close_date" field-type="string" required="false">
+<ResponseField name="opportunity.expectedCloseDate" field-type="string" required="false">
 Expected close date, if provided.
+</ResponseField>
+
+<ResponseField name="opportunity.ownerUserId" field-type="string" required="false">
+Related owner user ID, if provided.
+</ResponseField>
+
+<ResponseField name="opportunity.notes" field-type="string" required="false">
+Opportunity notes, if provided.
+</ResponseField>
+
+<ResponseField name="opportunity.company" field-type="object" required="false">
+Related company summary, if provided.
+</ResponseField>
+
+<ResponseField name="opportunity.company.id" field-type="string" required="true">
+Unique identifier for the related company.
+</ResponseField>
+
+<ResponseField name="opportunity.company.name" field-type="string" required="true">
+Related company name.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact" field-type="object" required="false">
+Related primary contact summary, if provided.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.id" field-type="string" required="true">
+Unique identifier for the related contact.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.firstName" field-type="string" required="false">
+Primary contact first name.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.lastName" field-type="string" required="false">
+Primary contact last name.
+</ResponseField>
+
+<ResponseField name="opportunity.primary_contact.email" field-type="string" required="false">
+Primary contact email address.
+</ResponseField>
+
+<ResponseField name="opportunity.customFields" field-type="object" required="false">
+Custom field values stored on the opportunity.
 </ResponseField>
 
 ## Get opportunity
@@ -276,20 +559,51 @@ Unique opportunity identifier. The endpoint expects an opportunity ID in the pat
 
 ### Response shape
 
-A successful response returns the standard envelope below:
+A successful response returns the standard envelope below, including the opportunity and the 50 most recent activities.
 
 ```json
 {
   "success": true,
   "opportunity": {
     "id": "opp_6c52a1ef",
-    "title": "Enterprise Expansion - Northwind Health",
-    "value": 48000,
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Enterprise Expansion - Northwind Health",
+    "amount": 48000,
+    "currency": "USD",
     "stage": "qualified",
-    "contact_id": "cnt_91b4a2e7",
-    "company_id": "cmp_7f3d21a9",
-    "expected_close_date": "2026-10-15"
-  }
+    "probability": 70,
+    "expectedCloseDate": "2026-10-15",
+    "ownerUserId": "usr_4a8b29de",
+    "notes": "Expansion opportunity for the Q4 rollout.",
+    "company": {
+      "id": "cmp_7f3d21a9",
+      "name": "Northwind Health"
+    },
+    "primary_contact": {
+      "id": "cnt_91b4a2e7",
+      "firstName": "Maya",
+      "lastName": "Patel",
+      "email": "maya.patel@northwindhealth.com"
+    },
+    "customFields": {
+      "contractTerm": "24 months",
+      "region": "North America"
+    }
+  },
+  "activities": [
+    {
+      "id": "act_18d2a4b0",
+      "type": "note",
+      "createdAt": "2026-07-18T15:22:11.000Z",
+      "content": "Reviewed pricing with procurement."
+    },
+    {
+      "id": "act_4bc91e22",
+      "type": "stage_changed",
+      "createdAt": "2026-07-12T09:10:44.000Z",
+      "content": "Stage changed from lead to qualified."
+    }
+  ]
 }
 ```
 
@@ -299,6 +613,10 @@ Returns `true` when the opportunity is found.
 
 <ResponseField name="opportunity" field-type="object" required="true">
 The requested opportunity record.
+</ResponseField>
+
+<ResponseField name="activities" field-type="array" required="true">
+Array of up to 50 most recent activities related to the opportunity.
 </ResponseField>
 
 ## Update opportunity
@@ -313,45 +631,100 @@ Unique opportunity identifier.
 
 ### Request body
 
-<ParamField body="title" param-type="string" required="false">
-Updated title for the opportunity.
-</ParamField>
-
-<ParamField body="value" param-type="number" required="false">
-Updated monetary value.
-</ParamField>
-
-<ParamField body="stage" param-type="string" required="false">
-Updated pipeline stage.
-</ParamField>
-
-<ParamField body="contact_id" param-type="string" required="false">
-Updated related contact ID.
-</ParamField>
-
-<ParamField body="company_id" param-type="string" required="false">
+<ParamField body="companyId" param-type="string" required="false">
 Updated related company ID.
 </ParamField>
 
-<ParamField body="expected_close_date" param-type="string" required="false">
+<ParamField body="primaryContactId" param-type="string" required="false">
+Updated related primary contact ID.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="false">
+Updated name for the opportunity.
+</ParamField>
+
+<ParamField body="stage" param-type="string" required="false" enum="lead,qualified,proposal,negotiation,won,lost">
+Updated pipeline stage.
+</ParamField>
+
+<ParamField body="amount" param-type="number" required="false">
+Updated monetary amount.
+</ParamField>
+
+<ParamField body="currency" param-type="string" required="false">
+Updated currency code.
+</ParamField>
+
+<ParamField body="probability" param-type="number" required="false">
+Updated probability percentage.
+</ParamField>
+
+<ParamField body="expectedCloseDate" param-type="string" required="false">
 Updated expected close date.
 </ParamField>
 
+<ParamField body="actualCloseDate" param-type="string" required="false">
+Actual close date for won or lost opportunities.
+</ParamField>
+
+<ParamField body="lostReason" param-type="string" required="false">
+Reason the opportunity was marked as lost.
+</ParamField>
+
+<ParamField body="wonDetails" param-type="object" required="false">
+Additional details stored when the opportunity is marked as won.
+</ParamField>
+
+<ParamField body="ownerUserId" param-type="string" required="false">
+Updated owner user ID.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Updated notes.
+</ParamField>
+
+<ParamField body="customFields" param-type="object" required="false">
+Updated custom field values.
+</ParamField>
+
+<Callout kind="info">
+
+If you set `stage` to `won` or `lost` and omit `actualCloseDate`, the API automatically sets `actualCloseDate` to the current date.
+
+</Callout>
+
 ### Response shape
 
-The update endpoint returns the same envelope as the create and get endpoints:
+The update endpoint returns the same envelope as the create endpoint.
 
 ```json
 {
   "success": true,
   "opportunity": {
     "id": "opp_6c52a1ef",
-    "title": "Enterprise Expansion - Northwind Health",
-    "value": 52000,
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Enterprise Expansion - Northwind Health",
+    "amount": 52000,
+    "currency": "USD",
     "stage": "proposal",
-    "contact_id": "cnt_91b4a2e7",
-    "company_id": "cmp_7f3d21a9",
-    "expected_close_date": "2026-10-31"
+    "probability": 80,
+    "expectedCloseDate": "2026-10-31",
+    "ownerUserId": "usr_4a8b29de",
+    "notes": "Pricing approved. Waiting on legal review.",
+    "company": {
+      "id": "cmp_7f3d21a9",
+      "name": "Northwind Health"
+    },
+    "primary_contact": {
+      "id": "cnt_91b4a2e7",
+      "firstName": "Maya",
+      "lastName": "Patel",
+      "email": "maya.patel@northwindhealth.com"
+    },
+    "customFields": {
+      "contractTerm": "24 months",
+      "region": "North America"
+    }
   }
 }
 ```
@@ -401,26 +774,54 @@ The opportunity object returned by list, create, get, and update endpoints inclu
 Unique identifier for the opportunity.
 </ResponseField>
 
-<ResponseField name="title" field-type="string" required="true">
-Opportunity title.
+<ResponseField name="teamId" field-type="string" required="true">
+Team UUID that owns the opportunity.
 </ResponseField>
 
-<ResponseField name="value" field-type="number" required="false">
-Monetary value associated with the deal.
+<ResponseField name="name" field-type="string" required="true">
+Opportunity name.
 </ResponseField>
 
-<ResponseField name="stage" field-type="string" required="false">
+<ResponseField name="amount" field-type="number" required="false">
+Monetary amount associated with the deal.
+</ResponseField>
+
+<ResponseField name="currency" field-type="string" required="false">
+Currency code associated with the deal amount.
+</ResponseField>
+
+<ResponseField name="stage" field-type="string" required="true">
 Current stage in your sales pipeline.
 </ResponseField>
 
-<ResponseField name="contact_id" field-type="string" required="false">
-Associated contact ID.
+<ResponseField name="probability" field-type="number" required="false">
+Probability percentage for the opportunity.
 </ResponseField>
 
-<ResponseField name="company_id" field-type="string" required="false">
-Associated company ID.
+<ResponseField name="company" field-type="object" required="false">
+Associated company summary.
 </ResponseField>
 
-<ResponseField name="expected_close_date" field-type="string" required="false">
+<ResponseField name="primary_contact" field-type="object" required="false">
+Associated primary contact summary.
+</ResponseField>
+
+<ResponseField name="expectedCloseDate" field-type="string" required="false">
 Expected date the opportunity will close.
+</ResponseField>
+
+<ResponseField name="actualCloseDate" field-type="string" required="false">
+Date the opportunity was actually closed.
+</ResponseField>
+
+<ResponseField name="ownerUserId" field-type="string" required="false">
+User ID of the assigned opportunity owner.
+</ResponseField>
+
+<ResponseField name="notes" field-type="string" required="false">
+Notes stored on the opportunity.
+</ResponseField>
+
+<ResponseField name="customFields" field-type="object" required="false">
+Custom field values stored on the opportunity.
 </ResponseField>

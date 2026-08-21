@@ -74,7 +74,7 @@ Get all API keys for an account. The response includes metadata only and never i
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X GET "https://api.talkturo.com/api/api-keys?accountSlug=acme-sales" \
+curl -X GET "https://app.talkturo.com/api/api-keys?accountSlug=acme-sales" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -H "Accept: application/json"
 ```
@@ -141,7 +141,7 @@ Create a new API key for an account. The response includes the standard key meta
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/api-keys" \
+curl -X POST "https://app.talkturo.com/api/api-keys" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
@@ -236,7 +236,7 @@ Update mutable fields on an existing API key. This endpoint changes display meta
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X PATCH "https://api.talkturo.com/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
+curl -X PATCH "https://app.talkturo.com/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
@@ -306,7 +306,7 @@ Delete an API key and immediately revoke its access. Use this endpoint when a ke
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X DELETE "https://api.talkturo.com/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
+curl -X DELETE "https://app.talkturo.com/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -H "Accept: application/json"
 ```
