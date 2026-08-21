@@ -8,6 +8,28 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-21" description="v2.7.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Vorschläge für Nachbarvorwahlen bei der Telefonnummernsuche** — Wenn deine verifizierte Stadt keine verfügbaren Telefonnummern hat, siehst du jetzt Vorschläge für benachbarte Vorwahlgebiete mit verfügbaren Nummern, sodass du eine passende Nummer findest, ohne von vorn zu beginnen. Siehe [Telefonie](/de/telephony).
+  - **Abgelehnte Compliance-Anträge erneut einreichen** — Abgelehnte Verifizierungsanträge können jetzt direkt korrigiert und neu eingereicht werden. Bereits genehmigte Dokumente werden in den neuen Entwurf übernommen, sodass du nur aktualisieren musst, was abgelehnt wurde. Siehe [Telefonie](/de/telephony).
+  - **Schreibgeschützte Ansicht für Anträge in Prüfung und genehmigte Anträge** — Alle Compliance-Anträge — auch solche in Prüfung oder bereits genehmigte — können jetzt schreibgeschützt von ihrer Karte aus geöffnet werden, sodass du die eingereichten Details jederzeit einsehen kannst. Siehe [Telefonie](/de/telephony).
+
+  ## Verbesserungen
+
+  - **Direkte Carrier-Einreichung ersetzt interne Prüfung** — Compliance-Verifizierungen werden jetzt direkt beim Carrier eingereicht, statt auf eine interne Prüfung zu warten. Der Carrier-Status wird live abgelesen, sodass du den aktuellen Stand jedes Antrags ohne Verzögerung siehst. Siehe [Telefonie](/de/telephony).
+  - **Leitung auf verifiziertes Gebiet bei der deutschen Nummernsuche** — Die Telefonnummernsuche leitet dich jetzt zu der Vorwahl deiner verifizierten Stadt, mit klaren Hinweisen, wenn du außerhalb deines genehmigten Gebiets suchst. Siehe [Telefonie](/de/telephony).
+  - **Einheitliches Compliance-Statusbanner** — Ein einzelnes, Live-Statusbanner erscheint jetzt über den Suchergebnissen und ersetzt die bisherige Mehr-Zustands-Anzeige. Entwürfe zeigen eine „Verifizierung fortsetzen"-Schaltfläche, sodass du dort weitermachen kannst, wo du aufgehört hast. Siehe [Telefonie](/de/telephony).
+  - **Kauf-Modal bleibt für schnellere Mehrfachkäufe geöffnet** — Das Kauf-Modal für Telefonnummern bleibt jetzt nach jedem Kauf geöffnet, wählt standardmäßig den empfohlenen Carrier und zeigt ein Badge für aktive Filter — das beschleunigt den Kauf mehrerer Nummern in einer Sitzung. Siehe [Telefonie](/de/telephony).
+  - **Ladeanzeige auf allen Carrier-Aktionen** — Alle Compliance- und Verifizierungs-Schaltflächen zeigen jetzt einen Spinner, während sie auf eine Carrier-Antwort warten, sodass du immer siehst, wenn eine Aktion läuft. Siehe [Telefonie](/de/telephony).
+  - **Admin-Verifizierungslinks zur Carrier-Konsole** — Bundle-Kennungen in der Admin-Verifizierungstabelle sind jetzt klickbare Links, die die Carrier-Konsole direkt öffnen, sodass Admins Carrier-Details prüfen können, ohne Tools zu wechseln. Siehe [Telefonie](/de/telephony).
+
+  ## Bugfixes
+
+  - **Telefonnummern-Stadtdaten in Produktions-Builds** — Behoben: Ein Build-Problem verhinderte, dass Stadt- und Vorwahldaten in der Produktion korrekt geladen wurden, was zu fehlgeschlagenen Telefonnummernsuchen in bereitgestellten Umgebungen führte. Siehe [Telefonie](/de/telephony).
+  - **Admin-Telefonie-Status für Kunden-Workspaces** — Super-Admins, die den Workspace eines Kunden einsehen, sehen jetzt den echten Carrier-Status statt einer falschen „Setup erforderlich"-Meldung. Siehe [Telefonie](/de/telephony).
+</Update>
+
 <Update label="2026-08-16" description="v2.6.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
