@@ -1,0 +1,511 @@
+---
+title: Stimme und TTS
+description: TTS-Stimmen über Anbieter hinweg durchsuchen, verfügbare Sprachmodelle auflisten und geklonte Stimmen aus Audio-Beispielen erstellen oder löschen.
+---
+
+## Endpunkte auf einen Blick
+
+Verwalten Sie TTS-Stimmen und Sprachmodelle über mehrere Anbieter hinweg und erstellen oder löschen Sie geklonte Stimmen für ein bestimmtes Konto.
+
+| Methode | Endpunkt | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/tts-voices` | TTS-Stimmen auflisten |
+| `GET` | `/api/voice-providers/models` | Verfügbare Modelle eines Anbieters auflisten |
+| `POST` | `/api/voice-cloning` | Geklonte Stimme erstellen |
+| `DELETE` | `/api/voice-cloning/{voiceId}` | Geklonte Stimme löschen |
+
+<Callout kind="info">
+
+`GET /api/voice-providers/voices` ist veraltet. Verwenden Sie für Stimmenlisten `/api/tts-voices`.
+
+</Callout>
+
+## GET /api/tts-voices
+
+Rufen Sie Systemstimmen und optional kontospezifische geklonte Stimmen in einer einzigen Liste ab.
+
+### Authentifizierung
+
+Keine. Dieser Endpunkt ist öffentlich.
+
+### Query-Parameter
+
+<ParamField query="provider" param-type="string" required="false">
+
+Filtert die Stimmen nach Anbieter. Wenn `provider` fehlt oder auf `all` gesetzt ist, gibt der Endpunkt Stimmen aller Anbieter zurück.
+
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="false">
+
+UUID des Kontos. Wenn `accountId` gesetzt ist, enthält die Antwort zusätzlich die geklonten Stimmen dieses Kontos.
+
+</ParamField>
+
+### Beispielanfrage
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/tts-voices?provider=dashscope&accountId=550e8400-e29b-41d4-a716-446655440000"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/tts-voices?provider=dashscope&accountId=550e8400-e29b-41d4-a716-446655440000"
+);
+
+const voices = await response.json();
+console.log(voices);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/tts-voices",
+    params={
+        "provider": "dashscope",
+        "accountId": "550e8400-e29b-41d4-a716-446655440000",
+    },
+)
+
+voices = response.json()
+print(voices)
+```
+</Request>
+
+### Beispielantwort
+
+<Response>
+```json
+[
+  {
+    "id": "9a7b6e14-8b1f-4d4d-96f2-1d5a1e8b2a11",
+    "provider": "dashscope",
+    "voice_id": "voice_system_de_female_01",
+    "name": "Anna",
+    "description": "German female system voice",
+    "language": "de",
+    "preview_url": "https://cdn.talkturo.com/voices/anna-preview.mp3",
+    "metadata": {
+      "gender": "female"
+    },
+    "voice_model": "qwen3-tts-flash-realtime",
+    "account_id": null,
+    "voice_type": null
+  },
+  {
+    "id": "0bb7c2b3-87f0-4bb2-8f64-9adad74a9a92",
+    "provider": "dashscope",
+    "voice_id": "voice_clone_7f83aa1d",
+    "name": "SupportTeamVoice",
+    "description": null,
+    "language": "de",
+    "preview_url": null,
+    "metadata": {
+      "target_model": "qwen3-tts-vc-realtime-2026-01-15"
+    },
+    "voice_model": "qwen3-tts-vc-realtime-2026-01-15",
+    "account_id": "550e8400-e29b-41d4-a716-446655440000",
+    "voice_type": "cloned"
+  }
+]
+```
+</Response>
+
+Wenn `accountId` fehlt, enthält die Antwort nur Systemstimmen mit `account_id: null`. Wenn `accountId` vorhanden ist, führt der Endpunkt Systemstimmen und geklonte Stimmen des Kontos zusammen und sortiert das Ergebnis nach `provider` und `name`.
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string">
+Eindeutige Datenbank-ID der Stimme.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string">
+Name des TTS-Anbieters, zum Beispiel `elevenlabs`, `cartesia` oder `dashscope`.
+</ResponseField>
+
+<ResponseField name="voice_id" field-type="string">
+Anbieterspezifische Stimmen-ID, die bei TTS-Anfragen verwendet wird.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+Anzeigename der Stimme.
+</ResponseField>
+
+<ResponseField name="description" field-type="string | null">
+Optionale Beschreibung der Stimme.
+</ResponseField>
+
+<ResponseField name="language" field-type="string | null">
+Optionale Sprachangabe der Stimme.
+</ResponseField>
+
+<ResponseField name="preview_url" field-type="string | null">
+Optionale URL zu einer Hörprobe der Stimme.
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object | null">
+Zusätzliche anbieterspezifische Metadaten.
+</ResponseField>
+
+<ResponseField name="voice_model" field-type="string | null">
+Name des Sprachmodells, das mit dieser Stimme verwendet wird.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string | null">
+Konto-ID der Stimme. Systemstimmen verwenden `null`.
+</ResponseField>
+
+<ResponseField name="voice_type" field-type="string | null">
+Typ der Stimme. Geklonte Stimmen verwenden `cloned`.
+</ResponseField>
+
+## GET /api/voice-providers/models
+
+Rufen Sie die von einem bestimmten Sprachanbieter unterstützten Modell-IDs und Anzeigenamen ab.
+
+### Authentifizierung
+
+Keine. Dieser Endpunkt ist öffentlich.
+
+### Query-Parameter
+
+<ParamField query="provider" param-type="string" required="true" enum="elevenlabs,cartesia,dashscope,inworld,kugel,fish">
+
+Anbieter, dessen Modelle aufgelistet werden sollen.
+
+</ParamField>
+
+### Beispielanfrage
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/voice-providers/models?provider=elevenlabs"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/voice-providers/models?provider=elevenlabs"
+);
+
+const models = await response.json();
+console.log(models);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/voice-providers/models",
+    params={"provider": "elevenlabs"},
+)
+
+models = response.json()
+print(models)
+```
+</Request>
+
+### Beispielantwort
+
+<Response>
+```json
+[
+  {
+    "id": "eleven_multilingual_v2",
+    "name": "Eleven Multilingual v2"
+  },
+  {
+    "id": "eleven_flash_v2_5",
+    "name": "Eleven Flash v2.5"
+  },
+  {
+    "id": "eleven_turbo_v2_5",
+    "name": "Eleven Turbo v2.5"
+  }
+]
+```
+</Response>
+
+### Unterstützte Modelle nach Anbieter
+
+| Anbieter | Modelle |
+| --- | --- |
+| `elevenlabs` | `eleven_multilingual_v2`, `eleven_flash_v2_5`, `eleven_turbo_v2_5` |
+| `cartesia` | `sonic-3`, `sonic-2`, `sonic-turbo` |
+| `dashscope` | `qwen3-tts-flash-realtime` |
+| `inworld` | `inworld-tts-2`, `inworld-tts-1.5-max`, `inworld-tts-1.5-mini` |
+| `kugel` | `kugel-3`, `kugel-2.5`, `kugel-2-turbo`, `kugel-1-turbo`, `kugel-1` |
+| `fish` | `s2.1-pro`, `s2-pro`, `s1` |
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string">
+Modell-ID, die in API-Anfragen verwendet wird.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+Menschenlesbarer Anzeigename des Modells.
+</ResponseField>
+
+### Fehler
+
+| Status | Antwort | Bedingung |
+| --- | --- | --- |
+| `400` | `{ error: "provider query param is required" }` | `provider` fehlt |
+| `400` | `{ error: "Unsupported provider: <value>" }` | Unbekannter Anbietername |
+
+## POST /api/voice-cloning
+
+Erstellen Sie aus einem Audio-Beispiel eine geklonte Stimme und speichern Sie sie für ein bestimmtes Konto.
+
+### Authentifizierung
+
+Dieser Endpunkt erfordert eine angemeldete Sitzung per Cookie. Der aufrufende Benutzer muss außerdem Eigentümer oder Mitglied des angegebenen Kontos sein.
+
+### Request-Body
+
+<ParamField body="accountId" param-type="string" required="true" show-location="false">
+
+UUID des Kontos, dem die geklonte Stimme zugeordnet wird.
+
+</ParamField>
+
+<ParamField body="preferred_name" param-type="string" required="true" show-location="false">
+
+Anzeigename für die Stimme. Der Wert wird standardmäßig als `cloned` behandelt, auf 32 Zeichen für die Anzeige gekürzt und für die Anbieteranfrage auf zulässige Zeichen reduziert.
+
+</ParamField>
+
+<ParamField body="audio_base64" param-type="string" required="true" show-location="false">
+
+Base64-kodierter Inhalt der Audiodatei.
+
+</ParamField>
+
+<ParamField body="audio_mime_type" param-type="string" required="false" show-location="false">
+
+MIME-Typ der Audiodatei. Wenn kein Wert gesetzt ist, verwendet der Endpunkt `audio/wav`.
+
+</ParamField>
+
+<ParamField body="language" param-type="string" required="false" show-location="false">
+
+Optionale Sprachangabe für das Stimmmodell.
+
+</ParamField>
+
+### Beispielanfrage
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/voice-cloning" \
+  -H "Content-Type: application/json" \
+  -b "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -d '{
+    "accountId": "550e8400-e29b-41d4-a716-446655440000",
+    "preferred_name": "SupportTeamVoice",
+    "audio_base64": "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=",
+    "audio_mime_type": "audio/wav",
+    "language": "de"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/voice-cloning", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    accountId: "550e8400-e29b-41d4-a716-446655440000",
+    preferred_name: "SupportTeamVoice",
+    audio_base64: "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=",
+    audio_mime_type: "audio/wav",
+    language: "de",
+  }),
+});
+
+const result = await response.json();
+console.log(result);
+```
+
+```python
+import requests
+
+session = requests.Session()
+session.cookies.set("sb-access-token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example")
+
+response = session.post(
+    "https://api.talkturo.com/api/voice-cloning",
+    json={
+        "accountId": "550e8400-e29b-41d4-a716-446655440000",
+        "preferred_name": "SupportTeamVoice",
+        "audio_base64": "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=",
+        "audio_mime_type": "audio/wav",
+        "language": "de",
+    },
+)
+
+result = response.json()
+print(result)
+```
+</Request>
+
+### Beispielantwort
+
+<Response>
+```json
+{
+  "success": true,
+  "voice": {
+    "id": "d6a70cfd-72be-4b36-a9d2-06a6b2a148d1",
+    "provider": "dashscope",
+    "voice_id": "voice_clone_7f83aa1d",
+    "name": "SupportTeamVoice",
+    "description": null,
+    "language": "de",
+    "preview_url": null,
+    "metadata": {
+      "target_model": "qwen3-tts-vc-realtime-2026-01-15"
+    },
+    "voice_model": "qwen3-tts-vc-realtime-2026-01-15",
+    "account_id": "550e8400-e29b-41d4-a716-446655440000",
+    "voice_type": "cloned"
+  }
+}
+```
+</Response>
+
+Bei erfolgreicher Erstellung speichert Talkturo die neue Stimme in der Tabelle `tts_voices` und gibt den vollständigen Datensatz zurück.
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Stimme erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="voice" field-type="object">
+Der vollständige gespeicherte Datensatz der geklonten Stimme.
+</ResponseField>
+
+### Fehler
+
+| Status | Antwort | Bedingung |
+| --- | --- | --- |
+| `400` | `{ error: "accountId is required" }` | `accountId` fehlt |
+| `400` | `{ error: "audio_base64 is required" }` | `audio_base64` fehlt |
+| `400` oder `4xx` | `{ error: "Failed to create voice", details: string }` | Der Sprachanbieter hat die Anfrage mit einem Client-Fehler abgelehnt |
+| `401/302` | — | Keine gültige Sitzung |
+| `403` | `{ error: "Unauthorized - no access to this account" }` | Der Benutzer hat keinen Zugriff auf das Konto |
+| `500` | `{ error: "Failed to save voice" }` | Die Stimme konnte nicht in der Datenbank gespeichert werden |
+| `502` | `{ error: "Failed to create voice", details: string }` | Der Sprachanbieter hat mit einem Server-Fehler geantwortet |
+| `502` | `{ error: "Invalid response from voice service" }` | Die Anbieterantwort enthielt kein gültiges `output.voice` |
+| `503` | `{ error: "Voice cloning is not configured" }` | Die Serverkonfiguration für Stimmklonen fehlt |
+
+### Verhalten
+
+- Für das Stimmklonen wird DashScope verwendet.
+- `preferred_name` wird für die Anbieteranfrage bereinigt, sodass nur alphanumerische Zeichen und Unterstriche übrig bleiben.
+- Der bereinigte Name wird für die Anbieteranfrage auf 16 Zeichen gekürzt.
+- Der gespeicherte Anzeigename wird auf 32 Zeichen gekürzt.
+- Die Datenbank schreibt den Datensatz mit einem Service-Role-Client.
+
+## DELETE /api/voice-cloning/{voiceId}
+
+Löschen Sie eine zuvor geklonte Stimme, solange sie nicht mehr von einem Assistenten verwendet wird.
+
+### Authentifizierung
+
+Dieser Endpunkt erfordert eine angemeldete Sitzung per Cookie. Der aufrufende Benutzer muss außerdem Eigentümer oder Mitglied des angegebenen Kontos sein.
+
+### Pfad- und Query-Parameter
+
+<ParamField path="voiceId" param-type="string" required="true">
+
+Die `voice_id` der geklonten Stimme, die gelöscht werden soll.
+
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="true">
+
+UUID des Kontos, dem die Stimme gehört.
+
+</ParamField>
+
+### Beispielanfrage
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X DELETE "https://api.talkturo.com/api/voice-cloning/voice_clone_7f83aa1d?accountId=550e8400-e29b-41d4-a716-446655440000" \
+  -b "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/voice-cloning/voice_clone_7f83aa1d?accountId=550e8400-e29b-41d4-a716-446655440000",
+  {
+    method: "DELETE",
+    credentials: "include",
+  }
+);
+
+const result = await response.json();
+console.log(result);
+```
+
+```python
+import requests
+
+session = requests.Session()
+session.cookies.set("sb-access-token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example")
+
+response = session.delete(
+    "https://api.talkturo.com/api/voice-cloning/voice_clone_7f83aa1d",
+    params={"accountId": "550e8400-e29b-41d4-a716-446655440000"},
+)
+
+result = response.json()
+print(result)
+```
+</Request>
+
+### Beispielantwort
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Stimme erfolgreich gelöscht wurde.
+</ResponseField>
+
+### Fehler
+
+| Status | Antwort | Bedingung |
+| --- | --- | --- |
+| `400` | `{ error: "accountId and voiceId are required" }` | `accountId` oder `voiceId` fehlt |
+| `401/302` | — | Keine gültige Sitzung |
+| `403` | `{ error: "Unauthorized - no access to this account" }` | Der Benutzer hat keinen Zugriff auf das Konto |
+| `404` | `{ error: "Cloned voice not found" }` | Es wurde keine passende geklonte Stimme gefunden |
+| `409` | `{ error: "This voice is used by one or more assistants...", assistants: Array<{ id, name }> }` | Die Stimme ist noch einem oder mehreren Assistenten zugewiesen |
+| `500` | `{ error: "Failed to delete voice" }` | Die Stimme konnte nicht gelöscht werden |
+
+<Callout kind="alert">
+
+Wenn der Endpunkt `409` zurückgibt, weisen Sie betroffene Assistenten zuerst einer anderen Stimme zu und wiederholen dann den Löschvorgang.
+
+</Callout>
+
+### Verhalten
+
+- Vor dem Löschen prüft der Endpunkt, ob Assistenten im Konto die Stimme noch verwenden.
+- Systemstimmen können über diesen Endpunkt nicht gelöscht werden.
+- Externe Löschfehler beim Anbieter verhindern das lokale Löschen nicht, wenn der Datenbankeintrag entfernt werden kann.

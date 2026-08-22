@@ -1,0 +1,1075 @@
+---
+title: Usage and Analytics
+description: Track credit consumption, voice call costs, and account-level usage analytics with time-series breakdowns by STT, LLM, TTS, and platform costs.
+---
+
+## Track usage across credits, calls, and voice events
+
+Use the Usage and Analytics endpoints to fetch current credit balances, query account usage over time, and log desktop voice transcription activity.
+
+<Callout kind="info">
+
+Usage endpoints use different authentication modes depending on the route. `GET /api/usage/current` accepts API key or session authentication, `GET /api/accounts/accountId/usage` requires a browser session with account access, and `POST /api/usage/voice` accepts a desktop Bearer JWT.
+
+</Callout>
+
+## Endpoints at a glance
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/usage/current` | Get the current period usage summary for an account |
+| `GET` | `/api/accounts/{accountId}/usage` | Query account usage analytics with time-series and paginated call rows |
+| `POST` | `/api/usage/voice` | Log desktop speech-to-text usage events |
+
+## Get current usage summary
+
+Retrieve the current limits, usage totals, remaining capacity, and usage percentages for an account.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/usage/current?accountId=9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/usage/current?accountId=9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1",
+  {
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r",
+      Accept: "application/json",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/usage/current",
+    params={"accountId": "9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1"},
+    headers={
+        "Authorization": "Bearer tk_live_example_9xmk7q2r",
+        "Accept": "application/json",
+    },
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response tabs="200,400,404" default-tab="1">
+
+```json
+{
+  "limits": {
+    "monthly_credits": 2500,
+    "daily_credits": 200,
+    "max_daily_credits": 500,
+    "minutes_per_month": 2500,
+    "parallel_calls": 10,
+    "max_ai_agents": 25,
+    "credit_rollover": true,
+    "usage_based_ai": false
+  },
+  "usage": {
+    "credits_used": 840,
+    "credits_remaining": 1820,
+    "minutes_used": 840,
+    "calls_made": 127,
+    "peak_parallel_calls": 4,
+    "ai_agents_created": 8,
+    "daily_credits_used": 43,
+    "credits_rolled_over": 160
+  },
+  "remaining": {
+    "credits": 1820,
+    "daily_credits": 157,
+    "minutes": 1660,
+    "parallel_calls": 6,
+    "ai_agents": 17
+  },
+  "percentages": {
+    "credits": 34,
+    "daily_credits": 22,
+    "minutes": 34,
+    "parallel_calls": 40,
+    "ai_agents": 32
+  },
+  "credit_info": {
+    "monthly_credits": 2500,
+    "daily_credits": 200,
+    "max_daily_credits": 500,
+    "credits_used": 840,
+    "credits_remaining": 1820,
+    "credits_rolled_over": 160,
+    "daily_credits_used": 43,
+    "credit_rollover_enabled": true,
+    "usage_based_ai_enabled": false
+  }
+}
+```
+
+```json
+{
+  "error": "accountId is required"
+}
+```
+
+```json
+{
+  "error": "Account limits not found"
+}
+```
+
+</Response>
+
+### Authentication
+
+`GET /api/usage/current` accepts either of these authentication methods:
+
+- **API key** — Send `Authorization: Bearer tk_live_example_9xmk7q2r`.
+- **Session token** — Send a Bearer session token or use a browser session cookie.
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+
+Account UUID to fetch usage for.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="limits" field-type="object" required="true">
+
+Account limits returned from the account limits lookup. This object includes normalized credit fields and may include additional limit fields such as `minutes_per_month`, `parallel_calls`, `max_ai_agents`, `credit_rollover`, and `usage_based_ai`.
+
+</ResponseField>
+
+<ResponseField name="usage" field-type="object" required="true">
+
+Current period usage totals. Credit fields are preferred, with minute-based values used for backward compatibility when needed.
+
+</ResponseField>
+
+<ResponseField name="remaining" field-type="object" required="true">
+
+Remaining account capacity after applying current usage. All values are clamped to a minimum of `0`.
+
+</ResponseField>
+
+<ResponseField name="percentages" field-type="object" required="true">
+
+Integer usage percentages from `0` to `100` for the tracked limit categories.
+
+</ResponseField>
+
+<ResponseField name="credit_info" field-type="object" required="true">
+
+Credit-focused summary derived from the `limits` and `usage` objects.
+
+</ResponseField>
+
+#### limits fields
+
+<ResponseField name="limits.monthly_credits" field-type="number" required="true">
+
+Monthly credit allowance. If monthly credits are not defined directly, Talkturo falls back to `minutes_per_month`.
+
+</ResponseField>
+
+<ResponseField name="limits.daily_credits" field-type="number" required="true">
+
+Daily credit allowance.
+
+</ResponseField>
+
+<ResponseField name="limits.max_daily_credits" field-type="number" required="true">
+
+Maximum daily credits available after rollover or account-specific adjustments.
+
+</ResponseField>
+
+#### usage fields
+
+<ResponseField name="usage.credits_used" field-type="number" required="true">
+
+Credits consumed in the current period.
+
+</ResponseField>
+
+<ResponseField name="usage.credits_remaining" field-type="number" required="true">
+
+Remaining credits reported by the usage calculation.
+
+</ResponseField>
+
+<ResponseField name="usage.minutes_used" field-type="number" required="true">
+
+Minutes consumed in the current period.
+
+</ResponseField>
+
+<ResponseField name="usage.calls_made" field-type="number" required="true">
+
+Completed or recorded calls counted for the current period.
+
+</ResponseField>
+
+<ResponseField name="usage.peak_parallel_calls" field-type="number" required="true">
+
+Highest number of simultaneous calls observed in the current period.
+
+</ResponseField>
+
+<ResponseField name="usage.ai_agents_created" field-type="number" required="true">
+
+Number of AI agents created against the current account limits.
+
+</ResponseField>
+
+<ResponseField name="usage.daily_credits_used" field-type="number" required="true">
+
+Credits consumed during the current daily window.
+
+</ResponseField>
+
+<ResponseField name="usage.credits_rolled_over" field-type="number" required="true">
+
+Credits carried over into the current period.
+
+</ResponseField>
+
+#### remaining fields
+
+<ResponseField name="remaining.credits" field-type="number" required="true">
+
+Remaining credits after applying monthly credits, rolled-over credits, and credits used.
+
+</ResponseField>
+
+<ResponseField name="remaining.daily_credits" field-type="number" required="true">
+
+Remaining daily credits.
+
+</ResponseField>
+
+<ResponseField name="remaining.minutes" field-type="number" required="true">
+
+Remaining monthly minutes.
+
+</ResponseField>
+
+<ResponseField name="remaining.parallel_calls" field-type="number" required="true">
+
+Remaining parallel call capacity.
+
+</ResponseField>
+
+<ResponseField name="remaining.ai_agents" field-type="number" required="true">
+
+Remaining AI agent capacity.
+
+</ResponseField>
+
+#### percentages fields
+
+<ResponseField name="percentages.credits" field-type="number" required="true">
+
+Current credit usage percentage.
+
+</ResponseField>
+
+<ResponseField name="percentages.daily_credits" field-type="number" required="true">
+
+Current daily credit usage percentage.
+
+</ResponseField>
+
+<ResponseField name="percentages.minutes" field-type="number" required="true">
+
+Current minute usage percentage.
+
+</ResponseField>
+
+<ResponseField name="percentages.parallel_calls" field-type="number" required="true">
+
+Current parallel call usage percentage.
+
+</ResponseField>
+
+<ResponseField name="percentages.ai_agents" field-type="number" required="true">
+
+Current AI agent usage percentage.
+
+</ResponseField>
+
+#### credit_info fields
+
+<ResponseField name="credit_info.monthly_credits" field-type="number" required="true">
+
+Monthly credit allowance used for credit reporting.
+
+</ResponseField>
+
+<ResponseField name="credit_info.daily_credits" field-type="number" required="true">
+
+Daily credit allowance used for credit reporting.
+
+</ResponseField>
+
+<ResponseField name="credit_info.max_daily_credits" field-type="number" required="true">
+
+Maximum daily credits available for the account.
+
+</ResponseField>
+
+<ResponseField name="credit_info.credits_used" field-type="number" required="true">
+
+Credits consumed in the current period.
+
+</ResponseField>
+
+<ResponseField name="credit_info.credits_remaining" field-type="number" required="true">
+
+Credits remaining in the current period.
+
+</ResponseField>
+
+<ResponseField name="credit_info.credits_rolled_over" field-type="number" required="true">
+
+Credits rolled over into the current period.
+
+</ResponseField>
+
+<ResponseField name="credit_info.daily_credits_used" field-type="number" required="true">
+
+Credits consumed in the current daily window.
+
+</ResponseField>
+
+<ResponseField name="credit_info.credit_rollover_enabled" field-type="boolean" required="true">
+
+Whether the account can roll unused credits forward.
+
+</ResponseField>
+
+<ResponseField name="credit_info.usage_based_ai_enabled" field-type="boolean" required="true">
+
+Whether usage-based AI accounting is enabled for the account.
+
+</ResponseField>
+
+### Errors
+
+| Status | Response |
+| --- | --- |
+| `400` | `{"error":"accountId is required"}` |
+| `401` | Authentication failed |
+| `404` | `{"error":"Account limits not found"}` |
+| `500` | Usage or limits lookup failed |
+
+<Callout kind="tip">
+
+Credit reporting prefers `credits_*` fields and falls back to `minutes_*` fields when needed for backward compatibility.
+
+</Callout>
+
+## Get account usage analytics
+
+Retrieve time-series usage data, daily rollups, totals, assistant metadata, and paginated call-level cost rows for an account.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/accounts/9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1/usage?from=2026-01-01T00:00:00.000Z&to=2026-01-31T23:59:59.999Z&granularity=day&page=1&pageSize=25" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Accept: application/json"
+```
+
+```javascript
+const params = new URLSearchParams({
+  from: "2026-01-01T00:00:00.000Z",
+  to: "2026-01-31T23:59:59.999Z",
+  granularity: "day",
+  page: "1",
+  pageSize: "25",
+});
+
+const response = await fetch(
+  `https://api.talkturo.com/api/accounts/9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1/usage?${params.toString()}`,
+  {
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+session = requests.Session()
+session.cookies.set(
+    "sb-access-token",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+)
+
+response = session.get(
+    "https://api.talkturo.com/api/accounts/9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1/usage",
+    params={
+        "from": "2026-01-01T00:00:00.000Z",
+        "to": "2026-01-31T23:59:59.999Z",
+        "granularity": "day",
+        "page": 1,
+        "pageSize": 25,
+    },
+    headers={"Accept": "application/json"},
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response tabs="200,400,403" default-tab="1">
+
+```json
+{
+  "granularity": "day",
+  "series": [
+    {
+      "day": "2026-01-01",
+      "period": "2026-01-01",
+      "call_count": 9,
+      "total_credits": 64.3,
+      "stt_credits": 8.1,
+      "llm_credits": 27.4,
+      "tts_credits": 18.6,
+      "talkturo_credits": 10.2
+    },
+    {
+      "day": "2026-01-02",
+      "period": "2026-01-02",
+      "call_count": 12,
+      "total_credits": 79.5,
+      "stt_credits": 10.4,
+      "llm_credits": 33.8,
+      "tts_credits": 22.1,
+      "talkturo_credits": 13.2
+    }
+  ],
+  "daily": [
+    {
+      "day": "2026-01-01",
+      "call_count": 9,
+      "total_credits": 64.3,
+      "stt_credits": 8.1,
+      "llm_credits": 27.4,
+      "tts_credits": 18.6,
+      "talkturo_credits": 10.2
+    },
+    {
+      "day": "2026-01-02",
+      "call_count": 12,
+      "total_credits": 79.5,
+      "stt_credits": 10.4,
+      "llm_credits": 33.8,
+      "tts_credits": 22.1,
+      "talkturo_credits": 13.2
+    }
+  ],
+  "totals": {
+    "call_count": 21,
+    "total_credits": 143.8,
+    "stt_credits": 18.5,
+    "llm_credits": 61.2,
+    "tts_credits": 40.7,
+    "talkturo_credits": 23.4
+  },
+  "assistants": [
+    {
+      "id": "asst_4f2d8c0b",
+      "name": "Sales Qualifier"
+    },
+    {
+      "id": "asst_8a1c3d99",
+      "name": "Support Triage"
+    }
+  ],
+  "rows": [
+    {
+      "id": "cc_6f139dd8-17cc-4ec5-bd94-6e0f831510b7",
+      "call_id": "call_9ed8d8f2f4",
+      "started_at": "2026-01-02T16:20:14.000Z",
+      "ended_at": "2026-01-02T16:27:39.000Z",
+      "assistant_id": "asst_4f2d8c0b",
+      "assistant_name": "Sales Qualifier",
+      "total_cost": 7.8,
+      "stt_cost": 1.0,
+      "llm_cost": 3.4,
+      "tts_cost": 2.2,
+      "talkturo_cost": 1.2
+    }
+  ],
+  "page": 1,
+  "pageSize": 25,
+  "rowCount": 148
+}
+```
+
+```json
+{
+  "error": "Date range cannot exceed 366 days"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+</Response>
+
+### Authentication
+
+This endpoint requires a browser session and account membership. API keys do not authorize `GET /api/accounts/{accountId}/usage`.
+
+### Path parameters
+
+<ParamField path="accountId" param-type="string" required="true">
+
+Account UUID to query.
+
+</ParamField>
+
+### Query parameters
+
+<ParamField query="from" param-type="string" required="true">
+
+Start of the reporting range as an ISO 8601 timestamp.
+
+</ParamField>
+
+<ParamField query="to" param-type="string" required="true">
+
+End of the reporting range as an ISO 8601 timestamp. The value must be equal to or later than `from`.
+
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+
+Optional assistant UUID filter. If provided, the value must be a valid UUID.
+
+</ParamField>
+
+<ParamField query="page" param-type="integer" required="false">
+
+Page number for `rows`. Defaults to `1`.
+
+</ParamField>
+
+<ParamField query="pageSize" param-type="integer" required="false">
+
+Number of rows to return per page. Defaults to `25` and cannot exceed `100`.
+
+</ParamField>
+
+<ParamField query="granularity" param-type="string" required="false" enum="day,week">
+
+Time bucketing applied to `series`. Defaults to `day`.
+
+</ParamField>
+
+<Callout kind="info">
+
+The date range cannot exceed `366` days. Weekly series are bucketed by UTC Monday.
+
+</Callout>
+
+### Response fields
+
+<ResponseField name="granularity" field-type="string" required="true">
+
+Granularity applied to the `series` array. The value is `day` or `week`.
+
+</ResponseField>
+
+<ResponseField name="series" field-type="array" required="true">
+
+Usage time series for the requested range. When `granularity` is `week`, each row represents one weekly bucket.
+
+</ResponseField>
+
+<ResponseField name="daily" field-type="array" required="true">
+
+Raw daily usage rows for the same range, regardless of the selected granularity.
+
+</ResponseField>
+
+<ResponseField name="totals" field-type="object" required="true">
+
+Sum of all daily usage values in the requested range.
+
+</ResponseField>
+
+<ResponseField name="assistants" field-type="array" required="true">
+
+Assistants available to the account. Use this list to build assistant filters in client applications.
+
+</ResponseField>
+
+<ResponseField name="rows" field-type="array" required="true">
+
+Paginated call-level cost rows ordered by `ended_at` descending.
+
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true">
+
+Current page number returned for `rows`.
+
+</ResponseField>
+
+<ResponseField name="pageSize" field-type="integer" required="true">
+
+Page size applied to `rows`.
+
+</ResponseField>
+
+<ResponseField name="rowCount" field-type="integer" required="true">
+
+Total number of matching call rows across all pages.
+
+</ResponseField>
+
+#### series item fields
+
+<ResponseField name="series[].day" field-type="string" required="true">
+
+Day string in `YYYY-MM-DD` format. For weekly buckets, this is the earliest day present in the bucket.
+
+</ResponseField>
+
+<ResponseField name="series[].period" field-type="string" required="true">
+
+Bucket identifier in `YYYY-MM-DD` format. For weekly buckets, this is the UTC Monday for that week.
+
+</ResponseField>
+
+<ResponseField name="series[].call_count" field-type="number" required="true">
+
+Number of calls included in the bucket.
+
+</ResponseField>
+
+<ResponseField name="series[].total_credits" field-type="number" required="true">
+
+Total credits consumed in the bucket.
+
+</ResponseField>
+
+<ResponseField name="series[].stt_credits" field-type="number" required="true">
+
+Speech-to-text credits consumed in the bucket.
+
+</ResponseField>
+
+<ResponseField name="series[].llm_credits" field-type="number" required="true">
+
+Language model credits consumed in the bucket.
+
+</ResponseField>
+
+<ResponseField name="series[].tts_credits" field-type="number" required="true">
+
+Text-to-speech credits consumed in the bucket.
+
+</ResponseField>
+
+<ResponseField name="series[].talkturo_credits" field-type="number" required="true">
+
+Platform credits consumed in the bucket.
+
+</ResponseField>
+
+#### daily item fields
+
+<ResponseField name="daily[].day" field-type="string" required="true">
+
+Day string in `YYYY-MM-DD` format.
+
+</ResponseField>
+
+<ResponseField name="daily[].call_count" field-type="number" required="true">
+
+Number of calls recorded for the day.
+
+</ResponseField>
+
+<ResponseField name="daily[].total_credits" field-type="number" required="true">
+
+Total credits consumed for the day.
+
+</ResponseField>
+
+<ResponseField name="daily[].stt_credits" field-type="number" required="true">
+
+Speech-to-text credits consumed for the day.
+
+</ResponseField>
+
+<ResponseField name="daily[].llm_credits" field-type="number" required="true">
+
+Language model credits consumed for the day.
+
+</ResponseField>
+
+<ResponseField name="daily[].tts_credits" field-type="number" required="true">
+
+Text-to-speech credits consumed for the day.
+
+</ResponseField>
+
+<ResponseField name="daily[].talkturo_credits" field-type="number" required="true">
+
+Platform credits consumed for the day.
+
+</ResponseField>
+
+#### totals fields
+
+<ResponseField name="totals.call_count" field-type="number" required="true">
+
+Total calls recorded in the range.
+
+</ResponseField>
+
+<ResponseField name="totals.total_credits" field-type="number" required="true">
+
+Total credits consumed in the range.
+
+</ResponseField>
+
+<ResponseField name="totals.stt_credits" field-type="number" required="true">
+
+Total speech-to-text credits consumed in the range.
+
+</ResponseField>
+
+<ResponseField name="totals.llm_credits" field-type="number" required="true">
+
+Total language model credits consumed in the range.
+
+</ResponseField>
+
+<ResponseField name="totals.tts_credits" field-type="number" required="true">
+
+Total text-to-speech credits consumed in the range.
+
+</ResponseField>
+
+<ResponseField name="totals.talkturo_credits" field-type="number" required="true">
+
+Total platform credits consumed in the range.
+
+</ResponseField>
+
+#### assistants item fields
+
+<ResponseField name="assistants[].id" field-type="string" required="true">
+
+Assistant identifier.
+
+</ResponseField>
+
+<ResponseField name="assistants[].name" field-type="string" required="true">
+
+Assistant display name.
+
+</ResponseField>
+
+#### rows item fields
+
+<ResponseField name="rows[].id" field-type="string" required="true">
+
+Cost row identifier.
+
+</ResponseField>
+
+<ResponseField name="rows[].call_id" field-type="string" required="true">
+
+Call identifier.
+
+</ResponseField>
+
+<ResponseField name="rows[].started_at" field-type="string" required="false">
+
+Call start timestamp as ISO 8601, or `null` if unavailable.
+
+</ResponseField>
+
+<ResponseField name="rows[].ended_at" field-type="string" required="false">
+
+Call end timestamp as ISO 8601, or `null` if unavailable.
+
+</ResponseField>
+
+<ResponseField name="rows[].assistant_id" field-type="string" required="false">
+
+Assistant UUID associated with the call, or `null`.
+
+</ResponseField>
+
+<ResponseField name="rows[].assistant_name" field-type="string" required="false">
+
+Assistant name associated with the call, or `null`.
+
+</ResponseField>
+
+<ResponseField name="rows[].total_cost" field-type="number" required="true">
+
+Total cost for the call.
+
+</ResponseField>
+
+<ResponseField name="rows[].stt_cost" field-type="number" required="true">
+
+Speech-to-text cost for the call.
+
+</ResponseField>
+
+<ResponseField name="rows[].llm_cost" field-type="number" required="true">
+
+Language model cost for the call.
+
+</ResponseField>
+
+<ResponseField name="rows[].tts_cost" field-type="number" required="true">
+
+Text-to-speech cost for the call.
+
+</ResponseField>
+
+<ResponseField name="rows[].talkturo_cost" field-type="number" required="true">
+
+Platform cost for the call.
+
+</ResponseField>
+
+### Errors
+
+| Status | Response |
+| --- | --- |
+| `400` | Missing `from` or `to`, invalid dates, inverted range, range over `366` days, or invalid `assistantId` |
+| `403` | `{"error":"Forbidden"}` when the session user is not a member of the account |
+| `500` | Usage series, assistants, or call list query failed |
+
+## Log desktop voice usage
+
+Record a desktop speech-to-text usage event for billing or analytics workflows.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/usage/voice" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "connectionId": "conn_4d2f1b9a",
+    "durationSeconds": 185,
+    "provider": "deepgram",
+    "model": "nova-3",
+    "userEmail": "alex@northstar.ai"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/usage/voice", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    connectionId: "conn_4d2f1b9a",
+    durationSeconds: 185,
+    provider: "deepgram",
+    model: "nova-3",
+    userEmail: "alex@northstar.ai",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.talkturo.com/api/usage/voice",
+    headers={
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example",
+        "Content-Type": "application/json",
+    },
+    json={
+        "connectionId": "conn_4d2f1b9a",
+        "durationSeconds": 185,
+        "provider": "deepgram",
+        "model": "nova-3",
+        "userEmail": "alex@northstar.ai",
+    },
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response tabs="200,401,500" default-tab="1">
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid or expired token"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Usage logging failed"
+}
+```
+
+</Response>
+
+### Authentication
+
+Send a desktop access token as a Bearer token in the `Authorization` header. This endpoint does not use API keys or browser sessions.
+
+### Request body
+
+<ParamField body="connectionId" param-type="string | null" required="false">
+
+Identifier for the speech-to-text connection. Defaults to `null` when omitted.
+
+</ParamField>
+
+<ParamField body="durationSeconds" param-type="number" required="false">
+
+Duration of the voice event in seconds. Defaults to `0`.
+
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="false">
+
+Speech-to-text provider name. Defaults to `deepgram`.
+
+</ParamField>
+
+<ParamField body="model" param-type="string" required="false">
+
+Speech-to-text model name. Defaults to `nova-3`.
+
+</ParamField>
+
+<ParamField body="userEmail" param-type="string | null" required="false">
+
+Optional user email stored as event metadata. Defaults to `null` when omitted.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the request was accepted.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Empty response object returned on success.
+
+</ResponseField>
+
+### Errors
+
+| Status | Response |
+| --- | --- |
+| `400` | `{"success":false,"error":"Invalid JSON body"}` |
+| `401` | Missing Bearer token, empty Bearer token, or invalid token |
+| `500` | `{"success":false,"error":"Usage logging failed"}` |
+
+<Callout kind="info">
+
+Desktop clients can call this endpoint from Electron or other non-browser environments. The route returns permissive CORS headers and calculates `cost_usd` as `durationSeconds / 60 * 0.0077` before writing the event to `talkturo_desktop_usage_events`.
+
+</Callout>
+
+## Multi-language examples
+
+Use the same request pattern across languages when you build usage polling or analytics sync jobs.
+
+<CodeGroup tabs="cURL,JavaScript,Python">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/usage/current?accountId=9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/usage/current?accountId=9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1",
+  {
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r",
+      Accept: "application/json",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data.credit_info.credits_remaining);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/usage/current",
+    params={"accountId": "9f7a2d1c-6b4c-4ad1-bf94-2d7c7f09a8b1"},
+    headers={
+        "Authorization": "Bearer tk_live_example_9xmk7q2r",
+        "Accept": "application/json",
+    },
+)
+
+data = response.json()
+print(data["credit_info"]["credits_remaining"])
+```
+
+</CodeGroup>

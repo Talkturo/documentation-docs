@@ -1,0 +1,621 @@
+---
+title: Nutzung und Analytics
+description: Verfolgen Sie Guthabenverbrauch, Sprachanrufkosten und kontoweite Nutzungsanalysen mit Zeitreihen-Aufschlüsselungen nach STT, LLM, TTS und Plattformkosten.
+---
+
+## Endpunkte für Nutzung und Analytics abrufen
+
+Rufen Sie aktuelle Guthabenstände, kontoweite Nutzungsanalysen und Desktop-Sprachnutzungsereignisse über die Usage-API ab.
+
+<Callout kind="info">
+
+Die Authentifizierung variiert je nach Endpunkt. `GET /api/usage/current` unterstützt API-Schlüssel oder Sitzungen, `GET /api/accounts/[accountId]/usage` erfordert eine angemeldete Sitzung mit Kontozugriff, und `POST /api/usage/voice` akzeptiert nur ein Desktop-Bearer-JWT.
+
+</Callout>
+
+## Endpunkte auf einen Blick
+
+| Methode | Endpunkt | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/usage/current` | Aktuelle Nutzungsübersicht für den Abrechnungszeitraum abrufen |
+| `GET` | `/api/accounts/[accountId]/usage` | Konto-Nutzungsanalyse mit Zeitreihen und Anrufdetails abrufen |
+| `POST` | `/api/usage/voice` | Desktop-STT-Nutzungsereignisse protokollieren |
+
+## GET /api/usage/current
+
+Rufen Sie die aktuelle Nutzungsübersicht eines Kontos für den laufenden Abrechnungszeitraum ab, einschließlich Limits, Verbrauch, verbleibender Kontingente und prozentualer Auslastung.
+
+### Authentifizierung
+
+Authentifizieren Sie sich mit `withApiAuth`. Der Endpunkt akzeptiert einen API-Schlüssel, ein Bearer-Sitzungstoken oder eine Cookie-basierte Sitzung. `requireAccountId` ist auf `false` gesetzt, daher müssen Sie das Zielkonto über den Query-Parameter `accountId` angeben.
+
+### Query-Parameter
+
+<ParamField query="accountId" param-type="string (UUID)" required="true">
+
+Die Konto-ID, für die Sie aktuelle Limits und Nutzungsdaten abrufen möchten.
+
+</ParamField>
+
+### Beispielanfrage
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/usage/current?accountId=550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/usage/current?accountId=550e8400-e29b-41d4-a716-446655440000",
+  {
+    headers: {
+      Authorization: "Bearer tk_test_example_9xmk7q2r",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/usage/current",
+    params={"accountId": "550e8400-e29b-41d4-a716-446655440000"},
+    headers={"Authorization": "Bearer tk_test_example_9xmk7q2r"},
+)
+
+print(response.json())
+```
+</Request>
+
+### Antwort
+
+<Response tabs="200,400,404,500" default-tab="1">
+```json
+{
+  "limits": {
+    "monthly_credits": 12000,
+    "daily_credits": 500,
+    "max_daily_credits": 1000,
+    "minutes_per_month": 12000,
+    "parallel_calls": 8,
+    "max_ai_agents": 25,
+    "credit_rollover": true,
+    "usage_based_ai": false
+  },
+  "usage": {
+    "credits_used": 3420,
+    "credits_remaining": 9080,
+    "minutes_used": 3388,
+    "calls_made": 184,
+    "peak_parallel_calls": 3,
+    "ai_agents_created": 7,
+    "daily_credits_used": 140,
+    "credits_rolled_over": 500
+  },
+  "remaining": {
+    "credits": 9080,
+    "daily_credits": 360,
+    "minutes": 8612,
+    "parallel_calls": 5,
+    "ai_agents": 18
+  },
+  "percentages": {
+    "credits": 27,
+    "daily_credits": 28,
+    "minutes": 28,
+    "parallel_calls": 38,
+    "ai_agents": 28
+  },
+  "credit_info": {
+    "monthly_credits": 12000,
+    "daily_credits": 500,
+    "max_daily_credits": 1000,
+    "credits_used": 3420,
+    "credits_remaining": 9080,
+    "credits_rolled_over": 500,
+    "daily_credits_used": 140,
+    "credit_rollover_enabled": true,
+    "usage_based_ai_enabled": false
+  }
+}
+```
+
+```json
+{
+  "error": "accountId is required"
+}
+```
+
+```json
+{
+  "error": "Account limits not found"
+}
+```
+
+```json
+{
+  "error": "Failed to fetch account limits"
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="limits" field-type="object" required="true">
+
+Rohlimits des Kontos aus `get_account_limits`, einschließlich normalisierter Guthabenfelder wie `monthly_credits`, `daily_credits` und `max_daily_credits`.
+
+</ResponseField>
+
+<ResponseField name="usage" field-type="object" required="true">
+
+Nutzungsdaten des aktuellen Monats aus `get_current_month_usage`, einschließlich normalisierter Felder wie `credits_used`, `credits_remaining` und `credits_rolled_over`.
+
+</ResponseField>
+
+<ResponseField name="remaining" field-type="object" required="true">
+
+Verbleibende Kontingente pro Kategorie. Alle Werte werden bei `0` abgeschnitten und nicht negativ zurückgegeben.
+
+</ResponseField>
+
+<ResponseField name="percentages" field-type="object" required="true">
+
+Ganzzahlige Auslastungswerte von `0` bis `100` für Guthaben, Tageslimits, Minuten, parallele Anrufe und AI-Agents.
+
+</ResponseField>
+
+<ResponseField name="credit_info" field-type="object" required="true">
+
+Zusammengefasste Guthabeninformationen, einschließlich Rollover- und nutzungsbasierter AI-Flags.
+
+</ResponseField>
+
+### Verhalten
+
+Der Endpunkt ruft zuerst `get_account_limits` und danach `get_current_month_usage` auf. Für die Guthabenlogik bevorzugt die API `credits_*`-Felder und fällt zur Abwärtskompatibilität auf `minutes_*` zurück.
+
+Die verbleibenden Guthaben werden mit der Formel `monthly_credits + credits_rolled_over - credits_used` berechnet. Alle Werte in `remaining` und `percentages` werden auf mindestens `0` begrenzt.
+
+### Fehler
+
+| Status | Beschreibung |
+| --- | --- |
+| `400` | `accountId` fehlt |
+| `401` | Authentifizierung fehlgeschlagen |
+| `404` | Kontolimits wurden nicht gefunden |
+| `500` | Abruf der Limits oder Nutzungsdaten ist fehlgeschlagen |
+
+## GET /api/accounts/[accountId]/usage
+
+Rufen Sie detaillierte Nutzungsanalysen für ein Konto über einen Zeitraum von bis zu 366 Tagen ab, einschließlich Zeitreihen, Tagessummen, Assistentenliste und paginierten Anrufzeilen.
+
+### Authentifizierung
+
+Authentifizieren Sie sich mit einer angemeldeten Sitzung. Der Endpunkt verwendet `requireUser()` und prüft anschließend, ob das aktuelle Benutzerkonto Eigentümer oder Mitglied des angefragten Kontos ist.
+
+### Pfadparameter
+
+<ParamField path="accountId" param-type="string (UUID)" required="true">
+
+Die Konto-ID, deren Nutzungsanalyse Sie abrufen möchten.
+
+</ParamField>
+
+### Query-Parameter
+
+<ParamField query="from" param-type="string (ISO 8601)" required="true">
+
+Startdatum des Analysezeitraums. Der Wert muss ein gültiger ISO-8601-Zeitstempel sein.
+
+</ParamField>
+
+<ParamField query="to" param-type="string (ISO 8601)" required="true">
+
+Enddatum des Analysezeitraums. Der Wert muss ein gültiger ISO-8601-Zeitstempel sein und darf nicht vor `from` liegen.
+
+</ParamField>
+
+<ParamField query="assistantId" param-type="string (UUID)" required="false">
+
+Filtert die Analyse auf einen einzelnen Assistenten. Wenn angegeben, muss der Wert eine gültige UUID sein.
+
+</ParamField>
+
+<ParamField query="page" param-type="integer" required="false">
+
+Seitennummer für die paginierte Liste in `rows`. Der Standardwert ist `1`.
+
+</ParamField>
+
+<ParamField query="pageSize" param-type="integer" required="false">
+
+Anzahl der Zeilen pro Seite. Der Standardwert ist `25`, der Maximalwert `100`.
+
+</ParamField>
+
+<ParamField query="granularity" param-type="string" required="false" enum="day,week">
+
+Zeitliche Gruppierung für `series`. Der Standardwert ist `day`.
+
+</ParamField>
+
+<Callout kind="tip">
+
+Begrenzen Sie den Datumsbereich auf das kleinste sinnvolle Fenster. Der Endpunkt lehnt Bereiche von mehr als 366 Tagen ab.
+
+</Callout>
+
+### Beispielanfrage
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/accounts/550e8400-e29b-41d4-a716-446655440000/usage?from=2025-01-01T00:00:00.000Z&to=2025-01-31T23:59:59.999Z&granularity=day&page=1&pageSize=25" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/accounts/550e8400-e29b-41d4-a716-446655440000/usage?from=2025-01-01T00:00:00.000Z&to=2025-01-31T23:59:59.999Z&granularity=day&page=1&pageSize=25",
+  {
+    headers: {
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/accounts/550e8400-e29b-41d4-a716-446655440000/usage",
+    params={
+        "from": "2025-01-01T00:00:00.000Z",
+        "to": "2025-01-31T23:59:59.999Z",
+        "granularity": "day",
+        "page": 1,
+        "pageSize": 25,
+    },
+    headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"},
+)
+
+print(response.json())
+```
+</Request>
+
+### Antwort
+
+<Response tabs="200,400,403,500" default-tab="1">
+```json
+{
+  "granularity": "day",
+  "series": [
+    {
+      "day": "2025-01-01",
+      "period": "2025-01-01",
+      "call_count": 12,
+      "total_credits": 184.5,
+      "stt_credits": 42.1,
+      "llm_credits": 68.3,
+      "tts_credits": 51.4,
+      "talkturo_credits": 22.7
+    }
+  ],
+  "daily": [
+    {
+      "day": "2025-01-01",
+      "call_count": 12,
+      "total_credits": 184.5,
+      "stt_credits": 42.1,
+      "llm_credits": 68.3,
+      "tts_credits": 51.4,
+      "talkturo_credits": 22.7
+    }
+  ],
+  "totals": {
+    "call_count": 12,
+    "total_credits": 184.5,
+    "stt_credits": 42.1,
+    "llm_credits": 68.3,
+    "tts_credits": 51.4,
+    "talkturo_credits": 22.7
+  },
+  "assistants": [
+    {
+      "id": "asst_2f6d8f2c",
+      "name": "Sales assistant"
+    }
+  ],
+  "rows": [
+    {
+      "id": "row_7f1d7a90",
+      "call_id": "call_91f2ab38",
+      "started_at": "2025-01-01T10:15:00.000Z",
+      "ended_at": "2025-01-01T10:19:32.000Z",
+      "assistant_id": "asst_2f6d8f2c",
+      "assistant_name": "Sales assistant",
+      "total_cost": 15.2,
+      "stt_cost": 3.1,
+      "llm_cost": 6.4,
+      "tts_cost": 4.3,
+      "talkturo_cost": 1.4
+    }
+  ],
+  "page": 1,
+  "pageSize": 25,
+  "rowCount": 1
+}
+```
+
+```json
+{
+  "error": "\"from\" and \"to\" query parameters are required"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Failed to load usage series"
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="granularity" field-type="string" required="true">
+
+Die tatsächlich verwendete Gruppierung für die Zeitreihe, entweder `day` oder `week`.
+
+</ResponseField>
+
+<ResponseField name="series" field-type="array" required="true">
+
+Aggregierte Zeitreihenwerte für den angefragten Zeitraum. Bei wöchentlicher Gruppierung ist `period` der Montag der jeweiligen UTC-Woche.
+
+</ResponseField>
+
+<ResponseField name="daily" field-type="array" required="true">
+
+Tägliche Rohwerte für den Zeitraum, unabhängig von der gewählten Gruppierung.
+
+</ResponseField>
+
+<ResponseField name="totals" field-type="object" required="true">
+
+Gesamtsummen aller Tageszeilen für Anrufanzahl und Guthabenkategorien.
+
+</ResponseField>
+
+<ResponseField name="assistants" field-type="array" required="true">
+
+Alle Assistenten des Kontos. Verwenden Sie diese Liste, um Filteroberflächen zu befüllen.
+
+</ResponseField>
+
+<ResponseField name="rows" field-type="array" required="true">
+
+Paginierte Anrufzeilen für abgeschlossene Anrufe, einschließlich Kostenaufschlüsselung nach STT, LLM, TTS und Talkturo.
+
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true">
+
+Die aktuelle Seitennummer der `rows`-Liste.
+
+</ResponseField>
+
+<ResponseField name="pageSize" field-type="integer" required="true">
+
+Die Anzahl der pro Seite zurückgegebenen Anrufzeilen.
+
+</ResponseField>
+
+<ResponseField name="rowCount" field-type="integer" required="true">
+
+Die Gesamtzahl aller passenden Anrufzeilen vor der Paginierung.
+
+</ResponseField>
+
+### Verhalten
+
+Der Endpunkt verwendet die RPC `account_usage_daily` für Zeitreihen und Tageswerte. Die Liste in `rows` enthält nur abgeschlossene Anrufe, weil Abfragen Datensätze mit `ended_at = null` ausschließen.
+
+Bei `granularity=week` gruppiert die API Daten nach UTC-Montagen. `series` wird chronologisch aufsteigend zurückgegeben, während `rows` nach `ended_at` absteigend sortiert ist.
+
+### Fehler
+
+| Status | Beschreibung |
+| --- | --- |
+| `400` | `from` oder `to` fehlt, der Datumsbereich ist ungültig oder invertiert, der Bereich überschreitet 366 Tage oder `assistantId` ist ungültig |
+| `403` | Zugriff auf das Konto ist verboten |
+| `500` | Laden von Assistenten, Nutzungsreihen oder Anruflisten ist fehlgeschlagen |
+
+## POST /api/usage/voice
+
+Protokollieren Sie Desktop-STT-Nutzungsereignisse, ohne den eigentlichen Abschluss des Sprachereignisses zu blockieren.
+
+### Authentifizierung
+
+Authentifizieren Sie sich mit `authenticateDesktop` über den Header `Authorization: Bearer ...`. Der Endpunkt akzeptiert nur ein Desktop-Bearer-JWT und ist für Electron- oder andere Desktop-Clients mit permissivem CORS ausgelegt.
+
+### CORS
+
+Die Antwort enthält permissive CORS-Header, einschließlich `Access-Control-Allow-Origin: *`. Der Endpunkt verarbeitet auch `OPTIONS`-Preflight-Anfragen.
+
+### Request-Body
+
+<ParamField body="connectionId" param-type="string | null" required="false">
+
+Kennung der STT-Verbindung. Wenn kein Wert gesendet wird, speichert die API `null`.
+
+</ParamField>
+
+<ParamField body="durationSeconds" param-type="number" required="false">
+
+Dauer des Sprachereignisses in Sekunden. Der Standardwert ist `0`.
+
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="false">
+
+Name des STT-Anbieters. Der Standardwert ist `deepgram`.
+
+</ParamField>
+
+<ParamField body="model" param-type="string" required="false">
+
+Name des verwendeten STT-Modells. Der Standardwert ist `nova-3`.
+
+</ParamField>
+
+<ParamField body="userEmail" param-type="string | null" required="false">
+
+E-Mail-Adresse des Benutzers für Metadatenzwecke. Wenn kein Wert gesendet wird, speichert die API `null`.
+
+</ParamField>
+
+### Beispielanfrage
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/usage/voice" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "connectionId": "conn_8af31e2d",
+    "durationSeconds": 95,
+    "provider": "deepgram",
+    "model": "nova-3",
+    "userEmail": "jane@acme.com"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/usage/voice", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    connectionId: "conn_8af31e2d",
+    durationSeconds: 95,
+    provider: "deepgram",
+    model: "nova-3",
+    userEmail: "jane@acme.com",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.talkturo.com/api/usage/voice",
+    headers={
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+        "Content-Type": "application/json",
+    },
+    json={
+        "connectionId": "conn_8af31e2d",
+        "durationSeconds": 95,
+        "provider": "deepgram",
+        "model": "nova-3",
+        "userEmail": "jane@acme.com",
+    },
+)
+
+print(response.json())
+```
+</Request>
+
+### Antwort
+
+<Response tabs="200,400,401,500" default-tab="1">
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid JSON body"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid or expired token"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Usage logging failed"
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich verarbeitet wurde.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Leeres Objekt bei erfolgreicher Protokollierung.
+
+</ResponseField>
+
+<ResponseField name="error" field-type="string" required="false">
+
+Fehlermeldung bei ungültigem JSON, fehlgeschlagener Authentifizierung oder Protokollierungsfehlern.
+
+</ResponseField>
+
+### Verhalten
+
+Die API berechnet die Kosten mit `cost_usd = (durationSeconds / 60) × 0.0077` und schreibt ein Ereignis mit `kind = 'voice'` in `talkturo_desktop_usage_events`. `connectionId` und `userEmail` werden als JSON-Metadaten gespeichert.
+
+Fehler beim Datenbankinsert sind absichtlich nicht fatal. Der Server protokolliert die Warnung, gibt aber weiterhin `200` zurück, damit der STT-Abschlusspfad nicht durch eine fehlende oder noch nicht angelegte Tabelle blockiert wird.
+
+### Fehler
+
+| Status | Beschreibung |
+| --- | --- |
+| `400` | Der JSON-Body ist ungültig |
+| `401` | Bearer-Token fehlt, ist leer oder abgelaufen |
+| `500` | Die Nutzungsprotokollierung ist fehlgeschlagen |
+
+## Nächste Schritte
+
+<Columns cols={2}>
+  <Card title="Guthaben API-Referenz" href="/de/api-reference/credits" icon="database" cta="Weiterlesen" />
+  <Card title="Zahlungsmethoden API-Referenz" href="/de/api-reference/payment-methods" icon="credit-card" cta="Weiterlesen" />
+</Columns>

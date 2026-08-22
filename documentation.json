@@ -285,6 +285,26 @@
                     "title": "Webhooks",
                     "path": "en/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "Usage and Analytics",
+                    "path": "en/api-reference/usage",
+                    "icon": "bar-chart"
+                  },
+                  {
+                    "title": "Voice and TTS",
+                    "path": "en/api-reference/voice",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Public Endpoints",
+                    "path": "en/api-reference/public",
+                    "icon": "globe"
+                  },
+                  {
+                    "title": "Payment Methods",
+                    "path": "en/api-reference/payment-methods",
+                    "icon": "credit-card"
                   }
                 ]
               },
@@ -655,6 +675,26 @@
                     "title": "Webhooks",
                     "path": "de/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "Nutzung und Analytics",
+                    "path": "de/api-reference/usage",
+                    "icon": "bar-chart"
+                  },
+                  {
+                    "title": "Stimme und TTS",
+                    "path": "de/api-reference/voice",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Öffentliche Endpunkte",
+                    "path": "de/api-reference/public",
+                    "icon": "globe"
+                  },
+                  {
+                    "title": "Zahlungsmethoden",
+                    "path": "de/api-reference/payment-methods",
+                    "icon": "credit-card"
                   }
                 ]
               },

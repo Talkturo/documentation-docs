@@ -1,0 +1,420 @@
+---
+title: Öffentliche Endpunkte
+description: Demo-Anrufe auslösen, LiveKit-Token generieren und Demo-Assistenten auflisten — ohne Authentifizierung, geschützt durch Turnstile CAPTCHA und Rate Limits.
+---
+
+## Endpunkte auf einen Blick
+
+Nutzen Sie diese öffentlichen Endpunkte, um Demo-Anrufe zu starten, LiveKit-Token für Web-Demos zu erzeugen und verfügbare Demo-Assistenten ohne Authentifizierung abzurufen.
+
+| Methode | Endpunkt | Zweck |
+| --- | --- | --- |
+| `POST` | `/api/public/test-call/outbound` | Öffentlichen Demo-Ausgehenden-Anruf initiieren |
+| `GET` | `/api/public/test-call/token` | LiveKit-Token für eingehenden Web-Demo-Anruf generieren |
+| `POST` | `/api/public/form-call/outbound` | Formularausgelösten ausgehenden Anruf starten |
+| `GET` | `/api/public/demo-assistants` | Öffentliche Demo-Assistenten auflisten |
+
+<Callout kind="info">
+
+Alle Endpunkte auf dieser Seite sind öffentlich und erfordern keinen `Authorization`-Header. Öffentliche Anruf-Endpunkte sind trotzdem durch Turnstile CAPTCHA, Einwilligungsprüfung und Rate Limits geschützt.
+
+</Callout>
+
+## POST /api/public/test-call/outbound
+
+Startet einen öffentlichen Demo-Ausgehenden-Anruf an eine Telefonnummer, die der Besucher angibt.
+
+### Authentifizierung und Schutzmechanismen
+
+Für diesen Endpunkt ist keine Authentifizierung erforderlich. Der Endpunkt erzwingt stattdessen mehrere Schutzmechanismen, um Missbrauch zu begrenzen:
+
+- **Rate Limit pro IP:** 10 Anfragen pro Stunde
+- **Rate Limit pro IP:** 30 Anfragen pro Tag
+- **Rate Limit pro Telefonnummer:** 3 Anrufe innerhalb von 6 Stunden
+- **CAPTCHA:** Ein gültiges Turnstile-Token ist erforderlich
+- **Einwilligung:** `consent_given` muss gesetzt sein
+
+### Request example
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/public/test-call/outbound" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assistant_id": "asst_demo_sales_en",
+    "to_number": "+4915123456789",
+    "turnstile_token": "0.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "consent_given": true,
+    "visitor_name": "Jane Chen",
+    "visitor_email": "jane@acme.com"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/public/test-call/outbound", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    assistant_id: "asst_demo_sales_en",
+    to_number: "+4915123456789",
+    turnstile_token: "0.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    consent_given: true,
+    visitor_name: "Jane Chen",
+    visitor_email: "jane@acme.com"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.talkturo.com/api/public/test-call/outbound",
+    headers={
+        "Content-Type": "application/json"
+    },
+    json={
+        "assistant_id": "asst_demo_sales_en",
+        "to_number": "+4915123456789",
+        "turnstile_token": "0.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "consent_given": True,
+        "visitor_name": "Jane Chen",
+        "visitor_email": "jane@acme.com"
+    }
+)
+
+print(response.json())
+```
+</Request>
+
+<Response tabs="200,400,429" default-tab="1">
+```json
+{
+  "success": true,
+  "call_id": "call_9f3k2m1x8q",
+  "message": "Call started"
+}
+```
+
+```json
+{
+  "error": "Invalid request"
+}
+```
+
+```json
+{
+  "error": "Rate limit exceeded"
+}
+```
+</Response>
+
+### Request body
+
+<ParamField body="assistant_id" param-type="string" required="true">
+Die ID des Demo-Assistenten, der den Anruf führen soll.
+</ParamField>
+
+<ParamField body="to_number" param-type="string" required="true">
+Die Zieltelefonnummer im internationalen Format, an die der Demo-Anruf gesendet wird.
+</ParamField>
+
+<ParamField body="turnstile_token" param-type="string" required="true">
+Das von Cloudflare Turnstile erzeugte CAPTCHA-Token. Ohne gültiges Token lehnt der Endpunkt die Anfrage ab.
+</ParamField>
+
+<ParamField body="consent_given" param-type="boolean" required="true">
+Gibt an, dass der Besucher dem Erhalt des Demo-Anrufs zugestimmt hat. Ohne bestätigte Einwilligung wird kein Anruf gestartet.
+</ParamField>
+
+<ParamField body="visitor_name" param-type="string" required="false">
+Optionaler Name des Besuchers für Demo-, Protokollierungs- oder CRM-Zwecke.
+</ParamField>
+
+<ParamField body="visitor_email" param-type="string" required="false">
+Optionale E-Mail-Adresse des Besuchers für Demo-, Protokollierungs- oder Nachverfolgungszwecke.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true`, wenn der Anruf erfolgreich initiiert wurde.
+</ResponseField>
+
+<ResponseField name="call_id" field-type="string" required="true">
+Die eindeutige ID des gestarteten Anrufs.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Eine menschenlesbare Statusmeldung zum gestarteten Anruf.
+</ResponseField>
+
+### Fehlerantworten
+
+| Status | Antwort | Beschreibung |
+| --- | --- | --- |
+| `400` | `{ "error": "Invalid request" }` | Pflichtfelder fehlen, das Request-Format ist ungültig oder die Einwilligung wurde nicht erteilt. |
+| `429` | `{ "error": "Rate limit exceeded" }` | Das IP-basierte oder telefonnummernbasierte Rate Limit wurde überschritten. |
+
+## GET /api/public/test-call/token
+
+Erzeugt ein LiveKit-Token und die zugehörige URL für einen eingehenden Web-Demo-Anruf.
+
+### Authentifizierung
+
+Für diesen Endpunkt ist keine Authentifizierung erforderlich.
+
+### Request example
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/public/test-call/token"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/public/test-call/token");
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.get("https://api.talkturo.com/api/public/test-call/token")
+print(response.json())
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "url": "wss://demo-7x9k2n3r.livekit.cloud"
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="token" field-type="string" required="true">
+Das LiveKit-Token, das der Client für den Verbindungsaufbau zum Demo-Raum verwendet.
+</ResponseField>
+
+<ResponseField name="url" field-type="string" required="true">
+Die LiveKit-Server-URL, mit der sich der Client verbindet.
+</ResponseField>
+
+## POST /api/public/form-call/outbound
+
+Startet einen ausgehenden Anruf, der durch ein öffentliches Formular ausgelöst wird.
+
+### Authentifizierung und Verhalten
+
+Für diesen Endpunkt ist keine Authentifizierung erforderlich. Der Request Body entspricht dem Muster des Endpunkts für öffentliche Demo-Ausgehende-Anrufe und wird für formularbasierte öffentliche Call-Flows verwendet.
+
+<Callout kind="tip">
+
+Wenn Sie bereits gegen `/api/public/test-call/outbound` integrieren, können Sie dieselbe Client-seitige Validierung für Telefonnummer, Turnstile-Token und Einwilligung wiederverwenden.
+
+</Callout>
+
+### Request example
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/public/form-call/outbound" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assistant_id": "asst_demo_sales_en",
+    "to_number": "+4915123456789",
+    "turnstile_token": "0.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "consent_given": true,
+    "visitor_name": "Jane Chen",
+    "visitor_email": "jane@acme.com"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/public/form-call/outbound", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    assistant_id: "asst_demo_sales_en",
+    to_number: "+4915123456789",
+    turnstile_token: "0.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    consent_given: true,
+    visitor_name: "Jane Chen",
+    visitor_email: "jane@acme.com"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.talkturo.com/api/public/form-call/outbound",
+    headers={
+        "Content-Type": "application/json"
+    },
+    json={
+        "assistant_id": "asst_demo_sales_en",
+        "to_number": "+4915123456789",
+        "turnstile_token": "0.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "consent_given": True,
+        "visitor_name": "Jane Chen",
+        "visitor_email": "jane@acme.com"
+    }
+)
+
+print(response.json())
+```
+</Request>
+
+<Response tabs="200,400,429" default-tab="1">
+```json
+{
+  "success": true,
+  "call_id": "call_9f3k2m1x8q"
+}
+```
+
+```json
+{
+  "error": "Invalid request"
+}
+```
+
+```json
+{
+  "error": "Rate limit exceeded"
+}
+```
+</Response>
+
+### Request body
+
+<ParamField body="assistant_id" param-type="string" required="true">
+Die ID des Assistenten, der den formularausgelösten Anruf bearbeiten soll.
+</ParamField>
+
+<ParamField body="to_number" param-type="string" required="true">
+Die Zieltelefonnummer im internationalen Format.
+</ParamField>
+
+<ParamField body="turnstile_token" param-type="string" required="true">
+Das Turnstile-CAPTCHA-Token, das den öffentlichen Formular-Request bestätigt.
+</ParamField>
+
+<ParamField body="consent_given" param-type="boolean" required="true">
+Gibt an, dass der Besucher dem Erhalt des Anrufs zugestimmt hat.
+</ParamField>
+
+<ParamField body="visitor_name" param-type="string" required="false">
+Optionaler Name des Besuchers.
+</ParamField>
+
+<ParamField body="visitor_email" param-type="string" required="false">
+Optionale E-Mail-Adresse des Besuchers.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true`, wenn der Anruf erfolgreich gestartet wurde.
+</ResponseField>
+
+<ResponseField name="call_id" field-type="string" required="true">
+Die eindeutige ID des gestarteten Anrufs.
+</ResponseField>
+
+### Fehlerantworten
+
+| Status | Antwort | Beschreibung |
+| --- | --- | --- |
+| `400` | `{ "error": "Invalid request" }` | Pflichtfelder fehlen oder der Request ist ungültig. |
+| `429` | `{ "error": "Rate limit exceeded" }` | Das konfigurierte Rate Limit für öffentliche Formular-Anrufe wurde überschritten. |
+
+## GET /api/public/demo-assistants
+
+Listet die Demo-Assistenten auf, die in öffentlichen Demo-Flows verwendet werden können.
+
+### Authentifizierung
+
+Für diesen Endpunkt ist keine Authentifizierung erforderlich.
+
+### Request example
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/public/demo-assistants"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/public/demo-assistants");
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.get("https://api.talkturo.com/api/public/demo-assistants")
+print(response.json())
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+[
+  {
+    "id": "asst_demo_sales_en",
+    "name": "Sales demo assistant",
+    "description": "Handles inbound product questions and qualification",
+    "avatar_url": "https://cdn.talkturo.com/assistants/sales-demo.png"
+  }
+]
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige ID des Demo-Assistenten.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Der Anzeigename des Demo-Assistenten.
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="true">
+Eine kurze Beschreibung des Anwendungsfalls oder Verhaltens des Assistenten.
+</ResponseField>
+
+<ResponseField name="avatar_url" field-type="string" required="true">
+Die URL des Avatar-Bildes des Assistenten.
+</ResponseField>
+
+## Integrationshinweise
+
+Diese Endpunkte eignen sich für öffentliche Demo-Formulare, Landingpages und eingebettete Testanrufe. Da keine Authentifizierung erforderlich ist, sollten Sie Requests immer serverseitig oder mit zusätzlicher Client-seitiger Missbrauchsabwehr kombinieren, wenn Sie eigene öffentliche Oberflächen darauf aufbauen.
+
+<Expandable title="Empfohlene Schutzmaßnahmen für öffentliche Integrationen" default-open="false">
+
+- Turnstile vor dem Absenden des Formulars validieren
+- Telefonnummern im E.164-Format clientseitig prüfen
+- Doppelte Formularübermittlungen in Ihrer Oberfläche verhindern
+- Erfolg anhand von `success`, `call_id` oder `token` im Response Body prüfen
+- `429`-Antworten abfangen und dem Benutzer eine erneute Anfrage später anbieten
+
+</Expandable>
