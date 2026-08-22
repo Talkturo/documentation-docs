@@ -8,6 +8,27 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-22" description="v2.8.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Fish Audio als Sprachanbieter** — Fish Audio ist jetzt als Text-to-Speech-Anbieter im Assistenten-Editor verfügbar, mit Einstellungen für Latenz und Lautstärke. Siehe [Sprachbibliothek](/de/voice-library).
+  - **Multi-Agent-Zahlungslinks** — Zahlungslinks können jetzt mehrere KI-Assistenten gemeinsam zum Verkauf bündeln. Wähle, ordne und zeige jeden Agenten auf der Zahlungsseite an. Käufer ohne Workspace können ihren Kauf trotzdem einsehen und einlösen.
+  - **Cc und Bcc in E-Mail-Workflow-Knoten** — E-Mail-Knoten in Workflows unterstützen jetzt eingegebene Cc- und Bcc-Felder. Siehe [Integrationen](/de/integrations).
+  - **Assistenten-Aktionen in Anrufprotokollen** — Anrufprotokolle zeigen jetzt, was der Assistent während eines Anrufs getan hat — Tool-Aufrufe und Entscheidungen — neben dem Transkript. Siehe [Anrufprotokolle](/de/call-logs).
+
+  ## Verbesserungen
+
+  - **Carrier-Namen für Kunden ausgeblendet** — Carrier-Anbieternamen werden im Kunden-Interface nicht mehr angezeigt. Sie erscheinen durchgehend als „Carrier 1" und „Carrier 2", auch in Fehlermeldungen. Siehe [Telefonie](/de/telephony).
+  - **Gmail über geprüften OAuth-Proxy** — Die Gmail-Integration läuft jetzt über einen OAuth-Proxy, der Googles Sicherheitsprüfung bestanden hat. Siehe [Integrationen](/de/integrations).
+  - **Assistenten-Carrier-Auto-Sync** — Wenn sich die Carrier-Zuweisung eines Assistenten ändert, werden SIP-Trunks automatisch neu aufgebaut. Siehe [Telefonie](/de/telephony).
+  - **Absatzstruktur in diktierten E-Mails** — Vom Sprachassistenten geschriebene E-Mails behalten jetzt ihre Absatzstruktur.
+
+  ## Bugfixes
+
+  - **Fish Audio-Abrechnung** — Fish Audio-Sprachausgabe wird jetzt korrekt abgerechnet; sie war zuvor aufgrund eines fehlenden Tarifeintrags kostenlos. Siehe [Abrechnung](/de/billing).
+  - **Doppelte Abrechnungs-Webhook-Events** — Doppelte Subscription-Update-Events werden jetzt ordnungsgemäß bestätigt, statt zweimal verarbeitet zu werden.
+</Update>
+
 <Update label="2026-08-21" description="v2.7.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
