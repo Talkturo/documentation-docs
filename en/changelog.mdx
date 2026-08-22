@@ -8,6 +8,27 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-22" description="v2.8.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Fish Audio voice provider** — Fish Audio is now available as a text-to-speech provider in the assistant builder, with controls for latency and volume. See [Voice Library](/en/voice-library).
+  - **Multi-agent payment links** — Payment links can now bundle multiple AI assistants for sale together. Select, order, and preview each agent on the payment page. Buyers without a workspace can still view and claim their purchase.
+  - **Cc and Bcc in email workflow nodes** — Email nodes in workflows now support typed Cc and Bcc fields. See [Integrations](/en/integrations).
+  - **Assistant actions in call logs** — Call logs now show what the assistant did during a call — tool calls and decisions — alongside the transcript. See [Call Logs](/en/call-logs).
+
+  ## Improvements
+
+  - **Carrier names hidden from customers** — Carrier provider names are no longer shown in the customer interface. They appear as "Carrier 1" and "Carrier 2" throughout, including in error messages. See [Telephony](/en/telephony).
+  - **Gmail via Google-audited OAuth proxy** — The Gmail integration is now routed through an OAuth proxy that has passed Google's security review. See [Integrations](/en/integrations).
+  - **Assistant carrier auto-sync** — When an assistant's carrier assignment changes, SIP trunks are rebuilt automatically to match. See [Telephony](/en/telephony).
+  - **Paragraph preservation in dictated emails** — Emails written by the voice assistant now preserve their paragraph structure.
+
+  ## Bug Fixes
+
+  - **Fish Audio billing** — Fish Audio speech is now correctly billed; it was previously free due to a missing rate entry. See [Billing](/en/billing).
+  - **Duplicate billing webhook events** — Duplicate subscription update events are now acknowledged gracefully instead of being processed twice.
+</Update>
+
 <Update label="2026-08-21" description="v2.7.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
