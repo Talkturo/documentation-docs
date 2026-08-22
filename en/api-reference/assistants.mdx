@@ -349,7 +349,7 @@ console.log(data);
   "success": true,
   "assistant": {
     "id": "0f3f8bc6-5e95-4344-88d2-8e5660ec9bf1",
-    "name": "Inbound Sales Assistant Copy",
+    "name": "Inbound Sales Assistant (Copy)",
     "created_at": "2025-02-18T14:39:12.442Z",
     "updated_at": "2025-02-18T14:39:12.442Z"
   }
@@ -366,6 +366,12 @@ console.log(data);
 
 <ParamField path="assistantId" param-type="string" required="true">
 The assistant UUID to clone.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="false">
+The account slug for the workspace where the clone should be created. If omitted, the API key's associated account is used.
 </ParamField>
 
 ### Response fields
@@ -391,13 +397,13 @@ Fetch usage data for a single assistant. Use this endpoint for monitoring, dashb
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats" \
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?accountId=9a6e7d1c-3fd1-4af6-a3ab-b0e9d3ac4a71" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats",
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?accountId=9a6e7d1c-3fd1-4af6-a3ab-b0e9d3ac4a71",
   {
     method: "GET",
     headers: {
@@ -416,12 +422,22 @@ console.log(data);
 
 ```json
 {
-  "success": true,
-  "stats": {
-    "total_calls": 148,
-    "total_minutes": 912,
-    "last_call_at": "2025-02-18T13:54:22.019Z"
-  }
+  "totalCalls": 148,
+  "totalMinutes": 912.0,
+  "avgDurationMinutes": 6.2,
+  "completedCallsWithDuration": 145,
+  "successRatePercent": 87.5,
+  "successEvaluatedCount": 130,
+  "timeline": {
+    "today": 5,
+    "last7Days": 45,
+    "last30Days": 148,
+    "last365Days": 148
+  },
+  "dailySeries": [
+    { "date": "2025-02-18", "count": 6 },
+    { "date": "2025-02-17", "count": 4 }
+  ]
 }
 ```
 
@@ -437,21 +453,226 @@ console.log(data);
 The assistant UUID whose usage statistics you want to retrieve.
 </ParamField>
 
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+The account UUID that owns the assistant. Returns `400` if omitted.
+</ParamField>
+
 ### Response fields
 
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when usage statistics are returned successfully.
+<ResponseField name="totalCalls" field-type="integer" required="true">
+Total number of calls handled by the assistant.
 </ResponseField>
 
-<ResponseField name="stats" field-type="object" required="true">
-An object containing usage data for the assistant.
+<ResponseField name="totalMinutes" field-type="number" required="true">
+Total call duration in minutes, rounded to one decimal place.
 </ResponseField>
 
-The shape of `stats` depends on the usage data Talkturo returns for that assistant. Build your client to read the fields your reporting workflow requires and tolerate additional fields over time.
+<ResponseField name="avgDurationMinutes" field-type="number" required="false">
+Average call duration in minutes. Returns `null` when no calls have both a start and end time recorded.
+</ResponseField>
+
+<ResponseField name="completedCallsWithDuration" field-type="integer" required="true">
+Number of calls that have both `started_at` and `ended_at` timestamps, used to compute the average.
+</ResponseField>
+
+<ResponseField name="successRatePercent" field-type="number" required="false">
+Percentage of calls that were successful, rounded to one decimal. Returns `null` when no calls could be scored.
+</ResponseField>
+
+<ResponseField name="successEvaluatedCount" field-type="integer" required="true">
+Number of calls that could be evaluated for success scoring.
+</ResponseField>
+
+<ResponseField name="timeline" field-type="object" required="true">
+Call counts grouped by time range: `today`, `last7Days`, `last30Days`, and `last365Days`.
+</ResponseField>
+
+<ResponseField name="dailySeries" field-type="array" required="true">
+Array of daily call counts for the trailing 30 days. Each entry contains a date in `YYYY-MM-DD` UTC format and a count.
+</ResponseField>
+
+## Tool configurations
+
+Tool configs let you attach third-party tools such as Cal.com scheduling, Zapier, or custom webhooks to an assistant.
+
+<Callout kind="info">
+
+All tool configuration endpoints require session authentication.
+
+</Callout>
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/assistants/{assistantId}/tool-configs` | List all enabled tool configs |
+| `GET` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Get configs for a specific tool type |
+| `POST` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Create or update a tool config |
+| `DELETE` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Delete tool config(s) |
+
+### Get tool configs by type
+
+Use this endpoint to retrieve one config, or all configs, for a specific tool type.
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/tool-configs/{toolType}`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true" enum="cal_com,zapier,cal_com_schedule,cal_com_get_bookings,cal_com_cancel">
+The tool type to retrieve.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="configId" param-type="string" required="false">
+Optional config UUID to retrieve a specific configuration.
+</ParamField>
+
+<ParamField query="all" param-type="boolean" required="false">
+Set to `true` to return all configs of this type.
+</ParamField>
+
+### Create or update a tool config
+
+Use this endpoint to create a new tool config or update an existing one for the selected tool type.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/tool-configs/{toolType}`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true" enum="cal_com,zapier,cal_com_schedule,cal_com_get_bookings,cal_com_cancel">
+The tool type to create or update.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="configId" param-type="string" required="false">
+Optional config UUID. When provided, the request updates that existing configuration.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="config" param-type="object" required="true">
+Free-form configuration for the tool.
+</ParamField>
+
+<ParamField body="is_enabled" param-type="boolean" required="false">
+Whether the tool config is enabled. Defaults to `true`.
+</ParamField>
+
+### Delete tool configs
+
+Delete one config by ID, or remove all configs for a tool type.
+
+### Endpoint
+
+`DELETE /api/assistants/{assistantId}/tool-configs/{toolType}`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+<ParamField path="toolType" param-type="string" required="true" enum="cal_com,zapier,cal_com_schedule,cal_com_get_bookings,cal_com_cancel">
+The tool type to delete.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="configId" param-type="string" required="false">
+Deletes a specific config when provided. Omit it to delete all configs of this type.
+</ParamField>
+
+## Billing estimate
+
+Fetch an estimated credits-per-minute cost based on the assistant's provider settings and the active cost catalog.
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/billing/estimate`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+Account UUID.
+</ParamField>
+
+<ParamField query="llm_provider" param-type="string" required="false">
+Override the LLM provider for live preview.
+</ParamField>
+
+<ParamField query="llm_model" param-type="string" required="false">
+Override the LLM model for live preview.
+</ParamField>
+
+<ParamField query="stt_provider" param-type="string" required="false">
+Override the STT provider for live preview.
+</ParamField>
+
+<ParamField query="stt_model" param-type="string" required="false">
+Override the STT model for live preview.
+</ParamField>
+
+<ParamField query="tts_provider" param-type="string" required="false">
+Override the TTS provider for live preview.
+</ParamField>
+
+<ParamField query="tts_model" param-type="string" required="false">
+Override the TTS model for live preview.
+</ParamField>
+
+<ParamField query="is_realtime" param-type="string" required="false">
+Set to `true` or `1` to estimate realtime mode.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="catalog" field-type="object" required="true">
+Active cost catalog used for the estimate. Includes `id` and `name`.
+</ResponseField>
+
+<ResponseField name="assumptions" field-type="object" required="true">
+Assumptions used to convert provider rates into per-minute estimates. Includes `chars_per_minute`, `prompt_tokens_per_minute`, and `completion_tokens_per_minute`.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Assistant provider and model information used for the estimate, including STT, LLM, and TTS settings.
+</ResponseField>
+
+<ResponseField name="rates" field-type="object" required="true">
+Resolved provider rates used to build the estimate, including per-minute and per-1k rates.
+</ResponseField>
+
+<ResponseField name="breakdown_credits_per_minute" field-type="object" required="true">
+Estimated credits-per-minute contribution from STT, TTS, LLM, and telephony components.
+</ResponseField>
+
+<ResponseField name="estimated_credits_per_minute" field-type="number" required="true">
+Total estimated credits per minute.
+</ResponseField>
 
 ## Common response shape
 
-All endpoints on this page return a top-level `success` field. Mutation endpoints also return either an `assistant` object or a `message`, depending on the operation.
+All mutation endpoints on this page return a top-level `success` field. Depending on the operation, the response also includes either an `assistant` object or a `message`.
 
 ### Success fields
 
@@ -461,10 +682,6 @@ Indicates whether the request completed successfully.
 
 <ResponseField name="assistant" field-type="object" required="false">
 Returned by the create, update, and clone endpoints.
-</ResponseField>
-
-<ResponseField name="stats" field-type="object" required="false">
-Returned by the usage statistics endpoint.
 </ResponseField>
 
 <ResponseField name="message" field-type="string" required="false">
@@ -480,3 +697,8 @@ Returned by the delete endpoint.
 | `DELETE` | ` /api/assistants/{assistantId} ` | Delete an assistant |
 | `POST` | ` /api/assistants/{assistantId}/clone ` | Clone an assistant |
 | `GET` | ` /api/assistants/{assistantId}/usage-stats ` | Retrieve usage statistics |
+| `GET` | `/api/assistants/{assistantId}/tool-configs` | List tool configurations |
+| `GET` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Get a specific tool configuration |
+| `POST` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Create or update a tool configuration |
+| `DELETE` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Delete tool configuration(s) |
+| `GET` | `/api/assistants/{assistantId}/billing/estimate` | Estimate credits per minute |
