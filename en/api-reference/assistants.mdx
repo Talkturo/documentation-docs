@@ -670,6 +670,104 @@ Estimated credits-per-minute contribution from STT, TTS, LLM, and telephony comp
 Total estimated credits per minute.
 </ResponseField>
 
+## Test a webhook delivery
+
+Queue a synthetic `call.ended` webhook event for an assistant so you can verify webhook configuration and delivery handling without waiting for a live call.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/webhooks/test" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/webhooks/test",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200,400,404,500" default-tab="1">
+
+```json
+{
+  "success": true,
+  "delivery_id": "3a9f60d5-2b22-4b68-b8ea-99f6db9b5c11",
+  "message": "Test event queued"
+}
+```
+
+```json
+{
+  "error": "Webhook not configured — set URL, secret, and enable before testing."
+}
+```
+
+```json
+{
+  "error": "Assistant not found"
+}
+```
+
+```json
+{
+  "error": "Failed to enqueue test event"
+}
+```
+
+</Response>
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/webhooks/test`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Request body
+
+This endpoint does not accept a request body.
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the test webhook event is queued successfully.
+</ResponseField>
+
+<ResponseField name="delivery_id" field-type="string" required="true">
+The UUID of the queued webhook delivery record.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Confirmation message. The value is `Test event queued`.
+</ResponseField>
+
+<Callout kind="info">
+
+This endpoint queues a synthetic `call.ended` webhook event and stores it as a pending delivery before Talkturo attempts delivery.
+
+</Callout>
+
+<Callout kind="alert">
+
+Testing requires a complete webhook configuration. Enable webhooks and set both `webhook_url` and `webhook_secret` on the assistant before calling this endpoint.
+
+</Callout>
+
 ## Common response shape
 
 All mutation endpoints on this page return a top-level `success` field. Depending on the operation, the response also includes either an `assistant` object or a `message`.
@@ -702,3 +800,4 @@ Returned by the delete endpoint.
 | `POST` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Create or update a tool configuration |
 | `DELETE` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Delete tool configuration(s) |
 | `GET` | `/api/assistants/{assistantId}/billing/estimate` | Estimate credits per minute |
+| `POST` | `/api/assistants/{assistantId}/webhooks/test` | Queue a test webhook delivery |

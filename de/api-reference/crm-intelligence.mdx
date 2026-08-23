@@ -1,0 +1,205 @@
+---
+title: CRM-Intelligence
+description: Konversations-Intelligence-Zusammenfassungen über CRM-Anrufe abrufen — mit Datumsbereich-, Kampagnen- und Assistenten-Filterung.
+---
+
+## CRM-Intelligence-Endpunkt
+
+Rufen Sie KI-generierte Konversations-Intelligence-Zusammenfassungen für CRM-Anrufe in einem Workspace ab. Der Endpunkt aggregiert Anrufdaten für einen Datumsbereich und gibt sowohl Zusammenfassungsdaten als auch verfügbare Filteroptionen für Kampagnen und Assistenten zurück.
+
+<Callout kind="info">
+
+Dieser Endpunkt verwendet Cookie-basierte Authentifizierung. Senden Sie die Anfrage im Kontext eines angemeldeten Benutzers mit einem gültigen Session-Cookie.
+
+</Callout>
+
+## Authentifizierung
+
+Authentifizieren Sie Anfragen mit dem Session-Cookie eines angemeldeten Benutzers. Der Endpunkt akzeptiert keinen API-Schlüssel und keine Bearer-Token-Authentifizierung.
+
+## Endpunkt
+
+`GET /api/close-ai/crm-intelligence`
+
+## Abfrageparameter
+
+<ParamField query="account" param-type="string" required="true">
+Der Workspace-Slug. Der Endpunkt verwendet diesen Wert, um den Workspace aufzulösen und die Workspace-Mitgliedschaft zu prüfen.
+</ParamField>
+
+<ParamField query="from" param-type="string" required="true">
+Startdatum im ISO-Format `YYYY-MM-DD`. Der Endpunkt berücksichtigt Anrufe ab diesem Datum.
+</ParamField>
+
+<ParamField query="to" param-type="string" required="true">
+Enddatum im ISO-Format `YYYY-MM-DD`. Der Endpunkt berücksichtigt Anrufe bis zu diesem Datum.
+</ParamField>
+
+<ParamField query="campaign" param-type="string" required="false">
+Optionaler Kampagnenfilter. Wenn gesetzt, beschränkt der Endpunkt die Zusammenfassung auf Anrufe, die dieser Kampagne zugeordnet sind.
+</ParamField>
+
+<ParamField query="assistant" param-type="string" required="false">
+Optionaler Assistentenfilter. Wenn gesetzt, beschränkt der Endpunkt die Zusammenfassung auf Anrufe, die diesem Assistenten zugeordnet sind.
+</ParamField>
+
+## Anfragebeispiel
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://app.talkturo.com/api/close-ai/crm-intelligence?account=acme-sales&from=2026-08-01&to=2026-08-31&campaign=Outbound%20Q3&assistant=Closer%20A" \
+  --cookie "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=refresh_token_example"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/close-ai/crm-intelligence?account=acme-sales&from=2026-08-01&to=2026-08-31&campaign=Outbound%20Q3&assistant=Closer%20A",
+  {
+    method: "GET",
+    credentials: "include"
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,401,403,404" default-tab="1">
+```json
+{
+  "summary": {
+    "totalCalls": 42,
+    "avgCloseScore": 73,
+    "avgDurationSeconds": 480.5,
+    "topStrengths": [
+      { "label": "Active listening", "count": 12 }
+    ],
+    "topWeaknesses": [
+      { "label": "Objection handling", "count": 8 }
+    ],
+    "topRisks": [
+      { "label": "Price sensitivity", "count": 4 }
+    ]
+  },
+  "filters": {
+    "campaigns": ["Outbound Q3", "Inbound Demo"],
+    "assistants": ["Closer A", "Closer B"]
+  }
+}
+```
+
+```json
+{ "error": "missing_required_query_params" }
+```
+
+```json
+{ "error": "unauthorized" }
+```
+
+```json
+{ "error": "workspace_access_denied" }
+```
+
+```json
+{ "error": "workspace_not_found" }
+```
+</Response>
+
+## Antwort-Body
+
+<ResponseField name="summary" field-type="object" required="true">
+Aggregierte CRM-Intelligence-Zusammenfassung für den angefragten Datumsbereich und die angewendeten Filter.
+</ResponseField>
+
+<ResponseField name="summary.totalCalls" field-type="number" required="true">
+Gesamtzahl der Anrufe, die in die Zusammenfassung einbezogen wurden.
+</ResponseField>
+
+<ResponseField name="summary.avgCloseScore" field-type="number" required="true">
+Durchschnittlicher Close Score über alle übereinstimmenden Anrufe.
+</ResponseField>
+
+<ResponseField name="summary.avgDurationSeconds" field-type="number" required="true">
+Durchschnittliche Anrufdauer in Sekunden.
+</ResponseField>
+
+<ResponseField name="summary.topStrengths" field-type="array" required="true">
+Häufigste erkannte Stärken in den übereinstimmenden Anrufen.
+</ResponseField>
+
+<ResponseField name="summary.topWeaknesses" field-type="array" required="true">
+Häufigste erkannte Schwächen in den übereinstimmenden Anrufen.
+</ResponseField>
+
+<ResponseField name="summary.topRisks" field-type="array" required="true">
+Häufigste erkannte Risiken in den übereinstimmenden Anrufen.
+</ResponseField>
+
+<ResponseField name="filters" field-type="object" required="true">
+Verfügbare Filteroptionen, die aus den Daten im angeforderten Workspace und Datumsbereich abgeleitet werden.
+</ResponseField>
+
+<ResponseField name="filters.campaigns" field-type="array" required="true">
+Liste der verfügbaren Kampagnenwerte für die aktuelle Auswahl.
+</ResponseField>
+
+<ResponseField name="filters.assistants" field-type="array" required="true">
+Liste der verfügbaren Assistentenwerte für die aktuelle Auswahl.
+</ResponseField>
+
+## Wie der Endpunkt eine Anfrage verarbeitet
+
+<Steps>
+<Step title="Angemeldeten Benutzer authentifizieren" icon="lock">
+
+Der Endpunkt liest das Session-Cookie und prüft, ob die Anfrage von einem angemeldeten Benutzer stammt. Wenn keine gültige Sitzung vorhanden ist, gibt die API `401` zurück.
+
+</Step>
+
+<Step title="Workspace-Slug auflösen" icon="folder">
+
+Der Wert aus `account` wird verwendet, um den Ziel-Workspace zu finden. Wenn kein passender Workspace existiert, gibt die API `404` mit `workspace_not_found` zurück.
+
+</Step>
+
+<Step title="Workspace-Mitgliedschaft prüfen" icon="shield">
+
+Nach dem Auflösen des Workspaces prüft der Endpunkt, ob der angemeldete Benutzer Zugriff auf diesen Workspace hat. Wenn der Benutzer kein Mitglied ist, gibt die API `403` zurück.
+
+</Step>
+
+<Step title="Intelligence-Zusammenfassung ausführen" icon="bar-chart">
+
+Der Endpunkt filtert CRM-Anrufe nach Datumsbereich sowie optional nach Kampagne und Assistent. Anschließend aggregiert er die Intelligence-Daten in eine zusammengefasste Ansicht.
+
+</Step>
+
+<Step title="Zusammenfassungsdaten und Filteroptionen zurückgeben" icon="check-circle">
+
+Die Antwort enthält die aggregierte Zusammenfassung sowie die für den aktuellen Scope verfügbaren Kampagnen- und Assistentenwerte. Diese Filteroptionen können Sie verwenden, um Dashboard-Steuerelemente ohne zusätzliche Metadatenanfragen zu füllen.
+
+</Step>
+</Steps>
+
+## Fehlerantworten
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | Erforderliche Abfrageparameter fehlen |
+| `401` | Nicht autorisiert |
+| `403` | Verboten |
+| `404` | Konto nicht gefunden |
+
+## Nutzungshinweise
+
+- Senden Sie immer `account`, `from` und `to`. Ohne diese Pflichtwerte kann der Endpunkt die Anfrage nicht ausführen.
+- Verwenden Sie `campaign` und `assistant` nur, wenn Sie die Zusammenfassung auf einen engeren Teil Ihrer CRM-Anrufe eingrenzen möchten.
+- Behandeln Sie `filters.campaigns` und `filters.assistants` als datenabhängige Werte. Die verfügbaren Optionen können sich ändern, wenn sich Datumsbereich oder Workspace ändern.
+- Verwenden Sie diesen Endpunkt, um Übersichts-Kacheln, Filter-Dropdowns und zusammenfassende Intelligence-Ansichten in CRM- oder Analytics-Dashboards zu versorgen.
+
+<Callout kind="tip">
+
+Wenn Sie interaktive Filteroberflächen aufbauen, laden Sie die Zusammenfassung nach jeder Änderung von Datumsbereich, Kampagne oder Assistent neu. So bleiben Kennzahlen und verfügbare Filteroptionen konsistent.
+
+</Callout>

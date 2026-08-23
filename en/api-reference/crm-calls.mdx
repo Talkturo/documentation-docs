@@ -1,0 +1,188 @@
+---
+title: CRM Calls
+description: Initiate single outbound calls through the Talkturo API with assistant routing, phone number selection, and metadata support.
+---
+
+## POST /api/crm/calls
+
+Start a single outbound call through Talkturo by choosing an assistant, a destination number, and an optional source number.
+
+<Callout kind="info">
+
+**Authentication**
+- Session cookie or API key
+- If you authenticate with an API key, the key must include the `calls:create` scope
+
+</Callout>
+
+<Callout kind="alert">
+
+Talkturo returns a `402` response when the account does not have enough credits to place the call.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/crm/calls` | API key or session | Initiate a single outbound call |
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/calls" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ttk_example_9xmk7q2r" \
+  -d '{
+    "assistant_id": "a8f4f3d1-2f45-4f6a-8f1b-9f27ac6b7b31",
+    "to_number": "+14155550173",
+    "from_number": "+14155550021",
+    "metadata": {
+      "lead_id": "lead_7c91ab42",
+      "campaign": "renewal_q3",
+      "owner": "jane.chen"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/calls", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer ttk_example_9xmk7q2r"
+  },
+  body: JSON.stringify({
+    assistant_id: "a8f4f3d1-2f45-4f6a-8f1b-9f27ac6b7b31",
+    to_number: "+14155550173",
+    from_number: "+14155550021",
+    metadata: {
+      lead_id: "lead_7c91ab42",
+      campaign: "renewal_q3",
+      owner: "jane.chen"
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,401,403,402,500" default-tab="1">
+```json
+{
+  "success": true,
+  "call": {
+    "room_name": "call_a91f3e4b7c",
+    "sip_call_id": "CA8f1d9a7c4b3e2d1f6a5b9c0e7d3f1a",
+    "from_number": "+14155550021",
+    "to_number": "+14155550173"
+  }
+}
+```
+
+```json
+{
+  "error": "Invalid request body",
+  "details": {
+    "fieldErrors": {
+      "assistant_id": [
+        "Required"
+      ]
+    },
+    "formErrors": []
+  }
+}
+```
+
+```json
+{
+  "error": "Authentication required"
+}
+```
+
+```json
+{
+  "error": "API key is missing the calls:create scope"
+}
+```
+
+```json
+{
+  "error": "Insufficient credits"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+## Request body
+
+Send a JSON body with the assistant and destination number. If you omit `from_number`, Talkturo uses the first active number assigned to the assistant.
+
+<ParamField body="assistant_id" param-type="string" required="true">
+UUID of the assistant that places the call.
+</ParamField>
+
+<ParamField body="to_number" param-type="string" required="true">
+Destination phone number. The value must be at least 4 characters long. Use E.164 format when possible, such as `+14155550173`.
+</ParamField>
+
+<ParamField body="from_number" param-type="string" required="false">
+Source phone number for the outbound call. If you omit this field, Talkturo automatically selects the first active phone number on the assistant.
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+Arbitrary JSON object passed through to the LiveKit room metadata for the call. Use this field to attach CRM context such as lead IDs, campaign names, or owner identifiers.
+</ParamField>
+
+## Response body
+
+A successful request returns the created call details, including the room name and SIP call identifier.
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when Talkturo successfully starts the outbound call.
+</ResponseField>
+
+<ResponseField name="call" field-type="object" required="true">
+Container for the created call details.
+</ResponseField>
+
+<ResponseField name="room_name" field-type="string" required="true">
+LiveKit room name created for the call.
+</ResponseField>
+
+<ResponseField name="sip_call_id" field-type="string" required="true">
+SIP provider call identifier for the outbound call.
+</ResponseField>
+
+<ResponseField name="from_number" field-type="string" required="true">
+Source phone number used for the call.
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string" required="true">
+Destination phone number used for the call.
+</ResponseField>
+
+## Error responses
+
+The endpoint returns standard JSON error objects. Validation errors include a `details` object with flattened field errors from request body validation.
+
+| Status | Response body |
+| --- | --- |
+| `400` | `{"error":"Invalid JSON body"}` or `{"error":"Invalid request body","details":...}` |
+| `401` | `{"error":"Authentication required"}` |
+| `402` | `{"error":"Insufficient credits"}` or another propagated billing error |
+| `403` | `{"error":"API key is missing the calls:create scope"}` |
+| `500` | `{"error":"..."}` |
+
+## Notes
+
+- Session-based requests and API key requests both use the same endpoint.
+- API key authentication requires the `calls:create` scope.
+- Credit and provider errors from outbound call setup can propagate directly into the response body.
+- The endpoint validates the request body before starting the call. If validation fails, no call is placed.

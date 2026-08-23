@@ -1,0 +1,1028 @@
+---
+title: Close AI
+description: Auf Konversationsanalyse-Dashboards, Coaching-Insights, Sitzungstranskripte, Prompt-Vorlagen, Verkaufsskripte und Benutzereinstellungen über die Close AI-API zugreifen.
+---
+
+## Close AI-Endpunkte
+
+Greifen Sie über die Close AI-API auf Dashboard-Analytics, Sitzungsdaten, Prompt-Vorlagen, Verkaufsskripte, Benutzereinstellungen und Desktop-Status zu. Alle Close AI-Endpunkte verwenden Session-Cookie-Authentifizierung. API-Schlüssel werden nicht unterstützt.
+
+<Callout kind="info">
+
+Authentifizieren Sie Anfragen an Close AI-Endpunkte mit einer gültigen Web-Session. Wenn Sie serverseitige Integrationen oder Desktop-Flows erstellen, verwenden Sie stattdessen die entsprechenden Desktop-Endpunkte.
+
+</Callout>
+
+## Endpunktübersicht
+
+| Methode | Pfad | Beschreibung |
+| --- | --- | --- |
+| `GET` | `/api/close-ai/dashboard` | Dashboard-Analytics abrufen |
+| `POST` | `/api/close-ai/dashboard/narrative` | Dashboard-Narrative generieren |
+| `GET` | `/api/close-ai/sessions` | Sitzungen auflisten |
+| `GET` `PATCH` `DELETE` | `/api/close-ai/sessions/:sessionId` | Sitzung abrufen, umbenennen oder löschen |
+| `GET` `POST` | `/api/close-ai/prompts` | Prompt-Vorlagen auflisten oder erstellen |
+| `GET` `POST` `PUT` `DELETE` | `/api/close-ai/scripts` | Verkaufsskripte auflisten, erstellen, aktualisieren oder löschen |
+| `GET` `PUT` | `/api/close-ai/settings` | Benutzereinstellungen lesen oder aktualisieren |
+| `GET` | `/api/close-ai/desktop-status` | Desktop-Status abrufen |
+
+## Dashboard-Analytics abrufen
+
+Rufen Sie aggregierte KPIs, Coaching-Signale, Einwände, Fragen, Sprachmetriken, Skriptabdeckung, Score-Verteilungen, Trends und mitgliederbezogene Zusammenfassungen für einen Workspace ab.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/close-ai/dashboard?account=my-workspace&days=30" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{
+  "kpis": {
+    "calls": 42,
+    "callsDeltaPct": 15,
+    "avgCloseScore": 73,
+    "avgDurationSeconds": 480.5,
+    "activeMembers": 5,
+    "analyzedCount": 38
+  },
+  "coaching": {
+    "evaluations": 38,
+    "strengths": [{ "label": "Active listening", "count": 12 }],
+    "weaknesses": [{ "label": "Objection handling", "count": 8 }],
+    "risks": [{ "label": "Price sensitivity", "count": 4 }]
+  },
+  "objections": {
+    "total": 95,
+    "byCategory": [{ "key": "Price", "count": 30, "avgCloseScore": 68 }],
+    "byType": [{ "key": "Hard", "count": 20, "avgCloseScore": 61 }],
+    "byIntensity": [{ "key": "High", "count": 15, "avgCloseScore": 59 }]
+  },
+  "questions": {
+    "open": 120,
+    "closed": 45,
+    "deep": 30,
+    "missed": [{ "label": "Budget timeline?", "count": 6 }]
+  },
+  "personality": [{ "type": "Driver", "count": 18 }],
+  "language": {
+    "avgTalkSharePct": 42.3,
+    "avgWpm": 148.1,
+    "avgPatiencePct": 67.0,
+    "avgLongestMonologueSeconds": 94.2
+  },
+  "script": {
+    "calls": 30,
+    "avgCoveragePct": 78,
+    "avgOrderDeviationPct": 12,
+    "blocks": [{ "name": "Intro", "avgPct": 92 }]
+  },
+  "scores": {
+    "distribution": [{ "bucket": "60-79", "count": 22 }],
+    "avg": 73
+  },
+  "durationDistribution": [{ "bucket": "5-10m", "count": 18 }],
+  "trends": [{ "date": "2026-08-01", "calls": 3, "avgCloseScore": 71 }],
+  "members": [{
+    "userId": "uuid",
+    "name": "Jane Doe",
+    "calls": 12,
+    "evaluations": 11,
+    "avgCloseScore": 76,
+    "avgDurationSeconds": 510,
+    "strengths": 8,
+    "weaknesses": 4,
+    "risks": 2,
+    "avgCoveragePct": 82,
+    "personality": "Driver"
+  }]
+}
+```
+</Response>
+
+### Abfrageparameter
+
+<ParamField query="account" param-type="string" required="true">
+Workspace-Slug. Der Endpunkt prüft, ob Sie Mitglied des angegebenen Workspace sind, Eigentümer eines persönlichen Workspace oder primärer Eigentümer.
+</ParamField>
+
+<ParamField query="days" param-type="integer" required="false">
+Länge des Auswertungsfensters in Tagen. Standard ist `30`. Der Wert wird auf den Bereich `1` bis `365` begrenzt.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="kpis" field-type="object" required="true">
+Zusammengefasste Leistungskennzahlen für den angeforderten Zeitraum.
+</ResponseField>
+
+<ResponseField name="coaching" field-type="object" required="true">
+Coaching-Zusammenfassung mit Auswertungsanzahl sowie häufigsten Stärken, Schwächen und Risiken.
+</ResponseField>
+
+<ResponseField name="objections" field-type="object" required="true">
+Einwandsanalyse mit Gesamtanzahl und Aufschlüsselungen nach Kategorie, Typ und Intensität.
+</ResponseField>
+
+<ResponseField name="questions" field-type="object" required="true">
+Frageanalyse mit offenen, geschlossenen und vertiefenden Fragen sowie verpassten Fragen.
+</ResponseField>
+
+<ResponseField name="personality" field-type="array" required="true">
+Verteilung erkannter Persönlichkeitstypen über Sitzungen hinweg.
+</ResponseField>
+
+<ResponseField name="language" field-type="object" required="true">
+Sprachmetriken wie Redeanteil, Wörter pro Minute, Geduld und längster Monolog.
+</ResponseField>
+
+<ResponseField name="script" field-type="object" required="true">
+Skriptbezogene Kennzahlen wie Abdeckung, Reihenfolgeabweichung und Block-Performance.
+</ResponseField>
+
+<ResponseField name="scores" field-type="object" required="true">
+Score-Verteilung und durchschnittlicher Close Score.
+</ResponseField>
+
+<ResponseField name="durationDistribution" field-type="array" required="true">
+Verteilung der Sitzungsdauer nach Buckets.
+</ResponseField>
+
+<ResponseField name="trends" field-type="array" required="true">
+Tägliche Trenddaten für den vollständigen Zeitraum, einschließlich Tagen ohne Calls.
+</ResponseField>
+
+<ResponseField name="members" field-type="array" required="true">
+Mitgliederliste, sortiert nach absteigender Call-Anzahl.
+</ResponseField>
+
+### Fehlermuster
+
+| Status | Antwort |
+| --- | --- |
+| `401` | `{ "error": "unauthorized" }` |
+| `400` | `{ "error": "account_required" }` |
+| `404` | `{ "error": "workspace_not_found" }` |
+| `403` | `{ "error": "workspace_access_denied" }` |
+
+## Dashboard-Narrative generieren
+
+Generieren Sie aus den Dashboard-Daten eine strukturierte Narrative mit tab-spezifischen Insights und Empfehlungen. Der Endpunkt erstellt keine Inhalte automatisch und wird nur bei Bedarf ausgelöst.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/close-ai/dashboard/narrative" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=..." \
+  -d '{
+    "account": "my-workspace",
+    "days": 30,
+    "lang": "de",
+    "data": {
+      "kpis": {
+        "calls": 42,
+        "avgCloseScore": 73
+      }
+    }
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "narrative": {
+    "overview": {
+      "insights": [{ "title": "Strong week", "body": "Calls rose 15%..." }],
+      "recommendations": ["..."]
+    },
+    "closescore": {
+      "insights": [],
+      "recommendations": []
+    },
+    "objections": {
+      "insights": [],
+      "recommendations": []
+    },
+    "questions": {
+      "insights": [],
+      "recommendations": []
+    },
+    "personality": {
+      "insights": [],
+      "recommendations": []
+    },
+    "language": {
+      "insights": [],
+      "recommendations": []
+    },
+    "coaching": {
+      "insights": [],
+      "recommendations": []
+    },
+    "script": {
+      "insights": [],
+      "recommendations": []
+    }
+  }
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="account" param-type="string" required="true">
+Workspace-Slug. Es gelten dieselben Workspace-Mitgliedschaftsprüfungen wie beim Dashboard-Analytics-Endpunkt.
+</ParamField>
+
+<ParamField body="days" param-type="integer" required="false">
+Länge des Zeitraums in Tagen. Der Wert ist optional und wird auf den Bereich `1` bis `365` begrenzt.
+</ParamField>
+
+<ParamField body="lang" param-type="string" required="false">
+Ausgabesprache für die generierte Narrative. Zulässig sind Sprach-Tags mit `2` bis `8` Zeichen. Bei `"de"` schreibt das Modell auf Deutsch, sonst auf Englisch.
+</ParamField>
+
+<ParamField body="data" param-type="object" required="true">
+Rohes Dashboard-Statistikobjekt aus `GET /api/close-ai/dashboard`. Übergeben Sie die Antwort ohne Umformung weiter.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="narrative" field-type="object" required="true">
+Container für alle generierten Narrative-Abschnitte.
+</ResponseField>
+
+<ResponseField name="narrative.overview" field-type="object" required="true">
+Überblicksabschnitt mit Insights und Empfehlungen.
+</ResponseField>
+
+<ResponseField name="narrative.closescore" field-type="object" required="true">
+Score-spezifischer Abschnitt mit Insights und Empfehlungen.
+</ResponseField>
+
+<ResponseField name="narrative.objections" field-type="object" required="true">
+Einwandsabschnitt mit Insights und Empfehlungen.
+</ResponseField>
+
+<ResponseField name="narrative.questions" field-type="object" required="true">
+Fragenabschnitt mit Insights und Empfehlungen.
+</ResponseField>
+
+<ResponseField name="narrative.personality" field-type="object" required="true">
+Persönlichkeitsabschnitt mit Insights und Empfehlungen.
+</ResponseField>
+
+<ResponseField name="narrative.language" field-type="object" required="true">
+Sprachabschnitt mit Insights und Empfehlungen.
+</ResponseField>
+
+<ResponseField name="narrative.coaching" field-type="object" required="true">
+Coaching-Abschnitt mit Insights und Empfehlungen.
+</ResponseField>
+
+<ResponseField name="narrative.script" field-type="object" required="true">
+Skriptabschnitt mit Insights und Empfehlungen.
+</ResponseField>
+
+### Fehlermuster
+
+| Status | Antwort |
+| --- | --- |
+| `401` | `{ "error": "unauthorized" }` |
+| `400` | `{ "error": "invalid_body" }` |
+| `404` | `{ "error": "workspace_not_found" }` |
+| `403` | `{ "error": "workspace_access_denied" }` |
+| `500` | `{ "error": "narrative_failed" }` |
+
+## Sitzungen auflisten
+
+Listen Sie Close AI-Sitzungen des aktuellen Benutzers mit Pagination, Volltextsuche auf dem Titel und optionaler Workspace-Einschränkung auf.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/close-ai/sessions?limit=50&offset=0&q=acme&account=my-workspace" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{
+  "sessions": [{
+    "id": "uuid",
+    "user_id": "uuid",
+    "account_id": "uuid | null",
+    "title": "Call with Acme Corp",
+    "session_type": "listen | ask",
+    "started_at": "2026-08-20T10:00:00Z",
+    "ended_at": "2026-08-20T10:32:00Z",
+    "status": "completed",
+    "duration_seconds": 1920,
+    "updated_at": "2026-08-20T10:32:05Z"
+  }],
+  "count": 84
+}
+```
+</Response>
+
+### Abfrageparameter
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximale Anzahl zurückgegebener Sitzungen. Standard ist `50`. Der Wert wird auf den Bereich `1` bis `100` begrenzt.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Versatz für paginierte Ergebnisse. Standard ist `0`.
+</ParamField>
+
+<ParamField query="q" param-type="string" required="false">
+Suche nach Sitzungen über einen `ILIKE`-Vergleich auf dem Feld `title`.
+</ParamField>
+
+<ParamField query="account" param-type="string" required="false">
+Workspace-Slug zur Einschränkung der Ergebnisse. Wenn gesetzt, filtert der Endpunkt nach `account_id = ? OR account_id IS NULL`, damit ältere Sitzungen ohne Workspace-Zuordnung weiterhin sichtbar bleiben.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="sessions" field-type="array" required="true">
+Paginierte Liste von Sitzungen, die dem authentifizierten Benutzer unterliegen.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Gesamtanzahl der Sitzungen für die aktuelle Abfrage.
+</ResponseField>
+
+### Fehlermuster
+
+| Status | Antwort |
+| --- | --- |
+| `400` | `{ "error": "<supabase message>" }` |
+
+## Sitzung abrufen, umbenennen oder löschen
+
+Arbeiten Sie mit einer einzelnen Sitzung über ihre Sitzungs-ID. Der Endpunkt unterstützt vollständiges Laden, Titelaktualisierung und Löschung.
+
+### Pfadparameter
+
+<ParamField path="sessionId" param-type="string" required="true">
+UUID der Sitzung.
+</ParamField>
+
+### Sitzung abrufen
+
+Laden Sie den vollständigen Sitzungssatz einschließlich Transkripten, AI-Nachrichten, Zusammenfassung und Analyse in einer Antwort.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/close-ai/sessions/2d7b8c90-4d34-4d55-a1e9-8f4d0c54a4d1" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{
+  "session": {
+    "id": "uuid",
+    "user_id": "uuid",
+    "title": "Call with Acme Corp",
+    "session_type": "listen",
+    "started_at": "2026-08-20T10:00:00Z",
+    "ended_at": "2026-08-20T10:32:00Z",
+    "status": "completed",
+    "duration_seconds": 1920,
+    "updated_at": "2026-08-20T10:32:05Z",
+    "created_at": "2026-08-20T10:00:00Z",
+    "parent_session_id": null
+  },
+  "transcripts": [{
+    "id": "uuid",
+    "session_id": "uuid",
+    "start_at": 0.0,
+    "end_at": 4.2,
+    "speaker": "rep",
+    "text": "Good morning...",
+    "lang": "en",
+    "created_at": "..."
+  }],
+  "messages": [{
+    "id": "uuid",
+    "session_id": "uuid",
+    "sent_at": "...",
+    "role": "assistant",
+    "content": "...",
+    "tokens": 142,
+    "model": "gpt-4o",
+    "created_at": "..."
+  }],
+  "summary": {
+    "session_id": "uuid",
+    "generated_at": "...",
+    "model": "gpt-4o",
+    "text": "...",
+    "tldr": "...",
+    "bullet_json": [],
+    "action_json": [],
+    "tokens_used": 820,
+    "updated_at": "..."
+  },
+  "analysis": {
+    "session_id": "uuid",
+    "close_score": 78,
+    "score_breakdown": {},
+    "strengths": [],
+    "weaknesses": [],
+    "risks": [],
+    "objections": [],
+    "questions": {},
+    "personality": {},
+    "talk_metrics": {},
+    "script_coverage": {},
+    "language": "en",
+    "model": "gpt-4o",
+    "generated_at": "..."
+  }
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="session" field-type="object" required="true">
+Sitzungs-Metadaten einschließlich Status, Dauer, Zeitstempel und optionaler Eltern-Sitzung.
+</ResponseField>
+
+<ResponseField name="transcripts" field-type="array" required="true">
+Transkriptsegmente mit Sprecher, Zeitfenstern und Text.
+</ResponseField>
+
+<ResponseField name="messages" field-type="array" required="true">
+AI-Nachrichten, die während oder nach der Sitzung erzeugt wurden.
+</ResponseField>
+
+<ResponseField name="summary" field-type="object" required="false">
+Generierte Sitzungszusammenfassung. Der Wert ist `null`, wenn noch keine Zusammenfassung vorliegt.
+</ResponseField>
+
+<ResponseField name="analysis" field-type="object" required="false">
+Generierte Sitzungsanalyse. Der Wert ist `null`, wenn noch keine Analyse vorliegt.
+</ResponseField>
+
+### Sitzung umbenennen
+
+Aktualisieren Sie den Sitzungstitel oder leeren Sie ihn, indem Sie einen leeren String senden.
+
+<Request>
+```bash
+curl -X PATCH "https://app.talkturo.com/api/close-ai/sessions/2d7b8c90-4d34-4d55-a1e9-8f4d0c54a4d1" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=..." \
+  -d '{ "title": "New Title" }'
+```
+</Request>
+
+<Response>
+```json
+{ "ok": true, "title": "New Title" }
+```
+</Response>
+
+### Body-Parameter für `PATCH`
+
+<ParamField body="title" param-type="string" required="true">
+Neuer Sitzungstitel. Senden Sie `""`, um den Titel zu leeren.
+</ParamField>
+
+### Sitzung löschen
+
+Löschen Sie eine Sitzung und alle kaskadierenden Datensätze, einschließlich Transkripten, AI-Nachrichten, Zusammenfassung und Analyse.
+
+<Request>
+```bash
+curl -X DELETE "https://app.talkturo.com/api/close-ai/sessions/2d7b8c90-4d34-4d55-a1e9-8f4d0c54a4d1" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{ "ok": true, "deleted": true }
+```
+</Response>
+
+### Fehlermuster
+
+| Status | Antwort |
+| --- | --- |
+| `400` | `{ "error": "<message>" }` |
+| `404` | `{ "error": "not_found" }` |
+
+## Prompt-Vorlagen auflisten oder erstellen
+
+Verwalten Sie gespeicherte Prompt-Vorlagen für Close AI. Sie können Benutzervorlagen abrufen, nur Templates filtern und neue Standardvorlagen anlegen.
+
+### Vorlagen auflisten
+
+Rufen Sie die Vorlagen des aktuellen Benutzers ab. Mit `templates=true` erhalten Sie nur Template-Presets.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/close-ai/prompts?templates=true" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{
+  "presets": [{
+    "id": "uuid",
+    "user_id": "uuid",
+    "title": "Discovery Call",
+    "prompt": "You are a...",
+    "is_default": true,
+    "is_template": false,
+    "created_at": "...",
+    "updated_at": "..."
+  }]
+}
+```
+</Response>
+
+### Abfrageparameter
+
+<ParamField query="templates" param-type="boolean" required="false">
+Wenn `true`, gibt der Endpunkt nur Template-Presets mit `is_template = true` zurück. Wenn weggelassen, gibt der Endpunkt alle Presets des Benutzers zurück.
+</ParamField>
+
+### Vorlagen erstellen
+
+Erstellen Sie ein neues Prompt-Preset. Wenn Sie `is_default` auf `true` setzen, entfernt der Endpunkt atomar jede andere Standardvorlage des Benutzers.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/close-ai/prompts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=..." \
+  -d '{
+    "title": "Discovery Call",
+    "prompt": "You are a...",
+    "is_default": true,
+    "is_template": false
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "preset": {
+    "id": "uuid",
+    "title": "Discovery Call",
+    "prompt": "You are a...",
+    "is_default": true,
+    "is_template": false
+  }
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="title" param-type="string" required="true">
+Titel der Vorlage. Länge `1` bis `200` Zeichen.
+</ParamField>
+
+<ParamField body="prompt" param-type="string" required="true">
+Prompt-Inhalt. Länge `1` bis `20000` Zeichen.
+</ParamField>
+
+<ParamField body="is_default" param-type="boolean" required="false">
+Markiert die Vorlage als Standardvorlage des Benutzers. Wenn `true`, wird jede vorhandene Standardvorlage zuerst entfernt.
+</ParamField>
+
+<ParamField body="is_template" param-type="boolean" required="false">
+Markiert die Vorlage als Template-Preset.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="presets" field-type="array" required="true">
+Liste gespeicherter Prompt-Presets.
+</ResponseField>
+
+<ResponseField name="preset" field-type="object" required="false">
+Neu erstelltes Prompt-Preset in der `POST`-Antwort.
+</ResponseField>
+
+### Fehlermuster
+
+| Status | Antwort |
+| --- | --- |
+| `401` | `{ "error": "unauthorized" }` |
+| `400` | `{ "error": "invalid_body", "detail": {} }` |
+
+## Verkaufsskripte auflisten, erstellen, aktualisieren oder löschen
+
+Verwalten Sie Workspace-Verkaufsskripte, die einen Verzweigungs-Node-Graphen in `content` speichern und genau ein aktives Skript pro Workspace unterstützen.
+
+### Skripte auflisten
+
+Rufen Sie alle Skripte eines Workspace ab, sortiert nach zuletzt aktualisiert.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/close-ai/scripts?account=my-workspace" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{
+  "scripts": [{
+    "id": "uuid",
+    "name": "Discovery Script",
+    "content": {
+      "sections": [],
+      "prompts": []
+    },
+    "is_active": true,
+    "updated_at": "..."
+  }]
+}
+```
+</Response>
+
+### Abfrageparameter
+
+<ParamField query="account" param-type="string" required="true">
+Workspace-Slug. Dieser Parameter ist für `GET` und `POST` erforderlich.
+</ParamField>
+
+<ParamField query="id" param-type="string" required="false">
+Skript-ID für `DELETE`. Wenn sie fehlt, antwortet der Endpunkt mit `id_required`.
+</ParamField>
+
+### Skript erstellen
+
+Erstellen Sie ein neues leeres Skript. Wenn Sie keinen Namen senden, verwendet der Endpunkt `Untitled script`.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/close-ai/scripts?account=my-workspace" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=..." \
+  -d '{ "name": "My Script" }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "script": {
+    "id": "uuid",
+    "name": "My Script",
+    "content": {
+      "sections": [],
+      "prompts": []
+    },
+    "is_active": false,
+    "updated_at": "..."
+  }
+}
+```
+</Response>
+
+### Body-Parameter für `POST`
+
+<ParamField body="name" param-type="string" required="false">
+Skriptname. Standard ist `Untitled script`.
+</ParamField>
+
+### Skript aktualisieren
+
+Aktualisieren Sie den Namen, den Inhalt und den Aktiv-Status eines vorhandenen Skripts. Wenn Sie `is_active` auf `true` setzen, deaktiviert der Endpunkt zuerst alle anderen Skripte im Workspace.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/close-ai/scripts" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=..." \
+  -d '{
+    "id": "2d7b8c90-4d34-4d55-a1e9-8f4d0c54a4d1",
+    "name": "Updated Name",
+    "content": {
+      "sections": [{
+        "id": "s1",
+        "name": "Intro",
+        "type": "script",
+        "content": "Good morning, I am calling from...",
+        "position": { "x": 120, "y": 0 },
+        "next": [{ "id": "n1", "condition": "Interested", "targetId": "s2" }]
+      }],
+      "prompts": [{
+        "id": "p1",
+        "trigger": "price",
+        "text": "Handle pricing objection",
+        "enabled": true
+      }]
+    },
+    "is_active": true
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "script": {
+    "id": "2d7b8c90-4d34-4d55-a1e9-8f4d0c54a4d1",
+    "name": "Updated Name",
+    "content": {
+      "sections": [{
+        "id": "s1",
+        "name": "Intro",
+        "type": "script",
+        "content": "Good morning, I am calling from...",
+        "position": { "x": 120, "y": 0 },
+        "next": [{ "id": "n1", "condition": "Interested", "targetId": "s2" }]
+      }],
+      "prompts": [{
+        "id": "p1",
+        "trigger": "price",
+        "text": "Handle pricing objection",
+        "enabled": true
+      }]
+    },
+    "is_active": true,
+    "updated_at": "..."
+  }
+}
+```
+</Response>
+
+### Body-Parameter für `PUT`
+
+<ParamField body="id" param-type="string" required="true">
+UUID des zu aktualisierenden Skripts.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="false">
+Aktualisierter Skriptname.
+</ParamField>
+
+<ParamField body="content" param-type="object" required="false">
+Vollständiges Skript-Node-Graph-Objekt. Übergeben Sie die gesamte Struktur, nicht nur geänderte Teilfelder.
+</ParamField>
+
+<ParamField body="is_active" param-type="boolean" required="false">
+Aktiviert dieses Skript. Wenn `true`, bleibt im Workspace genau ein aktives Skript erhalten.
+</ParamField>
+
+### Skript löschen
+
+Löschen Sie ein Skript über seine ID in der Abfragezeichenfolge.
+
+<Request>
+```bash
+curl -X DELETE "https://app.talkturo.com/api/close-ai/scripts?id=2d7b8c90-4d34-4d55-a1e9-8f4d0c54a4d1" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{ "ok": true }
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="scripts" field-type="array" required="false">
+Liste von Skripten in der `GET`-Antwort.
+</ResponseField>
+
+<ResponseField name="script" field-type="object" required="false">
+Einzelnes Skriptobjekt in `POST`- und `PUT`-Antworten.
+</ResponseField>
+
+### Fehlermuster
+
+| Status | Antwort |
+| --- | --- |
+| `401` | `{ "error": "unauthorized" }` |
+| `400` | `{ "error": "account_required" }`, `{ "error": "id_required" }`, `{ "error": "invalid_body" }` |
+| `404` | `{ "error": "workspace_not_found" }` |
+| `403` | `{ "error": "<db error>" }` |
+
+## Benutzereinstellungen lesen oder aktualisieren
+
+Lesen oder speichern Sie benutzerspezifische Analytics-System-Prompts für Close AI.
+
+### Einstellungen lesen
+
+Rufen Sie die aktuellen Einstellungen des Benutzers ab. Wenn noch nichts gespeichert wurde, sind die Felder `null`.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/close-ai/settings" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{
+  "analytics_system_prompt": "You are a sales coach...",
+  "updated_at": "2026-08-15T09:30:00Z"
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="analytics_system_prompt" field-type="string" required="false">
+Aktueller Analytics-System-Prompt des Benutzers. Der Wert ist `null`, wenn keiner gesetzt wurde.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="false">
+Zeitstempel der letzten Aktualisierung. Der Wert ist `null`, wenn noch nie gespeichert wurde.
+</ResponseField>
+
+### Einstellungen aktualisieren
+
+Speichern oder leeren Sie den Analytics-System-Prompt des Benutzers. Der Endpunkt verwendet ein Upsert und kann wiederholt sicher aufgerufen werden.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/close-ai/settings" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=..." \
+  -d '{
+    "analytics_system_prompt": "You are a sales coach..."
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "analytics_system_prompt": "You are a sales coach...",
+  "updated_at": "2026-08-23T10:15:00Z"
+}
+```
+</Response>
+
+### Body-Parameter
+
+<ParamField body="analytics_system_prompt" param-type="string | null" required="true">
+Analytics-System-Prompt mit maximal `20000` Zeichen. Senden Sie `null`, um den Wert zu leeren.
+</ParamField>
+
+### Fehlermuster
+
+| Status | Antwort |
+| --- | --- |
+| `401` | `{ "error": "unauthorized" }` |
+| `400` | `{ "error": "invalid_body", "detail": {} }`, `{ "error": "save_failed", "detail": "..." }` |
+
+## Desktop-Status abrufen
+
+Lesen Sie leichte Statusdaten für Banner und Upgrade-Hinweise in der Close AI-Weboberfläche.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/close-ai/desktop-status" \
+  -H "Cookie: sb-access-token=..."
+```
+</Request>
+
+<Response>
+```json
+{
+  "ok": true,
+  "status": {
+    "source": "subscription",
+    "plan": "prod_xxx",
+    "has_access": true,
+    "calls_this_month": 7,
+    "calls_per_month": 10,
+    "account_slug": "my-team"
+  }
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Kennzeichnet, ob die Statusabfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="status" field-type="object" required="true">
+Desktop-Nutzungs- und Zugriffsstatus für den aktuellen Benutzer.
+</ResponseField>
+
+<ResponseField name="status.source" field-type="string" required="true">
+Quelle des Zugriffsstatus. Typische Werte sind `subscription`, `manual` oder `none`.
+</ResponseField>
+
+<ResponseField name="status.plan" field-type="string | null" required="true">
+Plan-ID oder `null`, wenn kein Plan zugeordnet ist.
+</ResponseField>
+
+<ResponseField name="status.has_access" field-type="boolean" required="true">
+Gibt an, ob der Benutzer aktuell Zugriff auf Desktop-Funktionen hat.
+</ResponseField>
+
+<ResponseField name="status.calls_this_month" field-type="integer" required="true">
+Anzahl der `listen`-Sitzungen im aktuellen UTC-Monat, sofern der Plan nicht unbegrenzt ist.
+</ResponseField>
+
+<ResponseField name="status.calls_per_month" field-type="integer" required="true">
+Monatliches Kontingent. Der Wert `-1` bedeutet unbegrenzt.
+</ResponseField>
+
+<ResponseField name="status.account_slug" field-type="string" required="false">
+Workspace-Slug, der den Plan hält und für Deep-Link-CTAs verwendet werden kann.
+</ResponseField>
+
+### Fehlermuster
+
+| Status | Antwort |
+| --- | --- |
+| `401` | `{ "ok": false, "reason": "unauthenticated" }` |
+| `500` | `{ "ok": false, "reason": "rpc_failed", "error": "..." }` |
+
+## Authentifizierungsfehler
+
+Close AI-Endpunkte antworten bei fehlender oder abgelaufener Session in der Regel mit `401`. Die genaue Antwortform hängt vom Endpunkt ab.
+
+<ExpandableGroup>
+  <Expandable title="Typische 401-Antworten">
+
+  - Dashboard, Narrative, Prompts, Skripte und Einstellungen verwenden meist `{ "error": "unauthorized" }`.
+  - Desktop-Status verwendet `{ "ok": false, "reason": "unauthenticated" }`.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Workspace-Zugriffsfehler
+
+Workspace-bezogene Endpunkte prüfen zusätzlich zur Session, ob Sie auf den angeforderten Workspace zugreifen dürfen.
+
+<ExpandableGroup>
+  <Expandable title="Typische Workspace-Fehler">
+
+  - Fehlender Workspace-Slug führt zu `{ "error": "account_required" }` bei Endpunkten, die einen Workspace benötigen.
+  - Nicht vorhandene Workspaces führen zu `{ "error": "workspace_not_found" }`.
+  - Fehlende Mitgliedschaft führt zu `{ "error": "workspace_access_denied" }` oder zu einer datenbankspezifischen `403`-Antwort unter RLS.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Validierungsfehler
+
+Zod-validierte Endpunkte antworten mit `400`, wenn Body-Daten die erwartete Form nicht erfüllen.
+
+<ExpandableGroup>
+  <Expandable title="Typische 400-Antworten">
+
+  - Narrative, Prompts, Skripte und Einstellungen verwenden `{ "error": "invalid_body" }`.
+  - Einige Endpunkte ergänzen ein `detail`-Objekt mit Validierungsinformationen.
+  - Skript- und andere Endpunkte können zusätzliche spezifische Fehler wie `id_required` zurückgeben.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Fehler bei fehlenden Ressourcen
+
+Einzelne Ressourcenendpunkte verwenden `404`, wenn die angeforderte Sitzung, das Skript oder der Workspace nicht existiert.
+
+<ExpandableGroup>
+  <Expandable title="Typische 404-Antworten">
+
+  - Sitzungsendpunkte verwenden `{ "error": "not_found" }` für unbekannte Sitzungs-IDs.
+  - Workspace-bezogene Endpunkte verwenden `{ "error": "workspace_not_found" }`.
+  - Andere Ressourcenendpunkte können eigene kennzeichnungsspezifische `404`-Fehler verwenden.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Verwandte APIs
+
+Wenn Sie neben den webbasierten Close AI-Endpunkten auch Desktop-Integrationen erstellen, benötigen Sie zusätzlich die Desktop-API.
+
+<Columns cols={2}>
+  <Card title="Desktop API" href="/de/api-reference/desktop" icon="monitor">
+  Bearer-authentifizierte Endpunkte für Desktop-Skripte, Vorlagen, Nutzungsprüfung und Download-Flows.
+  </Card>
+  <Card title="Guthaben" href="/de/api-reference/credits" icon="database">
+  Guthabenstände abrufen, Nutzung abbuchen und Checkout-Flows starten.
+  </Card>
+</Columns>

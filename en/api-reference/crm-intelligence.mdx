@@ -1,0 +1,298 @@
+---
+title: CRM Intelligence
+description: Retrieve conversation intelligence summaries across CRM calls with date range, campaign, and assistant filtering.
+---
+
+## CRM Intelligence endpoint
+
+Retrieve AI-generated conversation intelligence summaries across CRM calls for a workspace and date range. Use optional campaign and assistant filters to narrow the summary to a specific slice of activity.
+
+<Callout kind="info">
+
+**Authentication**
+- `GET /api/crm/intelligence`
+
+This endpoint uses signed-in session authentication with a Supabase session cookie. It does **not** support API key authentication.
+
+</Callout>
+
+<Callout kind="alert">
+
+This endpoint validates that the signed-in user is a member of the workspace identified by `account`. If the workspace exists but the user is not a member, the API returns `403 Forbidden`.
+
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/crm/intelligence?account=acme-sales&from=2026-08-01&to=2026-08-31&campaign_id=6b4c2f1e-7d8a-4d29-9d34-2eb9a7a18c41&assistant_id=0f45a0c7-f6dc-4e38-a7b1-7f6d2c4e9b52" \
+  --header "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=v1.example.refresh"
+```
+
+```javascript
+const params = new URLSearchParams({
+  account: "acme-sales",
+  from: "2026-08-01",
+  to: "2026-08-31",
+  campaign_id: "6b4c2f1e-7d8a-4d29-9d34-2eb9a7a18c41",
+  assistant_id: "0f45a0c7-f6dc-4e38-a7b1-7f6d2c4e9b52"
+});
+
+const response = await fetch(`/api/crm/intelligence?${params.toString()}`, {
+  method: "GET",
+  credentials: "include"
+});
+
+const result = await response.json();
+console.log(result);
+```
+
+</Request>
+
+<Response tabs="200,401,403,404" default-tab="1">
+
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "total_calls": 184,
+      "analyzed_calls": 179,
+      "average_score": 74
+    }
+  },
+  "filters": {
+    "campaigns": [
+      {
+        "id": "6b4c2f1e-7d8a-4d29-9d34-2eb9a7a18c41",
+        "name": "Q3 Expansion"
+      }
+    ],
+    "assistants": [
+      {
+        "id": "0f45a0c7-f6dc-4e38-a7b1-7f6d2c4e9b52",
+        "name": "Inbound SDR"
+      }
+    ]
+  }
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Account not found"
+}
+```
+
+</Response>
+
+## Query parameters
+
+Pass all parameters in the query string. The endpoint requires a workspace slug and a date range before it runs the intelligence summary.
+
+<ParamField query="from" param-type="string" required="true">
+
+Start date in `YYYY-MM-DD` format.
+
+</ParamField>
+
+<ParamField query="to" param-type="string" required="true">
+
+End date in `YYYY-MM-DD` format.
+
+</ParamField>
+
+<ParamField query="account" param-type="string" required="true">
+
+Workspace slug. The API resolves this slug to an internal account ID before checking membership and running the summary.
+
+</ParamField>
+
+<ParamField query="campaign_id" param-type="string" required="false">
+
+Optional campaign UUID. When provided, the summary includes only conversations associated with that campaign.
+
+</ParamField>
+
+<ParamField query="assistant_id" param-type="string" required="false">
+
+Optional assistant UUID. When provided, the summary includes only conversations associated with that assistant.
+
+</ParamField>
+
+## How the endpoint processes a request
+
+The endpoint does more than return a raw aggregate. It authenticates the user, resolves the workspace, validates access, runs the summary RPC, and fetches filter metadata for the response.
+
+<Steps>
+
+<Step title="Authenticate the signed-in user" icon="lock">
+
+The server reads the Supabase session cookie and loads the current user. If no valid session exists, the request fails with `401 Unauthorized`.
+
+</Step>
+
+<Step title="Resolve the workspace slug" icon="folder">
+
+The API looks up the `account` slug and resolves it to an internal account ID. If the slug does not match a workspace, the request fails with `404 Account not found`.
+
+</Step>
+
+<Step title="Validate workspace membership" icon="users">
+
+The server checks the `accounts_memberships` relation to confirm the user belongs to the workspace. If membership validation fails, the request returns `403 Forbidden`.
+
+</Step>
+
+<Step title="Run the intelligence summary" icon="bar-chart">
+
+The endpoint calls the `conversation_intelligence_summary` RPC with `p_account_id`, `p_from`, `p_to`, `p_campaign_id`, and `p_assistant_id`.
+
+</Step>
+
+<Step title="Return summary data and filter options" icon="check-circle">
+
+The API returns the RPC result in `data` and includes available `campaigns` and `assistants` lists in `filters`. Use those lists to populate filter dropdowns in your dashboard.
+
+</Step>
+
+</Steps>
+
+## Response body
+
+A successful response contains the summary result and filter metadata. The exact structure inside `data` comes from the `conversation_intelligence_summary` RPC result.
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Always `true` for a successful request.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Conversation intelligence summary returned by the `conversation_intelligence_summary` RPC. Treat this object as the primary analytics payload for your dashboard or reporting view.
+
+</ResponseField>
+
+<ResponseField name="filters" field-type="object" required="true">
+
+Filter metadata returned alongside the summary. Use this object to populate available campaign and assistant selectors without making separate lookup requests.
+
+</ResponseField>
+
+<ResponseField name="filters.campaigns" field-type="array" required="true">
+
+List of campaigns available for the workspace and current user context.
+
+</ResponseField>
+
+<ResponseField name="filters.campaigns[].id" field-type="string" required="true">
+
+Campaign UUID.
+
+</ResponseField>
+
+<ResponseField name="filters.campaigns[].name" field-type="string" required="true">
+
+Campaign display name.
+
+</ResponseField>
+
+<ResponseField name="filters.assistants" field-type="array" required="true">
+
+List of assistants available for the workspace and current user context.
+
+</ResponseField>
+
+<ResponseField name="filters.assistants[].id" field-type="string" required="true">
+
+Assistant UUID.
+
+</ResponseField>
+
+<ResponseField name="filters.assistants[].name" field-type="string" required="true">
+
+Assistant display name.
+
+</ResponseField>
+
+## Error responses
+
+Handle these responses explicitly in your client. The endpoint distinguishes between missing input, missing authentication, missing workspace access, and server-side execution failures.
+
+### 400 Bad Request
+
+The API returns `400` when required query parameters are missing.
+
+```json
+{
+  "error": "Missing required query params: from, to (YYYY-MM-DD)"
+}
+```
+
+If `account` is missing, the response is:
+
+```json
+{
+  "error": "Missing required query param: account"
+}
+```
+
+### 401 Unauthorized
+
+The API returns `401` when no valid Supabase session is present.
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+### 403 Forbidden
+
+The API returns `403` when the authenticated user is not a member of the workspace.
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+### 404 Not Found
+
+The API returns `404` when the `account` slug does not resolve to a workspace.
+
+```json
+{
+  "error": "Account not found"
+}
+```
+
+### 500 Internal Server Error
+
+The API returns `500` when the RPC or related server-side work fails.
+
+```json
+{
+  "error": "RPC error message"
+}
+```
+
+## Usage notes
+
+Build your client around workspace-scoped session authentication, not server-to-server API access. If you need to call this endpoint from a frontend dashboard, send requests with `credentials: "include"` so the browser includes the signed-in session cookie.
+
+Use `filters.campaigns` and `filters.assistants` as the source of truth for available filter options. That keeps your intelligence view aligned with the same workspace context the summary query used.

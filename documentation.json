@@ -316,6 +316,21 @@
                     "title": "CRM Custom Fields",
                     "path": "en/api-reference/crm-custom-fields",
                     "icon": "sliders"
+                  },
+                  {
+                    "title": "CRM Calls",
+                    "path": "en/api-reference/crm-calls",
+                    "icon": "phone-call"
+                  },
+                  {
+                    "title": "CRM Intelligence",
+                    "path": "en/api-reference/crm-intelligence",
+                    "icon": "bar-chart"
+                  },
+                  {
+                    "title": "Close AI",
+                    "path": "en/api-reference/close-ai",
+                    "icon": "monitor"
                   }
                 ]
               },
@@ -686,6 +701,21 @@
                     "title": "CRM-Benutzerdefinierte Felder",
                     "path": "de/api-reference/crm-custom-fields",
                     "icon": "sliders"
+                  },
+                  {
+                    "title": "CRM-Anrufe",
+                    "path": "de/api-reference/crm-calls",
+                    "icon": "phone-call"
+                  },
+                  {
+                    "title": "CRM-Intelligence",
+                    "path": "de/api-reference/crm-intelligence",
+                    "icon": "bar-chart"
+                  },
+                  {
+                    "title": "Close AI",
+                    "path": "de/api-reference/close-ai",
+                    "icon": "monitor"
                   }
                 ]
               },

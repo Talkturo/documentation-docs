@@ -9,7 +9,7 @@ Verwalten Sie assistentenspezifische Wissensdatenbank-Dateien mit sitzungsauthen
 
 <Callout kind="info">
 
-Diese Endpunkte erfordern eine authentifizierte Browser-Sitzung. Sie verwenden keine API-Schlüssel-Authentifizierung.
+Diese Endpunkte unterstützen duale Authentifizierung. Verwenden Sie entweder eine authentifizierte Browser-Sitzung oder einen API-Schlüssel. Bei Verwendung eines API-Schlüssels benötigt `GET` den Scope `kb:read` und `POST` den Scope `kb:write`.
 
 </Callout>
 
@@ -23,11 +23,11 @@ Upload-Anfragen verwenden `multipart/form-data` und müssen ein Dateifeld enthal
 
 | Methode | Pfad | Zweck | Auth |
 | --- | --- | --- | --- |
-| `GET` | `/api/assistants/{assistantId}/knowledge-base` | Wissensdatenbank-Dateien eines Assistenten auflisten | Sitzungs-Cookie |
-| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Wissensdatenbank-Datei hochladen | Sitzungs-Cookie |
+| `GET` | `/api/assistants/{assistantId}/knowledge-base` | Wissensdatenbank-Dateien eines Assistenten auflisten | API-Schlüssel oder Sitzung |
+| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Wissensdatenbank-Datei hochladen | API-Schlüssel oder Sitzung |
+| `POST` (vorhandene Datei anhängen) | `/api/assistants/{assistantId}/knowledge-base` | Vorhandene Wissensdatenbank-Datei per JSON-Body mit `file_id` anhängen | API-Schlüssel oder Sitzung |
 | `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Wissensdatenbank-Datei löschen | Sitzungs-Cookie |
 | `GET` | `/api/assistants/{assistantId}/billing/estimate` | Kostenschätzung für die Wissensdatenbank-Verarbeitung abrufen | Sitzungs-Cookie |
-| `GET` | `/api/kb` | Eigenständiger Wissensdatenbank-Abfrage-Endpunkt, sofern in Ihrer Deployment aktiviert | Prüfen Sie Ihre Deployment |
 
 ## Wissensdatenbank-Dateien auflisten
 
@@ -62,18 +62,26 @@ console.log(data);
     {
       "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
       "filename": "acme-pricing-guide.pdf",
-      "size": 248193,
-      "type": "application/pdf",
-      "status": "processed",
-      "created_at": "2026-02-11T14:22:09.000Z"
+      "size_bytes": 248193,
+      "mime_type": "application/pdf",
+      "status": "ready",
+      "status_error": null,
+      "char_count": 18420,
+      "chunk_count": 37,
+      "created_at": "2026-02-11T14:22:09.000Z",
+      "updated_at": "2026-02-11T14:22:46.000Z"
     },
     {
       "id": "4f6c291e-a60d-4ff3-9cb2-52e2b65f6b31",
       "filename": "returns-policy.docx",
-      "size": 91344,
-      "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "size_bytes": 91344,
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "status": "processing",
-      "created_at": "2026-02-11T14:24:51.000Z"
+      "status_error": null,
+      "char_count": 0,
+      "chunk_count": 0,
+      "created_at": "2026-02-11T14:24:51.000Z",
+      "updated_at": "2026-02-11T14:24:51.000Z"
     }
   ]
 }
@@ -104,11 +112,11 @@ Eindeutige Dateikennung. Verwenden Sie diesen Wert beim Löschen einer Datei.
 Ursprünglicher Dateiname beim Upload.
 </ResponseField>
 
-<ResponseField name="files[].size" field-type="number" required="true">
+<ResponseField name="files[].size_bytes" field-type="number" required="true">
 Dateigröße in Bytes.
 </ResponseField>
 
-<ResponseField name="files[].type" field-type="string" required="true">
+<ResponseField name="files[].mime_type" field-type="string" required="true">
 Erkannter MIME-Typ der Datei.
 </ResponseField>
 
@@ -116,8 +124,24 @@ Erkannter MIME-Typ der Datei.
 Verarbeitungsstatus der Datei. Nutzen Sie dieses Feld, um zu erkennen, ob die Datei noch verarbeitet wird oder für Retrieval bereit ist.
 </ResponseField>
 
+<ResponseField name="files[].status_error" field-type="string">
+Fehlerdetails zur Verarbeitung, falls die Verarbeitung fehlgeschlagen ist. Andernfalls `null`.
+</ResponseField>
+
+<ResponseField name="files[].char_count" field-type="number" required="true">
+Anzahl der aus der Datei extrahierten Zeichen.
+</ResponseField>
+
+<ResponseField name="files[].chunk_count" field-type="number" required="true">
+Anzahl der für Retrieval erzeugten Chunks.
+</ResponseField>
+
 <ResponseField name="files[].created_at" field-type="string" required="true">
 Zeitstempel, wann die Datei hochgeladen wurde.
+</ResponseField>
+
+<ResponseField name="files[].updated_at" field-type="string" required="true">
+Zeitstempel der letzten Status- oder Metadatenänderung.
 </ResponseField>
 
 ## Wissensdatenbank-Datei hochladen
@@ -157,10 +181,14 @@ console.log(data);
   "file": {
     "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
     "filename": "acme-support-playbook.pdf",
-    "size": 248193,
-    "type": "application/pdf",
+    "size_bytes": 248193,
+    "mime_type": "application/pdf",
     "status": "processing",
-    "created_at": "2026-02-11T14:22:09.000Z"
+    "status_error": null,
+    "char_count": 0,
+    "chunk_count": 0,
+    "created_at": "2026-02-11T14:22:09.000Z",
+    "updated_at": "2026-02-11T14:22:09.000Z"
   }
 }
 ```
@@ -198,11 +226,11 @@ Eindeutige Dateikennung.
 Ursprünglicher Dateiname beim Upload.
 </ResponseField>
 
-<ResponseField name="file.size" field-type="number" required="true">
+<ResponseField name="file.size_bytes" field-type="number" required="true">
 Dateigröße in Bytes.
 </ResponseField>
 
-<ResponseField name="file.type" field-type="string" required="true">
+<ResponseField name="file.mime_type" field-type="string" required="true">
 Erkannter MIME-Typ der Datei.
 </ResponseField>
 
@@ -210,26 +238,178 @@ Erkannter MIME-Typ der Datei.
 Anfänglicher Verarbeitungsstatus nach dem Upload.
 </ResponseField>
 
+<ResponseField name="file.status_error" field-type="string">
+Fehlerdetails zur Verarbeitung, falls die Verarbeitung fehlschlägt. Andernfalls `null`.
+</ResponseField>
+
+<ResponseField name="file.char_count" field-type="number" required="true">
+Anzahl der aus der Datei extrahierten Zeichen.
+</ResponseField>
+
+<ResponseField name="file.chunk_count" field-type="number" required="true">
+Anzahl der für Retrieval erzeugten Chunks.
+</ResponseField>
+
 <ResponseField name="file.created_at" field-type="string" required="true">
 Zeitstempel, wann die Datei erstellt wurde.
+</ResponseField>
+
+<ResponseField name="file.updated_at" field-type="string" required="true">
+Zeitstempel der letzten Status- oder Metadatenänderung.
+</ResponseField>
+
+## Vorhandene Datei anhängen
+
+Hängen Sie eine bereits vorhandene Wissensdatenbank-Datei an einen Assistenten an, indem Sie einen JSON-Body mit `file_id` senden.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base" \
+  --header "Content-Type: application/json" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r" \
+  --data '{
+    "file_id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer tk_example_9xmk7q2r",
+    },
+    body: JSON.stringify({
+      file_id: "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    }),
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,200 idempotent" default-tab="1">
+```json
+{
+  "success": true,
+  "file": {
+    "id": "6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    "filename": "acme-support-playbook.pdf",
+    "size_bytes": 248193,
+    "mime_type": "application/pdf",
+    "status": "ready",
+    "status_error": null,
+    "char_count": 18420,
+    "chunk_count": 37,
+    "created_at": "2026-02-11T14:22:09.000Z",
+    "updated_at": "2026-02-11T14:22:46.000Z"
+  }
+}
+```
+
+```json
+{
+  "success": true,
+  "idempotent": true
+}
+```
+</Response>
+
+Diese Anfrage ist idempotent. Wenn die Datei bereits an den Assistenten angehängt ist, gibt der Endpunkt `success: true` und `idempotent: true` zurück.
+
+Die Datei muss bereits existieren und zum selben Konto gehören wie der Assistent. Bei Verwendung eines API-Schlüssels benötigt diese Anfrage den Scope `kb:write`.
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="uuid" required="true">
+Assistentenkennung, an die die vorhandene Datei angehängt wird.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="file_id" param-type="uuid" required="true">
+Kennung einer bereits existierenden Wissensdatenbank-Datei, die demselben Konto gehört wie der Assistent.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Datei erfolgreich angehängt wurde oder bereits angehängt war.
+</ResponseField>
+
+<ResponseField name="idempotent" field-type="boolean">
+Gibt `true` zurück, wenn die Datei bereits angehängt war und daher keine Änderung vorgenommen wurde.
+</ResponseField>
+
+<ResponseField name="file" field-type="object">
+Metadaten der angehängten Datei, wenn der Endpunkt eine neue Verknüpfung erstellt.
+</ResponseField>
+
+<ResponseField name="file.id" field-type="uuid">
+Eindeutige Dateikennung.
+</ResponseField>
+
+<ResponseField name="file.filename" field-type="string">
+Ursprünglicher Dateiname der vorhandenen Datei.
+</ResponseField>
+
+<ResponseField name="file.size_bytes" field-type="number">
+Dateigröße in Bytes.
+</ResponseField>
+
+<ResponseField name="file.mime_type" field-type="string">
+Erkannter MIME-Typ der Datei.
+</ResponseField>
+
+<ResponseField name="file.status" field-type="string">
+Aktueller Verarbeitungsstatus der Datei.
+</ResponseField>
+
+<ResponseField name="file.status_error" field-type="string">
+Fehlerdetails zur Verarbeitung, falls vorhanden. Andernfalls `null`.
+</ResponseField>
+
+<ResponseField name="file.char_count" field-type="number">
+Anzahl der aus der Datei extrahierten Zeichen.
+</ResponseField>
+
+<ResponseField name="file.chunk_count" field-type="number">
+Anzahl der für Retrieval erzeugten Chunks.
+</ResponseField>
+
+<ResponseField name="file.created_at" field-type="string">
+Zeitstempel, wann die Datei erstellt wurde.
+</ResponseField>
+
+<ResponseField name="file.updated_at" field-type="string">
+Zeitstempel der letzten Status- oder Metadatenänderung.
 </ResponseField>
 
 ## Wissensdatenbank-Datei löschen
 
 Entfernen Sie eine Datei aus der Wissensdatenbank eines Assistenten.
 
+<Request tabs="cURL" default-tab="1">
 ```bash
 curl --request DELETE \
   --url "https://app.talkturo.com/api/assistants/9d3f6cf5-3c12-4e60-bd8a-1b1d57a8c4d2/knowledge-base/6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
   --cookie "sb-access-token=sb_example_session_token"
 ```
+</Request>
 
+<Response tabs="200">
 ```json
 {
   "success": true,
   "message": "File deleted"
 }
 ```
+</Response>
 
 ### Pfadparameter
 
@@ -279,18 +459,6 @@ Gibt `true` zurück, wenn die Schätzung verfügbar ist.
 Details der Abrechnungsschätzung für die Wissensdatenbank-Verarbeitung. Die Objektstruktur hängt von der aktuellen Abrechnungsimplementierung ab.
 </ResponseField>
 
-## Eigenständiger Wissensdatenbank-Endpunkt
-
-Einige Deployments stellen möglicherweise einen separaten Endpunkt `GET /api/kb` für eigenständige Wissensdatenbank-Abfragen bereit.
-
-<Callout kind="info">
-
-Der Repository-Kontext für diese Seite bestätigt die assistentenspezifischen Endpunkte zur Verwaltung der Wissensdatenbank. Er liefert kein verifiziertes Anfrage- oder Antwortschema für `GET /api/kb`. Prüfen Sie Ihre deployte API oder interne Routendefinitionen, bevor Sie diesen Endpunkt in der Produktion verwenden.
-
-</Callout>
-
-Falls `GET /api/kb` in Ihrer Umgebung existiert, behandeln Sie ihn getrennt von der Dateiverwaltung für Assistenten. Er ersetzt nicht die oben dokumentierten Upload-, Listen- oder Lösch-Endpunkte.
-
 ## Typischer Workflow
 
 Verwenden Sie die Wissensdatenbank-Endpunkte in dieser Reihenfolge, wenn Sie die Dokumentenverwaltung automatisieren:
@@ -329,9 +497,6 @@ Eine erfolgreiche Löschung gibt `success: true` und eine Bestätigungsnachricht
 ## Verwandte Endpunkte
 
 <Columns cols={2}>
-  <Card title="Tool-Konfigurationen" href="/de/api-reference/tool-configs" icon="settings" cta="Referenz ansehen">
-  Das Verhalten der Wissensdatenbank kann auch mit der Tool-Konfiguration des Assistenten interagieren.
-  </Card>
   <Card title="Assistenten" href="/de/api-reference/assistants" icon="users" cta="Referenz ansehen">
   Verwalten Sie die Assistenten-Ressource, der jede Wissensdatenbank-Datei gehört.
   </Card>

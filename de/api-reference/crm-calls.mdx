@@ -1,0 +1,182 @@
+---
+title: CRM-Anrufe
+description: Einzelne ausgehende Anrufe über die Talkturo-API initiieren — mit Assistenten-Routing, Telefonnummernauswahl und Metadaten-Unterstützung.
+---
+
+## POST /api/crm/calls
+
+Starten Sie einen einzelnen ausgehenden Anruf.
+
+### Endpunktübersicht
+
+<Callout kind="info">
+
+**Authentifizierung:** Session-Cookie oder API-Schlüssel  
+**Berechtigung:** `calls:write`
+
+</Callout>
+
+Dieser Endpunkt erstellt einen einzelnen ausgehenden Anruf und ordnet ihn dem angegebenen Assistenten zu. Sie können optional eine Quelltelefonnummer und Metadaten mitsenden, damit nachgelagerte Systeme den Anruf einem CRM-Datensatz oder Workflow zuordnen können.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/calls" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assistantId": "asst_7f3c2d91",
+    "to": "+493012345678",
+    "from": "+498912345670",
+    "metadata": {
+      "contactId": "cnt_84hj2k",
+      "dealId": "deal_19az8q",
+      "source": "outbound-sequence"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/calls", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    assistantId: "asst_7f3c2d91",
+    to: "+493012345678",
+    from: "+498912345670",
+    metadata: {
+      contactId: "cnt_84hj2k",
+      dealId: "deal_19az8q",
+      source: "outbound-sequence"
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="201,400,401,402,500" default-tab="1">
+```json
+{
+  "call": {
+    "id": "call_2mY7nK8pQ4",
+    "assistantId": "asst_7f3c2d91",
+    "to": "+493012345678",
+    "from": "+498912345670",
+    "status": "queued",
+    "metadata": {
+      "contactId": "cnt_84hj2k",
+      "dealId": "deal_19az8q",
+      "source": "outbound-sequence"
+    },
+    "createdAt": "2026-08-23T14:12:09.000Z"
+  }
+}
+```
+
+```json
+{
+  "error": "invalid_body",
+  "message": "The request body is invalid."
+}
+```
+
+```json
+{
+  "error": "unauthorized",
+  "message": "Authentication required"
+}
+```
+
+```json
+{
+  "error": "insufficient_credits",
+  "message": "Insufficient credits"
+}
+```
+
+```json
+{
+  "error": "internal_error",
+  "message": "Internal server error"
+}
+```
+</Response>
+
+### Anfrage-Body
+
+<ParamField body="assistantId" param-type="string" required="true">
+Die ID des Assistenten, der den Anruf führen soll.
+</ParamField>
+
+<ParamField body="to" param-type="string" required="true">
+Zieltelefonnummer im E.164-Format.
+</ParamField>
+
+<ParamField body="from" param-type="string" required="false">
+Quelltelefonnummer im E.164-Format. Wenn Sie kein `from` senden, wählt Talkturo automatisch eine geeignete Nummer für den Assistenten oder Workspace aus.
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+Beliebige Schlüssel-Wert-Daten, die zusammen mit dem Anruf gespeichert werden. Verwenden Sie Metadaten, um CRM-Kontakte, Deals, Kampagnen oder externe Workflow-IDs zu referenzieren.
+</ParamField>
+
+### Antwort-Body
+
+<ResponseField name="call" field-type="object" required="true">
+Das erstellte Anrufobjekt.
+</ResponseField>
+
+<ResponseField name="call.id" field-type="string" required="true">
+Die eindeutige ID des Anrufs.
+</ResponseField>
+
+<ResponseField name="call.assistantId" field-type="string" required="true">
+Die ID des Assistenten, der dem Anruf zugeordnet wurde.
+</ResponseField>
+
+<ResponseField name="call.to" field-type="string" required="true">
+Die Zieltelefonnummer des Anrufs.
+</ResponseField>
+
+<ResponseField name="call.from" field-type="string" required="false">
+Die für den Anruf verwendete Quelltelefonnummer.
+</ResponseField>
+
+<ResponseField name="call.status" field-type="string" required="true">
+Der anfängliche Status des Anrufs. Neue Anrufe werden in der Regel mit `queued` erstellt.
+</ResponseField>
+
+<ResponseField name="call.metadata" field-type="object" required="false">
+Die Metadaten, die Sie im Anfrage-Body übergeben haben.
+</ResponseField>
+
+<ResponseField name="call.createdAt" field-type="string" required="true">
+Der Zeitstempel, zu dem Talkturo den Anruf erstellt hat, im ISO-8601-Format.
+</ResponseField>
+
+### Fehlerantworten
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | Die Anfrage ist ungültig, zum Beispiel wenn Pflichtfelder fehlen oder eine Telefonnummer falsch formatiert ist. |
+| `401` | Authentifizierung erforderlich. |
+| `402` | Unzureichendes Guthaben. |
+| `500` | Interner Serverfehler. |
+
+### Hinweise
+
+<Callout kind="tip">
+
+Wenn Sie Anrufe mit einem CRM synchronisieren, senden Sie stabile externe Kennungen in `metadata`, zum Beispiel `contactId` oder `dealId`. So können Sie Webhook-Ereignisse und Berichte später ohne zusätzliche Nachschlagetabellen zuordnen.
+
+</Callout>
+
+- Verwenden Sie für `to` und `from` das E.164-Format.
+- Senden Sie `from` nur, wenn Ihr Workspace oder Assistent diese Nummer verwenden darf.
+- Behandeln Sie `metadata` als anwendungsdefinierten Kontext. Die Struktur wird von der API nicht für Sie normalisiert.
+- Ein erfolgreicher Aufruf bestätigt, dass der Anruf angenommen und in die Warteschlange gestellt wurde. Er bestätigt nicht, dass die Gegenstelle bereits abgehoben hat.
