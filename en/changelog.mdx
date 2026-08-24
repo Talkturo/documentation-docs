@@ -8,6 +8,20 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-24" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **"Single company" CSV import mode** — Assign all imported contacts to one chosen company instead of reading company names from the file, preventing accidental mass company creation from business-directory lists. See [CRM Contacts](/en/crm/contacts).
+
+  ## Improvements
+
+  - **CSV import safeguards** — Imports now warn when more than 25 companies would be created and require acknowledgement before proceeding, detect likely mismapped columns (e.g., a German salutation column mapped to "First Name"), and show a preview of the first contact before you commit. See [CRM Contacts](/en/crm/contacts).
+
+  ## Bug Fixes
+
+  - **Auto-create checkbox preserved on mode switch** — The "auto-create companies" checkbox was being reset when switching back from single-company to file-based import mode. See [CRM Contacts](/en/crm/contacts).
+</Update>
+
 <Update label="2026-08-22" description="v2.8.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
