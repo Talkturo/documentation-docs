@@ -1,0 +1,290 @@
+---
+title: Stimmen
+description: Liste verfügbare Stimmenmodelle und TTS-Stimmen nach Provider auf, einschließlich geklonter Stimmen und veralteter Endpunkte.
+---
+
+## Verfügbare Stimmen und Modelle abrufen
+
+Diese Endpunkte listen Sprachmodelle und TTS-Stimmen für die von Talkturo unterstützten Provider auf. Verwende `/api/voice-providers/models`, um die verfügbaren Modelle eines Providers abzurufen, und `/api/tts-voices`, um System- und optional kontobezogene geklonte Stimmen zu laden.
+
+<Callout kind="info">
+
+Alle drei Endpunkte sind öffentlich und erfordern keine Authentifizierung. Der veraltete Endpunkt `/api/voice-providers/voices` bleibt aus Kompatibilitätsgründen verfügbar, aber neue Integrationen sollten `/api/tts-voices` verwenden.
+
+</Callout>
+
+## GET /api/voice-providers/models
+
+Rufe die verfügbaren Stimmenmodelle für einen einzelnen Provider ab.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/voice-providers/models?provider=elevenlabs"
+```
+</Request>
+
+<Response>
+```json
+[
+  {
+    "id": "eleven_multilingual_v2",
+    "name": "Eleven Multilingual v2"
+  },
+  {
+    "id": "eleven_flash_v2_5",
+    "name": "Eleven Flash v2.5"
+  },
+  {
+    "id": "eleven_turbo_v2_5",
+    "name": "Eleven Turbo v2.5"
+  }
+]
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="provider" param-type="string" required="true">
+Der Provider, für den Modelle geladen werden sollen.
+
+Unterstützte Werte:
+
+- `elevenlabs`
+- `cartesia`
+- `dashscope`
+- `inworld`
+- `kugel`
+- `fish`
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige Modell-ID, die du in nachgelagerten Sprach- oder TTS-Konfigurationen verwendest.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Der lesbare Name des Modells.
+</ResponseField>
+
+### Fehlerantworten
+
+<Response tabs="400 missing provider,400 unsupported provider">
+```json
+{
+  "error": "provider query param is required"
+}
+```
+
+```json
+{
+  "error": "Unsupported provider: speechify"
+}
+```
+</Response>
+
+## GET /api/tts-voices
+
+Rufe TTS-Stimmen aus der zentralen Stimmenliste ab. Ohne `accountId` liefert der Endpunkt nur Systemstimmen. Mit `accountId` liefert er zusätzlich geklonte Stimmen für dieses Konto.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/tts-voices?provider=elevenlabs&accountId=acc_9f4c2b7d"
+```
+</Request>
+
+<Response>
+```json
+[
+  {
+    "id": "voice_01hxy8m4n7k3p2q5r6s7t8u9",
+    "account_id": null,
+    "provider": "elevenlabs",
+    "name": "Amelia",
+    "voice_type": "system"
+  },
+  {
+    "id": "voice_01hxy9b1c4d6e7f8g9h0j1k2",
+    "account_id": "acc_9f4c2b7d",
+    "provider": "elevenlabs",
+    "name": "Sales Demo Clone",
+    "voice_type": "cloned"
+  }
+]
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="provider" param-type="string" required="false">
+Filtert die Stimmen nach Provider. Wenn du `all` übergibst oder den Parameter weglässt, gibt der Endpunkt Stimmen aus allen Providern zurück.
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="false">
+Wenn gesetzt, ergänzt der Endpunkt die Systemstimmen um geklonte Stimmen mit `voice_type` gleich `cloned`, die diesem Konto gehören.
+</ParamField>
+
+### Verhalten
+
+Die Antwort wird in dieser Reihenfolge aufgebaut:
+
+- Zuerst lädt der Endpunkt immer Systemstimmen mit `account_id` gleich `null`.
+- Wenn `provider` gesetzt ist, filtert der Endpunkt diese Systemstimmen auf den angegebenen Provider.
+- Wenn `accountId` gesetzt ist, lädt der Endpunkt zusätzlich geklonte Stimmen für dieses Konto.
+- Die zusammengeführte Liste wird nach `provider` und `name` sortiert.
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige ID der Stimme.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string | null" required="true">
+Die Konto-ID der Stimme. Systemstimmen haben `null`. Geklonte Stimmen enthalten die ID des zugehörigen Kontos.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string" required="true">
+Der Name des Voice-Providers.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Der Anzeigename der Stimme.
+</ResponseField>
+
+<ResponseField name="voice_type" field-type="string" required="true">
+Der Stimmtyp. Relevante Werte in diesem Endpunkt sind `system` und `cloned`.
+</ResponseField>
+
+### Fehlerantworten
+
+<Response tabs="500">
+```json
+{
+  "error": "Failed to load voices"
+}
+```
+</Response>
+
+<Callout kind="tip">
+
+Wenn du nur die global verfügbaren Stimmen benötigst, lasse `accountId` weg. Wenn du in der Oberfläche oder in einer Integration geklonte Stimmen anzeigen willst, übergib zusätzlich die Konto-ID.
+
+</Callout>
+
+## GET /api/voice-providers/voices
+
+Dieser Endpunkt ist veraltet. Verwende für neue Integrationen `/api/tts-voices`.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/voice-providers/voices?provider=elevenlabs"
+```
+</Request>
+
+<Response>
+```json
+[
+  {
+    "id": "voice_live_01",
+    "name": "Rachel",
+    "description": "Clear and conversational",
+    "previewUrl": "https://audio.talkturo.com/previews/rachel.mp3"
+  }
+]
+```
+</Response>
+
+### Status
+
+<Callout kind="alert">
+
+`/api/voice-providers/voices` ist veraltet und bleibt nur aus Kompatibilitätsgründen verfügbar. Die aktuelle Stimmenquelle ist `/api/tts-voices`, das auf der Tabelle `tts_voices` basiert.
+
+</Callout>
+
+### Query-Parameter
+
+<ParamField query="provider" param-type="string" required="true">
+Der Provider, dessen Stimmen geladen werden sollen.
+
+Unterstützte Werte:
+
+- `elevenlabs`
+- `cartesia`
+
+</ParamField>
+
+### Verhalten
+
+Für diesen Endpunkt gelten folgende Besonderheiten:
+
+- Bei `elevenlabs` werden Stimmen live aus der ElevenLabs-API geladen.
+- Bei `cartesia` werden Stimmen live aus der Cartesia-API geladen.
+- Wenn der erforderliche API-Schlüssel fehlt oder der Upstream-Aufruf fehlschlägt, gibt der Endpunkt stillschweigend ein leeres Array zurück.
+- Die Antwortform hängt vom jeweiligen Provider ab und entspricht nicht der zentralen Struktur von `/api/tts-voices`.
+
+### Mögliche Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Die eindeutige ID der Stimme beim Upstream-Provider.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Der Anzeigename der Stimme.
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="false">
+Eine optionale Beschreibung der Stimme.
+</ResponseField>
+
+<ResponseField name="previewUrl" field-type="string" required="false">
+Eine optionale URL zu einer Hörprobe. Dieser Wert wird typischerweise für ElevenLabs-Stimmen zurückgegeben.
+</ResponseField>
+
+<ResponseField name="language" field-type="string" required="false">
+Eine optionale Sprachangabe. Dieser Wert wird typischerweise für Cartesia-Stimmen zurückgegeben.
+</ResponseField>
+
+### Fehlerantworten
+
+<Response tabs="400 missing provider,400 unsupported provider">
+```json
+{
+  "error": "provider query param is required"
+}
+```
+
+```json
+{
+  "error": "Unsupported provider: inworld"
+}
+```
+</Response>
+
+## Wann du welchen Endpunkt verwendest
+
+Wähle den Endpunkt nach dem aus, was du in deiner Integration brauchst.
+
+| Endpunkt | Verwende ihn für | Hinweise |
+|---|---|---|
+| `/api/voice-providers/models` | Verfügbare Modelle eines Providers laden | `provider` ist erforderlich |
+| `/api/tts-voices` | Systemstimmen und optional geklonte Stimmen laden | Empfohlener Endpunkt |
+| `/api/voice-providers/voices` | Alte Integrationen weiter betreiben | Veraltet |
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+<Card
+  title="Voice Cloning"
+  href="/de/api-reference/voice-cloning"
+  icon="users"
+  cta="Zur Referenz"
+/>
+<Card
+  title="Assistenten"
+  href="/de/api-reference/assistants"
+  icon="bot"
+  cta="Zur Referenz"
+/>
+</Columns>

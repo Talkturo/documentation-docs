@@ -1,0 +1,286 @@
+---
+title: Zahlungsmethoden
+description: Listen Sie Stripe-Zahlungsmethoden auf, fügen Sie neue hinzu, legen Sie eine Standardmethode fest und entfernen Sie gespeicherte Karten.
+---
+
+## Endpunkte für Zahlungsmethoden
+
+Verwalten Sie die in einem Konto gespeicherten Stripe-Zahlungsmethoden über vier Endpunkte: auflisten, hinzufügen, als Standard festlegen und entfernen.
+
+<Callout kind="info">
+
+Diese Endpunkte akzeptieren Authentifizierung per **API-Schlüssel oder Sitzung**, abhängig davon, wie Sie die API aufrufen.
+
+</Callout>
+
+### Unterstützte Endpunkte
+
+- `GET /api/payment-methods`
+- `POST /api/payment-methods`
+- `PATCH /api/payment-methods/{id}`
+- `DELETE /api/payment-methods/{id}`
+
+## Zahlungsmethoden auflisten
+
+Rufen Sie alle aktiven Zahlungsmethoden für ein Konto ab.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/payment-methods?accountId=acc_9f2k1m7q" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "paymentMethods": [
+    {
+      "id": "pm_1QZkYhC8a9L2mN4p",
+      "brand": "visa",
+      "last4": "4242",
+      "expMonth": 12,
+      "expYear": 2028,
+      "isDefault": true
+    },
+    {
+      "id": "pm_1QZkZ9C8a9L2mN4q",
+      "brand": "mastercard",
+      "last4": "4444",
+      "expMonth": 8,
+      "expYear": 2027,
+      "isDefault": false
+    }
+  ],
+  "count": 2
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="accountId" param-type="string" required="true">
+
+Die ID des Kontos, dessen Zahlungsmethoden Sie abrufen möchten.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="paymentMethods" field-type="array" required="true">
+
+Liste der gespeicherten Zahlungsmethoden für das angegebene Konto.
+
+</ResponseField>
+
+<ResponseField name="count" field-type="number" required="true">
+
+Anzahl der zurückgegebenen Zahlungsmethoden.
+
+</ResponseField>
+
+## Zahlungsmethode hinzufügen
+
+Hängen Sie eine vorhandene Stripe-Zahlungsmethode an ein Konto an. Optional können Sie die neue Methode sofort als Standard festlegen.
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/payment-methods" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "acc_9f2k1m7q",
+    "paymentMethodId": "pm_1QZkYhC8a9L2mN4p",
+    "setAsDefault": true
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "paymentMethod": {
+    "id": "pm_1QZkYhC8a9L2mN4p",
+    "brand": "visa",
+    "last4": "4242",
+    "expMonth": 12,
+    "expYear": 2028,
+    "isDefault": true
+  }
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Die ID des Kontos, dem die Zahlungsmethode zugeordnet wird.
+
+</ParamField>
+
+<ParamField body="paymentMethodId" param-type="string" required="true">
+
+Die Stripe-ID der Zahlungsmethode, die angehängt werden soll. Der Endpunkt ruft intern `stripe.paymentMethods.attach` auf.
+
+</ParamField>
+
+<ParamField body="setAsDefault" param-type="boolean" required="false">
+
+Legt fest, ob die neu hinzugefügte Zahlungsmethode sofort als Standardzahlungsmethode gesetzt wird.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Zahlungsmethode erfolgreich hinzugefügt wurde.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod" field-type="object" required="true">
+
+Die neu verknüpfte Zahlungsmethode.
+
+</ResponseField>
+
+## Standardzahlungsmethode festlegen
+
+Markieren Sie eine vorhandene Zahlungsmethode als Standard für zukünftige Abrechnungen.
+
+<Request>
+```bash
+curl -X PATCH "https://api.talkturo.com/api/payment-methods/pm_1QZkYhC8a9L2mN4p?accountId=acc_9f2k1m7q" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfad- und Query-Parameter
+
+<ParamField path="id" param-type="string" required="true">
+
+Die ID der Zahlungsmethode, die als Standard gesetzt werden soll.
+
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="true">
+
+Die ID des Kontos, zu dem die Zahlungsmethode gehört.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Standardzahlungsmethode erfolgreich aktualisiert wurde.
+
+</ResponseField>
+
+<Callout kind="info">
+
+Dieser Endpunkt setzt die Standardzahlungsmethode über eine interne RPC-Aktualisierung.
+
+</Callout>
+
+## Zahlungsmethode entfernen
+
+Entfernen Sie eine gespeicherte Zahlungsmethode aus einem Konto. Der Endpunkt führt ein Soft-Delete aus und befördert automatisch eine andere Methode, wenn die entfernte Methode zuvor die Standardmethode war.
+
+<Request>
+```bash
+curl -X DELETE "https://api.talkturo.com/api/payment-methods/pm_1QZkYhC8a9L2mN4p?accountId=acc_9f2k1m7q" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfad- und Query-Parameter
+
+<ParamField path="id" param-type="string" required="true">
+
+Die ID der Zahlungsmethode, die entfernt werden soll.
+
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="true">
+
+Die ID des Kontos, aus dem die Zahlungsmethode entfernt wird.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Zahlungsmethode erfolgreich entfernt wurde.
+
+</ResponseField>
+
+<Callout kind="tip">
+
+Wenn Sie die aktuelle Standardzahlungsmethode entfernen, weist der Endpunkt automatisch eine andere aktive Zahlungsmethode als neue Standardmethode zu.
+
+</Callout>
+
+## Verhalten und Hinweise
+
+Diese Endpunkte decken die typischen Abläufe für gespeicherte Karten und andere Stripe-Zahlungsmethoden ab. Alle Änderungen gelten für das angegebene Konto und nicht global für den Benutzer.
+
+### Wichtige Details
+
+- **Auflisten** gibt die aktuelle Menge aktiver Zahlungsmethoden und deren Anzahl zurück.
+- **Hinzufügen** hängt eine vorhandene Stripe-Zahlungsmethode an das Konto an.
+- **Standard festlegen** aktualisiert die für künftige Abbuchungen verwendete Zahlungsmethode.
+- **Entfernen** löscht Zahlungsmethoden weich und behandelt den Standardfall automatisch.
+
+## Verwandte Ressourcen
+
+Nutzen Sie diese Seiten, wenn Sie Zahlungsdaten außerhalb der reinen Methodenverwaltung verwalten möchten.
+
+<Columns cols={2}>
+  <Card
+    title="Abrechnung"
+    href="/de/api-reference/billing"
+    icon="credit-card"
+    cta="API-Referenz öffnen"
+  >
+  
+  Rechnungs- und Abrechnungsendpunkte für Konten, Zahlungen und Abrechnungsverlauf.
+  
+  </Card>
+  <Card
+    title="Guthaben"
+    href="/de/api-reference/credits"
+    icon="database"
+    cta="API-Referenz öffnen"
+  >
+  
+  Verwalten und prüfen Sie Guthabenbewegungen und den aktuellen Stand eines Kontos.
+  
+  </Card>
+</Columns>

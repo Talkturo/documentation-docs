@@ -1,0 +1,297 @@
+---
+title: Voices
+description: List available voice models by provider, retrieve TTS voices, and include account-specific cloned voices for assistant configuration.
+---
+
+## Voice catalogs and TTS voice lists
+
+Use these endpoints to load provider model options, list available TTS voices, and include account-level cloned voices when you build voice selection into your assistant setup.
+
+<Callout kind="info">
+
+All voice endpoints on this page are **public**. They do not require a user session or API authentication.
+
+</Callout>
+
+## Endpoint summary
+
+| Endpoint | Method | Auth | Purpose |
+|---|---|---|---|
+| `/api/voice-providers/models` | `GET` | None | List supported models for a voice provider |
+| `/api/tts-voices` | `GET` | None | List system TTS voices and optionally include cloned voices for an account |
+| `/api/voice-providers/voices` | `GET` | None | Deprecated live provider voice lookup for ElevenLabs and Cartesia |
+
+## Get voice provider models
+
+`GET https://app.talkturo.com/api/voice-providers/models`
+
+Load the model catalog for a supported voice provider before you save assistant voice settings. The response is a simple array of model options with stable `id` values and human-readable names.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/voice-providers/models?provider=elevenlabs"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/voice-providers/models?provider=elevenlabs"
+);
+
+const models = await response.json();
+console.log(models);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+[
+  {
+    "id": "eleven_multilingual_v2",
+    "name": "Eleven Multilingual v2"
+  },
+  {
+    "id": "eleven_flash_v2_5",
+    "name": "Eleven Flash v2.5"
+  },
+  {
+    "id": "eleven_turbo_v2_5",
+    "name": "Eleven Turbo v2.5"
+  }
+]
+```
+
+```json
+{
+  "error": "provider query param is required"
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="provider" param-type="string" required="true" enum="elevenlabs,cartesia,dashscope,inworld,kugel,fish">
+Voice provider to list models for.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" field-type="string" required="true">
+Provider-specific model identifier. Use this value when you store or submit model selections.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Display name for the model.
+</ResponseField>
+
+### Supported providers and models
+
+| Provider | Models |
+|---|---|
+| `elevenlabs` | `eleven_multilingual_v2`, `eleven_flash_v2_5`, `eleven_turbo_v2_5` |
+| `cartesia` | `sonic-3`, `sonic-2`, `sonic-turbo` |
+| `dashscope` | `qwen3-tts-flash-realtime` |
+| `inworld` | `inworld-tts-2`, `inworld-tts-1.5-max`, `inworld-tts-1.5-mini` |
+| `kugel` | `kugel-3`, `kugel-2.5`, `kugel-2-turbo`, `kugel-1-turbo`, `kugel-1` |
+| `fish` | `s2.1-pro`, `s2-pro`, `s1` |
+
+### Error behavior
+
+If you omit `provider`, the API returns `400` with `provider query param is required`.
+
+If you pass an unsupported provider, the API returns `400` with an error in the form `Unsupported provider: provider-name`.
+
+## Get TTS voices
+
+`GET https://app.talkturo.com/api/tts-voices`
+
+Load the full TTS voice list used by the application. By default, the endpoint returns system voices. If you pass an `accountId`, the response also includes cloned voices for that account, then re-sorts the combined list by provider and name.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/tts-voices?provider=elevenlabs&accountId=acc_9f3c2d1b7e"
+```
+
+```javascript
+const params = new URLSearchParams({
+  provider: "elevenlabs",
+  accountId: "acc_9f3c2d1b7e"
+});
+
+const response = await fetch(
+  `https://app.talkturo.com/api/tts-voices?${params.toString()}`
+);
+
+const voices = await response.json();
+console.log(voices);
+```
+</Request>
+
+<Response tabs="200,500" default-tab="1">
+```json
+[
+  {
+    "id": "voice_01hxy8n4m2s7k9p3",
+    "account_id": null,
+    "provider": "elevenlabs",
+    "name": "Ava",
+    "voice_type": "system"
+  },
+  {
+    "id": "voice_01hxz1q5r8t4m6n2",
+    "account_id": "acc_9f3c2d1b7e",
+    "provider": "elevenlabs",
+    "name": "Jordan Sales Clone",
+    "voice_type": "cloned"
+  }
+]
+```
+
+```json
+{
+  "error": "Failed to load voices"
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="provider" param-type="string" required="false">
+Filter voices by provider. Omit this parameter or set it to `all` to return voices from every provider.
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="false">
+Account identifier used to include cloned voices for that account alongside system voices.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" field-type="string" required="true">
+Unique voice record identifier from the `tts_voices` table.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string | null" required="true">
+Account that owns the voice. System voices use `null`. Cloned voices use the owning account ID.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string" required="true">
+Voice provider for the record.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Display name shown in voice pickers.
+</ResponseField>
+
+<ResponseField name="voice_type" field-type="string" required="true">
+Voice category stored on the record. Cloned account voices use `cloned`.
+</ResponseField>
+
+### How filtering works
+
+The endpoint always loads system voices first. When you include `accountId`, it also loads cloned voices where `voice_type` is `cloned` for that account.
+
+If you also include `provider`, the same provider filter applies to both system voices and cloned voices. The final merged response is sorted by `provider` and then `name`.
+
+<Callout kind="tip">
+
+Use `/api/tts-voices` for any production voice picker. It returns the app-backed catalog and can include cloned voices in one request.
+
+</Callout>
+
+## Get provider voices
+
+`GET https://app.talkturo.com/api/voice-providers/voices`
+
+This endpoint fetches live voice data directly from provider APIs, but it is deprecated. Prefer `/api/tts-voices` for current integrations.
+
+<Callout kind="alert">
+
+`/api/voice-providers/voices` is deprecated. Use `/api/tts-voices` instead.
+
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/voice-providers/voices?provider=cartesia"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/voice-providers/voices?provider=cartesia"
+);
+
+const voices = await response.json();
+console.log(voices);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+[
+  {
+    "id": "cartesia-voice-7f4d2a",
+    "name": "Maya",
+    "description": "Clear conversational voice",
+    "language": "en"
+  }
+]
+```
+
+```json
+{
+  "error": "Unsupported provider: inworld"
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="provider" param-type="string" required="true" enum="elevenlabs,cartesia">
+Provider to query. Only `elevenlabs` and `cartesia` are supported.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" field-type="string" required="true">
+Provider voice identifier.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Voice display name returned by the provider.
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="false">
+Optional provider-supplied description for the voice.
+</ResponseField>
+
+<ResponseField name="previewUrl" field-type="string" required="false">
+Preview audio URL returned by ElevenLabs.
+</ResponseField>
+
+<ResponseField name="language" field-type="string" required="false">
+Language value returned by Cartesia.
+</ResponseField>
+
+### Provider behavior
+
+For `elevenlabs`, the endpoint fetches voices from the ElevenLabs voices API and maps the response to `id`, `name`, `description`, and `previewUrl`.
+
+For `cartesia`, the endpoint fetches voices from the Cartesia voices API and maps the response to `id`, `name`, `description`, and `language`.
+
+If the upstream API key is missing or the provider request fails, the endpoint returns an empty array instead of an error response.
+
+## Related resources
+
+<Columns cols={2}>
+  <Card
+    title="Voice cloning"
+    href="/en/api-reference/voice-cloning"
+    icon="mic"
+    cta="View endpoint"
+  />
+  <Card
+    title="Assistants"
+    href="/en/api-reference/assistants"
+    icon="users"
+    cta="View endpoints"
+  />
+</Columns>

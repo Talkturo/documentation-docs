@@ -1,0 +1,187 @@
+---
+title: Anrufe
+description: Rufen Sie TurboFlow-Ausführungen für einen Anruf ab und generieren Sie vorsignierte Aufnahme-URLs für den sicheren Zugriff.
+---
+
+## Anrufdaten und Aufnahme-Links abrufen
+
+Die Anrufe-API stellt zwei leseorientierte Endpunkte bereit: einen für TurboFlow-Ausführungen, die zu einem Anruf gehören, und einen für eine zeitlich begrenzte URL zur Anrufaufnahme. Beide Endpunkte verwenden Sitzungsauthentifizierung.
+
+<Callout kind="info">
+
+Verwenden Sie diese Endpunkte mit einer aktiven Benutzersitzung. Wenn keine gültige Sitzung vorhanden ist, schlägt die Anfrage mit einem Authentifizierungsfehler fehl.
+
+</Callout>
+
+## GET /api/calls/{id}/flow-runs
+
+Rufen Sie alle TurboFlow-Ausführungen ab, die für einen bestimmten Anruf gestartet wurden. Das ist nützlich, wenn Sie nachvollziehen möchten, welche Flows gelaufen sind, wann sie gestartet oder beendet wurden und ob Fehler aufgetreten sind.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/calls/call_9f3k2m1q/flow-runs" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4bn8y1wp"
+```
+</Request>
+
+<Response>
+```json
+{
+  "runs": [
+    {
+      "id": "run_01j7v2m8n4e6p9q3",
+      "flowId": "flow_01j7v1c2k8d4r5t6",
+      "name": "Post-call summary",
+      "status": "completed",
+      "startedAt": "2026-08-24T10:02:14.000Z",
+      "finishedAt": "2026-08-24T10:02:18.000Z",
+      "error": null,
+      "input": {
+        "callId": "call_9f3k2m1q",
+        "language": "en"
+      }
+    },
+    {
+      "id": "run_01j7v2mb7s1c4x8z",
+      "flowId": "flow_01j7v1z9n2b3m4k5",
+      "name": "CRM sync",
+      "status": "failed",
+      "startedAt": "2026-08-24T10:02:20.000Z",
+      "finishedAt": "2026-08-24T10:02:21.000Z",
+      "error": "Remote CRM returned 502",
+      "input": {
+        "callId": "call_9f3k2m1q",
+        "workspace": "acme-sales"
+      }
+    }
+  ]
+}
+```
+</Response>
+
+### Authentifizierung
+
+Dieser Endpunkt erfordert Sitzungsauthentifizierung.
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Die eindeutige Kennung des Anrufs, dessen TurboFlow-Ausführungen Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="runs" field-type="array" required="true">
+Liste aller TurboFlow-Ausführungen, die dem Anruf zugeordnet sind.
+</ResponseField>
+
+<ResponseField name="runs[].id" field-type="string" required="true">
+Die eindeutige Kennung der Flow-Ausführung.
+</ResponseField>
+
+<ResponseField name="runs[].flowId" field-type="string" required="true">
+Die Kennung des TurboFlow, der ausgeführt wurde.
+</ResponseField>
+
+<ResponseField name="runs[].name" field-type="string" required="true">
+Der Name des Flows zum Zeitpunkt der Ausführung.
+</ResponseField>
+
+<ResponseField name="runs[].status" field-type="string" required="true">
+Der aktuelle oder abschließende Status der Ausführung.
+</ResponseField>
+
+<ResponseField name="runs[].startedAt" field-type="string" required="true">
+Zeitstempel, wann die Ausführung gestartet wurde.
+</ResponseField>
+
+<ResponseField name="runs[].finishedAt" field-type="string" required="false">
+Zeitstempel, wann die Ausführung beendet wurde. Dieser Wert kann leer sein, wenn die Ausführung noch läuft.
+</ResponseField>
+
+<ResponseField name="runs[].error" field-type="string | null" required="false">
+Fehlerdetails, wenn die Ausführung fehlgeschlagen ist. Bei erfolgreichen Ausführungen ist der Wert `null`.
+</ResponseField>
+
+<ResponseField name="runs[].input" field-type="object" required="false">
+Die Eingabedaten, mit denen der Flow gestartet wurde.
+</ResponseField>
+
+### Verhalten
+
+Der Endpunkt gibt ein einzelnes Objekt mit dem Feld `runs` zurück. Jede Ausführung enthält Metadaten zum Flow, Zeitstempel für Start und Ende sowie optionale Fehler- und Eingabedaten.
+
+<Callout kind="tip">
+
+Wenn Sie Anrufautomationen debuggen, prüfen Sie zuerst `status`, `finishedAt` und `error`. Diese drei Felder reichen oft aus, um fehlgeschlagene oder noch laufende Ausführungen schnell einzuordnen.
+
+</Callout>
+
+## GET /api/calls/{id}/recording-url
+
+Generieren Sie eine vorsignierte URL für die Aufnahme eines Anrufs. Verwenden Sie diese URL, wenn Sie eine Aufnahme sicher abspielen oder herunterladen möchten, ohne einen dauerhaft öffentlichen Link bereitzustellen.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/calls/call_9f3k2m1q/recording-url" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4bn8y1wp"
+```
+</Request>
+
+<Response>
+```json
+{
+  "url": "https://storage.talkturo.com/recordings/call_9f3k2m1q.wav?signature=8b6f2a91c3d4e5f6&expires=1724497200",
+  "expiresIn": 3600
+}
+```
+</Response>
+
+### Authentifizierung
+
+Dieser Endpunkt erfordert Sitzungsauthentifizierung.
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Die eindeutige Kennung des Anrufs, für den Sie eine Aufnahme-URL generieren möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="url" field-type="string" required="true">
+Die vorsignierte URL zur Aufnahme. Die URL ist nur für eine begrenzte Zeit gültig.
+</ResponseField>
+
+<ResponseField name="expiresIn" field-type="number" required="true">
+Die Gültigkeitsdauer der URL in Sekunden.
+</ResponseField>
+
+### Verhalten
+
+Die Antwort enthält die eigentliche Download- oder Playback-URL in `url` und die verbleibende Gültigkeitsdauer in `expiresIn`. Fordern Sie bei Bedarf eine neue URL an, statt eine abgelaufene URL erneut zu verwenden.
+
+<Callout kind="alert">
+
+Behandeln Sie die zurückgegebene Aufnahme-URL wie ein temporäres Geheimnis. Teilen Sie sie nicht öffentlich und speichern Sie sie nicht dauerhaft in Logs, Tickets oder Client-seitigem Quellcode.
+
+</Callout>
+
+## Verwandte Ressourcen
+
+Wenn Sie mit Anrufen arbeiten, benötigen Sie oft zusätzlich Dokumentation zu Flow-Ausführungen oder zur zugrunde liegenden Sitzung.
+
+<Columns cols={2}>
+  <Card
+    title="TurboFlow"
+    href="/de/api-reference/turboflow"
+    icon="zap"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="Sitzungen"
+    href="/de/api-reference/sessions"
+    icon="database"
+    cta="Zur Referenz"
+  />
+</Columns>

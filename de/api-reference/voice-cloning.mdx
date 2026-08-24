@@ -1,0 +1,248 @@
+---
+title: Voice Cloning
+description: Erstelle und lösche benutzerdefinierte Voice Clones über die API, einschließlich Authentifizierung, Request-Feldern, Antworten und Fehlerfällen.
+---
+
+## Voice Cloning Endpunkte
+
+Erstelle benutzerdefinierte Klon-Stimmen aus Audiomaterial und lösche sie wieder, wenn du sie nicht mehr brauchst. Beide Endpunkte verwenden Session-Cookie-Authentifizierung und sind für account-spezifische Stimmen gedacht.
+
+<Callout kind="info">
+
+Verwende diese Endpunkte für **geklonte Stimmen**. Wenn du verfügbare Stimmen auflisten oder bestehende Stimmen in deiner Anwendung verwenden willst, siehe [Stimmen](/de/api-reference/voices).
+
+</Callout>
+
+## POST /api/voice-cloning
+
+Erstellt eine neue Klon-Stimme für einen Account auf Basis einer Base64-kodierten Audiodatei.
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/voice-cloning" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -d '{
+    "accountId": "acc_9f3k2m1q",
+    "preferred_name": "Support DE Voice",
+    "language": "de",
+    "audio_base64": "UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YScAAAB...",
+    "audio_mime_type": "audio/wav"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "voice": {
+    "id": "9d4c6f72-6e3d-4e9d-ae2e-2a1b6d6f8c41",
+    "provider": "dashscope",
+    "voice_id": "voice_clone_01jx8q2m7m5x4t2p9n6r3k1h",
+    "name": "Support DE Voice",
+    "language": "de",
+    "voice_type": "cloned",
+    "voice_model": "dashscope",
+    "account_id": "acc_9f3k2m1q",
+    "preview_url": null,
+    "description": null,
+    "metadata": {
+      "target_model": "dashscope"
+    }
+  }
+}
+```
+</Response>
+
+### Authentifizierung
+
+Sende einen gültigen Session-Cookie mit der Anfrage. Ohne authentifizierte Session gibt die API einen Fehler zurück.
+
+### Request-Body
+
+<ParamField body="accountId" param-type="string" required="true">
+Die ID des Accounts, dem die geklonte Stimme zugeordnet wird.
+</ParamField>
+
+<ParamField body="preferred_name" param-type="string" required="false">
+Optionaler Anzeigename für die neue Stimme. Wenn du keinen Namen sendest, verwendet der Dienst einen internen Standardwert.
+</ParamField>
+
+<ParamField body="language" param-type="string" required="false">
+Optionale Sprachkennung der Klon-Stimme, zum Beispiel `de` oder `en`.
+</ParamField>
+
+<ParamField body="audio_base64" param-type="string" required="true">
+Base64-kodierter Audioinhalt der Trainingsaufnahme. Dieses Feld ist erforderlich.
+</ParamField>
+
+<ParamField body="audio_mime_type" param-type="string" required="false">
+MIME-Typ der Audiodatei. Standard ist `audio/wav`, wenn du keinen Wert sendest.
+</ParamField>
+
+### Response-Felder
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true`, wenn die Klon-Stimme erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="voice" field-type="object" required="true">
+Das gespeicherte Voice-Objekt der neu erstellten Klon-Stimme.
+</ResponseField>
+
+<ResponseField name="voice.id" field-type="string" required="true">
+Interne ID des Voice-Datensatzes.
+</ResponseField>
+
+<ResponseField name="voice.provider" field-type="string" required="true">
+Provider der geklonten Stimme. Für diesen Endpunkt ist der Wert `dashscope`.
+</ResponseField>
+
+<ResponseField name="voice.voice_id" field-type="string" required="true">
+Externe Voice-ID beim Provider. Verwende diesen Wert als `voiceId` im Lösch-Endpunkt.
+</ResponseField>
+
+<ResponseField name="voice.name" field-type="string" required="true">
+Anzeigename der Stimme.
+</ResponseField>
+
+<ResponseField name="voice.language" field-type="string" required="false">
+Sprachkennung der Stimme, sofern gesetzt.
+</ResponseField>
+
+<ResponseField name="voice.voice_type" field-type="string" required="true">
+Typ der Stimme. Für geklonte Stimmen ist der Wert `cloned`.
+</ResponseField>
+
+<ResponseField name="voice.voice_model" field-type="string" required="true">
+Modellbezeichnung der Stimme.
+</ResponseField>
+
+<ResponseField name="voice.account_id" field-type="string" required="true">
+ID des Accounts, dem die Stimme gehört.
+</ResponseField>
+
+<ResponseField name="voice.preview_url" field-type="null" required="true">
+Vorschaulink der Stimme. Für diesen Endpunkt derzeit `null`.
+</ResponseField>
+
+<ResponseField name="voice.description" field-type="null" required="true">
+Beschreibung der Stimme. Für diesen Endpunkt derzeit `null`.
+</ResponseField>
+
+<ResponseField name="voice.metadata" field-type="object" required="true">
+Zusätzliche Metadaten zur Provider-Stimme.
+</ResponseField>
+
+<ResponseField name="voice.metadata.target_model" field-type="string" required="true">
+Zielmodell, das für die Klon-Erstellung verwendet wurde.
+</ResponseField>
+
+### Fehlerfälle
+
+| Status | Bedeutung |
+|---|---|
+| `400` | `accountId` oder `audio_base64` fehlt |
+| `403` | Nicht autorisiert |
+| `500` | Datenbankeintrag konnte nicht erstellt werden |
+| `502` | Fehler von DashScope beim Erstellen der Stimme |
+| `503` | `DASHSCOPE_API_KEY` ist nicht konfiguriert |
+
+<Callout kind="alert">
+
+Wenn `audio_base64` fehlt oder leer ist, verarbeitet die API die Anfrage nicht. Prüfe vor dem Senden, dass dein Audio vollständig eingelesen und korrekt Base64-kodiert wurde.
+
+</Callout>
+
+## DELETE /api/voice-cloning/voiceId
+
+Löscht eine zuvor erstellte Klon-Stimme anhand ihrer Provider-ID.
+
+<Request>
+```bash
+curl -X DELETE "https://api.talkturo.com/api/voice-cloning/voice_clone_01jx8q2m7m5x4t2p9n6r3k1h?accountId=acc_9f3k2m1q" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="voiceId" param-type="string" required="true">
+Die Voice-ID beim Provider. Das ist derselbe Wert wie `voice.voice_id` aus der Erstellungsantwort.
+</ParamField>
+
+### Query-Parameter
+
+<ParamField query="accountId" param-type="string" required="true">
+Die ID des Accounts, zu dem die Stimme gehört.
+</ParamField>
+
+### Response-Felder
+
+<ResponseField name="success" field-type="boolean" required="true">
+`true`, wenn die Stimme erfolgreich gelöscht wurde.
+</ResponseField>
+
+### Fehlerfälle
+
+| Status | Bedeutung |
+|---|---|
+| `400` | `accountId` oder `voiceId` fehlt |
+| `403` | Nicht autorisiert |
+| `404` | Stimme nicht gefunden |
+| `409` | Stimme wird noch von Assistenten verwendet |
+| `500` | Datenbankfehler beim Löschen |
+
+### 409 Konflikt bei Verwendung durch Assistenten
+
+Wenn die Stimme noch in einem oder mehreren Assistenten verwendet wird, verhindert die API das Löschen und gibt einen `409`-Fehler zurück. Die Antwort enthält in diesem Fall zusätzlich eine Liste der betroffenen Assistenten, damit du die Zuordnung zuerst entfernen kannst.
+
+<Response>
+```json
+{
+  "error": "Voice is in use by assistants",
+  "assistants": [
+    {
+      "id": "asst_7c2m9d4k",
+      "name": "Inbound Support DE"
+    },
+    {
+      "id": "asst_2p8x5q1n",
+      "name": "Sales Qualifier"
+    }
+  ]
+}
+```
+</Response>
+
+## Hinweise zum Verhalten
+
+Der Erstellungs-Endpunkt legt die Stimme beim Provider an und speichert anschließend den Datensatz lokal. Ein `500`-Fehler bedeutet daher, dass der Datenbankeintrag fehlgeschlagen ist, auch wenn der Provider-Aufruf zuvor erfolgreich war.
+
+Der Lösch-Endpunkt arbeitet mit der Provider-Voice-ID im Pfad, nicht mit der internen Datenbank-ID. Wenn du Stimmen programmatisch verwaltest, speichere deshalb sowohl `id` als auch `voice_id`, und verwende für Löschvorgänge `voice_id`.
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card
+    title="Stimmen"
+    href="/de/api-reference/voices"
+    icon="database"
+    cta="Zur API-Referenz"
+  />
+  <Card
+    title="Assistenten"
+    href="/de/api-reference/assistants"
+    icon="users"
+    cta="Zur API-Referenz"
+  />
+</Columns>

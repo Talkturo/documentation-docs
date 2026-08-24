@@ -1,0 +1,258 @@
+---
+title: Calls
+description: Retrieve TurboFlow runs for a call and generate presigned recording URLs for playback or download from Talkturo.
+---
+
+## Calls API
+
+Retrieve TurboFlow runs triggered during a call and generate a short-lived recording URL for playback or download. Both endpoints are scoped to the call's workspace and only return data if the signed-in user belongs to that workspace.
+
+<Callout kind="info">
+
+These endpoints require **session authentication**. Send the request from an authenticated browser session or include the Talkturo session cookie in your request. API keys are not supported for these routes.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/calls/{id}/flow-runs` | List TurboFlow runs associated with a call, including each flow name |
+| `GET` | `/api/calls/{id}/recording-url` | Generate a presigned S3 URL for the call recording |
+
+## Get flow runs for a call
+
+`GET /api/calls/{id}/flow-runs` returns TurboFlow runs linked to the specified call. The response includes the flow name, run status, timestamps, any error message, and the recorded input payload.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/calls/call_7d9c2f4a-4d5d-4bb6-b6c1-1b2f8d760e21/flow-runs" \
+  --cookie "sb-access-token=sess_example_9xmk7q2r; sb-refresh-token=refresh_example_3pm4t8vz"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/calls/call_7d9c2f4a-4d5d-4bb6-b6c1-1b2f8d760e21/flow-runs",
+  {
+    method: "GET",
+    credentials: "include"
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,403,404" default-tab="1">
+```json
+{
+  "runs": [
+    {
+      "id": "run_91f0a36d",
+      "flowId": "flow_2ab4c9e1",
+      "name": "Lead qualification",
+      "status": "completed",
+      "startedAt": "2026-08-24T16:02:11.000Z",
+      "finishedAt": "2026-08-24T16:02:18.000Z",
+      "error": null,
+      "input": {
+        "call_id": "call_7d9c2f4a-4d5d-4bb6-b6c1-1b2f8d760e21",
+        "contact_name": "Jane Chen",
+        "company": "Northwind Health"
+      }
+    },
+    {
+      "id": "run_4a33b8d2",
+      "flowId": "flow_8cf1d0b7",
+      "name": "Post-call summary",
+      "status": "failed",
+      "startedAt": "2026-08-24T16:30:04.000Z",
+      "finishedAt": "2026-08-24T16:30:05.000Z",
+      "error": "Webhook destination returned 500",
+      "input": {
+        "call_id": "call_7d9c2f4a-4d5d-4bb6-b6c1-1b2f8d760e21"
+      }
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Call not found"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Call UUID.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="runs" field-type="array" required="true">
+List of TurboFlow runs associated with the call.
+</ResponseField>
+
+<ResponseField name="runs[].id" field-type="string" required="true">
+Unique run identifier.
+</ResponseField>
+
+<ResponseField name="runs[].flowId" field-type="string" required="true">
+Unique identifier of the flow that executed.
+</ResponseField>
+
+<ResponseField name="runs[].name" field-type="string" required="true">
+Flow name from the joined flow record.
+</ResponseField>
+
+<ResponseField name="runs[].status" field-type="string" required="true">
+Run status. One of `completed`, `failed`, or `running`.
+</ResponseField>
+
+<ResponseField name="runs[].startedAt" field-type="string" required="true">
+Timestamp when the run started.
+</ResponseField>
+
+<ResponseField name="runs[].finishedAt" field-type="string" required="false">
+Timestamp when the run finished. Returns `null` while the run is still in progress.
+</ResponseField>
+
+<ResponseField name="runs[].error" field-type="string" required="false">
+Error message for failed runs. Returns `null` for successful or in-progress runs.
+</ResponseField>
+
+<ResponseField name="runs[].input" field-type="object" required="true">
+Input payload stored for the run.
+</ResponseField>
+
+### Behavior
+
+The endpoint filters runs by the call ID stored in the TurboFlow run context and by the workspace account ID associated with the call. Talkturo first loads the call, then verifies that your session belongs to the call's workspace before querying runs.
+
+Because the response joins flow metadata, `name` reflects the current flow name returned by the underlying query. Use `flowId` as the stable identifier in your integration.
+
+### Errors
+
+| Status | Meaning |
+| --- | --- |
+| `400` | The call ID is missing |
+| `403` | Your session does not belong to the workspace that owns the call |
+| `404` | The call does not exist |
+| `500` | The flow runs query failed |
+
+<Callout kind="tip">
+
+Use this endpoint when you need to correlate automation activity with a completed call. A `running` status means the flow started during the call but has not finished yet.
+
+</Callout>
+
+## Get a presigned recording URL
+
+`GET /api/calls/{id}/recording-url` returns a short-lived S3 URL for the call recording. The endpoint prefers `stereo_recording_url` and falls back to `recording_url` when a stereo file is not available.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/calls/call_7d9c2f4a-4d5d-4bb6-b6c1-1b2f8d760e21/recording-url" \
+  --cookie "sb-access-token=sess_example_9xmk7q2r; sb-refresh-token=refresh_example_3pm4t8vz"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/calls/call_7d9c2f4a-4d5d-4bb6-b6c1-1b2f8d760e21/recording-url",
+  {
+    method: "GET",
+    credentials: "include"
+  }
+);
+
+const data = await response.json();
+console.log(data.url, data.expiresIn);
+```
+</Request>
+
+<Response tabs="200,404,500" default-tab="1">
+```json
+{
+  "url": "https://recordings.talkturo.com/calls/2026/08/24/call_7d9c2f4a-4d5d-4bb6-b6c1-1b2f8d760e21.wav?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=example_access_key",
+  "expiresIn": 600
+}
+```
+
+```json
+{
+  "error": "Recording not found"
+}
+```
+
+```json
+{
+  "error": "Failed to generate recording URL"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Call UUID.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="url" field-type="string" required="true">
+Presigned S3 download URL for the call recording.
+</ResponseField>
+
+<ResponseField name="expiresIn" field-type="integer" required="true">
+URL lifetime in seconds.
+</ResponseField>
+
+### Behavior
+
+The endpoint loads the call record, checks that your session belongs to the workspace that owns the call, and then signs the recording object in S3. If both recording fields exist, Talkturo uses `stereo_recording_url` first.
+
+Presigned URLs expire after 600 seconds by default. The server can override that value with the `RECORDINGS_PRESIGN_EXPIRES_IN` environment variable.
+
+### Errors
+
+| Status | Meaning |
+| --- | --- |
+| `400` | The call ID is missing |
+| `403` | Your session does not belong to the workspace that owns the call |
+| `404` | The call does not exist or no recording URL is stored for the call |
+| `500` | Recording storage is not configured correctly, the key could not be extracted, or URL signing failed |
+
+<Callout kind="alert">
+
+Treat the returned URL as temporary access to the recording file. Generate a fresh URL when `expiresIn` has elapsed instead of caching the URL long term.
+
+</Callout>
+
+## Related resources
+
+<Columns cols={2}>
+  <Card
+    title="TurboFlow"
+    href="/en/api-reference/turboflow"
+    icon="workflow"
+    cta="View endpoints"
+  />
+  <Card
+    title="Sessions"
+    href="/en/api-reference/sessions"
+    icon="monitor"
+    cta="View endpoints"
+  />
+</Columns>

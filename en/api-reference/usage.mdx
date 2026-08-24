@@ -1,0 +1,523 @@
+---
+title: Usage
+description: Retrieve current month usage limits and consumption, and log desktop voice usage events for billing and usage tracking.
+---
+
+## Monitor usage and log voice events
+
+Use the Usage API to read current-month limits and consumption for an account, then record desktop speech-to-text usage events for billing. The two endpoints serve different clients: account usage is available to your web app or backend, while voice usage logging is intended for the desktop app.
+
+<Callout kind="info">
+
+`GET /api/usage/current` accepts either a session or an API key through `withApiAuth`. `POST /api/usage/voice` uses desktop-token authentication through `authenticateDesktop`, not API-key auth. Use `https://api.talkturo.com` for API-key requests, and `https://app.talkturo.com` for session-based or desktop-token requests.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Endpoint | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/api/usage/current` | Session or API key | Return account limits, current-month usage, remaining capacity, percentages, and credit details |
+| `POST` | `/api/usage/voice` | Desktop token | Log a desktop STT usage event for billing |
+
+## Get current usage
+
+`GET /api/usage/current` returns the current month's usage snapshot for an account. The response includes raw limits and usage plus server-calculated remaining values and percentages, so you can render usage meters without duplicating billing logic.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/usage/current?accountId=acc_7f3a2c19" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Accept: application/json"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/usage/current?accountId=acc_7f3a2c19",
+  {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer tk_example_9xmk7q2r",
+      "Accept": "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,404,500" default-tab="1">
+```json
+{
+  "limits": {
+    "minutes_per_month": 1200,
+    "parallel_calls": 5,
+    "max_ai_agents": 12,
+    "monthly_credits": 50000,
+    "daily_credits": 2000,
+    "max_daily_credits": 3000
+  },
+  "usage": {
+    "minutes_used": 184,
+    "calls_made": 92,
+    "credits_used": 14680,
+    "peak_parallel_calls": 3,
+    "ai_agents_created": 4,
+    "credits_remaining": 35320,
+    "daily_credits_used": 980,
+    "credits_rolled_over": 1500
+  },
+  "remaining": {
+    "credits": 35320,
+    "daily_credits": 1020,
+    "minutes": 1016,
+    "parallel_calls": 2,
+    "ai_agents": 8
+  },
+  "percentages": {
+    "credits": 29.36,
+    "daily_credits": 49,
+    "minutes": 15.33,
+    "parallel_calls": 60,
+    "ai_agents": 33.33
+  },
+  "credit_info": {
+    "monthly_credits": 50000,
+    "daily_credits": 2000,
+    "max_daily_credits": 3000,
+    "credits_used": 14680,
+    "credits_remaining": 35320,
+    "credits_rolled_over": 1500,
+    "daily_credits_used": 980,
+    "credit_rollover_enabled": true,
+    "usage_based_ai_enabled": true
+  }
+}
+```
+
+```json
+{
+  "error": "accountId is required"
+}
+```
+
+```json
+{
+  "error": "Account limits not found"
+}
+```
+
+```json
+{
+  "error": "Failed to fetch usage"
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+
+Account identifier to load usage and billing limits for.
+
+</ParamField>
+
+### Authentication
+
+Add either a valid API key or an authenticated session. For API-key access, send the request to `https://api.talkturo.com`. For browser-session access, send the request to `https://app.talkturo.com`.
+
+### How usage is calculated
+
+The endpoint combines account limits from `get_account_limits` with current-month consumption from `get_current_month_usage`. It supports a dual billing model: when credits are enabled, the response emphasizes credits-based accounting; when credits are not available, usage falls back to minute-based tracking.
+
+That calculation happens on the server. The `remaining` and `percentages` objects are already derived from the account's limits and current usage, so your client does not need to recompute them.
+
+### Response fields
+
+#### limits
+
+<ResponseField name="limits" field-type="object" required="true">
+
+Account-level usage limits for the current billing model.
+
+</ResponseField>
+
+<ResponseField name="limits.minutes_per_month" field-type="number" required="true">
+
+Monthly minute allowance.
+
+</ResponseField>
+
+<ResponseField name="limits.parallel_calls" field-type="number" required="true">
+
+Maximum concurrent calls allowed for the account.
+
+</ResponseField>
+
+<ResponseField name="limits.max_ai_agents" field-type="number" required="true">
+
+Maximum number of AI agents the account can create.
+
+</ResponseField>
+
+<ResponseField name="limits.monthly_credits" field-type="number" required="true">
+
+Monthly credit allocation.
+
+</ResponseField>
+
+<ResponseField name="limits.daily_credits" field-type="number" required="true">
+
+Daily credit allocation.
+
+</ResponseField>
+
+<ResponseField name="limits.max_daily_credits" field-type="number" required="true">
+
+Maximum daily credits available after rollover or account-level adjustments.
+
+</ResponseField>
+
+#### usage
+
+<ResponseField name="usage" field-type="object" required="true">
+
+Current-month consumption values for the account.
+
+</ResponseField>
+
+<ResponseField name="usage.minutes_used" field-type="number" required="true">
+
+Total minutes consumed in the current month.
+
+</ResponseField>
+
+<ResponseField name="usage.calls_made" field-type="number" required="true">
+
+Total calls recorded in the current month.
+
+</ResponseField>
+
+<ResponseField name="usage.credits_used" field-type="number" required="true">
+
+Credits consumed in the current month.
+
+</ResponseField>
+
+<ResponseField name="usage.peak_parallel_calls" field-type="number" required="true">
+
+Highest number of concurrent calls observed in the current month.
+
+</ResponseField>
+
+<ResponseField name="usage.ai_agents_created" field-type="number" required="true">
+
+Number of AI agents created during the current month.
+
+</ResponseField>
+
+<ResponseField name="usage.credits_remaining" field-type="number" required="true">
+
+Credits still available after current-month usage is applied.
+
+</ResponseField>
+
+<ResponseField name="usage.daily_credits_used" field-type="number" required="true">
+
+Credits consumed from the current daily credit pool.
+
+</ResponseField>
+
+<ResponseField name="usage.credits_rolled_over" field-type="number" required="true">
+
+Credits carried forward into the current period.
+
+</ResponseField>
+
+#### remaining
+
+<ResponseField name="remaining" field-type="object" required="true">
+
+Remaining capacity after current usage is applied.
+
+</ResponseField>
+
+<ResponseField name="remaining.credits" field-type="number" required="true">
+
+Credits still available.
+
+</ResponseField>
+
+<ResponseField name="remaining.daily_credits" field-type="number" required="true">
+
+Daily credits still available.
+
+</ResponseField>
+
+<ResponseField name="remaining.minutes" field-type="number" required="true">
+
+Minutes still available in the current month.
+
+</ResponseField>
+
+<ResponseField name="remaining.parallel_calls" field-type="number" required="true">
+
+Additional concurrent calls the account can support before reaching its limit.
+
+</ResponseField>
+
+<ResponseField name="remaining.ai_agents" field-type="number" required="true">
+
+Additional AI agents the account can create before reaching its limit.
+
+</ResponseField>
+
+#### percentages
+
+<ResponseField name="percentages" field-type="object" required="true">
+
+Percentage usage across tracked billing and capacity dimensions.
+
+</ResponseField>
+
+<ResponseField name="percentages.credits" field-type="number" required="true">
+
+Percent of monthly credits already consumed.
+
+</ResponseField>
+
+<ResponseField name="percentages.daily_credits" field-type="number" required="true">
+
+Percent of daily credits already consumed.
+
+</ResponseField>
+
+<ResponseField name="percentages.minutes" field-type="number" required="true">
+
+Percent of monthly minutes already consumed.
+
+</ResponseField>
+
+<ResponseField name="percentages.parallel_calls" field-type="number" required="true">
+
+Percent of the parallel call limit reached by the current peak concurrency.
+
+</ResponseField>
+
+<ResponseField name="percentages.ai_agents" field-type="number" required="true">
+
+Percent of the AI agent limit already used.
+
+</ResponseField>
+
+#### credit_info
+
+<ResponseField name="credit_info" field-type="object" required="true">
+
+Credits-focused billing details, including rollover and feature flags.
+
+</ResponseField>
+
+<ResponseField name="credit_info.monthly_credits" field-type="number" required="true">
+
+Monthly credit allocation for the account.
+
+</ResponseField>
+
+<ResponseField name="credit_info.daily_credits" field-type="number" required="true">
+
+Daily credit allocation for the account.
+
+</ResponseField>
+
+<ResponseField name="credit_info.max_daily_credits" field-type="number" required="true">
+
+Maximum credits that can be available in a day.
+
+</ResponseField>
+
+<ResponseField name="credit_info.credits_used" field-type="number" required="true">
+
+Credits consumed in the current month.
+
+</ResponseField>
+
+<ResponseField name="credit_info.credits_remaining" field-type="number" required="true">
+
+Credits remaining after current usage.
+
+</ResponseField>
+
+<ResponseField name="credit_info.credits_rolled_over" field-type="number" required="true">
+
+Rolled-over credits included in the current balance.
+
+</ResponseField>
+
+<ResponseField name="credit_info.daily_credits_used" field-type="number" required="true">
+
+Credits consumed from today's allocation.
+
+</ResponseField>
+
+<ResponseField name="credit_info.credit_rollover_enabled" field-type="boolean" required="true">
+
+Whether the account can carry credits forward.
+
+</ResponseField>
+
+<ResponseField name="credit_info.usage_based_ai_enabled" field-type="boolean" required="true">
+
+Whether the account uses usage-based AI billing behavior.
+
+</ResponseField>
+
+### Error responses
+
+<ResponseField name="error" field-type="string" required="true">
+
+Error message returned when the request fails.
+
+</ResponseField>
+
+A `400` response means the `accountId` query parameter is missing. A `404` response means Talkturo could not find account limits for the requested account. A `500` response means one of the underlying RPC calls failed.
+
+## Log voice usage
+
+`POST /api/usage/voice` records a speech-to-text billing event from the desktop app. The endpoint rounds `durationSeconds` to the nearest whole second, clamps negative values to `0`, and calculates `cost_usd` as `seconds / 60 * 0.0077`.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/usage/voice" \
+  -H "Authorization: Bearer dt_example_4km2q8sx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "connectionId": "conn_01hzy4w8m9q2",
+    "durationSeconds": 187.4,
+    "provider": "deepgram",
+    "model": "nova-3",
+    "userEmail": "jane.chen@acme.co"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/usage/voice", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer dt_example_4km2q8sx",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    connectionId: "conn_01hzy4w8m9q2",
+    durationSeconds: 187.4,
+    provider: "deepgram",
+    model: "nova-3",
+    userEmail: "jane.chen@acme.co"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,401,500" default-tab="1">
+```json
+{}
+```
+
+```json
+{
+  "error": "Invalid JSON body"
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Failed to log usage"
+}
+```
+</Response>
+
+### Request body
+
+<ParamField body="connectionId" param-type="string | null" required="true">
+
+Connection identifier associated with the desktop session. Pass `null` when no connection is available.
+
+</ParamField>
+
+<ParamField body="durationSeconds" param-type="number" required="true">
+
+Voice duration in seconds before normalization. The server rounds the value to the nearest whole second and treats negative values as `0`.
+
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="false">
+
+Speech-to-text provider name. Defaults to `deepgram`.
+
+</ParamField>
+
+<ParamField body="model" param-type="string" required="false">
+
+Model name used for transcription. Defaults to `nova-3`.
+
+</ParamField>
+
+<ParamField body="userEmail" param-type="string | null" required="true">
+
+Email address associated with the desktop user, or `null` when unavailable.
+
+</ParamField>
+
+### Behavior
+
+This endpoint is best-effort billing telemetry. If the `talkturo_desktop_usage_events` table does not exist, the server logs a warning internally and still returns `200` with an empty JSON object.
+
+<Callout kind="tip">
+
+Use this endpoint for usage logging, not for billing reconciliation on the client. The server stores the normalized duration and computes cost from the fixed Deepgram pay-as-you-go rate of `0.0077` USD per minute.
+
+</Callout>
+
+### Response fields
+
+<ResponseField name="root" field-type="object" required="true">
+
+The success response is an empty JSON object.
+
+</ResponseField>
+
+<ResponseField name="error" field-type="string" required="true">
+
+Error message returned when the request fails.
+
+</ResponseField>
+
+A `400` response means the request body could not be parsed as JSON. A `401` response means desktop authentication failed. A `500` response means an unexpected database error occurred while writing the usage event.
+
+## Related resources
+
+<Columns cols={2}>
+  <Card
+    title="Credits"
+    href="/credits"
+    icon="bar-chart"
+    cta="View credits reference"
+  />
+  <Card
+    title="Billing"
+    href="/billing"
+    icon="wallet"
+    cta="View billing guides"
+  />
+</Columns>

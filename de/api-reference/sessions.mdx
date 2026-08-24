@@ -1,0 +1,391 @@
+---
+title: Sitzungen
+description: Verwalten Sie Desktop-Sitzungen über die Sitzungs-API, einschließlich Erstellen, Abrufen, Aktualisieren und explizitem Beenden.
+---
+
+## Sitzungs-API
+
+Verwalten Sie Desktop-Sitzungen mit Endpunkten zum Erstellen, Abrufen, Aktualisieren und Beenden einer Sitzung.
+
+<Callout kind="info">
+
+Verwenden Sie für alle Anfragen einen gültigen Desktop-Auth-Token im `Authorization`-Header als `Bearer JWT`. Nicht authentifizierte Anfragen schlagen fehl.
+
+</Callout>
+
+## Endpunktübersicht
+
+| Methode | Pfad | Zweck |
+|---|---|---|
+| `GET` | `/api/close-ai/sessions` | Sitzungen für den authentifizierten Benutzer auflisten |
+| `POST` | `/api/sessions` | Sitzung erstellen oder fortsetzen |
+| `GET` | `/api/sessions/{id}` | Sitzungsstatus abrufen oder anzeigen |
+| `PATCH` | `/api/sessions/{id}` | Metadaten während der Sitzung aktualisieren |
+| `DELETE` | `/api/sessions/{id}` | Sitzung explizit beenden |
+
+## Sitzungen auflisten
+
+Rufen Sie paginierte Desktop-Sitzungen ab, die für den authentifizierten Benutzer sichtbar sind. Wenn Sie `account` angeben, grenzt die API die Ergebnisse auf den Workspace und kompatible Legacy-Datensätze ein.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/close-ai/sessions?limit=50&offset=0&q=Acme&account=acme-sales" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response>
+```json
+{
+  "sessions": [
+    {
+      "id": "8e4b9b39-1e29-4f17-b2a3-70e6c8fd12a1",
+      "user_id": "1b9c3f6a-72d1-4f8d-9cc7-4d5f8d6a7b3a",
+      "account_id": "3a88bdb4-f7f2-4db8-a29e-28b7f8a33d88",
+      "title": "Call with Acme Corp",
+      "session_type": "sales_call",
+      "started_at": "2026-08-24T10:00:00Z",
+      "ended_at": "2026-08-24T10:30:00Z",
+      "status": "completed",
+      "duration_seconds": 1800,
+      "updated_at": "2026-08-24T10:30:00Z"
+    }
+  ],
+  "count": 123
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximale Anzahl der zurückgegebenen Sitzungen. Gültige Werte liegen zwischen `1` und `100`. Standardwert ist `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Anzahl der Datensätze, die vor Beginn der aktuellen Seite übersprungen werden. Muss `0` oder größer sein. Standardwert ist `0`.
+</ParamField>
+
+<ParamField query="q" param-type="string" required="false">
+Filtert Sitzungen über eine `ILIKE`-Suche auf dem Feld `title`.
+</ParamField>
+
+<ParamField query="account" param-type="string" required="false">
+Workspace-Slug. Wenn angegeben, gibt die API Sitzungen für diesen Workspace sowie Legacy-Zeilen ohne `account_id` zurück.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="sessions" field-type="array" required="true">
+Liste der Sitzungsobjekte, die dem Filter und der Pagination entsprechen.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Gesamtzahl der übereinstimmenden Sitzungen vor Anwendung der Pagination.
+</ResponseField>
+
+## Sitzung erstellen oder fortsetzen
+
+Erstellen Sie eine neue Sitzung oder setzen Sie eine bestehende Sitzung fort, wenn der Desktop-Client bereits einen aktiven Kontext hat.
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/sessions" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Call with Acme Corp",
+    "sessionType": "sales_call",
+    "accountId": "3a88bdb4-f7f2-4db8-a29e-28b7f8a33d88"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "id": "8e4b9b39-1e29-4f17-b2a3-70e6c8fd12a1",
+  "title": "Call with Acme Corp",
+  "status": "active",
+  "sessionType": "sales_call",
+  "startedAt": "2026-08-24T10:00:00Z",
+  "updatedAt": "2026-08-24T10:00:00Z"
+}
+```
+</Response>
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer JWT für Desktop-Auth.
+</ParamField>
+
+<ParamField header="Content-Type" param-type="string" required="true">
+Setzen Sie diesen Wert auf `application/json`.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="title" param-type="string" required="true">
+Menschenlesbarer Titel für die Sitzung.
+</ParamField>
+
+<ParamField body="sessionType" param-type="string" required="true">
+Sitzungstyp, den der Desktop-Client und nachgelagerte Analysen verwenden.
+</ParamField>
+
+<ParamField body="accountId" param-type="string" required="false">
+UUID des Workspace-Kontos, dem die Sitzung zugeordnet werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Sitzungs-ID.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Aktueller Titel der Sitzung.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Aktueller Sitzungsstatus.
+</ResponseField>
+
+<ResponseField name="sessionType" field-type="string" required="true">
+Sitzungstyp, wie er für die Sitzung gespeichert wurde.
+</ResponseField>
+
+<ResponseField name="startedAt" field-type="string" required="true">
+Zeitstempel, wann die Sitzung begonnen hat, im Format ISO 8601.
+</ResponseField>
+
+<ResponseField name="updatedAt" field-type="string" required="true">
+Zeitstempel der letzten Aktualisierung der Sitzung, im Format ISO 8601.
+</ResponseField>
+
+## Sitzungsstatus abrufen oder anzeigen
+
+Rufen Sie den aktuellen Zustand einer einzelnen Sitzung ab, um Benutzeroberflächen zu rendern, Sitzungsfortschritt anzuzeigen oder lokale Daten zu synchronisieren.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/sessions/8e4b9b39-1e29-4f17-b2a3-70e6c8fd12a1" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response>
+```json
+{
+  "id": "8e4b9b39-1e29-4f17-b2a3-70e6c8fd12a1",
+  "title": "Call with Acme Corp",
+  "status": "active",
+  "sessionType": "sales_call",
+  "startedAt": "2026-08-24T10:00:00Z",
+  "endedAt": null,
+  "durationSeconds": null,
+  "updatedAt": "2026-08-24T10:12:43Z"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Sitzung, die Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Sitzungs-ID.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Aktueller Titel der Sitzung.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Aktueller Lebenszyklusstatus der Sitzung.
+</ResponseField>
+
+<ResponseField name="sessionType" field-type="string" required="true">
+Sitzungstyp, der beim Erstellen oder Fortsetzen gespeichert wurde.
+</ResponseField>
+
+<ResponseField name="startedAt" field-type="string" required="true">
+Zeitstempel des Sitzungsstarts im Format ISO 8601.
+</ResponseField>
+
+<ResponseField name="endedAt" field-type="string" required="false">
+Zeitstempel des Sitzungsendes im Format ISO 8601. Der Wert ist `null`, solange die Sitzung noch aktiv ist.
+</ResponseField>
+
+<ResponseField name="durationSeconds" field-type="integer" required="false">
+Gesamtdauer der Sitzung in Sekunden. Der Wert ist `null`, bis die Sitzung beendet wurde.
+</ResponseField>
+
+<ResponseField name="updatedAt" field-type="string" required="true">
+Zeitstempel der letzten Änderung an der Sitzung im Format ISO 8601.
+</ResponseField>
+
+## Metadaten während der Sitzung aktualisieren
+
+Aktualisieren Sie Metadaten auf einer laufenden oder abgeschlossenen Sitzung, ohne einen neuen Datensatz zu erstellen.
+
+<Request>
+```bash
+curl -X PATCH "https://api.talkturo.com/api/sessions/8e4b9b39-1e29-4f17-b2a3-70e6c8fd12a1" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Call with Acme Corp - Discovery",
+    "status": "active"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "id": "8e4b9b39-1e29-4f17-b2a3-70e6c8fd12a1",
+  "title": "Call with Acme Corp - Discovery",
+  "status": "active",
+  "sessionType": "sales_call",
+  "startedAt": "2026-08-24T10:00:00Z",
+  "updatedAt": "2026-08-24T10:12:43Z"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Sitzung, die Sie aktualisieren möchten.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="title" param-type="string" required="false">
+Aktualisierter Sitzungsname. Senden Sie dieses Feld, wenn sich der angezeigte Titel im Desktop-Client geändert hat.
+</ParamField>
+
+<ParamField body="status" param-type="string" required="false">
+Aktualisierter Sitzungsstatus.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Sitzungs-ID.
+</ResponseField>
+
+<ResponseField name="title" field-type="string" required="true">
+Aktualisierter Sitzungsname.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Aktualisierter Sitzungsstatus.
+</ResponseField>
+
+<ResponseField name="sessionType" field-type="string" required="true">
+Sitzungstyp der aktualisierten Sitzung.
+</ResponseField>
+
+<ResponseField name="startedAt" field-type="string" required="true">
+Ursprünglicher Startzeitstempel im Format ISO 8601.
+</ResponseField>
+
+<ResponseField name="updatedAt" field-type="string" required="true">
+Zeitstempel der letzten erfolgreichen Aktualisierung im Format ISO 8601.
+</ResponseField>
+
+## Sitzung explizit beenden
+
+Beenden Sie eine Sitzung, wenn der Desktop-Client sie nicht automatisch schließen kann oder wenn Sie einen expliziten Abschluss erzwingen müssen.
+
+<Request>
+```bash
+curl -X DELETE "https://api.talkturo.com/api/sessions/8e4b9b39-1e29-4f17-b2a3-70e6c8fd12a1" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response>
+```json
+{
+  "id": "8e4b9b39-1e29-4f17-b2a3-70e6c8fd12a1",
+  "status": "completed",
+  "endedAt": "2026-08-24T10:30:00Z",
+  "durationSeconds": 1800,
+  "updatedAt": "2026-08-24T10:30:00Z"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Sitzung, die Sie beenden möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige Sitzungs-ID.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Finaler Status nach dem Beenden der Sitzung.
+</ResponseField>
+
+<ResponseField name="endedAt" field-type="string" required="true">
+Zeitstempel, wann die Sitzung endete, im Format ISO 8601.
+</ResponseField>
+
+<ResponseField name="durationSeconds" field-type="integer" required="true">
+Gesamtdauer der abgeschlossenen Sitzung in Sekunden.
+</ResponseField>
+
+<ResponseField name="updatedAt" field-type="string" required="true">
+Zeitstempel der finalen Aktualisierung im Format ISO 8601.
+</ResponseField>
+
+## Typischer Workflow
+
+Verwenden Sie diese Reihenfolge, wenn Sie Sitzungsverwaltung in einen Desktop-Client oder eine begleitende Integration einbauen.
+
+<Steps>
+  <Step title="Sitzung erstellen oder fortsetzen">
+
+  Starten Sie eine Sitzung, sobald ein Anruf oder eine Desktop-Aktivität beginnt. Speichern Sie die zurückgegebene Sitzungs-ID lokal, damit spätere Aktualisierungen und das Beenden dieselbe Sitzung referenzieren.
+
+  </Step>
+  <Step title="Sitzungsstatus abrufen oder anzeigen">
+
+  Rufen Sie die Sitzung ab, wenn Ihr Client den aktuellen Status nach einem Neustart, einer Hintergrundsynchronisierung oder einer Wiederverbindung laden muss.
+
+  </Step>
+  <Step title="Metadaten während der Sitzung aktualisieren">
+
+  Senden Sie `PATCH`-Anfragen, wenn sich der Titel, Status oder andere angezeigte Metadaten während der Sitzung ändern.
+
+  </Step>
+  <Step title="Sitzung explizit beenden">
+
+  Beenden Sie die Sitzung, wenn die Aktivität aufhört. Nach erfolgreichem Abschluss enthält die Antwort `endedAt` und `durationSeconds`.
+
+  </Step>
+</Steps>
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card title="Close AI dashboard" href="/de/api-reference/dashboard" icon="bar-chart" cta="Zur Referenz">
+  Teamweite Analysen und aggregierte Kennzahlen für Close AI abrufen.
+  </Card>
+  <Card title="Skripte" href="/de/api-reference/scripts" icon="code" cta="Zur Referenz">
+  Verkaufsskripte auf Workspace-Ebene für Desktop-Workflows verwalten.
+  </Card>
+</Columns>

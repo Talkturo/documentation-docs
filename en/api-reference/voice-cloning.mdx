@@ -1,0 +1,352 @@
+---
+title: Voice Cloning
+description: Create and delete custom voice clones from audio samples using Talkturo session-authenticated endpoints backed by DashScope.
+---
+
+## Voice cloning endpoints
+
+Create a custom voice clone from a base64-encoded audio sample and delete cloned voices that your account no longer uses. These endpoints run on `https://app.talkturo.com` and require an authenticated Talkturo session cookie.
+
+<Callout kind="alert">
+
+Authenticate with a Talkturo user session cookie. These endpoints do not accept API key authentication, and requests without a valid signed-in session fail authentication before any voice cloning logic runs.
+
+</Callout>
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/voice-cloning` | Create a cloned voice from an audio sample |
+| `DELETE` | `/api/voice-cloning/{voiceId}` | Delete a cloned voice for an account |
+
+## POST /api/voice-cloning
+
+Create a cloned voice in DashScope and store the resulting voice record in Talkturo.
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/voice-cloning" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=refresh_token_example_8fd2m" \
+  -d '{
+    "accountId": "9f4e7e91-2e0a-4c1c-a0d0-6a4b2e31b5f7",
+    "preferred_name": "Jordan_Sales",
+    "language": "en",
+    "audio_base64": "UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSoAAAAA...",
+    "audio_mime_type": "audio/wav"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/voice-cloning", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Cookie": "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=refresh_token_example_8fd2m"
+  },
+  body: JSON.stringify({
+    accountId: "9f4e7e91-2e0a-4c1c-a0d0-6a4b2e31b5f7",
+    preferred_name: "Jordan_Sales",
+    language: "en",
+    audio_base64: "UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSoAAAAA...",
+    audio_mime_type: "audio/wav"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,403,502,503" default-tab="1">
+```json
+{
+  "success": true,
+  "voice": {
+    "id": "0d86f7ab-7af4-4b63-9ddf-3bf6dd0c44a7",
+    "provider": "dashscope",
+    "voice_id": "voice_9xmk7q2r_example",
+    "name": "Jordan_Sales",
+    "language": "en",
+    "voice_type": "cloned",
+    "voice_model": "qwen3-tts-vc-realtime-2026-01-15",
+    "account_id": "9f4e7e91-2e0a-4c1c-a0d0-6a4b2e31b5f7",
+    "preview_url": null,
+    "description": null,
+    "metadata": {
+      "target_model": "qwen3-tts-vc-realtime-2026-01-15"
+    }
+  }
+}
+```
+
+```json
+{
+  "error": "accountId is required"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Failed to create voice clone"
+}
+```
+
+```json
+{
+  "error": "Voice cloning is not configured"
+}
+```
+</Response>
+
+### Request body
+
+<ParamField body="accountId" param-type="string" required="true">
+UUID of the Talkturo account that will own the cloned voice.
+</ParamField>
+
+<ParamField body="preferred_name" param-type="string" required="false">
+Optional display name for the cloned voice. Talkturo trims this value, stores up to 32 characters for display, and derives the upstream API name by removing all characters except letters, numbers, and underscores, then truncating to 16 characters. If the sanitized name is empty, Talkturo uses `cloned`.
+</ParamField>
+
+<ParamField body="language" param-type="string" required="false">
+Optional language label stored with the voice record.
+</ParamField>
+
+<ParamField body="audio_base64" param-type="string" required="true">
+Base64-encoded audio sample used for enrollment. Send only the raw base64 content in this field. Talkturo prefixes it internally as a data URL before sending it to DashScope.
+</ParamField>
+
+<ParamField body="audio_mime_type" param-type="string" required="false">
+MIME type for the audio sample. Defaults to `audio/wav`.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the clone is created successfully.
+</ResponseField>
+
+<ResponseField name="voice" field-type="object" required="true">
+Stored voice record returned after Talkturo creates the clone in DashScope and inserts it into `tts_voices`.
+</ResponseField>
+
+<ResponseField name="voice.id" field-type="string" required="true">
+Internal Talkturo voice record ID.
+</ResponseField>
+
+<ResponseField name="voice.provider" field-type="string" required="true">
+Voice provider. This endpoint always returns `dashscope`.
+</ResponseField>
+
+<ResponseField name="voice.voice_id" field-type="string" required="true">
+Provider voice ID returned by DashScope. Use this value as the `voiceId` path parameter when deleting the clone.
+</ResponseField>
+
+<ResponseField name="voice.name" field-type="string" required="true">
+Stored voice name.
+</ResponseField>
+
+<ResponseField name="voice.language" field-type="string" required="false">
+Language stored on the voice record if provided.
+</ResponseField>
+
+<ResponseField name="voice.voice_type" field-type="string" required="true">
+Voice type. This endpoint always returns `cloned`.
+</ResponseField>
+
+<ResponseField name="voice.voice_model" field-type="string" required="true">
+Target model used for the cloned voice. The current value is `qwen3-tts-vc-realtime-2026-01-15`.
+</ResponseField>
+
+<ResponseField name="voice.account_id" field-type="string" required="true">
+Account ID that owns the cloned voice.
+</ResponseField>
+
+<ResponseField name="voice.preview_url" field-type="null" required="true">
+Preview URL for the voice. Cloned voices currently return `null`.
+</ResponseField>
+
+<ResponseField name="voice.description" field-type="null" required="true">
+Voice description. Cloned voices currently return `null`.
+</ResponseField>
+
+<ResponseField name="voice.metadata" field-type="object" required="true">
+Provider-specific metadata stored with the voice record.
+</ResponseField>
+
+<ResponseField name="voice.metadata.target_model" field-type="string" required="true">
+DashScope target model used when the clone was created.
+</ResponseField>
+
+### Behavior and validation
+
+Talkturo validates that `accountId` and `audio_base64` are present before calling DashScope. If either field is missing, the endpoint returns `400`.
+
+Account access is enforced against the target account. You must be the account's primary owner or a member of that account, or the endpoint returns `403`.
+
+The upstream provider call uses DashScope with the `qwen-voice-enrollment` model and targets `qwen3-tts-vc-realtime-2026-01-15`. If DashScope does not return a usable provider voice ID, Talkturo returns `502`.
+
+<Callout kind="info">
+
+Voice cloning depends on server-side DashScope configuration. If the `DASHSCOPE_API_KEY` environment variable is not configured, the endpoint returns `503`.
+
+</Callout>
+
+### Error responses
+
+| Status | Meaning |
+|---|---|
+| `400` | Missing required input such as `accountId` or `audio_base64` |
+| `403` | Authenticated user does not belong to the target account |
+| `500` | Talkturo could not insert the created voice into the database |
+| `502` | DashScope returned an error or did not return a voice ID |
+| `503` | Voice cloning is not configured on the server |
+
+## DELETE /api/voice-cloning/{voiceId}
+
+Delete a cloned voice from Talkturo and attempt to remove it from DashScope.
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X DELETE "https://app.talkturo.com/api/voice-cloning/voice_9xmk7q2r_example?accountId=9f4e7e91-2e0a-4c1c-a0d0-6a4b2e31b5f7" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=refresh_token_example_8fd2m"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/voice-cloning/voice_9xmk7q2r_example?accountId=9f4e7e91-2e0a-4c1c-a0d0-6a4b2e31b5f7",
+  {
+    method: "DELETE",
+    headers: {
+      "Cookie": "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=refresh_token_example_8fd2m"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,404,409,500" default-tab="1">
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "accountId is required"
+}
+```
+
+```json
+{
+  "error": "Cloned voice not found"
+}
+```
+
+```json
+{
+  "error": "Voice is in use by assistants",
+  "assistants": [
+    {
+      "id": "asst_7b31d0d4",
+      "name": "Inbound SDR"
+    },
+    {
+      "id": "asst_c9810ab2",
+      "name": "Renewals Coach"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Failed to delete cloned voice"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="voiceId" param-type="string" required="true">
+DashScope voice ID of the cloned voice to delete. This is the provider ID stored as `voice.voice_id` in the create response.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+UUID of the Talkturo account that owns the cloned voice.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when Talkturo deletes the cloned voice record successfully.
+</ResponseField>
+
+<ResponseField name="assistants" field-type="array" required="false">
+Returned only on `409 Conflict`. Lists assistants that still reference the cloned voice.
+</ResponseField>
+
+<ResponseField name="assistants[].id" field-type="string" required="true">
+Internal assistant ID that blocks deletion.
+</ResponseField>
+
+<ResponseField name="assistants[].name" field-type="string" required="true">
+Assistant name that blocks deletion.
+</ResponseField>
+
+### Behavior and validation
+
+Talkturo requires both `voiceId` and `accountId`. If either value is missing, the endpoint returns `400`.
+
+The endpoint only deletes voices that exist in `tts_voices`, belong to the specified account, and have `voice_type` set to `cloned`. If no matching record exists, the endpoint returns `404`.
+
+Before deletion, Talkturo checks whether any assistants still reference the cloned voice. If one or more assistants use it, the endpoint returns `409` and includes the blocking assistants in the response so you can detach the voice before retrying.
+
+<Callout kind="info">
+
+Talkturo treats the DashScope delete call as best-effort. If the provider delete fails, Talkturo still deletes the database record and returns success as long as the local delete succeeds.
+
+</Callout>
+
+### Error responses
+
+| Status | Meaning |
+|---|---|
+| `400` | Missing `accountId` or `voiceId` |
+| `403` | Authenticated user does not belong to the target account |
+| `404` | No cloned voice matched the provided account and voice ID |
+| `409` | One or more assistants still use the cloned voice |
+| `500` | Talkturo could not delete the cloned voice record |
+
+## Related resources
+
+<Columns cols={2}>
+  <Card
+    title="Voices"
+    href="/en/api-reference/voices"
+    icon="mic"
+    cta="View endpoints"
+  />
+  <Card
+    title="Assistants"
+    href="/en/api-reference/assistants"
+    icon="bot"
+    cta="View endpoints"
+  />
+</Columns>

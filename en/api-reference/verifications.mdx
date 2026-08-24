@@ -1,0 +1,647 @@
+---
+title: Verifications
+description: Manage regulatory compliance filings for phone numbers, including draft creation, document uploads, submission, and live status checks.
+---
+
+## Manage verification filings
+
+Use the Verifications API to open, resume, update, submit, and monitor regulatory compliance filings for phone number provisioning. These endpoints support draft filing workflows, document management, carrier submission, and live verification status lookup.
+
+<Callout kind="info">
+
+All verification endpoints require an authenticated Talkturo session cookie. If the request does not include a valid session, the API returns `401 Unauthorized`.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/verifications/filings` | Open a new filing or resume an existing draft |
+| `GET` | `/api/verifications/filings/{bundleSid}` | Get filing details and current regulatory requirements |
+| `PATCH` | `/api/verifications/filings/{bundleSid}` | Save filing form data to a draft |
+| `DELETE` | `/api/verifications/filings/{bundleSid}` | Discard a draft filing |
+| `POST` | `/api/verifications/filings/{bundleSid}/documents` | Upload a supporting document |
+| `DELETE` | `/api/verifications/filings/{bundleSid}/documents` | Remove a supporting document |
+| `POST` | `/api/verifications/filings/{bundleSid}/submit` | Submit a filing for carrier review |
+| `GET` | `/api/verifications/live` | List live verification bundles for a workspace |
+
+## POST /api/verifications/filings
+
+Open a new filing draft or resume the most recent matching draft for the same country and number type. If you pass `resubmitOf`, the API creates a new draft from a rejected filing and carries forward any surviving documents.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/verifications/filings" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_cookie" \
+  -d '{
+    "account": "acme-sales",
+    "country": "US",
+    "numberType": "local"
+  }'
+```
+</Request>
+
+<Response tabs="200,502" default-tab="1">
+```json
+{
+  "success": true,
+  "bundleSid": "BU7a8f8e2c1b3d4f5a6c7e8d9f01234567",
+  "resumed": false
+}
+```
+
+```json
+{
+  "error": "The carrier could not be reached just now. Please try again."
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="account" param-type="string" required="true">
+Workspace slug for the filing.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false">
+Optional carrier override.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="true">
+Two-character ISO 3166-1 alpha-2 country code. The API uppercases the value internally.
+</ParamField>
+
+<ParamField body="numberType" param-type="string" required="false" enum="local,toll-free,mobile,national">
+Number type for the filing. Defaults to `local` when omitted.
+</ParamField>
+
+<ParamField body="resubmitOf" param-type="string" required="false">
+Existing rejected bundle SID to reopen as a fix-and-resubmit filing. The value must match the Twilio bundle SID format `BU` followed by 32 hexadecimal characters.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="bundleSid" field-type="string" required="true">
+The filing bundle SID.
+</ResponseField>
+
+<ResponseField name="resumed" field-type="boolean" required="true">
+Whether the API resumed an existing draft instead of opening a new one.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Error responses">
+
+  - `401` — Request is missing a valid authenticated session.
+  - `403` — The current user cannot access the requested workspace or filing context.
+  - `404` — The workspace or filing context could not be found.
+  - `502` — The carrier could not be reached.
+
+  </Expandable>
+</ExpandableGroup>
+
+## GET /api/verifications/filings/{bundleSid}
+
+Fetch the current filing record and the live regulatory requirements for that bundle. Use this endpoint to repopulate draft state before rendering a filing form.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/verifications/filings/BU7a8f8e2c1b3d4f5a6c7e8d9f01234567?account=acme-sales&country=US&numberType=local" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+```json
+{
+  "success": true,
+  "filing": {
+    "sid": "BU7a8f8e2c1b3d4f5a6c7e8d9f01234567",
+    "status": "draft"
+  },
+  "requirements": {
+    "name": "US Local Numbers",
+    "items": []
+  }
+}
+```
+
+```json
+{
+  "error": "Filing not found"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Bundle SID for the filing. The value must match the format `BU` followed by 32 hexadecimal characters.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug for the filing.
+</ParamField>
+
+<ParamField query="carrier" param-type="string" required="false">
+Optional carrier override.
+</ParamField>
+
+<ParamField query="country" param-type="string" required="true">
+Two-character country code used to load the matching live regulatory requirements.
+</ParamField>
+
+<ParamField query="numberType" param-type="string" required="false" enum="local,toll-free,mobile,national">
+Number type used when loading requirements.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="filing" field-type="object" required="true">
+The current filing bundle returned by the carrier.
+</ResponseField>
+
+<ResponseField name="requirements" field-type="object" required="true">
+Live regulatory requirements for the requested country and number type.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Error responses">
+
+  - `400` — `bundleSid` is invalid.
+  - `401` — Request is missing a valid authenticated session.
+  - `404` — No filing exists for the supplied bundle SID.
+
+  </Expandable>
+</ExpandableGroup>
+
+## PATCH /api/verifications/filings/{bundleSid}
+
+Save form data to an existing draft filing. This endpoint updates the carrier-side draft and does not submit it for review.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X PATCH "https://app.talkturo.com/api/verifications/filings/BU7a8f8e2c1b3d4f5a6c7e8d9f01234567" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_cookie" \
+  -d '{
+    "account": "acme-sales",
+    "formData": {
+      "business_name": "Acme Sales LLC",
+      "business_registration_number": "98-7654321"
+    }
+  }'
+```
+</Request>
+
+<Response tabs="200,409" default-tab="1">
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "Could not save filing draft"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Bundle SID for the filing. The value must match the format `BU` followed by 32 hexadecimal characters.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="account" param-type="string" required="true">
+Workspace slug for the filing.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false">
+Optional carrier override.
+</ParamField>
+
+<ParamField body="formData" param-type="object" required="true">
+Freeform key-value pairs containing the current filing form answers.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the draft was saved.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Error responses">
+
+  - `400` — `bundleSid` is invalid or the request body does not match the expected schema.
+  - `401` — Request is missing a valid authenticated session.
+  - `409` — The filing draft could not be saved.
+
+  </Expandable>
+</ExpandableGroup>
+
+## DELETE /api/verifications/filings/{bundleSid}
+
+Discard a draft filing. Use this endpoint when you want to remove an in-progress filing instead of keeping it available for later resumption.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X DELETE "https://app.talkturo.com/api/verifications/filings/BU7a8f8e2c1b3d4f5a6c7e8d9f01234567?account=acme-sales" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+</Request>
+
+<Response tabs="200,409" default-tab="1">
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "Could not discard filing"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Bundle SID for the filing. The value must match the format `BU` followed by 32 hexadecimal characters.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug for the filing.
+</ParamField>
+
+<ParamField query="carrier" param-type="string" required="false">
+Optional carrier override.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the filing was discarded.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Error responses">
+
+  - `400` — `bundleSid` is invalid.
+  - `401` — Request is missing a valid authenticated session.
+  - `409` — The filing could not be discarded.
+
+  </Expandable>
+</ExpandableGroup>
+
+## POST /api/verifications/filings/{bundleSid}/documents
+
+Upload a supporting document to a filing. The file goes directly to the carrier and is not stored locally by Talkturo.
+
+<Callout kind="alert">
+
+Send this request as `multipart/form-data`. The uploaded `file` must be 20 MB or smaller, and the allowed MIME types are PDF, JPEG, PNG, HEIC, and WebP.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/verifications/filings/BU7a8f8e2c1b3d4f5a6c7e8d9f01234567/documents" \
+  -H "Cookie: sb-session=example_session_cookie" \
+  -F "file=@/Users/jane/Downloads/acme-registration.pdf" \
+  -F "requirement=proof_of_business_registration" \
+  -F "type=registration_document" \
+  -F "account=acme-sales"
+```
+</Request>
+
+<Response tabs="200,400,502" default-tab="1">
+```json
+{
+  "success": true,
+  "documents": [
+    {
+      "sid": "RD6f8e2c1b3d4f5a6c7e8d9f0123456789",
+      "type": "registration_document"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Invalid document upload"
+}
+```
+
+```json
+{
+  "error": "Carrier rejected upload"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Bundle SID for the filing. The value must match the format `BU` followed by 32 hexadecimal characters.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="file" param-type="file" required="true">
+Document file to upload.
+</ParamField>
+
+<ParamField body="requirement" param-type="string" required="true">
+Requirement identifier that this document satisfies.
+</ParamField>
+
+<ParamField body="type" param-type="string" required="true">
+Document type label.
+</ParamField>
+
+<ParamField body="account" param-type="string" required="true">
+Workspace slug for the filing.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false">
+Optional carrier override.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the document upload succeeds.
+</ResponseField>
+
+<ResponseField name="documents" field-type="array" required="true">
+Updated filing document list after the upload completes.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Error responses">
+
+  - `400` — The request is missing `file`, `requirement`, or `type`, the file is too large, or the MIME type is not allowed.
+  - `401` — Request is missing a valid authenticated session.
+  - `502` — The carrier rejected the upload.
+
+  </Expandable>
+</ExpandableGroup>
+
+## DELETE /api/verifications/filings/{bundleSid}/documents
+
+Remove a previously uploaded document from a filing draft.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X DELETE "https://app.talkturo.com/api/verifications/filings/BU7a8f8e2c1b3d4f5a6c7e8d9f01234567/documents?account=acme-sales&documentSid=RD6f8e2c1b3d4f5a6c7e8d9f0123456789" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+</Request>
+
+<Response tabs="200,409" default-tab="1">
+```json
+{
+  "success": true,
+  "documents": []
+}
+```
+
+```json
+{
+  "error": "Could not remove document"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Bundle SID for the filing. The value must match the format `BU` followed by 32 hexadecimal characters.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug for the filing.
+</ParamField>
+
+<ParamField query="carrier" param-type="string" required="false">
+Optional carrier override.
+</ParamField>
+
+<ParamField query="documentSid" param-type="string" required="true">
+Document SID to remove. The value must match the format `RD` followed by 32 hexadecimal characters.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the document is removed.
+</ResponseField>
+
+<ResponseField name="documents" field-type="array" required="true">
+Updated filing document list after removal.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Error responses">
+
+  - `400` — `bundleSid` or `documentSid` is invalid.
+  - `401` — Request is missing a valid authenticated session.
+  - `409` — The document could not be removed.
+
+  </Expandable>
+</ExpandableGroup>
+
+## POST /api/verifications/filings/{bundleSid}/submit
+
+Submit a filing for carrier review. Before submission, the API runs an instant evaluation. If evaluation fails, the API returns the failing requirements and leaves the draft unchanged.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/verifications/filings/BU7a8f8e2c1b3d4f5a6c7e8d9f01234567/submit" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-session=example_session_cookie" \
+  -d '{
+    "account": "acme-sales",
+    "formData": {
+      "business_name": "Acme Sales LLC"
+    }
+  }'
+```
+</Request>
+
+<Response tabs="200,422" default-tab="1">
+```json
+{
+  "success": true,
+  "bundleSid": "BU7a8f8e2c1b3d4f5a6c7e8d9f01234567"
+}
+```
+
+```json
+{
+  "error": "Evaluation failed",
+  "failures": [
+    {
+      "requirement": "proof_of_address",
+      "message": "A supporting document is required"
+    }
+  ]
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Bundle SID for the filing. The value must match the format `BU` followed by 32 hexadecimal characters.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="account" param-type="string" required="true">
+Workspace slug for the filing.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false">
+Optional carrier override.
+</ParamField>
+
+<ParamField body="formData" param-type="object" required="false">
+Current form values to send with the submission request.
+</ParamField>
+
+### Success response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the filing is submitted for carrier review.
+</ResponseField>
+
+<ResponseField name="bundleSid" field-type="string" required="true">
+Bundle SID for the submitted filing.
+</ResponseField>
+
+### Validation failure response fields
+
+<ResponseField name="error" field-type="string" required="true">
+Error message describing why evaluation failed.
+</ResponseField>
+
+<ResponseField name="failures" field-type="array" required="true">
+List of failed requirements returned by the pre-submission evaluation.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Error responses">
+
+  - `400` — `bundleSid` is invalid or the request body does not match the expected schema.
+  - `401` — Request is missing a valid authenticated session.
+  - `403` — The current user cannot access the requested workspace or filing context.
+  - `404` — The workspace or filing context could not be found.
+  - `422` — The instant evaluation failed and the filing was not submitted.
+
+  </Expandable>
+</ExpandableGroup>
+
+## GET /api/verifications/live
+
+List live verification bundles for a workspace. This endpoint reads current live verification data from the carrier instead of local storage.
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/verifications/live?account=acme-sales" \
+  -H "Cookie: sb-session=example_session_cookie"
+```
+</Request>
+
+<Response tabs="200,403,404" default-tab="1">
+```json
+{
+  "success": true,
+  "bundles": [
+    {
+      "sid": "BU7a8f8e2c1b3d4f5a6c7e8d9f01234567",
+      "status": "approved"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Workspace not found"
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug to inspect.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="bundles" field-type="array" required="false">
+Representative live verification bundle data returned by the live bundle listing view. The exact fields depend on the live bundle payload.
+</ResponseField>
+
+<ExpandableGroup>
+  <Expandable title="Error responses">
+
+  - `400` — `account` is missing.
+  - `401` — Request is missing a valid authenticated session.
+  - `403` — The current user is not a member of the workspace.
+  - `404` — The workspace could not be found.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Related resources
+
+<Columns cols={2}>
+  <Card
+    title="Phone numbers"
+    href="/en/api-reference/phone-numbers"
+    icon="phone"
+    cta="View endpoint"
+  />
+  <Card
+    title="Accounts"
+    href="/en/api-reference/accounts"
+    icon="users"
+    cta="View endpoint"
+  />
+</Columns>

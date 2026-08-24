@@ -1,0 +1,500 @@
+---
+title: Payment Methods
+description: List, attach, set default, and remove Stripe payment methods for an account using the Talkturo Payment Methods API.
+---
+
+## Manage saved payment methods
+
+Use the Payment Methods API to list saved cards, attach a new Stripe payment method to an account, choose the default payment method, and remove saved methods without hard-deleting billing history.
+
+<Callout kind="info">
+
+Authenticate with either a Talkturo session or an API key. All payment method endpoints use account-scoped auth. When a request accepts `accountId` in the query string, the API falls back to the authenticated account when `accountId` is omitted.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/payment-methods` | List active payment methods for an account |
+| `POST` | `/api/payment-methods` | Attach a Stripe payment method to an existing billing customer |
+| `PATCH` | `/api/payment-methods/{id}` | Set a saved payment method as the default |
+| `DELETE` | `/api/payment-methods/{id}` | Soft-delete a payment method and detach it from Stripe |
+
+<Callout kind="tip">
+
+Use `https://app.talkturo.com` when you authenticate with a browser session. Use `https://api.talkturo.com` when you authenticate with an API key.
+
+</Callout>
+
+## GET /api/payment-methods
+
+List non-deleted payment methods for an account. The API returns results ordered by default status first, then by creation time descending.
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="false">
+
+Account identifier to list payment methods for. If you omit `accountId`, the API uses the authenticated account from the session or API key context. The request fails when neither source provides an account.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url 'https://api.talkturo.com/api/payment-methods?accountId=acc_9f2k1m7q' \
+  --header 'Authorization: Bearer dkai_example_9xmk7q2r' \
+  --header 'Accept: application/json'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/payment-methods?accountId=acc_9f2k1m7q",
+  {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer dkai_example_9xmk7q2r",
+      "Accept": "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "success": true,
+  "paymentMethods": [
+    {
+      "id": "8d8ff0a6-ef23-4e8f-a4e0-0a8826602b74",
+      "stripe_payment_method_id": "pm_1Qz8AbCDeFgHiJkL9mN0pQrS",
+      "type": "card",
+      "card_brand": "visa",
+      "card_last4": "4242",
+      "card_exp_month": 12,
+      "card_exp_year": 2028,
+      "card_funding": "credit",
+      "is_default": true,
+      "is_active": true,
+      "billing_details": {
+        "name": "Jane Chen",
+        "email": "jane@acme.com"
+      },
+      "created_at": "2026-08-20T14:12:33.000Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "accountId is required"
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="paymentMethods" field-type="array" required="true">
+Array of saved payment methods for the account. Only records where `deleted_at` is null are returned.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].id" field-type="string" required="true">
+Internal Talkturo payment method ID. Use this value in the `PATCH` and `DELETE` endpoints.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].stripe_payment_method_id" field-type="string" required="true">
+Stripe payment method ID attached to the billing customer.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].type" field-type="string" required="true">
+Payment method type. Current responses return `card`.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_brand" field-type="string" required="true">
+Card brand reported by Stripe, such as `visa` or `mastercard`.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_last4" field-type="string" required="true">
+Last four digits of the card number.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_exp_month" field-type="number" required="true">
+Card expiration month.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_exp_year" field-type="number" required="true">
+Card expiration year.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].card_funding" field-type="string" required="true">
+Card funding type reported by Stripe, such as `credit`, `debit`, or `prepaid`.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].is_default" field-type="boolean" required="true">
+Whether the payment method is the default for the account.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].is_active" field-type="boolean" required="true">
+Whether the payment method is active.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].billing_details" field-type="object" required="true">
+Stripe billing details captured for the payment method.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].billing_details.name" field-type="string" required="false">
+Cardholder name from Stripe billing details.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].billing_details.email" field-type="string" required="false">
+Billing email from Stripe billing details.
+</ResponseField>
+
+<ResponseField name="paymentMethods[].created_at" field-type="string" required="true">
+Timestamp when the payment method record was created.
+</ResponseField>
+
+<ResponseField name="count" field-type="number" required="true">
+Total number of payment methods returned.
+</ResponseField>
+
+### Error behavior
+
+- Returns `400` when the request does not include `accountId` and the authenticated context does not provide an account.
+- Returns `500` when the database query fails.
+
+## POST /api/payment-methods
+
+Attach a Stripe payment method to the account's existing Stripe billing customer, then store a local payment method record in Talkturo.
+
+### Body parameters
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Account identifier that owns the billing customer.
+
+</ParamField>
+
+<ParamField body="paymentMethodId" param-type="string" required="true">
+
+Stripe payment method ID created on the client, typically from Stripe Elements.
+
+</ParamField>
+
+<ParamField body="setAsDefault" param-type="boolean" required="false">
+
+When `true`, the API sets the new payment method as the default after insertion.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url 'https://api.talkturo.com/api/payment-methods' \
+  --header 'Authorization: Bearer dkai_example_9xmk7q2r' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "accountId": "acc_9f2k1m7q",
+    "paymentMethodId": "pm_1Qz8AbCDeFgHiJkL9mN0pQrS",
+    "setAsDefault": true
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/payment-methods", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer dkai_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountId: "acc_9f2k1m7q",
+    paymentMethodId: "pm_1Qz8AbCDeFgHiJkL9mN0pQrS",
+    setAsDefault: true
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404,409" default-tab="1">
+```json
+{
+  "success": true,
+  "paymentMethod": {
+    "id": "8d8ff0a6-ef23-4e8f-a4e0-0a8826602b74",
+    "stripe_payment_method_id": "pm_1Qz8AbCDeFgHiJkL9mN0pQrS",
+    "card_brand": "visa",
+    "card_last4": "4242",
+    "card_exp_month": 12,
+    "card_exp_year": 2028,
+    "is_default": true
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "No Stripe billing customer found for account"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method already attached"
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the payment method was attached and stored successfully.
+</ResponseField>
+
+<ResponseField name="paymentMethod" field-type="object" required="true">
+Summary of the newly attached payment method.
+</ResponseField>
+
+<ResponseField name="paymentMethod.id" field-type="string" required="true">
+Internal Talkturo payment method ID.
+</ResponseField>
+
+<ResponseField name="paymentMethod.stripe_payment_method_id" field-type="string" required="true">
+Stripe payment method ID attached to the customer.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_brand" field-type="string" required="true">
+Card brand returned by Stripe.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_last4" field-type="string" required="true">
+Last four digits of the attached card.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_exp_month" field-type="number" required="true">
+Expiration month of the attached card.
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_exp_year" field-type="number" required="true">
+Expiration year of the attached card.
+</ResponseField>
+
+<ResponseField name="paymentMethod.is_default" field-type="boolean" required="true">
+Whether the new payment method is now the default for the account.
+</ResponseField>
+
+<Callout kind="info">
+
+The API first attaches the Stripe payment method to the Stripe customer, then inserts the local `payment_methods` record. If the database insert fails, Talkturo attempts to detach the payment method from Stripe so the two systems stay in sync.
+
+</Callout>
+
+### Error behavior
+
+- Returns `400` when `accountId` or `paymentMethodId` is missing.
+- Returns `404` when the account does not have a Stripe billing customer.
+- Returns `409` when the Stripe payment method is already attached in Talkturo.
+- Returns `500` when the local insert fails, including cases where rollback is attempted after Stripe attachment succeeds.
+
+## PATCH /api/payment-methods/{id}
+
+Set an existing payment method as the default for the account. The `id` path parameter is the internal Talkturo payment method UUID, not the Stripe payment method ID.
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Internal payment method UUID to set as default.
+
+</ParamField>
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="false">
+
+Account identifier for the payment method. If you omit `accountId`, the API falls back to the authenticated account.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request PATCH \
+  --url 'https://api.talkturo.com/api/payment-methods/8d8ff0a6-ef23-4e8f-a4e0-0a8826602b74?accountId=acc_9f2k1m7q' \
+  --header 'Authorization: Bearer dkai_example_9xmk7q2r' \
+  --header 'Accept: application/json'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/payment-methods/8d8ff0a6-ef23-4e8f-a4e0-0a8826602b74?accountId=acc_9f2k1m7q",
+  {
+    method: "PATCH",
+    headers: {
+      "Authorization": "Bearer dkai_example_9xmk7q2r",
+      "Accept": "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+```json
+{
+  "success": true,
+  "message": "Default payment method updated"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the default payment method update succeeded.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Status message for the update operation. Successful requests return `Default payment method updated`.
+</ResponseField>
+
+### Error behavior
+
+- Returns `400` when `id` is missing, or when the request has no `accountId` and no authenticated account context.
+- Returns `404` when the payment method does not exist for the account or has already been soft-deleted.
+- Returns `500` when the default-setting RPC fails.
+
+## DELETE /api/payment-methods/{id}
+
+Remove a payment method from active use. The API detaches the method from Stripe, marks the Talkturo record as deleted, and clears its active and default flags.
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Internal payment method UUID to remove.
+
+</ParamField>
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+
+Account identifier that owns the payment method.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request DELETE \
+  --url 'https://api.talkturo.com/api/payment-methods/8d8ff0a6-ef23-4e8f-a4e0-0a8826602b74?accountId=acc_9f2k1m7q' \
+  --header 'Authorization: Bearer dkai_example_9xmk7q2r' \
+  --header 'Accept: application/json'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/payment-methods/8d8ff0a6-ef23-4e8f-a4e0-0a8826602b74?accountId=acc_9f2k1m7q",
+  {
+    method: "DELETE",
+    headers: {
+      "Authorization": "Bearer dkai_example_9xmk7q2r",
+      "Accept": "application/json"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+```json
+{
+  "success": true,
+  "message": "Payment method deleted"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the payment method was deleted successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Status message for the delete operation. Successful requests return `Payment method deleted`.
+</ResponseField>
+
+<Callout kind="info">
+
+Delete performs a soft delete in Talkturo. The record remains in billing history, but the API sets `deleted_at`, `is_active=false`, and `is_default=false`. If you delete the current default payment method, the API automatically promotes another active payment method when one exists.
+
+</Callout>
+
+### Error behavior
+
+- Returns `400` when `accountId` or `id` is missing.
+- Returns `404` when the payment method does not exist for the account or is already deleted.
+- Returns `500` when the soft-delete update fails.
+- Stripe detach errors for missing remote payment methods are tolerated when Stripe reports that the payment method does not exist.
+
+## Related resources
+
+<Columns cols={2}>
+  <Card
+    title="Billing"
+    href="/billing"
+    icon="credit-card"
+    cta="Open billing docs"
+  />
+  <Card
+    title="Credits"
+    href="/credits"
+    icon="database"
+    cta="View credits docs"
+  />
+</Columns>

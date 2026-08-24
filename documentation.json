@@ -285,6 +285,46 @@
                     "title": "Webhooks",
                     "path": "en/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "Sessions",
+                    "path": "en/api-reference/sessions",
+                    "icon": "monitor"
+                  },
+                  {
+                    "title": "Calls",
+                    "path": "en/api-reference/calls",
+                    "icon": "phone-call"
+                  },
+                  {
+                    "title": "Voices",
+                    "path": "en/api-reference/voices",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Voice Cloning",
+                    "path": "en/api-reference/voice-cloning",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Verifications",
+                    "path": "en/api-reference/verifications",
+                    "icon": "shield-check"
+                  },
+                  {
+                    "title": "Close AI",
+                    "path": "en/api-reference/close-ai",
+                    "icon": "brain"
+                  },
+                  {
+                    "title": "Payment Methods",
+                    "path": "en/api-reference/payment-methods",
+                    "icon": "credit-card"
+                  },
+                  {
+                    "title": "Usage",
+                    "path": "en/api-reference/usage",
+                    "icon": "bar-chart"
                   }
                 ]
               },
@@ -655,6 +695,46 @@
                     "title": "Webhooks",
                     "path": "de/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "Sitzungen",
+                    "path": "de/api-reference/sessions",
+                    "icon": "monitor"
+                  },
+                  {
+                    "title": "Anrufe",
+                    "path": "de/api-reference/calls",
+                    "icon": "phone-call"
+                  },
+                  {
+                    "title": "Stimmen",
+                    "path": "de/api-reference/voices",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Voice Cloning",
+                    "path": "de/api-reference/voice-cloning",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "Verifizierungen",
+                    "path": "de/api-reference/verifications",
+                    "icon": "shield-check"
+                  },
+                  {
+                    "title": "Close AI",
+                    "path": "de/api-reference/close-ai",
+                    "icon": "brain"
+                  },
+                  {
+                    "title": "Zahlungsmethoden",
+                    "path": "de/api-reference/payment-methods",
+                    "icon": "credit-card"
+                  },
+                  {
+                    "title": "Nutzung",
+                    "path": "de/api-reference/usage",
+                    "icon": "bar-chart"
                   }
                 ]
               },

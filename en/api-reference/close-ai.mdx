@@ -1,0 +1,789 @@
+---
+title: Close AI
+description: Reference for Close AI dashboard analytics, sessions, prompt presets, sales scripts, and user settings endpoints.
+---
+
+## Close AI endpoints
+
+Use the Close AI API to read team analytics, list recorded desktop sessions, manage prompt presets, store workspace sales scripts, and update per-user analytics settings.
+
+<Callout kind="info">
+
+All Close AI endpoints use authenticated session cookies from the Talkturo app. Send requests from an authenticated browser session or an environment that forwards the user's Talkturo cookies. Unauthenticated requests return `401`.
+
+</Callout>
+
+Some endpoints are scoped to a workspace through the `account` query parameter, while others rely on row-level security for the signed-in user. That distinction affects what data the API returns and whether membership checks apply.
+
+## Endpoint summary
+
+| Endpoint | Methods | Purpose |
+| --- | --- | --- |
+| `/api/close-ai/dashboard` | `GET` | Return workspace-level analytics and coaching summaries |
+| `/api/close-ai/sessions` | `GET` | List desktop sessions with pagination and search |
+| `/api/close-ai/prompts` | `GET`, `POST` | List and create prompt presets |
+| `/api/close-ai/scripts` | `GET`, `POST`, `PUT`, `DELETE` | Create and manage workspace sales scripts |
+| `/api/close-ai/settings` | `GET`, `PUT` | Read and update per-user analytics settings |
+
+## GET /api/close-ai/dashboard
+
+Read aggregated Close AI analytics for a workspace over a configurable time window.
+
+<Callout kind="alert">
+
+`/api/close-ai/dashboard` requires both an authenticated user and workspace membership. The route checks the `account` slug against workspace membership before it reads analytics data. If the user is not a member, the API returns `403`.
+
+</Callout>
+
+### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug to query.
+</ParamField>
+
+<ParamField query="days" param-type="integer" required="false">
+Number of trailing days to include. Valid values are `1` through `365`. Defaults to `30`.
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/dashboard?account=acme-sales&days=30" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s"
+```
+</Request>
+
+<Response tabs="200,401,403" default-tab="1">
+```json
+{
+  "kpis": {
+    "calls": 42,
+    "callsDeltaPct": 15,
+    "avgCloseScore": 73,
+    "avgDurationSeconds": 480.5,
+    "activeMembers": 5,
+    "analyzedCount": 38
+  },
+  "coaching": {
+    "evaluations": 38,
+    "strengths": [
+      { "label": "Active listening", "count": 12 }
+    ],
+    "weaknesses": [
+      { "label": "Objection handling", "count": 8 }
+    ],
+    "risks": [
+      { "label": "Price sensitivity", "count": 4 }
+    ]
+  },
+  "objections": {
+    "total": 120,
+    "byCategory": [
+      { "key": "price", "count": 45, "avgCloseScore": 68 }
+    ],
+    "byType": [
+      { "key": "timing", "count": 30, "avgCloseScore": 71 }
+    ],
+    "byIntensity": [
+      { "key": "high", "count": 20, "avgCloseScore": 60 }
+    ]
+  },
+  "questions": {
+    "open": 80,
+    "closed": 40,
+    "deep": 15,
+    "missed": [
+      { "label": "Budget authority", "count": 5 }
+    ]
+  },
+  "personality": [
+    { "type": "Driver", "count": 10 }
+  ],
+  "language": {
+    "avgTalkSharePct": 55.2,
+    "avgWpm": 148,
+    "avgPatiencePct": 72,
+    "avgLongestMonologueSeconds": 45
+  },
+  "script": {
+    "calls": 25,
+    "avgCoveragePct": 78,
+    "avgOrderDeviationPct": 12,
+    "blocks": [
+      { "name": "Opening", "avgPct": 91 }
+    ]
+  },
+  "scores": {
+    "distribution": [
+      { "bucket": "0-39", "count": 2 },
+      { "bucket": "40-59", "count": 8 },
+      { "bucket": "60-79", "count": 18 },
+      { "bucket": "80-100", "count": 10 }
+    ],
+    "avg": 73
+  },
+  "durationDistribution": [
+    { "bucket": "0-5m", "count": 5 },
+    { "bucket": "5-10m", "count": 12 }
+  ],
+  "trends": [
+    { "date": "2026-07-25", "calls": 3, "avgCloseScore": 72 }
+  ],
+  "members": [
+    {
+      "userId": "b6f4d8f7-59f8-4c66-a7f5-1e80fd85dbab",
+      "name": "Alice",
+      "calls": 10,
+      "evaluations": 9,
+      "avgCloseScore": 75,
+      "avgDurationSeconds": 490,
+      "strengths": 18,
+      "weaknesses": 5,
+      "risks": 2,
+      "avgCoveragePct": 80,
+      "personality": "Driver"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="kpis" field-type="object">
+Top-level KPI summary for the selected date range, including call volume, average close score, average duration, active members, and analyzed call count.
+</ResponseField>
+
+<ResponseField name="coaching" field-type="object">
+Coaching outcomes derived from session analysis, including evaluation count and the most common strengths, weaknesses, and risks.
+</ResponseField>
+
+<ResponseField name="objections" field-type="object">
+Objection totals and grouped breakdowns by category, type, and intensity with average close score for each group.
+</ResponseField>
+
+<ResponseField name="questions" field-type="object">
+Question mix across analyzed calls, including open, closed, and deep questions plus the most frequently missed question areas.
+</ResponseField>
+
+<ResponseField name="personality" field-type="array">
+Distribution of detected buyer or conversation personality types for the selected workspace and time window.
+</ResponseField>
+
+<ResponseField name="language" field-type="object">
+Language behavior metrics such as talk share, speaking rate, patience, and longest monologue duration.
+</ResponseField>
+
+<ResponseField name="script" field-type="object">
+Script adherence summary, including coverage, order deviation, and block-level usage percentages.
+</ResponseField>
+
+<ResponseField name="scores" field-type="object">
+Close score average and bucketed score distribution.
+</ResponseField>
+
+<ResponseField name="durationDistribution" field-type="array">
+Bucketed session duration counts.
+</ResponseField>
+
+<ResponseField name="trends" field-type="array">
+Per-day analytics trend data across the requested date range.
+</ResponseField>
+
+<ResponseField name="members" field-type="array">
+Per-member breakdown sorted by call volume, including call counts, evaluations, close score, duration, coaching counts, coverage, and personality.
+</ResponseField>
+
+### Notes
+
+The dashboard response is designed for analytics views rather than per-call detail pages. Use it to power charts, scorecards, and leaderboard-style workspace summaries.
+
+## GET /api/close-ai/sessions
+
+List Close AI desktop sessions visible to the authenticated user.
+
+When you pass an `account` slug, the API scopes results to that workspace and also includes legacy rows with a null account identifier. Without `account`, the API returns all sessions available to the signed-in user through row-level security.
+
+### Query parameters
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of sessions to return. Valid values are `1` through `100`. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Zero-based pagination offset. Defaults to `0`.
+</ParamField>
+
+<ParamField query="q" param-type="string" required="false">
+Case-insensitive search term applied to the session `title`.
+</ParamField>
+
+<ParamField query="account" param-type="string" required="false">
+Workspace slug used to scope results to workspace sessions plus legacy rows with no workspace identifier.
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/sessions?account=acme-sales&limit=25&offset=0&q=acme" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s"
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "sessions": [
+    {
+      "id": "9e055607-4e99-4326-ac88-7a44df9bd5fb",
+      "user_id": "b6f4d8f7-59f8-4c66-a7f5-1e80fd85dbab",
+      "account_id": "319f1934-96cd-4687-b43c-6ed1e1c04b5d",
+      "title": "Call with Acme Corp",
+      "session_type": "desktop",
+      "started_at": "2026-08-24T10:00:00Z",
+      "ended_at": "2026-08-24T10:30:00Z",
+      "status": "completed",
+      "duration_seconds": 1800,
+      "updated_at": "2026-08-24T10:30:00Z"
+    }
+  ],
+  "count": 123
+}
+```
+
+```json
+{
+  "error": "Invalid request"
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="sessions" field-type="array">
+Paginated list of session records ordered by `started_at` descending.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer">
+Total number of matching sessions before pagination.
+</ResponseField>
+
+## GET and POST /api/close-ai/prompts
+
+Manage saved prompt presets for the authenticated user. Prompt records are scoped by row-level security to the current user.
+
+### GET query parameters
+
+<ParamField query="templates" param-type="string" required="false">
+Pass `true` to return only presets where `is_template` is true.
+</ParamField>
+
+### GET request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/prompts?templates=true" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s"
+```
+</Request>
+
+<Response tabs="200,401" default-tab="1">
+```json
+{
+  "presets": [
+    {
+      "id": "d83065bd-a314-49b7-a221-a15e3d6a47af",
+      "user_id": "b6f4d8f7-59f8-4c66-a7f5-1e80fd85dbab",
+      "title": "Discovery coach",
+      "prompt": "Evaluate discovery depth, objection handling, and next-step clarity.",
+      "is_default": true,
+      "is_template": true,
+      "created_at": "2026-08-10T12:04:00Z",
+      "updated_at": "2026-08-24T09:15:00Z"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+</Response>
+
+### GET response fields
+
+<ResponseField name="presets" field-type="array">
+Prompt preset records ordered by `is_default` descending and then `updated_at` descending.
+</ResponseField>
+
+### POST body parameters
+
+<ParamField body="title" param-type="string" required="true">
+Preset title. Must contain `1` to `200` characters.
+</ParamField>
+
+<ParamField body="prompt" param-type="string" required="true">
+Prompt text. Must contain `1` to `20000` characters.
+</ParamField>
+
+<ParamField body="is_default" param-type="boolean" required="false">
+Marks the preset as the user's default preset. When set to `true`, the API clears `is_default` on all other presets first.
+</ParamField>
+
+<ParamField body="is_template" param-type="boolean" required="false">
+Marks the preset as a reusable template.
+</ParamField>
+
+### POST request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/prompts" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s" \
+  -d '{
+    "title": "Objection handling review",
+    "prompt": "Review how the rep handled pricing objections, timing concerns, and commitment language.",
+    "is_default": false,
+    "is_template": false
+  }'
+```
+</Request>
+
+<Response tabs="201,400" default-tab="1">
+```json
+{
+  "preset": {
+    "id": "f856a1d0-6654-4403-abd5-ebf8f0a5820e",
+    "user_id": "b6f4d8f7-59f8-4c66-a7f5-1e80fd85dbab",
+    "title": "Objection handling review",
+    "prompt": "Review how the rep handled pricing objections, timing concerns, and commitment language.",
+    "is_default": false,
+    "is_template": false,
+    "created_at": "2026-08-24T10:20:00Z",
+    "updated_at": "2026-08-24T10:20:00Z"
+  }
+}
+```
+
+```json
+{
+  "error": "invalid_body",
+  "detail": {
+    "fieldErrors": {
+      "title": [
+        "String must contain at least 1 character"
+      ]
+    },
+    "formErrors": []
+  }
+}
+```
+</Response>
+
+### POST response fields
+
+<ResponseField name="preset" field-type="object">
+Created preset record for the authenticated user.
+</ResponseField>
+
+## GET, POST, PUT, and DELETE /api/close-ai/scripts
+
+Manage workspace sales scripts used by Close AI. Script endpoints are workspace-scoped and rely on row-level security for access control.
+
+<Callout kind="info">
+
+`GET` and `POST` require the `account` query parameter. `PUT` and `DELETE` operate on existing script records by identifier. When a `PUT` request sets `is_active` to `true`, the API deactivates every other script in the same workspace first.
+
+</Callout>
+
+### GET query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug whose scripts you want to list.
+</ParamField>
+
+### GET request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/scripts?account=acme-sales" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s"
+```
+</Request>
+
+<Response tabs="200,403" default-tab="1">
+```json
+{
+  "scripts": [
+    {
+      "id": "72e154c6-747e-4c41-b90c-f7fe948ebaf9",
+      "name": "Discovery opener",
+      "content": {
+        "sections": [
+          {
+            "id": "sec_opening",
+            "name": "Opening",
+            "type": "script",
+            "content": "Confirm the prospect goal and meeting agenda.",
+            "next": [
+              {
+                "id": "edge_opening_budget",
+                "condition": "If budget is unclear",
+                "targetId": "sec_budget"
+              }
+            ],
+            "position": {
+              "x": 120,
+              "y": 80
+            }
+          }
+        ],
+        "prompts": [
+          {
+            "id": "pr_discovery_gap",
+            "trigger": "Long monologue",
+            "text": "Ask a diagnostic question before continuing the pitch.",
+            "enabled": true
+          }
+        ]
+      },
+      "is_active": true,
+      "updated_at": "2026-08-24T08:30:00Z"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+</Response>
+
+### GET response fields
+
+<ResponseField name="scripts" field-type="array">
+Workspace script records ordered by `updated_at` descending.
+</ResponseField>
+
+### POST query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug where the script will be created.
+</ParamField>
+
+### POST body parameters
+
+<ParamField body="name" param-type="string" required="false">
+Script name. If omitted or blank after trimming, the API uses `Untitled script`.
+</ParamField>
+
+### POST request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/scripts?account=acme-sales" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s" \
+  -d '{
+    "name": "Renewal call flow"
+  }'
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "script": {
+    "id": "4556fc07-f439-486c-aea5-aa9d7cb8d3fd",
+    "name": "Renewal call flow",
+    "content": null,
+    "is_active": false,
+    "updated_at": "2026-08-24T11:05:00Z"
+  }
+}
+```
+</Response>
+
+### POST response fields
+
+<ResponseField name="script" field-type="object">
+Created workspace script record.
+</ResponseField>
+
+### PUT body parameters
+
+<ParamField body="id" param-type="string" required="true">
+Script identifier. Must be a UUID.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="false">
+Updated script name. If provided, it must contain at least one character.
+</ParamField>
+
+<ParamField body="content" param-type="object" required="false">
+Full script content object with `sections` and `prompts` arrays.
+</ParamField>
+
+<ParamField body="is_active" param-type="boolean" required="false">
+Marks the script as the active script for its workspace. Only one script can be active at a time.
+</ParamField>
+
+#### Content object shape
+
+<ParamField body="sections" param-type="array" required="false" show-location="false">
+Ordered list of script nodes. Each section contains `id`, `name`, `type`, `content`, `next`, and optional `position`.
+</ParamField>
+
+<ParamField body="prompts" param-type="array" required="false" show-location="false">
+Prompt rules associated with the script. Each prompt contains `id`, `trigger`, `text`, and `enabled`.
+</ParamField>
+
+### PUT request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/scripts" \
+  -X PUT \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s" \
+  -d '{
+    "id": "72e154c6-747e-4c41-b90c-f7fe948ebaf9",
+    "name": "Discovery opener",
+    "is_active": true,
+    "content": {
+      "sections": [
+        {
+          "id": "sec_opening",
+          "name": "Opening",
+          "type": "script",
+          "content": "Confirm the prospect goal and meeting agenda.",
+          "next": [
+            {
+              "id": "edge_opening_budget",
+              "condition": "If budget is unclear",
+              "targetId": "sec_budget"
+            }
+          ],
+          "position": {
+            "x": 120,
+            "y": 80
+          }
+        }
+      ],
+      "prompts": [
+        {
+          "id": "pr_discovery_gap",
+          "trigger": "Long monologue",
+          "text": "Ask a diagnostic question before continuing the pitch.",
+          "enabled": true
+        }
+      ]
+    }
+  }'
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "script": {
+    "id": "72e154c6-747e-4c41-b90c-f7fe948ebaf9",
+    "name": "Discovery opener",
+    "content": {
+      "sections": [
+        {
+          "id": "sec_opening",
+          "name": "Opening",
+          "type": "script",
+          "content": "Confirm the prospect goal and meeting agenda.",
+          "next": [
+            {
+              "id": "edge_opening_budget",
+              "condition": "If budget is unclear",
+              "targetId": "sec_budget"
+            }
+          ],
+          "position": {
+            "x": 120,
+            "y": 80
+          }
+        }
+      ],
+      "prompts": [
+        {
+          "id": "pr_discovery_gap",
+          "trigger": "Long monologue",
+          "text": "Ask a diagnostic question before continuing the pitch.",
+          "enabled": true
+        }
+      ]
+    },
+    "is_active": true,
+    "updated_at": "2026-08-24T11:20:00Z"
+  }
+}
+```
+</Response>
+
+### PUT response fields
+
+<ResponseField name="script" field-type="object">
+Updated script record after applying name, content, and activation changes.
+</ResponseField>
+
+### DELETE query parameters
+
+<ParamField query="id" param-type="string" required="true">
+Script identifier to delete. Must be a UUID.
+</ParamField>
+
+### DELETE request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/scripts?id=4556fc07-f439-486c-aea5-aa9d7cb8d3fd" \
+  -X DELETE \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s"
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "ok": true
+}
+```
+
+```json
+{
+  "error": "id_required"
+}
+```
+</Response>
+
+### DELETE response fields
+
+<ResponseField name="ok" field-type="boolean">
+Returns `true` when the script is deleted successfully.
+</ResponseField>
+
+## GET and PUT /api/close-ai/settings
+
+Read and update per-user analytics settings for Close AI.
+
+The settings record stores a single analytics system prompt and uses upsert behavior on save. You can call `PUT` whether or not the user already has a settings row.
+
+### GET request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/settings" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s"
+```
+</Request>
+
+<Response tabs="200,401" default-tab="1">
+```json
+{
+  "analytics_system_prompt": "Evaluate pacing, objection handling, and the quality of next-step commitments.",
+  "updated_at": "2026-08-24T09:00:00Z"
+}
+```
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+</Response>
+
+### GET response fields
+
+<ResponseField name="analytics_system_prompt" field-type="string | null">
+Current analytics system prompt for the authenticated user. Returns `null` if no settings row exists yet.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string | null">
+Timestamp of the most recent settings update. Returns `null` if no settings row exists yet.
+</ResponseField>
+
+### PUT body parameters
+
+<ParamField body="analytics_system_prompt" param-type="string | null" required="true">
+Analytics system prompt text. Maximum length is `20000` characters. Pass `null` to clear the stored value.
+</ParamField>
+
+### PUT request example
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/close-ai/settings" \
+  -X PUT \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=sb_example_9xmk7q2r; sb-refresh-token=sb_refresh_example_4kdp8n1s" \
+  -d '{
+    "analytics_system_prompt": "Coach for concise discovery, explicit next steps, and balanced talk share."
+  }'
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "analytics_system_prompt": "Coach for concise discovery, explicit next steps, and balanced talk share.",
+  "updated_at": "2026-08-24T11:45:00Z"
+}
+```
+
+```json
+{
+  "error": "invalid_body",
+  "detail": {
+    "fieldErrors": {},
+    "formErrors": []
+  }
+}
+```
+</Response>
+
+### PUT response fields
+
+<ResponseField name="analytics_system_prompt" field-type="string | null">
+Saved analytics system prompt after the update completes.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string">
+Timestamp written by the upsert operation.
+</ResponseField>
+
+## Related resources
+
+<Columns cols={2}>
+  <Card title="Sessions API" href="/en/api-reference/close-ai-sessions" icon="terminal" cta="Open reference">
+  Use session listing data to power call history, search, and pagination flows.
+  </Card>
+  <Card title="Desktop authentication" href="/en/guides/desktop-auth" icon="lock" cta="Read guide">
+  Understand how authenticated desktop clients maintain Talkturo session cookies.
+  </Card>
+</Columns>
