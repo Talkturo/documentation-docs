@@ -38,6 +38,9 @@ The following endpoints require a session-authenticated browser request:
 | `GET` | `/api/credits/plans` | Session | List available credit purchase plans |
 | `GET` | `/api/credits/statement` | Session | Get credit statement history |
 | `GET` | `/api/credits/transactions` | Session | Get credit transaction history |
+| `POST` | `/api/credits/claim-grants/new-workspace` | Session | Claim workspace signup bonus credits |
+| `GET` | `/api/usage/current` | API key or session | Get current period usage summary |
+| `GET` | `/api/usage/voice` | API key or session | Get voice usage breakdown |
 
 ## Get credits balance
 
@@ -443,6 +446,50 @@ Dollar amount to charge when auto-reload runs.
 
 `POST /api/credits/claim-grants` applies any pending credit grants to the signed-in account. Use this endpoint after account actions that provision promotional or manual credits.
 
+### Claim new workspace bonus
+
+`POST /api/credits/claim-grants/new-workspace` claims workspace signup bonus credits for the signed-in account. Use this endpoint after a new workspace is created to claim any promotional signup credits.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/credits/claim-grants/new-workspace" \
+  -H "Cookie: talkturo_session=session_example_a8f4m2k1p9q7r3"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/claim-grants/new-workspace", {
+  method: "POST",
+  credentials: "include",
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "granted": 5000
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the signup bonus is claimed successfully.
+
+</ResponseField>
+
+<ResponseField name="granted" field-type="number" required="true">
+
+Number of promotional credits granted to the signed-in account.
+
+</ResponseField>
+
 ### List available plans
 
 `GET /api/credits/plans` returns the purchase plans available to the signed-in account. Use it to populate a billing UI before calling checkout.
@@ -454,6 +501,100 @@ Dollar amount to charge when auto-reload runs.
 ### Get transaction history
 
 `GET /api/credits/transactions` returns transaction-level credit history for the signed-in account. Use it when you need detailed usage and purchase records.
+
+## Usage endpoints
+
+Use these endpoints to inspect current-period consumption alongside the credits balance. Both endpoints support the same dual authentication model as the balance and deduction endpoints.
+
+### Get current period usage summary
+
+`GET /api/usage/current` returns a summary of usage for the current billing period.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/usage/current" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/usage/current", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "period": {
+    "start": "2024-02-01T00:00:00.000Z",
+    "end": "2024-02-29T23:59:59.999Z"
+  },
+  "usage": {
+    "credits_used": 6580,
+    "voice_minutes": 412.4,
+    "calls": 187
+  }
+}
+```
+</Response>
+
+### Get voice usage breakdown
+
+`GET /api/usage/voice` returns a voice-specific usage breakdown including minutes, calls, and assistant activity.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/usage/voice" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/usage/voice", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r5s8d4m1n6p3v7y2z",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "summary": {
+    "minutes": 412.4,
+    "calls": 187,
+    "active_assistants": 6
+  },
+  "assistants": [
+    {
+      "assistantId": "0b760e0d-4b10-4ee8-9c8b-89f02d0a9149",
+      "name": "Outbound SDR",
+      "minutes": 188.7,
+      "calls": 84
+    },
+    {
+      "assistantId": "84e72f0b-5f40-4ec2-8f29-ecc66d18d6f4",
+      "name": "Support Triage",
+      "minutes": 96.2,
+      "calls": 41
+    }
+  ]
+}
+```
+</Response>
 
 ## Common integration patterns
 

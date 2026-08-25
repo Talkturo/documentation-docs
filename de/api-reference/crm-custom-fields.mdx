@@ -1,17 +1,29 @@
 ---
 title: CRM-Benutzerdefinierte Felder
-description: Benutzerdefinierte Felder für Kontakte, Unternehmen und Opportunities im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen — Datensätze mit Text-, Zahlen-, Datums-, Auswahl- und Boolean-Feldtypen erweitern.
+description: Benutzerdefinierte Felder für Kontakte im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen — Datensätze mit Text-, Zahlen-, Datums-, Auswahl-, Boolean- und Textbereich-Feldtypen erweitern.
 ---
 
 ## CRM-Datensätze mit benutzerdefinierten Feldern erweitern
 
-Benutzerdefinierte Felder ergänzen Kontakte, Unternehmen und Opportunities um eigene Datenpunkte, die in Ihrem CRM-Workflow fehlen. Über diese Endpunkte listen Sie vorhandene Felder auf, legen neue Felder an, rufen einzelne Felder ab, aktualisieren deren Namen oder Auswahloptionen und löschen nicht mehr benötigte Felder.
+Benutzerdefinierte Felder ergänzen Kontakte um eigene Datenpunkte, die in Ihrem CRM-Workflow fehlen. Über diese Endpunkte listen Sie vorhandene Felder auf, legen neue Felder an, rufen einzelne Felder ab, aktualisieren deren Eigenschaften und löschen nicht mehr benötigte Felder.
+
+<Callout kind="alert">
+
+Benutzerdefinierte Felder werden nur für den Entitätstyp `contact` unterstützt. Benutzerdefinierte Felder für Unternehmen sind veraltet.
+
+</Callout>
 
 Alle Endpunkte in diesem Bereich verwenden Session-Authentifizierung. Die Antworten folgen durchgängig dem Muster `success: true` und liefern je nach Operation entweder `fields`, `field` oder nur eine Erfolgsbestätigung zurück.
 
 <Callout kind="info">
 
-Benutzerdefinierte Felder unterstützen die Feldtypen `text`, `number`, `date`, `select` und `boolean`. Das Feld `options` verwenden Sie nur für den Typ `select`.
+Benutzerdefinierte Felder unterstützen die Feldtypen `text`, `number`, `boolean`, `date`, `select` und `textarea`. Das Feld `options` verwenden Sie nur für den Typ `select`.
+
+</Callout>
+
+<Callout kind="info">
+
+Feld-Schlüssel müssen snake_case sein, mit einem Buchstaben beginnen und 2–64 Zeichen lang sein.
 
 </Callout>
 
@@ -22,7 +34,7 @@ Benutzerdefinierte Felder unterstützen die Feldtypen `text`, `number`, `date`, 
 | `GET` | `/api/crm/custom-fields` | Alle benutzerdefinierten Felder auflisten |
 | `POST` | `/api/crm/custom-fields` | Ein neues benutzerdefiniertes Feld erstellen |
 | `GET` | `/api/crm/custom-fields/[id]` | Ein benutzerdefiniertes Feld anhand seiner ID abrufen |
-| `PATCH` | `/api/crm/custom-fields/[id]` | Name oder Auswahloptionen eines Felds aktualisieren |
+| `PUT` | `/api/crm/custom-fields/[id]` | Eigenschaften eines Felds aktualisieren |
 | `DELETE` | `/api/crm/custom-fields/[id]` | Ein benutzerdefiniertes Feld löschen |
 
 ## GET /api/crm/custom-fields
@@ -86,7 +98,7 @@ CRM-Entität, für die das Feld gilt. Mögliche Werte sind `contact`, `company` 
 
 ## POST /api/crm/custom-fields
 
-Erstellen Sie ein neues benutzerdefiniertes Feld für Kontakte, Unternehmen oder Opportunities. Für Auswahlfelder übergeben Sie zusätzlich eine Liste von Optionen.
+Erstellen Sie ein neues benutzerdefiniertes Feld für Kontakte. Für Auswahlfelder übergeben Sie zusätzlich ein `options`-Objekt mit einem Array von Auswahlwerten.
 
 <Request>
 ```bash
@@ -94,10 +106,15 @@ curl -X POST "https://api.talkturo.com/api/crm/custom-fields" \
   -H "Content-Type: application/json" \
   -H "Cookie: sb-access-token=example_session_token_9xmk7q2r" \
   -d '{
-    "name": "Lead Source",
-    "type": "select",
-    "entity_type": "contact",
-    "options": ["Referral", "Website", "Partner"]
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "entityType": "contact",
+    "key": "lead_source",
+    "label": "Lead Source",
+    "fieldType": "select",
+    "options": { "options": ["Referral", "Website", "Partner"] },
+    "isRequired": false,
+    "sortOrder": 0,
+    "isActive": true
   }'
 ```
 </Request>
@@ -108,10 +125,15 @@ curl -X POST "https://api.talkturo.com/api/crm/custom-fields" \
   "success": true,
   "field": {
     "id": "cf_b5f29410",
-    "name": "Lead Source",
-    "type": "select",
-    "entity_type": "contact",
-    "options": ["Referral", "Website", "Partner"]
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "entityType": "contact",
+    "key": "lead_source",
+    "label": "Lead Source",
+    "fieldType": "select",
+    "options": { "options": ["Referral", "Website", "Partner"] },
+    "isRequired": false,
+    "sortOrder": 0,
+    "isActive": true
   }
 }
 ```
@@ -119,20 +141,40 @@ curl -X POST "https://api.talkturo.com/api/crm/custom-fields" \
 
 ### Body-Parameter
 
-<ParamField body="name" param-type="string" required="true">
-Name des benutzerdefinierten Felds, wie er im CRM angezeigt wird.
+<ParamField body="teamId" param-type="string" required="true">
+Team-UUID, der das Feld gehört.
 </ParamField>
 
-<ParamField body="type" param-type="string" required="true" enum="text,number,date,select,boolean">
-Definiert den Feldtyp. Verwenden Sie `options` nur, wenn `type` den Wert `select` hat.
+<ParamField body="entityType" param-type="string" required="true" enum="contact">
+Legt fest, für welche CRM-Entität das Feld verfügbar ist. Nur `contact` wird unterstützt.
 </ParamField>
 
-<ParamField body="entity_type" param-type="string" required="true" enum="contact,company,opportunity">
-Legt fest, für welche CRM-Entität das Feld verfügbar ist.
+<ParamField body="key" param-type="string" required="true">
+Feld-Schlüssel in snake_case, der mit einem Buchstaben beginnt und 2–64 Zeichen lang ist.
 </ParamField>
 
-<ParamField body="options" param-type="array" required="false">
-Liste der auswählbaren Werte für Felder vom Typ `select`.
+<ParamField body="label" param-type="string" required="true">
+Anzeige-Label des Felds, wie es im CRM angezeigt wird.
+</ParamField>
+
+<ParamField body="fieldType" param-type="string" required="true" enum="text,number,boolean,date,select,textarea">
+Definiert den Feldtyp. Verwenden Sie `options` nur, wenn `fieldType` den Wert `select` hat.
+</ParamField>
+
+<ParamField body="options" param-type="object" required="false">
+Für den Typ `select` muss das Objekt ein `options`-Array mit Strings enthalten, z. B. `{ "options": ["Referral", "Website"] }`.
+</ParamField>
+
+<ParamField body="isRequired" param-type="boolean" required="false">
+Gibt an, ob das Feld verpflichtend ist. Standardwert ist `false`.
+</ParamField>
+
+<ParamField body="sortOrder" param-type="integer" required="false">
+Sortierreihenfolge des Felds. Standardwert ist `0`.
+</ParamField>
+
+<ParamField body="isActive" param-type="boolean" required="false">
+Gibt an, ob das Feld aktiv ist. Standardwert ist `true`.
 </ParamField>
 
 ### Antwortfelder
@@ -203,18 +245,19 @@ Gibt an, ob die Anfrage erfolgreich war.
 Enthält das angeforderte benutzerdefinierte Feld.
 </ResponseField>
 
-## PATCH /api/crm/custom-fields/[id]
+## PUT /api/crm/custom-fields/[id]
 
-Aktualisieren Sie den Namen eines Felds oder die Auswahloptionen eines vorhandenen Auswahlfelds. Andere Feldeigenschaften werden von diesem Endpunkt nicht dokumentiert.
+Aktualisieren Sie das Label, die Auswahloptionen oder andere Eigenschaften eines vorhandenen Felds.
 
 <Request>
 ```bash
-curl -X PATCH "https://api.talkturo.com/api/crm/custom-fields/cf_b5f29410" \
+curl -X PUT "https://api.talkturo.com/api/crm/custom-fields/cf_b5f29410" \
   -H "Content-Type: application/json" \
   -H "Cookie: sb-access-token=example_session_token_9xmk7q2r" \
   -d '{
-    "name": "Primary Lead Source",
-    "options": ["Referral", "Website", "Partner", "Event"]
+    "label": "Primary Lead Source",
+    "options": { "options": ["Referral", "Website", "Partner", "Event"] },
+    "isRequired": true
   }'
 ```
 </Request>
@@ -225,10 +268,15 @@ curl -X PATCH "https://api.talkturo.com/api/crm/custom-fields/cf_b5f29410" \
   "success": true,
   "field": {
     "id": "cf_b5f29410",
-    "name": "Primary Lead Source",
-    "type": "select",
-    "entity_type": "contact",
-    "options": ["Referral", "Website", "Partner", "Event"]
+    "teamId": "550e8400-e29b-41d4-a716-446655440000",
+    "entityType": "contact",
+    "key": "lead_source",
+    "label": "Primary Lead Source",
+    "fieldType": "select",
+    "options": { "options": ["Referral", "Website", "Partner", "Event"] },
+    "isRequired": true,
+    "sortOrder": 0,
+    "isActive": true
   }
 }
 ```
@@ -242,12 +290,24 @@ Eindeutige Kennung des zu aktualisierenden Felds.
 
 ### Body-Parameter
 
-<ParamField body="name" param-type="string" required="false">
-Neuer Anzeigename des benutzerdefinierten Felds.
+<ParamField body="label" param-type="string" required="false">
+Neues Anzeige-Label des benutzerdefinierten Felds.
 </ParamField>
 
-<ParamField body="options" param-type="array" required="false">
-Aktualisierte Auswahlwerte für ein Feld vom Typ `select`.
+<ParamField body="options" param-type="object" required="false">
+Aktualisierte Auswahlwerte für ein Feld vom Typ `select`. Muss ein `options`-Array enthalten.
+</ParamField>
+
+<ParamField body="isRequired" param-type="boolean" required="false">
+Aktualisiert, ob das Feld verpflichtend ist.
+</ParamField>
+
+<ParamField body="sortOrder" param-type="integer" required="false">
+Aktualisierte Sortierreihenfolge.
+</ParamField>
+
+<ParamField body="isActive" param-type="boolean" required="false">
+Aktiviert oder deaktiviert das Feld.
 </ParamField>
 
 ### Antwortfelder

@@ -9,22 +9,20 @@ description: >-
 
 Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge aktualisieren, löschen und die zugeordneten Kontakte eines Unternehmens abfragen.
 
-Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung.
-
 <Callout kind="info" collapsed="false">
-  Die Listenansicht unterstützt Seitennummerierung und Suche. Die Detailendpunkte arbeiten mit der Unternehmens-ID aus dem CRM.
+  Die Listenansicht unterstützt Seitennummerierung und Suche und akzeptiert API-Key- oder Session-Cookie-Authentifizierung. Die Detailendpunkte sowie Kontaktzuordnungen verwenden Session-Cookie-Authentifizierung und arbeiten mit der Unternehmens-ID aus dem CRM.
 </Callout>
 
 ## Endpunktübersicht
 
-| Methode  | Pfad                               | Zweck                                 |
-| -------- | ---------------------------------- | ------------------------------------- |
-| `GET`    | `/api/crm/companies`               | Unternehmen auflisten                 |
-| `POST`   | `/api/crm/companies`               | Unternehmen erstellen                 |
-| `GET`    | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen         |
-| `PATCH`  | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             |
-| `DELETE` | `/api/crm/companies/{id}`          | Unternehmen löschen                   |
-| `GET`    | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten |
+| Methode  | Pfad                               | Zweck                                 | Authentifizierung              |
+| -------- | ---------------------------------- | ------------------------------------- | ------------------------------ |
+| `GET`    | `/api/crm/companies`               | Unternehmen auflisten                 | API-Key oder Session-Cookie    |
+| `POST`   | `/api/crm/companies`               | Unternehmen erstellen                 | Session-Cookie                 |
+| `GET`    | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen         | Session-Cookie                 |
+| `PUT`    | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             | Session-Cookie                 |
+| `DELETE` | `/api/crm/companies/{id}`          | Unternehmen löschen                   | Session-Cookie                 |
+| `GET`    | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten | Session-Cookie                 |
 
 ## Unternehmen auflisten
 
@@ -33,7 +31,8 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
 <Request show-lines="true">
   ```bash
   curl -X GET "https://api.talkturo.local/api/crm/companies?page=1&limit=20&search=Acme" \
-    -H "Cookie: sb-session=example_session_token"
+    -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+    -H "Content-Type: application/json"
   ```
 </Request>
 
@@ -111,6 +110,10 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
 
 ## Unternehmen erstellen
 
+<Callout kind="alert" collapsed="false">
+  `POST /api/crm/companies` ist veraltet und gibt HTTP 410 zurück. Verwenden Sie `POST /api/crm/groups`, um Gruppen zu erstellen.
+</Callout>
+
 Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CRM anzulegen.
 
 <Request show-lines="true">
@@ -131,15 +134,8 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
 <Response show-lines="true">
   ```json
   {
-    "success": true,
-    "company": {
-      "id": "cmp_c4a91e7b",
-      "name": "Northwind Health Partners",
-      "website": "https://northwind-health.com",
-      "industry": "Healthcare",
-      "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
-    }
+    "success": false,
+    "error": "Endpoint deprecated. Use /api/crm/groups instead."
   }
   ```
 </Response>
@@ -169,15 +165,11 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
 ### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true" deprecated="false">
-  Gibt an, ob das Unternehmen erfolgreich erstellt wurde.
+  Gibt an, ob die Anfrage erfolgreich war.
 </ResponseField>
 
-<ResponseField name="company" field-type="object" required="true" deprecated="false">
-  Der neu angelegte Unternehmensdatensatz.
-</ResponseField>
-
-<ResponseField name="company.id" field-type="string" required="true" deprecated="false">
-  Eindeutige ID des neuen Unternehmens.
+<ResponseField name="error" field-type="string" required="true" deprecated="false">
+  Fehlermeldung zum veralteten Endpunkt mit Verweis auf den Ersatzendpunkt.
 </ResponseField>
 
 <Callout kind="tip" collapsed="false">
@@ -210,7 +202,7 @@ Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdate
 
 ## Unternehmen aktualisieren
 
-Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehmens zu ändern. Der Endpunkt gibt den aktualisierten Datensatz zurück.
+Senden Sie `PUT /api/crm/companies/{id}`, um vorhandene Felder eines Unternehmens zu ändern. Der Endpunkt gibt den aktualisierten Datensatz zurück.
 
 ### Pfadparameter
 
@@ -267,7 +259,7 @@ Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz aus 
 </ResponseField>
 
 <Callout kind="alert" collapsed="false">
-  Das Löschen eines Unternehmens ist als Operation destruktiv. Prüfen Sie vor dem Entfernen, ob nachgelagerte Prozesse oder verknüpfte Datensätze die Unternehmens-ID noch verwenden.
+  Das Löschen eines Unternehmens ist als Operation destruktiv. Prüfen Sie vor dem Entfernen, ob nachgelagerte Prozesse oder verknüpfte Datensätze die Unternehmens-ID noch verwenden. Wenn dem Unternehmen noch Kontakte zugeordnet sind, blockiert der Endpunkt das Löschen. Entfernen Sie diese Kontakte zuerst.
 </Callout>
 
 ## Kontakte eines Unternehmens auflisten
@@ -301,4 +293,3 @@ Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen
 
   </Card>
 </Columns>
-

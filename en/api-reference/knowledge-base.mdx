@@ -3,6 +3,388 @@ title: Knowledge Base
 description: Upload, list, and delete knowledge base files for AI voice assistants via the Talkturo API — manage documents that power retrieval-based answers during calls.
 ---
 
+## Account-level knowledge base files
+
+Manage knowledge base files at the account level with dual authentication. These endpoints accept an API key or session cookie and let you upload, list, retrieve, download, and delete files without scoping them to a specific assistant.
+
+<Callout kind="info">
+
+Account-level KB file endpoints use dual authentication through `withApiAuth`. Authenticate with an API key in the `Authorization` header or a signed-in session cookie. API key scope guards apply: `kb:read` for `GET` endpoints and `kb:write` for `POST` and `DELETE`.
+
+</Callout>
+
+### Account-level KB endpoint summary
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/kb/files` | API key or session | List KB files for the account |
+| `POST` | `/api/kb/files` | API key or session | Upload a KB file with `multipart/form-data` |
+| `GET` | `/api/kb/files/{fileId}` | API key or session | Get a single KB file |
+| `DELETE` | `/api/kb/files/{fileId}` | API key or session | Delete a KB file |
+| `GET` | `/api/kb/files/{fileId}/download` | API key or session | Get a signed download URL |
+
+### List KB files
+
+Returns all KB files for the authenticated account.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/kb/files" \
+  --header "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/kb/files", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "files": [
+    {
+      "id": "kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+      "filename": "acme-pricing-guide.pdf",
+      "size": 248193,
+      "type": "application/pdf",
+      "status": "processed",
+      "created_at": "2026-02-11T14:22:09.000Z"
+    },
+    {
+      "id": "kbfile_4f6c291e-a60d-4ff3-9cb2-52e2b65f6b31",
+      "filename": "returns-policy.docx",
+      "size": 91344,
+      "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "status": "processing",
+      "created_at": "2026-02-11T14:24:51.000Z"
+    }
+  ]
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="files" field-type="array" required="true">
+List of knowledge base files available to the authenticated account.
+</ResponseField>
+
+<ResponseField name="files[].id" field-type="string" required="true">
+Unique knowledge base file identifier.
+</ResponseField>
+
+<ResponseField name="files[].filename" field-type="string" required="true">
+Original uploaded filename.
+</ResponseField>
+
+<ResponseField name="files[].size" field-type="number" required="true">
+File size in bytes.
+</ResponseField>
+
+<ResponseField name="files[].type" field-type="string" required="true">
+Detected file MIME type.
+</ResponseField>
+
+<ResponseField name="files[].status" field-type="string" required="true">
+Processing state for the file.
+</ResponseField>
+
+<ResponseField name="files[].created_at" field-type="string" required="true">
+Timestamp when the file was uploaded.
+</ResponseField>
+
+### Upload KB file
+
+Upload a file with `multipart/form-data`. Accepted formats: PDF, DOCX, TXT, and MD. Maximum file size is 1 GB.
+
+<Callout kind="alert">
+
+File processing happens after upload, so a newly uploaded file may appear with a non-ready `status` before it becomes available for retrieval.
+
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/kb/files" \
+  --header "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  --form "file=@./docs/acme-support-playbook.pdf"
+```
+
+```javascript
+const formData = new FormData();
+formData.append("file", fileInput.files[0]);
+
+const response = await fetch("https://app.talkturo.com/api/kb/files", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r",
+  },
+  body: formData,
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "file": {
+    "id": "kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    "filename": "acme-support-playbook.pdf",
+    "size": 248193,
+    "type": "application/pdf",
+    "status": "processing",
+    "created_at": "2026-02-11T14:22:09.000Z"
+  }
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="file" param-type="binary" required="true">
+The file to upload, sent as a `multipart/form-data` field.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the upload is accepted.
+</ResponseField>
+
+<ResponseField name="file" field-type="object" required="true">
+Metadata for the uploaded file.
+</ResponseField>
+
+<ResponseField name="file.id" field-type="string" required="true">
+Unique knowledge base file identifier.
+</ResponseField>
+
+<ResponseField name="file.filename" field-type="string" required="true">
+Original uploaded filename.
+</ResponseField>
+
+<ResponseField name="file.size" field-type="number" required="true">
+File size in bytes.
+</ResponseField>
+
+<ResponseField name="file.type" field-type="string" required="true">
+Detected file MIME type.
+</ResponseField>
+
+<ResponseField name="file.status" field-type="string" required="true">
+Initial processing state after upload.
+</ResponseField>
+
+<ResponseField name="file.created_at" field-type="string" required="true">
+Timestamp when the file was created.
+</ResponseField>
+
+### Get KB file
+
+Retrieve a single KB file by ID.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/kb/files/kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --header "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "file": {
+    "id": "kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+    "filename": "acme-pricing-guide.pdf",
+    "size": 248193,
+    "type": "application/pdf",
+    "status": "processed",
+    "created_at": "2026-02-11T14:22:09.000Z"
+  }
+}
+```
+</Response>
+
+#### Path parameters
+
+<ParamField path="fileId" param-type="string" required="true">
+Knowledge base file identifier to retrieve.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file is found.
+</ResponseField>
+
+<ResponseField name="file" field-type="object" required="true">
+Metadata for the requested knowledge base file.
+</ResponseField>
+
+<ResponseField name="file.id" field-type="string" required="true">
+Unique knowledge base file identifier.
+</ResponseField>
+
+<ResponseField name="file.filename" field-type="string" required="true">
+Original uploaded filename.
+</ResponseField>
+
+<ResponseField name="file.size" field-type="number" required="true">
+File size in bytes.
+</ResponseField>
+
+<ResponseField name="file.type" field-type="string" required="true">
+Detected file MIME type.
+</ResponseField>
+
+<ResponseField name="file.status" field-type="string" required="true">
+Current processing state for the file.
+</ResponseField>
+
+<ResponseField name="file.created_at" field-type="string" required="true">
+Timestamp when the file was uploaded.
+</ResponseField>
+
+### Delete KB file
+
+Delete a KB file by ID.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/kb/files/kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714" \
+  --header "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "message": "File deleted"
+}
+```
+</Response>
+
+#### Path parameters
+
+<ParamField path="fileId" param-type="string" required="true">
+Knowledge base file identifier to delete.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file is removed.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Human-readable deletion result.
+</ResponseField>
+
+### Download KB file
+
+Returns a signed download URL for a KB file.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/kb/files/kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/download" \
+  --header "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/kb/files/kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714/download",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "downloadUrl": "https://storage.talkturo.com/kb-files/kbfile_6b9d58b9-4b43-4f94-8cb8-2d3d9f18d714?signature=example_signed_url"
+}
+```
+</Response>
+
+#### Path parameters
+
+<ParamField path="fileId" param-type="string" required="true">
+Knowledge base file identifier to download.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the signed download URL is generated.
+</ResponseField>
+
+<ResponseField name="downloadUrl" field-type="string" required="true">
+Signed URL that downloads the requested knowledge base file.
+</ResponseField>
+
 ## Knowledge base endpoints
 
 Manage assistant-specific knowledge base files with session-authenticated endpoints under `/api/assistants/{assistantId}/knowledge-base`. Uploaded files are stored per assistant and processed for retrieval during calls.

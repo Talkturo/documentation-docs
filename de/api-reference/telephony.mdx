@@ -3,6 +3,130 @@ title: Telefonie
 description: Konfigurieren Sie ein- und ausgehende Telefonie, weisen Sie Telefonnummern zu, führen Sie Testanrufe durch und verwalten Sie Compliance-Vorlagen für Sprachassistenten über die Talkturo-API.
 ---
 
+## Kontoweite Telefonieverwaltung
+
+Verwalten Sie die Telefonieverbindung des Arbeitsbereichs auf Kontoebene, verbinden Sie einen verwalteten Carrier oder Ihr eigenes Twilio-Konto, validieren Sie Anmeldedaten neu und rufen Sie verfügbare SIP-Regionen sowie regulatorische Anforderungen ab.
+
+<Callout kind="info">
+
+Kontoweite Telefonie-Endpunkte erfordern Session-Cookie-Authentifizierung und verwenden die `enhanceRouteHandler`-Middleware.
+
+</Callout>
+
+### Endpunktübersicht auf Kontoebene
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/telephony/account` | Telefonie-Carrier und BYOA-Status abrufen |
+| `POST` | `/api/telephony/account` | Telefoniekonto verbinden, verwaltet oder BYOA |
+| `PUT` | `/api/telephony/account` | BYOA-Anmeldedaten neu validieren |
+| `DELETE` | `/api/telephony/account` | BYOA-Verbindung trennen |
+| `GET` | `/api/telephony/regions` | Verfügbare SIP-Regionen auflisten |
+| `GET` | `/api/telephony/regulatory` | Regulatorische Anforderungen abrufen |
+
+### Telefoniekonto abrufen
+
+`GET /api/telephony/account` gibt die Telefonie-Carrier-Konfiguration und den BYOA-Verbindungsstatus des Arbeitsbereichs zurück.
+
+### Telefoniekonto verbinden
+
+`POST /api/telephony/account` verbindet ein Telefoniekonto in einem von zwei Modi.
+
+<Tabs>
+  <Tab title="Verwalteter Carrier" icon="cloud">
+
+  Verwenden Sie den Modus `managed`, um Talkturos verwalteten Carrier für den Arbeitsbereich zu verbinden.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/telephony/account" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=authenticated_session" \
+  -d '{
+    "mode": "managed",
+    "account": "my-workspace"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/telephony/account", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    mode: "managed",
+    account: "my-workspace",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+  </Tab>
+  <Tab title="BYOA mit Twilio" icon="settings">
+
+  Verwenden Sie den Modus `byoa`, um ein eigenes Twilio-Konto mit dem Arbeitsbereich zu verbinden.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/telephony/account" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=authenticated_session" \
+  -d '{
+    "mode": "byoa",
+    "account": "my-workspace",
+    "providerAccountSid": "ACexample9f3b2a7c1d4e6f8091a2b3c4d5e6f7",
+    "apiKeySid": "SKexample1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c",
+    "apiKeySecret": "twilio_secret_example_7mN4pQ2xZ8kL",
+    "label": "Mein Twilio-Konto"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/telephony/account", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    mode: "byoa",
+    account: "my-workspace",
+    providerAccountSid: "ACexample9f3b2a7c1d4e6f8091a2b3c4d5e6f7",
+    apiKeySid: "SKexample1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c",
+    apiKeySecret: "twilio_secret_example_7mN4pQ2xZ8kL",
+    label: "Mein Twilio-Konto",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+  </Tab>
+</Tabs>
+
+### BYOA-Anmeldedaten neu validieren
+
+`PUT /api/telephony/account` validiert geänderte BYOA-Anmeldedaten erneut. Der Request-Body entspricht der Struktur des Verbindungsaufrufs mit `mode` gleich `byoa`.
+
+### BYOA trennen
+
+`DELETE /api/telephony/account` trennt gespeicherte BYOA-Anmeldedaten und entfernt die Verbindung des Arbeitsbereichs.
+
+### Verfügbare Regionen auflisten
+
+`GET /api/telephony/regions` gibt eine Liste verfügbarer SIP-Regionen und Verbindungen zurück.
+
+### Regulatorische Anforderungen abrufen
+
+`GET /api/telephony/regulatory` gibt regulatorische Bundle-Anforderungen für regulierte Länder und Nummerntypen zurück.
+
 ## Telefonie-Endpunkte
 
 Verwalten Sie die Anrufkonfiguration eines Assistenten, zugewiesene Telefonnummern, ausgehende Testanrufe und Compliance-Vorlagen. Alle Telefonie-Routen sind auf einen einzelnen Assistenten beschränkt und erfordern eine authentifizierte Browser-Sitzung.

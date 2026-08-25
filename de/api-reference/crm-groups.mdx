@@ -1,0 +1,442 @@
+---
+title: CRM-Gruppen
+description: CRM-Gruppen erstellen, auflisten, aktualisieren und löschen, um Kontakte für Kampagnen und Berichte zu segmentieren, mit API-Key- oder Session-Authentifizierung.
+---
+
+## CRM-Gruppen verwalten
+
+Verwenden Sie die Endpunkte für CRM-Gruppen, um Kontakte in wiederverwendbare Segmente für Kampagnen, Outreach-Workflows und Berichte in Ihrem Talkturo-Konto zu organisieren.
+
+Alle Endpunkte für CRM-Gruppen verwenden duale Authentifizierung. Senden Sie einen API-Key im `Authorization`-Header als Bearer-Token oder führen Sie die Anfrage aus einer angemeldeten Session mit gültigem Session-Cookie aus.
+
+API-Key-Scope-Guards gelten je nach Methode:
+- `contacts:read` für `GET`-Endpunkte
+- `contacts:write` für `POST`-, `PUT`- und `DELETE`-Endpunkte
+
+## Endpunktübersicht
+
+| Methode | Pfad | Beschreibung |
+| --- | --- | --- |
+| `GET` | `/api/crm/groups` | Gruppen mit Kontaktanzahl auflisten |
+| `POST` | `/api/crm/groups` | Neue Gruppe erstellen |
+| `GET` | `/api/crm/groups/{id}` | Gruppe abrufen |
+| `PUT` | `/api/crm/groups/{id}` | Gruppe aktualisieren |
+| `DELETE` | `/api/crm/groups/{id}` | Gruppe löschen |
+| `GET` | `/api/crm/groups/{id}/contacts` | Kontakte einer Gruppe auflisten |
+| `POST` | `/api/crm/groups/{id}/contacts` | Kontakte hinzufügen oder entfernen |
+
+## Gruppen auflisten
+
+Rufen Sie Gruppen für Ihr Konto ab, optional gefiltert nach Team. Die Antwort enthält für jede Gruppe auch die aktuelle Kontaktanzahl.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/groups?teamId=7f3c2d90-4e12-4bb7-a8cf-3c4f2d8d5a11" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "groups": [
+    {
+      "id": "0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1",
+      "name": "Enterprise leads",
+      "description": "High-value accounts for outbound campaigns",
+      "teamId": "7f3c2d90-4e12-4bb7-a8cf-3c4f2d8d5a11",
+      "contactCount": 42,
+      "createdAt": "2026-08-20T10:14:22.000Z"
+    }
+  ]
+}
+```
+
+</Response>
+
+### Query-Parameter
+
+<ParamField query="teamId" param-type="string" required="false">
+
+Filtert die zurückgegebenen Gruppen auf ein bestimmtes Team.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+
+`true`, wenn die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="groups" field-type="array">
+
+Liste der CRM-Gruppen, die dem authentifizierten Konto entsprechen.
+
+</ResponseField>
+
+<ResponseField name="id" field-type="string">
+
+Eindeutige UUID der Gruppe.
+
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+
+Anzeigename der Gruppe.
+
+</ResponseField>
+
+<ResponseField name="description" field-type="string">
+
+Optionale Beschreibung der Gruppe.
+
+</ResponseField>
+
+<ResponseField name="teamId" field-type="string">
+
+UUID des Teams, dem die Gruppe zugeordnet ist.
+
+</ResponseField>
+
+<ResponseField name="contactCount" field-type="integer">
+
+Anzahl der Kontakte, die aktuell der Gruppe zugeordnet sind.
+
+</ResponseField>
+
+<ResponseField name="createdAt" field-type="string">
+
+Zeitstempel der Erstellung im ISO-8601-Format.
+
+</ResponseField>
+
+## Gruppe erstellen
+
+Erstellen Sie eine neue Gruppe, um Kontakte für spätere Filterung, Kampagnenzuweisung oder Berichte zu segmentieren.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/groups" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "teamId": "7f3c2d90-4e12-4bb7-a8cf-3c4f2d8d5a11",
+    "name": "Enterprise leads",
+    "description": "High-value accounts for outbound campaigns"
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1",
+    "name": "Enterprise leads",
+    "description": "High-value accounts for outbound campaigns",
+    "teamId": "7f3c2d90-4e12-4bb7-a8cf-3c4f2d8d5a11",
+    "contactCount": 0,
+    "createdAt": "2026-08-20T10:14:22.000Z"
+  }
+}
+```
+
+</Response>
+
+### Body-Parameter
+
+<ParamField body="teamId" param-type="string" required="true">
+
+UUID des Teams, unter dem die Gruppe erstellt wird.
+
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+
+Name der Gruppe.
+
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+
+Optionale Beschreibung, die den Zweck oder die Segmentlogik der Gruppe erklärt.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+
+`true`, wenn die Gruppe erfolgreich erstellt wurde.
+
+</ResponseField>
+
+<ResponseField name="group" field-type="object">
+
+Das neu erstellte Gruppenobjekt.
+
+</ResponseField>
+
+## Gruppe abrufen
+
+Rufen Sie eine einzelne Gruppe über ihre UUID ab.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/groups/0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1",
+    "name": "Enterprise leads",
+    "description": "High-value accounts for outbound campaigns",
+    "teamId": "7f3c2d90-4e12-4bb7-a8cf-3c4f2d8d5a11",
+    "contactCount": 42,
+    "createdAt": "2026-08-20T10:14:22.000Z"
+  }
+}
+```
+
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID der Gruppe.
+
+</ParamField>
+
+## Gruppe aktualisieren
+
+Aktualisieren Sie den Namen oder die Beschreibung einer vorhandenen Gruppe, ohne die Kontaktzuordnungen zu ändern.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X PUT "https://app.talkturo.com/api/crm/groups/0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Enterprise prospects",
+    "description": "Priority accounts for Q4 outreach"
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1",
+    "name": "Enterprise prospects",
+    "description": "Priority accounts for Q4 outreach",
+    "teamId": "7f3c2d90-4e12-4bb7-a8cf-3c4f2d8d5a11",
+    "contactCount": 42,
+    "createdAt": "2026-08-20T10:14:22.000Z"
+  }
+}
+```
+
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID der zu aktualisierenden Gruppe.
+
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="name" param-type="string" required="false">
+
+Neuer Name der Gruppe.
+
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+
+Neue Beschreibung der Gruppe.
+
+</ParamField>
+
+## Gruppe löschen
+
+Löschen Sie eine Gruppe, wenn Sie das Segment nicht mehr benötigen.
+
+<Callout kind="alert">
+
+Das Löschen einer Gruppe löscht nicht die darin enthaltenen Kontakte. Kontakte bleiben im CRM erhalten, sind aber nicht mehr dieser Gruppe zugeordnet.
+
+</Callout>
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X DELETE "https://app.talkturo.com/api/crm/groups/0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID der zu löschenden Gruppe.
+
+</ParamField>
+
+## Gruppenkontakte auflisten
+
+Rufen Sie die Kontakte ab, die aktuell einer bestimmten Gruppe zugeordnet sind. Verwenden Sie Paginierung, wenn die Gruppe viele Einträge enthält.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/groups/0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1/contacts?limit=50&offset=0" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "contacts": [
+    {
+      "id": "9bc2ad34-2b93-4e2e-93d6-d364c8d64e7e",
+      "firstName": "Jane",
+      "lastName": "Chen",
+      "phone": "+491701234567",
+      "email": "jane@acme.com",
+      "leadStatus": "new"
+    }
+  ]
+}
+```
+
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID der Gruppe, deren Kontakte Sie abrufen.
+
+</ParamField>
+
+### Query-Parameter
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximale Anzahl der zurückgegebenen Kontakte.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Anzahl der Einträge, die vor Beginn der Ergebnismenge übersprungen werden.
+
+</ParamField>
+
+## Gruppenkontakte verwalten
+
+Fügen Sie Kontakte gesammelt zu einer Gruppe hinzu oder entfernen Sie sie gesammelt aus einer Gruppe, indem Sie eine Aktion und eine Liste von Kontakt-UUIDs übergeben.
+
+<Request tabs="cURL" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/groups/0c8e5a3d-8f50-4b89-b4d6-1df43352a7f1/contacts" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contactIds": [
+      "9bc2ad34-2b93-4e2e-93d6-d364c8d64e7e",
+      "a12d2c3e-4b7a-49fb-a706-f8567d1279bf"
+    ],
+    "action": "add"
+  }'
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID der Gruppe, deren Kontaktzuordnungen Sie ändern.
+
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="contactIds" param-type="string[]" required="true">
+
+Array mit Kontakt-UUIDs, die hinzugefügt oder entfernt werden sollen.
+
+</ParamField>
+
+<ParamField body="action" param-type="string" required="true" enum="add,remove">
+
+Definiert, ob die angegebenen Kontakte zur Gruppe hinzugefügt oder aus der Gruppe entfernt werden.
+
+</ParamField>
+
+## Verwandte Ressourcen
+
+<Columns cols={3}>
+
+<Card title="CRM-Kontakte" href="/de/api-reference/crm-contacts" icon="users" cta="Zur Referenz" />
+
+<Card title="CRM-Kampagnen" href="/de/api-reference/crm-campaigns" icon="rocket" cta="Zur Referenz" />
+
+<Card title="CRM-Opportunities" href="/de/api-reference/crm-opportunities" icon="bar-chart" cta="Zur Referenz" />
+
+</Columns>

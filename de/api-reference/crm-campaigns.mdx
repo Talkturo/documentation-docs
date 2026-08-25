@@ -1,13 +1,13 @@
 ---
 title: CRM-Kampagnen
-description: Ausgehende Anrufkampagnen über die Talkturo-CRM-API erstellen, verwalten und ausführen — Kontakte hinzufügen, Echtzeit-Dashboard-Statistiken überwachen, Kampagnen starten und stoppen sowie Anrufprotokolle und KI-Einblicke abrufen.
+description: Ausgehende Anrufkampagnen über die Talkturo-CRM-API erstellen, aktualisieren und ausführen, mit Einschreibung, Dashboard-Statistiken und Kontaktverwaltung.
 ---
 
 ## CRM-Kampagnen für ausgehende Anrufe verwalten
 
-Mit den CRM-Kampagnen-Endpunkten erstellen und steuern Sie ausgehende Anrufkampagnen in Talkturo. Sie können Kampagnen anlegen, Kontakte zuordnen, eine Kampagne starten oder stoppen und den aktuellen Fortschritt über Dashboard-Statistiken verfolgen.
+Mit den CRM-Kampagnen-Endpunkten erstellen und steuern Sie ausgehende Anrufkampagnen in Talkturo. Sie können Kampagnen anlegen, Kontakte oder Einschreibungsregeln zuordnen, eine Kampagne starten oder stoppen und den aktuellen Fortschritt über Dashboard-Statistiken verfolgen.
 
-Alle Endpunkte in diesem Bereich verwenden Sitzungsauthentifizierung. Rufen Sie diese API daher aus einer angemeldeten Talkturo-Sitzung heraus auf.
+Alle Endpunkte in diesem Bereich verwenden duale Authentifizierung über die `withApiAuth`-Middleware. Sie können jeden Endpunkt entweder mit einem API-Key im Header `Authorization: Bearer tk_live_example_9xmk7q2r` oder aus einer angemeldeten Talkturo-Sitzung mit Session-Cookie aufrufen.
 
 <Callout kind="info">
 
@@ -21,8 +21,9 @@ Die Kampagnen-API deckt den Kampagnenablauf selbst ab. Für verfügbare Outbound
 | --- | --- | --- |
 | `GET` | `/api/crm/campaigns` | Kampagnen auflisten |
 | `POST` | `/api/crm/campaigns` | Kampagne erstellen |
+| `GET` | `/api/crm/campaigns/preview-enrollment` | Einschreibungsvorschau abrufen |
 | `GET` | `/api/crm/campaigns/[id]` | Kampagne abrufen |
-| `PATCH` | `/api/crm/campaigns/[id]` | Kampagne aktualisieren |
+| `PUT` | `/api/crm/campaigns/[id]` | Kampagne aktualisieren |
 | `DELETE` | `/api/crm/campaigns/[id]` | Kampagne löschen |
 | `GET` | `/api/crm/campaigns/[id]/contacts` | Kontakte einer Kampagne auflisten |
 | `POST` | `/api/crm/campaigns/[id]/contacts` | Kontakte zu einer Kampagne hinzufügen |
@@ -32,23 +33,144 @@ Die Kampagnen-API deckt den Kampagnenablauf selbst ab. Für verfügbare Outbound
 | `GET` | `/api/crm/calls` | Anrufprotokolle auflisten |
 | `GET` | `/api/crm/intelligence` | KI-Einblicke abrufen |
 
+## Kampagnen auflisten
+
+Listen Sie Kampagnen teambezogen auf und filtern Sie die Ergebnisse nach Status, Assistent, Löschstatus oder Kontaktzustand. Der Endpunkt verwendet `limit`- und `offset`-Paginierung.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/crm/campaigns?teamId=4c8f7f4b-6c41-4db0-9d9a-d3b8bb3d3b0a&status=running&includeContactStats=true&limit=20&offset=0" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const params = new URLSearchParams({
+  teamId: "4c8f7f4b-6c41-4db0-9d9a-d3b8bb3d3b0a",
+  status: "running",
+  includeContactStats: "true",
+  limit: "20",
+  offset: "0"
+});
+
+const response = await fetch(`https://app.talkturo.com/api/crm/campaigns?${params.toString()}`, {
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
+  }
+});
+
+const campaigns = await response.json();
+console.log(campaigns);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "items": [
+    {
+      "id": "cmp_2d9a4c71",
+      "teamId": "4c8f7f4b-6c41-4db0-9d9a-d3b8bb3d3b0a",
+      "assistantId": "8f9135fc-3e3a-4ba4-97d5-e3ad96f49f92",
+      "name": "Q3 Renewal Outreach",
+      "status": "running",
+      "contactStats": {
+        "total": 148,
+        "answered": 96,
+        "awaiting_retry": 21,
+        "voicemail": 14
+      }
+    }
+  ],
+  "limit": 20,
+  "offset": 0
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="teamId" param-type="string" required="false">
+Team-UUID. Verwenden Sie diesen Parameter, um Kampagnen auf ein bestimmtes Team zu begrenzen.
+</ParamField>
+
+<ParamField query="status" param-type="string" required="false">
+Filtert nach Kampagnenstatus.
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+Filtert nach der UUID des zugewiesenen Outbound-Assistenten.
+</ParamField>
+
+<ParamField query="deleted" param-type="string" required="false" enum="exclude,include,only">
+Steuert, ob soft-gelöschte Kampagnen ausgeschlossen, zusätzlich einbezogen oder ausschließlich zurückgegeben werden.
+</ParamField>
+
+<ParamField query="contactFilter" param-type="string" required="false" enum="voicemail,awaiting_retry,answered,no_answer,busy,error">
+Filtert Kampagnen anhand von Kontakt- oder Anrufzuständen.
+</ParamField>
+
+<ParamField query="includeContactStats" param-type="boolean" required="false">
+Gibt zusätzliche Kontaktstatistiken pro Kampagne zurück.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximale Anzahl der zurückgegebenen Kampagnen.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Anzahl der zu überspringenden Einträge für die Paginierung.
+</ParamField>
+
+### Antwort
+
+<ResponseField name="items" field-type="array">
+Liste der Kampagnen, die den übergebenen Filtern entsprechen.
+</ResponseField>
+
+<ResponseField name="limit" field-type="number">
+Verwendeter Seitenwert für die maximale Anzahl von Ergebnissen.
+</ResponseField>
+
+<ResponseField name="offset" field-type="number">
+Verwendeter Startversatz innerhalb der Gesamtergebnisliste.
+</ResponseField>
+
 ## Kampagne erstellen
 
-Erstellen Sie eine Kampagne mit einem Namen und optional mit einem zugewiesenen Assistenten oder einem Zeitplan.
+Erstellen Sie eine Kampagne mit Team, Outbound-Assistent, Absendernummern und optionalen Regeln für Zeitfenster, Wiederholungen, Webhooks und Einschreibung.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=example_session_token" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
   -d '{
+    "teamId": "4c8f7f4b-6c41-4db0-9d9a-d3b8bb3d3b0a",
+    "assistantId": "8f9135fc-3e3a-4ba4-97d5-e3ad96f49f92",
+    "fromNumberIds": ["num_71b2c9a4", "num_5d8f1a2e"],
     "name": "Q3 Renewal Outreach",
-    "assistant_id": "asst_7f3d2c91",
-    "schedule": {
-      "timezone": "Europe/Berlin",
-      "days": ["monday", "tuesday", "wednesday"],
-      "start_time": "09:00",
-      "end_time": "17:00"
+    "description": "Kampagne für Bestandskunden mit auslaufenden Verträgen",
+    "scheduledStartAt": "2026-09-15T09:00:00.000Z",
+    "callWindowStart": "09:00",
+    "callWindowEnd": "18:00",
+    "callWindowTimezone": "Europe/Berlin",
+    "maxConcurrentCalls": 5,
+    "maxAttemptsPerContact": 3,
+    "retryDelayMinutes": 60,
+    "noAutoComplete": false,
+    "liveSync": false,
+    "webhookEnabled": true,
+    "webhookUrl": "https://hooks.northstar-industries.com/talkturo/campaign-events",
+    "webhookSecret": "whsec_example_4f92b7c1",
+    "webhookEvents": ["call.completed"],
+    "enrollment": {
+      "mode": "all_eligible",
+      "notYetDialed": true,
+      "leadStatus": "open",
+      "maxToAdd": 500
+    },
+    "settings": {
+      "recordCalls": true
     }
   }'
 ```
@@ -57,17 +179,36 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
 const response = await fetch("https://app.talkturo.com/api/crm/campaigns", {
   method: "POST",
   headers: {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
   },
-  credentials: "include",
   body: JSON.stringify({
+    teamId: "4c8f7f4b-6c41-4db0-9d9a-d3b8bb3d3b0a",
+    assistantId: "8f9135fc-3e3a-4ba4-97d5-e3ad96f49f92",
+    fromNumberIds: ["num_71b2c9a4", "num_5d8f1a2e"],
     name: "Q3 Renewal Outreach",
-    assistant_id: "asst_7f3d2c91",
-    schedule: {
-      timezone: "Europe/Berlin",
-      days: ["monday", "tuesday", "wednesday"],
-      start_time: "09:00",
-      end_time: "17:00"
+    description: "Kampagne für Bestandskunden mit auslaufenden Verträgen",
+    scheduledStartAt: "2026-09-15T09:00:00.000Z",
+    callWindowStart: "09:00",
+    callWindowEnd: "18:00",
+    callWindowTimezone: "Europe/Berlin",
+    maxConcurrentCalls: 5,
+    maxAttemptsPerContact: 3,
+    retryDelayMinutes: 60,
+    noAutoComplete: false,
+    liveSync: false,
+    webhookEnabled: true,
+    webhookUrl: "https://hooks.northstar-industries.com/talkturo/campaign-events",
+    webhookSecret: "whsec_example_4f92b7c1",
+    webhookEvents: ["call.completed"],
+    enrollment: {
+      mode: "all_eligible",
+      notYetDialed: true,
+      leadStatus: "open",
+      maxToAdd: 500
+    },
+    settings: {
+      recordCalls: true
     }
   })
 });
@@ -81,13 +222,31 @@ console.log(campaign);
 ```json
 {
   "id": "cmp_2d9a4c71",
+  "teamId": "4c8f7f4b-6c41-4db0-9d9a-d3b8bb3d3b0a",
+  "assistantId": "8f9135fc-3e3a-4ba4-97d5-e3ad96f49f92",
+  "fromNumberIds": ["num_71b2c9a4", "num_5d8f1a2e"],
   "name": "Q3 Renewal Outreach",
-  "assistant_id": "asst_7f3d2c91",
-  "schedule": {
-    "timezone": "Europe/Berlin",
-    "days": ["monday", "tuesday", "wednesday"],
-    "start_time": "09:00",
-    "end_time": "17:00"
+  "description": "Kampagne für Bestandskunden mit auslaufenden Verträgen",
+  "scheduledStartAt": "2026-09-15T09:00:00.000Z",
+  "callWindowStart": "09:00",
+  "callWindowEnd": "18:00",
+  "callWindowTimezone": "Europe/Berlin",
+  "maxConcurrentCalls": 5,
+  "maxAttemptsPerContact": 3,
+  "retryDelayMinutes": 60,
+  "noAutoComplete": false,
+  "liveSync": false,
+  "webhookEnabled": true,
+  "webhookUrl": "https://hooks.northstar-industries.com/talkturo/campaign-events",
+  "webhookEvents": ["call.completed"],
+  "enrollment": {
+    "mode": "all_eligible",
+    "notYetDialed": true,
+    "leadStatus": "open",
+    "maxToAdd": 500
+  },
+  "settings": {
+    "recordCalls": true
   }
 }
 ```
@@ -95,16 +254,114 @@ console.log(campaign);
 
 ### Request-Body
 
+<ParamField body="teamId" param-type="string" required="true">
+Team-UUID, unter der die Kampagne erstellt wird.
+</ParamField>
+
+<ParamField body="assistantId" param-type="string" required="true">
+UUID des Outbound-Assistenten, der die Anrufe für diese Kampagne ausführt.
+</ParamField>
+
+<ParamField body="fromNumberIds" param-type="array[string]" required="true">
+Liste der Telefonnummern-IDs, die für ausgehende Anrufe verwendet werden.
+</ParamField>
+
 <ParamField body="name" param-type="string" required="true">
 Name der Kampagne.
 </ParamField>
 
-<ParamField body="assistant_id" param-type="string" required="false">
-ID des Assistenten, der die ausgehenden Anrufe für diese Kampagne ausführen soll.
+<ParamField body="description" param-type="string" required="false">
+Optionale interne Beschreibung der Kampagne.
 </ParamField>
 
-<ParamField body="schedule" param-type="object" required="false">
-Optionaler Zeitplan für die Kampagne. Die genaue Objektstruktur ist implementierungsabhängig; übergeben Sie ein JSON-Objekt mit den gewünschten Planungswerten.
+<ParamField body="scheduledStartAt" param-type="string" required="false">
+Optionaler ISO-Zeitstempel für einen geplanten Kampagnenstart.
+</ParamField>
+
+<ParamField body="callWindowStart" param-type="string" required="false">
+Früheste Uhrzeit, zu der die Kampagne Anrufe startet, zum Beispiel `09:00`.
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false">
+Späteste Uhrzeit, bis zu der die Kampagne Anrufe startet, zum Beispiel `18:00`.
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false">
+Zeitzone für das Anruffenster.
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false">
+Maximale Anzahl gleichzeitiger Anrufe. Standardwert ist `5`.
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false">
+Maximale Anzahl von Versuchen pro Kontakt. Standardwert ist `3`.
+</ParamField>
+
+<ParamField body="retryDelayMinutes" param-type="integer" required="false">
+Wartezeit in Minuten bis zum nächsten Wiederholungsversuch. Standardwert ist `60`.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false">
+Wenn `true`, schließt das System die Kampagne nicht automatisch ab.
+</ParamField>
+
+<ParamField body="liveSync" param-type="boolean" required="false">
+Wenn `true`, bleibt die Einschreibung während der Laufzeit aktiv. Dabei wird `noAutoComplete` ebenfalls auf `true` gesetzt.
+</ParamField>
+
+<ParamField body="webhookEnabled" param-type="boolean" required="false">
+Aktiviert die Zustellung von Webhook-Ereignissen für diese Kampagne.
+</ParamField>
+
+<ParamField body="webhookUrl" param-type="string" required="false">
+Webhook-URL für die Zustellung von Kampagnen- oder Anrufereignissen.
+</ParamField>
+
+<ParamField body="webhookSecret" param-type="string" required="false">
+Geheimnis zur Verifizierung eingehender Webhook-Nachrichten.
+</ParamField>
+
+<ParamField body="webhookEvents" param-type="array[string]" required="false">
+Liste der auszulösenden Ereignisse, zum Beispiel `call.completed`.
+</ParamField>
+
+<ParamField body="enrollment" param-type="object" required="false">
+Optionale Einschreibungskonfiguration zum automatischen Hinzufügen passender Kontakte.
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false">
+Zusätzliche kampagnenspezifische Einstellungen.
+</ParamField>
+
+### Einschreibungskonfiguration
+
+<ParamField body="enrollment.mode" param-type="string" required="false" enum="all_eligible,delta,none" show-location="false">
+Legt fest, wie Kontakte eingeschrieben werden. Standardwert ist `all_eligible`.
+</ParamField>
+
+<ParamField body="enrollment.notYetDialed" param-type="boolean" required="false" show-location="false">
+Schreibt nur Kontakte ein, die noch nicht gewählt wurden.
+</ParamField>
+
+<ParamField body="enrollment.addedAfter" param-type="string" required="false" show-location="false">
+Beschränkt die Einschreibung auf Kontakte, die nach diesem ISO-Zeitstempel hinzugefügt wurden.
+</ParamField>
+
+<ParamField body="enrollment.importBatchIds" param-type="array[string]" required="false" show-location="false">
+Begrenzt die Einschreibung auf bestimmte Import-Batches.
+</ParamField>
+
+<ParamField body="enrollment.search" param-type="string" required="false" show-location="false">
+Wendet einen Suchbegriff auf die einzuschreibenden Kontakte an.
+</ParamField>
+
+<ParamField body="enrollment.leadStatus" param-type="string" required="false" show-location="false">
+Filtert die Einschreibung nach Lead-Status.
+</ParamField>
+
+<ParamField body="enrollment.maxToAdd" param-type="integer" required="false" show-location="false">
+Begrenzt die Anzahl der neu einzuschreibenden Kontakte.
 </ParamField>
 
 ### Antwort
@@ -113,23 +370,419 @@ Optionaler Zeitplan für die Kampagne. Die genaue Objektstruktur ist implementie
 Eindeutige ID der erstellten Kampagne.
 </ResponseField>
 
+<ResponseField name="teamId" field-type="string">
+Team-UUID der Kampagne.
+</ResponseField>
+
+<ResponseField name="assistantId" field-type="string">
+UUID des zugewiesenen Outbound-Assistenten.
+</ResponseField>
+
+<ResponseField name="fromNumberIds" field-type="array">
+Telefonnummern-IDs, die für ausgehende Anrufe verwendet werden.
+</ResponseField>
+
 <ResponseField name="name" field-type="string">
 Name der Kampagne.
 </ResponseField>
 
-<ResponseField name="assistant_id" field-type="string">
-ID des zugewiesenen Outbound-Assistenten, falls gesetzt.
+<ResponseField name="description" field-type="string">
+Interne Beschreibung der Kampagne, falls gesetzt.
 </ResponseField>
 
-<ResponseField name="schedule" field-type="object">
-Gespeicherte Planungseinstellungen der Kampagne, falls übermittelt.
+<ResponseField name="scheduledStartAt" field-type="string">
+Geplanter Startzeitpunkt im ISO-Format, falls gesetzt.
 </ResponseField>
+
+<ResponseField name="callWindowStart" field-type="string">
+Start des zulässigen Anruffensters.
+</ResponseField>
+
+<ResponseField name="callWindowEnd" field-type="string">
+Ende des zulässigen Anruffensters.
+</ResponseField>
+
+<ResponseField name="callWindowTimezone" field-type="string">
+Zeitzone des Anruffensters.
+</ResponseField>
+
+<ResponseField name="maxConcurrentCalls" field-type="number">
+Maximale Anzahl gleichzeitiger Anrufe.
+</ResponseField>
+
+<ResponseField name="maxAttemptsPerContact" field-type="number">
+Maximale Anzahl von Versuchen pro Kontakt.
+</ResponseField>
+
+<ResponseField name="retryDelayMinutes" field-type="number">
+Verzögerung in Minuten bis zum nächsten Versuch.
+</ResponseField>
+
+<ResponseField name="noAutoComplete" field-type="boolean">
+Gibt an, ob die Kampagne automatisch abgeschlossen wird.
+</ResponseField>
+
+<ResponseField name="liveSync" field-type="boolean">
+Gibt an, ob neue passende Kontakte während der Laufzeit weiter eingeschrieben werden.
+</ResponseField>
+
+<ResponseField name="webhookEnabled" field-type="boolean">
+Gibt an, ob Webhooks für diese Kampagne aktiviert sind.
+</ResponseField>
+
+<ResponseField name="webhookUrl" field-type="string">
+Konfigurierte Webhook-URL, falls gesetzt.
+</ResponseField>
+
+<ResponseField name="webhookEvents" field-type="array">
+Aktive Webhook-Ereignisse, falls gesetzt.
+</ResponseField>
+
+<ResponseField name="enrollment" field-type="object">
+Gespeicherte Einschreibungskonfiguration der Kampagne.
+</ResponseField>
+
+<ResponseField name="settings" field-type="object">
+Zusätzliche Kampagneneinstellungen.
+</ResponseField>
+
+<Callout kind="info">
+
+Die Einschreibungsmodi steuern, welche Kontakte beim Erstellen der Kampagne hinzugefügt werden. `all_eligible` schreibt alle passenden Kontakte ein, `delta` nur neue Kontakte seit dem letzten Lauf und `none` erstellt die Kampagne ohne automatische Einschreibung.
+
+</Callout>
 
 <Callout kind="tip">
 
-Wenn Sie eine Kampagne direkt nach der Erstellung ausführen möchten, weisen Sie zuerst einen passenden Outbound-Assistenten zu und fügen Sie anschließend Kontakte hinzu. Danach kann der Endpunkt zum Starten der Kampagne den Lauf anstoßen.
+Wenn Sie `liveSync` auf `true` setzen, aktiviert das System automatisch auch `noAutoComplete` mit `true`.
 
 </Callout>
+
+<Callout kind="alert">
+
+Mindestens 1 Credit ist erforderlich, um eine ausgehende Kampagne zu starten. Pro Assistent ist nur eine aktive Kampagne gleichzeitig erlaubt.
+
+</Callout>
+
+## Vorschau-Einschreibung abrufen
+
+Prüfen Sie vor dem Erstellen oder Aktualisieren einer Kampagne, wie viele Kontakte anhand bestimmter Einschreibungskriterien hinzugefügt würden.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/crm/campaigns/preview-enrollment?teamId=4c8f7f4b-6c41-4db0-9d9a-d3b8bb3d3b0a&mode=all_eligible&notYetDialed=true&leadStatus=open&maxToAdd=500" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const params = new URLSearchParams({
+  teamId: "4c8f7f4b-6c41-4db0-9d9a-d3b8bb3d3b0a",
+  mode: "all_eligible",
+  notYetDialed: "true",
+  leadStatus: "open",
+  maxToAdd: "500"
+});
+
+const response = await fetch(`https://app.talkturo.com/api/crm/campaigns/preview-enrollment?${params.toString()}`, {
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
+  }
+});
+
+const preview = await response.json();
+console.log(preview);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "eligibleContacts": 312,
+  "mode": "all_eligible",
+  "appliedFilters": {
+    "notYetDialed": true,
+    "leadStatus": "open",
+    "maxToAdd": 500
+  }
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="teamId" param-type="string" required="true">
+Team-UUID, für die die Einschreibung geprüft wird.
+</ParamField>
+
+<ParamField query="mode" param-type="string" required="false" enum="all_eligible,delta,none">
+Einschreibungsmodus für die Vorschau. Standardwert ist `all_eligible`.
+</ParamField>
+
+<ParamField query="notYetDialed" param-type="boolean" required="false">
+Berücksichtigt nur Kontakte, die noch nicht gewählt wurden.
+</ParamField>
+
+<ParamField query="addedAfter" param-type="string" required="false">
+Beschränkt die Vorschau auf Kontakte, die nach diesem ISO-Zeitstempel hinzugefügt wurden.
+</ParamField>
+
+<ParamField query="importBatchIds" param-type="array[string]" required="false">
+Filtert auf bestimmte Import-Batches.
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false">
+Wendet einen Suchbegriff auf die Vorschau an.
+</ParamField>
+
+<ParamField query="leadStatus" param-type="string" required="false">
+Filtert nach Lead-Status.
+</ParamField>
+
+<ParamField query="maxToAdd" param-type="integer" required="false">
+Begrenzt die Anzahl der für die Einschreibung berücksichtigten Kontakte.
+</ParamField>
+
+### Antwort
+
+<ResponseField name="eligibleContacts" field-type="number">
+Anzahl der Kontakte, die mit den aktuellen Einschreibungskriterien hinzugefügt würden.
+</ResponseField>
+
+<ResponseField name="mode" field-type="string">
+Verwendeter Einschreibungsmodus für die Vorschau.
+</ResponseField>
+
+<ResponseField name="appliedFilters" field-type="object">
+Zusammenfassung der tatsächlich angewendeten Einschreibungsfilter.
+</ResponseField>
+
+## Kampagne aktualisieren
+
+Aktualisieren Sie eine vorhandene Kampagne vollständig über `PUT`. Neben den Grundfeldern können Sie auch Regeln für Voicemail, Wiederholungslogik und zeitzonenabhängige Anruffenster setzen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PUT "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -d '{
+    "name": "Q3 Renewal Outreach - DACH",
+    "description": "Aktualisierte Kampagne für deutschsprachige Bestandskunden",
+    "callWindowStart": "09:00",
+    "callWindowEnd": "18:00",
+    "callWindowTimezone": "Europe/Berlin",
+    "maxConcurrentCalls": 8,
+    "maxAttemptsPerContact": 4,
+    "retryDelayMinutes": 90,
+    "voicemailDropMessage": "msg_9d2b7a31",
+    "voicemailDetectionEnabled": true,
+    "voicemailAction": "leave_message",
+    "unavailableAction": "retry",
+    "retryDelayMinutesNoAnswer": 30,
+    "retryDelayMinutesBusy": 45,
+    "retryDelayMinutesError": 120,
+    "retryOnError": true,
+    "useContactTimezoneForCallWindow": true,
+    "retryBackoffMode": "exponential",
+    "retryBackoffMultiplier": 2,
+    "retryBackoffMaxMinutes": 720,
+    "maxAttemptsNoAnswer": 5,
+    "maxAttemptsBusy": 3,
+    "maxAttemptsError": 2
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71", {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
+  },
+  body: JSON.stringify({
+    name: "Q3 Renewal Outreach - DACH",
+    description: "Aktualisierte Kampagne für deutschsprachige Bestandskunden",
+    callWindowStart: "09:00",
+    callWindowEnd: "18:00",
+    callWindowTimezone: "Europe/Berlin",
+    maxConcurrentCalls: 8,
+    maxAttemptsPerContact: 4,
+    retryDelayMinutes: 90,
+    voicemailDropMessage: "msg_9d2b7a31",
+    voicemailDetectionEnabled: true,
+    voicemailAction: "leave_message",
+    unavailableAction: "retry",
+    retryDelayMinutesNoAnswer: 30,
+    retryDelayMinutesBusy: 45,
+    retryDelayMinutesError: 120,
+    retryOnError: true,
+    useContactTimezoneForCallWindow: true,
+    retryBackoffMode: "exponential",
+    retryBackoffMultiplier: 2,
+    retryBackoffMaxMinutes: 720,
+    maxAttemptsNoAnswer: 5,
+    maxAttemptsBusy: 3,
+    maxAttemptsError: 2
+  })
+});
+
+const campaign = await response.json();
+console.log(campaign);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "id": "cmp_2d9a4c71",
+  "name": "Q3 Renewal Outreach - DACH",
+  "description": "Aktualisierte Kampagne für deutschsprachige Bestandskunden",
+  "callWindowStart": "09:00",
+  "callWindowEnd": "18:00",
+  "callWindowTimezone": "Europe/Berlin",
+  "maxConcurrentCalls": 8,
+  "maxAttemptsPerContact": 4,
+  "retryDelayMinutes": 90,
+  "voicemailDropMessage": "msg_9d2b7a31",
+  "voicemailDetectionEnabled": true,
+  "voicemailAction": "leave_message",
+  "unavailableAction": "retry",
+  "retryDelayMinutesNoAnswer": 30,
+  "retryDelayMinutesBusy": 45,
+  "retryDelayMinutesError": 120,
+  "retryOnError": true,
+  "useContactTimezoneForCallWindow": true,
+  "retryBackoffMode": "exponential",
+  "retryBackoffMultiplier": 2,
+  "retryBackoffMaxMinutes": 720,
+  "maxAttemptsNoAnswer": 5,
+  "maxAttemptsBusy": 3,
+  "maxAttemptsError": 2
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+ID der Kampagne, die Sie aktualisieren möchten.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="voicemailDropMessage" param-type="string" required="false">
+ID der Nachricht, die bei aktivierter Voicemail-Ablage hinterlassen wird.
+</ParamField>
+
+<ParamField body="voicemailDetectionEnabled" param-type="boolean" required="false">
+Aktiviert die Erkennung von Voicemail.
+</ParamField>
+
+<ParamField body="voicemailAction" param-type="string" required="false" enum="leave_message,hangup">
+Legt fest, ob bei erkannter Voicemail eine Nachricht hinterlassen oder aufgelegt wird.
+</ParamField>
+
+<ParamField body="unavailableAction" param-type="string" required="false" enum="retry,fail">
+Legt fest, ob nicht erreichbare Kontakte erneut versucht oder sofort als fehlgeschlagen markiert werden.
+</ParamField>
+
+<ParamField body="retryDelayMinutesNoAnswer" param-type="integer" required="false">
+Wartezeit in Minuten nach einem Ergebnis ohne Antwort. Gültiger Bereich ist `1` bis `10080`.
+</ParamField>
+
+<ParamField body="retryDelayMinutesBusy" param-type="integer" required="false">
+Wartezeit in Minuten nach einem Besetzt-Ergebnis. Gültiger Bereich ist `1` bis `10080`.
+</ParamField>
+
+<ParamField body="retryDelayMinutesError" param-type="integer" required="false">
+Wartezeit in Minuten nach einem Fehler. Gültiger Bereich ist `1` bis `10080`.
+</ParamField>
+
+<ParamField body="retryOnError" param-type="boolean" required="false">
+Steuert, ob Kontakte nach Fehlern erneut versucht werden.
+</ParamField>
+
+<ParamField body="useContactTimezoneForCallWindow" param-type="boolean" required="false">
+Verwendet statt der Kampagnenzeitzone die Zeitzone des Kontakts für das Anruffenster.
+</ParamField>
+
+<ParamField body="retryBackoffMode" param-type="string" required="false" enum="fixed,exponential">
+Legt fest, ob Wiederholungen mit fixer oder exponentieller Verzögerung geplant werden.
+</ParamField>
+
+<ParamField body="retryBackoffMultiplier" param-type="number" required="false">
+Multiplikator für exponentielles Backoff. Gültiger Bereich ist `1.01` bis `10`.
+</ParamField>
+
+<ParamField body="retryBackoffMaxMinutes" param-type="integer" required="false">
+Maximale Verzögerung in Minuten für Backoff-basierte Wiederholungen.
+</ParamField>
+
+<ParamField body="maxAttemptsNoAnswer" param-type="integer|null" required="false">
+Maximale Anzahl von Wiederholungen bei keiner Antwort. Zulässig sind `1` bis `50` oder `null`.
+</ParamField>
+
+<ParamField body="maxAttemptsBusy" param-type="integer|null" required="false">
+Maximale Anzahl von Wiederholungen bei Besetzt. Zulässig sind `1` bis `50` oder `null`.
+</ParamField>
+
+<ParamField body="maxAttemptsError" param-type="integer|null" required="false">
+Maximale Anzahl von Wiederholungen bei Fehlern. Zulässig sind `1` bis `50` oder `null`.
+</ParamField>
+
+## Kampagne löschen
+
+Löschen Sie eine Kampagne per Soft-Delete. Der Datensatz bleibt dabei erhalten und kann über den Filter `deleted` in Listenabfragen einbezogen werden.
+
+<Callout kind="alert">
+
+Soft-Delete ist nur für Kampagnen im Status `draft` oder `cancelled` erlaubt.
+
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X DELETE "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71", {
+  method: "DELETE",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
+  }
+});
+
+const result = await response.json();
+console.log(result);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "deleted": true
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+ID der Kampagne, die Sie soft-löschen möchten.
+</ParamField>
+
+### Antwort
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Löschanfrage erfolgreich verarbeitet wurde.
+</ResponseField>
+
+<ResponseField name="deleted" field-type="boolean">
+Gibt an, ob die Kampagne als gelöscht markiert wurde.
+</ResponseField>
 
 ## Kampagne starten oder stoppen
 
@@ -139,7 +792,7 @@ Mit dem Run-Endpunkt steuern Sie den Laufstatus einer vorhandenen Kampagne. Send
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/run" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=example_session_token" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
   -d '{
     "action": "start"
   }'
@@ -149,9 +802,9 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/run" \
 const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/run", {
   method: "POST",
   headers: {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
   },
-  credentials: "include",
   body: JSON.stringify({
     action: "start"
   })
@@ -193,6 +846,12 @@ Gibt an, ob die Aktion erfolgreich ausgeführt wurde.
 Aktueller Status der Kampagne nach der Aktion.
 </ResponseField>
 
+<Callout kind="alert">
+
+Das Starten einer Kampagne erfordert mindestens 1 verfügbaren Credit.
+
+</Callout>
+
 ## Echtzeit-Dashboard-Statistiken abrufen
 
 Das Kampagnen-Dashboard liefert einen kompakten Überblick über den aktuellen Fortschritt. Sie erhalten Zähler für alle Anrufe sowie für beantwortete, fehlgeschlagene und laufende Anrufe.
@@ -200,12 +859,14 @@ Das Kampagnen-Dashboard liefert einen kompakten Überblick über den aktuellen F
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/dashboard" \
-  -H "Cookie: sb-session=example_session_token"
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
 ```
 
 ```javascript
 const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/dashboard", {
-  credentials: "include"
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
+  }
 });
 
 const dashboard = await response.json();
@@ -255,12 +916,14 @@ Rufen Sie die einer Kampagne zugeordneten Kontakte über den Kontakt-Endpunkt de
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/contacts" \
-  -H "Cookie: sb-session=example_session_token"
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
 ```
 
 ```javascript
 const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/contacts", {
-  credentials: "include"
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
+  }
 });
 
 const contacts = await response.json();
@@ -319,7 +982,7 @@ E-Mail-Adresse des Kontakts, falls vorhanden.
 
 <Callout kind="info">
 
-Nutzen Sie `POST /api/crm/campaigns/[id]/contacts`, um Kontakte derselben Kampagne hinzuzufügen. Für die Verwaltung einzelner Kontakte selbst stehen die CRM-Kontakt-Endpunkte unter `/api/crm/contacts` bereit.
+Nutzen Sie `POST /api/crm/campaigns/[id]/contacts`, um Kontakte derselben Kampagne hinzuzufügen. Für die Verwaltung einzelner Kontakte selbst stehen die CRM-Kontakt-Endpunkte unter `/de/api-reference/crm-contacts` bereit.
 
 </Callout>
 

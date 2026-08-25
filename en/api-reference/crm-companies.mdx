@@ -9,20 +9,22 @@ Use the CRM Companies endpoints to store organization records, attach custom fie
 
 <Callout kind="info">
 
-All CRM Companies endpoints require session cookie authentication. Send requests from an authenticated Talkturo session.
+`GET /api/crm/companies` supports dual authentication. Send either an API key in the `Authorization` header or an authenticated Talkturo session cookie.
+
+All other CRM Companies endpoints on this page require session cookie authentication and must be sent from an authenticated Talkturo session.
 
 </Callout>
 
 ## Endpoints at a glance
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/crm/companies` | List companies |
-| `POST` | `/api/crm/companies` | Create a company |
-| `GET` | `/api/crm/companies/{id}` | Retrieve a company |
-| `PATCH` | `/api/crm/companies/{id}` | Update a company |
-| `DELETE` | `/api/crm/companies/{id}` | Delete a company |
-| `GET` | `/api/crm/companies/{id}/contacts` | List contacts for a company |
+| Method | Endpoint | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/crm/companies` | Dual auth | List companies |
+| `POST` | `/api/crm/companies` | Session | Create a company |
+| `GET` | `/api/crm/companies/{id}` | Session | Retrieve a company |
+| `PUT` | `/api/crm/companies/{id}` | Session | Update a company |
+| `DELETE` | `/api/crm/companies/{id}` | Session | Delete a company |
+| `GET` | `/api/crm/companies/{id}/contacts` | Session | List contacts for a company |
 
 ## Company object
 
@@ -71,7 +73,7 @@ Retrieve a paginated list of companies. Use `search` to filter results by a sear
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl -X GET "https://app.talkturo.com/api/crm/companies?page=1&limit=25&search=Acme" \
-  -H "Cookie: sb-session=example_session_cookie"
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
 ```
 
 ```javascript
@@ -79,8 +81,8 @@ const response = await fetch(
   "https://app.talkturo.com/api/crm/companies?page=1&limit=25&search=Acme",
   {
     method: "GET",
-    credentials: "include",
     headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r",
       "Content-Type": "application/json"
     }
   }
@@ -166,6 +168,12 @@ Current page number in the paginated result.
 </ResponseField>
 
 ## Create a company
+
+<Callout kind="alert">
+
+`POST /api/crm/companies` is deprecated and returns HTTP `410`. Use `POST /api/crm/groups` to create groups instead.
+
+</Callout>
 
 Create a new company record by sending the company name and any additional fields you want to store.
 
@@ -371,6 +379,12 @@ The updated company record.
 ## Delete a company
 
 Delete a company by its ID.
+
+<Callout kind="info">
+
+Deleting a company is blocked when contacts are still attached to that company. Remove the associated contacts first, then delete the company.
+
+</Callout>
 
 ### Path parameters
 

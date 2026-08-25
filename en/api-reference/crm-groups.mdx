@@ -1,0 +1,888 @@
+---
+title: CRM Groups
+description: Create, list, update, and delete CRM groups to organize contacts into segments for campaigns and reporting, using API key or session authentication.
+---
+
+## Manage CRM groups
+
+Use the CRM Groups endpoints to organize contacts into reusable segments for campaigns, outreach workflows, and reporting in your Talkturo account.
+
+<Callout kind="info">
+
+All CRM Groups endpoints use dual authentication. Send an API key in the `Authorization` header as a Bearer token, or make the request from a signed-in session with a valid session cookie.
+
+API key scope guards apply by method:
+
+- `contacts:read` for `GET` endpoints
+- `contacts:write` for `POST`, `PUT`, and `DELETE` endpoints
+
+</Callout>
+
+### Endpoints at a glance
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/crm/groups` | List groups with contact counts |
+| `POST` | `/api/crm/groups` | Create a new group |
+| `GET` | `/api/crm/groups/{id}` | Get a group |
+| `PUT` | `/api/crm/groups/{id}` | Update a group |
+| `DELETE` | `/api/crm/groups/{id}` | Delete a group |
+| `GET` | `/api/crm/groups/{id}/contacts` | List contacts in a group |
+| `POST` | `/api/crm/groups/{id}/contacts` | Add or remove contacts from a group |
+
+### Authentication formats
+
+<Request tabs="API key,Session cookie" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/crm/groups" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+```
+
+```http
+GET /api/crm/groups HTTP/1.1
+Host: api.talkturo.com
+Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.session_example
+```
+
+</Request>
+
+## List groups
+
+List CRM groups for the authenticated account. Each group includes its current contact count so you can show segment size without making a second request.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/crm/groups?teamId=team_7f3d2b91" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/groups?teamId=team_7f3d2b91", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/crm/groups",
+    params={"teamId": "team_7f3d2b91"},
+    headers={"Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"}
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "groups": [
+    {
+      "id": "grp_8c4d1f29",
+      "name": "Enterprise leads",
+      "description": "High-value accounts for Q4 outbound campaigns",
+      "teamId": "team_7f3d2b91",
+      "contactCount": 128,
+      "createdAt": "2026-08-12T14:23:11.000Z"
+    },
+    {
+      "id": "grp_1a6e5b44",
+      "name": "Renewal follow-up",
+      "description": "Customers due for renewal in the next 30 days",
+      "teamId": "team_7f3d2b91",
+      "contactCount": 43,
+      "createdAt": "2026-08-14T09:10:05.000Z"
+    }
+  ]
+}
+```
+
+</Response>
+
+### Query parameters
+
+<ParamField query="teamId" param-type="string" required="false">
+
+Filter groups by team.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="groups" field-type="array" required="true">
+
+Array of CRM groups visible to the authenticated account.
+
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+
+Unique group identifier.
+
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+
+Group name.
+
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="false">
+
+Optional description stored on the group.
+
+</ResponseField>
+
+<ResponseField name="teamId" field-type="string" required="true">
+
+Team that owns the group.
+
+</ResponseField>
+
+<ResponseField name="contactCount" field-type="integer" required="true">
+
+Number of contacts currently assigned to the group.
+
+</ResponseField>
+
+<ResponseField name="createdAt" field-type="string" required="true">
+
+Timestamp when the group was created.
+
+</ResponseField>
+
+## Create a group
+
+Create a CRM group before assigning contacts to it. New groups start with a contact count of `0`.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/groups" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "teamId": "team_7f3d2b91",
+    "name": "Enterprise leads",
+    "description": "High-value accounts for Q4 outbound campaigns"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/groups", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    teamId: "team_7f3d2b91",
+    name: "Enterprise leads",
+    description: "High-value accounts for Q4 outbound campaigns"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.talkturo.com/api/crm/groups",
+    headers={
+        "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y",
+        "Content-Type": "application/json"
+    },
+    json={
+        "teamId": "team_7f3d2b91",
+        "name": "Enterprise leads",
+        "description": "High-value accounts for Q4 outbound campaigns"
+    }
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "grp_8c4d1f29",
+    "name": "Enterprise leads",
+    "description": "High-value accounts for Q4 outbound campaigns",
+    "teamId": "team_7f3d2b91",
+    "contactCount": 0,
+    "createdAt": "2026-08-12T14:23:11.000Z"
+  }
+}
+```
+
+</Response>
+
+### Request body
+
+<ParamField body="teamId" param-type="string" required="true">
+
+Team that owns the group.
+
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+
+Human-readable group name.
+
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+
+Optional description for the group.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+
+Created group record.
+
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+
+Unique group identifier.
+
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+
+Group name.
+
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="false">
+
+Optional group description.
+
+</ResponseField>
+
+<ResponseField name="teamId" field-type="string" required="true">
+
+Team that owns the group.
+
+</ResponseField>
+
+<ResponseField name="contactCount" field-type="integer" required="true">
+
+Number of contacts currently assigned to the group. New groups return `0`.
+
+</ResponseField>
+
+<ResponseField name="createdAt" field-type="string" required="true">
+
+Timestamp when the group was created.
+
+</ResponseField>
+
+## Get a group
+
+Retrieve one group by ID. Use this endpoint when you need the current group metadata and contact count for a specific segment.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/groups/grp_8c4d1f29", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29",
+    headers={"Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"}
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "grp_8c4d1f29",
+    "name": "Enterprise leads",
+    "description": "High-value accounts for Q4 outbound campaigns",
+    "teamId": "team_7f3d2b91",
+    "contactCount": 128,
+    "createdAt": "2026-08-12T14:23:11.000Z"
+  }
+}
+```
+
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+
+Requested group record.
+
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+
+Unique group identifier.
+
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+
+Group name.
+
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="false">
+
+Optional group description.
+
+</ResponseField>
+
+<ResponseField name="teamId" field-type="string" required="true">
+
+Team that owns the group.
+
+</ResponseField>
+
+<ResponseField name="contactCount" field-type="integer" required="true">
+
+Number of contacts currently assigned to the group.
+
+</ResponseField>
+
+<ResponseField name="createdAt" field-type="string" required="true">
+
+Timestamp when the group was created.
+
+</ResponseField>
+
+## Update a group
+
+Update a group's name or description without changing its contact membership.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X PUT "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Enterprise outbound leads",
+    "description": "Priority accounts for enterprise outbound sequences"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/groups/grp_8c4d1f29", {
+  method: "PUT",
+  headers: {
+    "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    name: "Enterprise outbound leads",
+    description: "Priority accounts for enterprise outbound sequences"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.put(
+    "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29",
+    headers={
+        "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y",
+        "Content-Type": "application/json"
+    },
+    json={
+        "name": "Enterprise outbound leads",
+        "description": "Priority accounts for enterprise outbound sequences"
+    }
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "grp_8c4d1f29",
+    "name": "Enterprise outbound leads",
+    "description": "Priority accounts for enterprise outbound sequences",
+    "teamId": "team_7f3d2b91",
+    "contactCount": 128,
+    "createdAt": "2026-08-12T14:23:11.000Z"
+  }
+}
+```
+
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+### Request body
+
+<ParamField body="name" param-type="string" required="false">
+
+Updated group name.
+
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+
+Updated group description.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+
+Updated group record.
+
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+
+Unique group identifier.
+
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+
+Group name after the update.
+
+</ResponseField>
+
+<ResponseField name="description" field-type="string" required="false">
+
+Group description after the update.
+
+</ResponseField>
+
+<ResponseField name="teamId" field-type="string" required="true">
+
+Team that owns the group.
+
+</ResponseField>
+
+<ResponseField name="contactCount" field-type="integer" required="true">
+
+Current number of contacts assigned to the group.
+
+</ResponseField>
+
+<ResponseField name="createdAt" field-type="string" required="true">
+
+Timestamp when the group was created.
+
+</ResponseField>
+
+## Delete a group
+
+Delete a group when you no longer need the segment. Deleting a group removes the grouping, not the underlying contacts.
+
+<Callout kind="alert">
+
+Deleting a group does not delete the contacts within it. Contacts remain in the CRM but are ungrouped.
+
+</Callout>
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X DELETE "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/groups/grp_8c4d1f29", {
+  method: "DELETE",
+  headers: {
+    "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.delete(
+    "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29",
+    headers={"Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"}
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "message": "Group deleted"
+}
+```
+
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+
+Confirmation message returned after the group is deleted.
+
+</ResponseField>
+
+## List group contacts
+
+List contacts currently assigned to a group. Use pagination to load large groups incrementally.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29/contacts?limit=50&offset=0" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/groups/grp_8c4d1f29/contacts?limit=50&offset=0", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29/contacts",
+    params={"limit": 50, "offset": 0},
+    headers={"Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y"}
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "contacts": [
+    {
+      "id": "cnt_4e82b731",
+      "firstName": "Maya",
+      "lastName": "Patel",
+      "phone": "+14155550192",
+      "email": "maya.patel@northgatehealth.com"
+    },
+    {
+      "id": "cnt_2c97a880",
+      "firstName": "Daniel",
+      "lastName": "Reed",
+      "phone": "+14155550874",
+      "email": "daniel.reed@apexlogistics.com"
+    }
+  ],
+  "limit": 50,
+  "offset": 0
+}
+```
+
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+### Query parameters
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximum number of contacts to return.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Number of contacts to skip before returning results.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="contacts" field-type="array" required="true">
+
+Paginated list of contacts in the group.
+
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true">
+
+Limit applied to the result set.
+
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+
+Offset applied to the result set.
+
+</ResponseField>
+
+## Manage group contacts
+
+Add contacts to a group or remove contacts from it in a single request. Set `action` to `add` or `remove` and pass the contact IDs you want to update.
+
+<Request tabs="cURL,JavaScript,Python" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29/contacts" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contactIds": ["cnt_4e82b731", "cnt_2c97a880"],
+    "action": "add"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/groups/grp_8c4d1f29/contacts", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    contactIds: ["cnt_4e82b731", "cnt_2c97a880"],
+    action: "add"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.talkturo.com/api/crm/groups/grp_8c4d1f29/contacts",
+    headers={
+        "Authorization": "Bearer tk_live_example_9xmk7q2r8n4v6p1d5s7u0w3y",
+        "Content-Type": "application/json"
+    },
+    json={
+        "contactIds": ["cnt_4e82b731", "cnt_2c97a880"],
+        "action": "add"
+    }
+)
+
+print(response.json())
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "message": "Contacts updated",
+  "contactCount": 42
+}
+```
+
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+### Request body
+
+<ParamField body="contactIds" param-type="array[string]" required="true">
+
+Contact UUIDs to add to the group or remove from it.
+
+</ParamField>
+
+<ParamField body="action" param-type="string" required="true" enum="add,remove">
+
+Action to perform on the provided contact IDs.
+
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+
+Confirmation message returned after the contacts are updated.
+
+</ResponseField>
+
+<ResponseField name="contactCount" field-type="integer" required="true">
+
+Current number of contacts in the group after the update.
+
+</ResponseField>
+
+## Related resources
+
+<Columns cols={3}>
+  <Card
+    title="CRM Contacts"
+    href="/en/api-reference/crm-contacts"
+    icon="users"
+    cta="Open reference"
+  />
+  <Card
+    title="CRM Campaigns"
+    href="/en/api-reference/crm-campaigns"
+    icon="rocket"
+    cta="Open reference"
+  />
+  <Card
+    title="CRM Opportunities"
+    href="/en/api-reference/crm-opportunities"
+    icon="bar-chart"
+    cta="Open reference"
+  />
+</Columns>

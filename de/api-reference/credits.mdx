@@ -25,9 +25,12 @@ Verwenden Sie für serverseitige Integrationen bevorzugt einen API-Schlüssel. S
 | `GET` | `/api/credits/auto-reload` | Nur Sitzung | Auto-Reload-Konfiguration abrufen |
 | `POST` | `/api/credits/auto-reload` | Nur Sitzung | Auto-Reload-Konfiguration speichern |
 | `POST` | `/api/credits/claim-grants` | Nur Sitzung | Verfügbare Grants beanspruchen |
+| `POST` | `/api/credits/claim-grants/new-workspace` | Nur Sitzung | Workspace-Anmeldebonus-Guthaben beanspruchen |
 | `GET` | `/api/credits/plans` | Nur Sitzung | Verfügbare Guthabenpläne abrufen |
 | `GET` | `/api/credits/statement` | Nur Sitzung | Guthabenauszug abrufen |
 | `GET` | `/api/credits/transactions` | Nur Sitzung | Transaktionsverlauf abrufen |
+| `GET` | `/api/usage/current` | API-Schlüssel oder Sitzung | Aktuelle Nutzungsübersicht abrufen |
+| `GET` | `/api/usage/voice` | API-Schlüssel oder Sitzung | Sprachnutzung aufschlüsseln |
 
 ## Guthabenstand abrufen
 
@@ -344,9 +347,104 @@ Die folgenden Guthaben-Endpunkte unterstützen keinen API-Schlüssel. Rufen Sie 
 | `GET` | `/api/credits/auto-reload` | Aktuelle Auto-Reload-Einstellungen abrufen |
 | `POST` | `/api/credits/auto-reload` | Auto-Reload-Einstellungen aktualisieren |
 | `POST` | `/api/credits/claim-grants` | Verfügbare Guthaben-Grants beanspruchen |
+| `POST` | `/api/credits/claim-grants/new-workspace` | Workspace-Anmeldebonus-Guthaben beanspruchen |
 | `GET` | `/api/credits/plans` | Verfügbare Guthabenpläne abrufen |
 | `GET` | `/api/credits/statement` | Guthabenauszug oder Verlauf abrufen |
 | `GET` | `/api/credits/transactions` | Einzelne Guthabentransaktionen abrufen |
+
+### Workspace-Anmeldebonus beanspruchen
+
+Beanspruchen Sie mit `POST /api/credits/claim-grants/new-workspace` das Anmeldebonus-Guthaben für einen neu erstellten Workspace. Verwenden Sie diesen Endpunkt direkt nach der Erstellung eines neuen Workspace, um verfügbare Förderguthaben dem Arbeitsbereich gutzuschreiben.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/credits/claim-grants/new-workspace" \
+  -H "Cookie: session=tt_session_example_a91c7d2f"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/credits/claim-grants/new-workspace", {
+  method: "POST",
+  credentials: "include"
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "granted": 5000
+}
+```
+</Response>
+
+### Authentifizierung
+
+Für diesen Endpunkt ist ein Session-Cookie erforderlich. Body-Parameter sind nicht erforderlich.
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob das Bonusguthaben erfolgreich beansprucht wurde.
+</ResponseField>
+
+<ResponseField name="granted" field-type="number" required="true">
+Die Anzahl der gewährten Credits.
+</ResponseField>
+
+## Nutzungs-Endpunkte
+
+Die Nutzungs-Endpunkte liefern aggregierte Kennzahlen für den aktuellen Abrechnungszeitraum und für sprachbezogene Nutzung. Beide Endpunkte unterstützen duale Authentifizierung und können daher mit API-Schlüssel oder mit einer aktiven Sitzung aufgerufen werden.
+
+### Aktuelle Nutzungsübersicht abrufen
+
+Rufen Sie mit `GET /api/usage/current` eine Zusammenfassung der aktuellen Nutzung ab. Der Endpunkt eignet sich für Dashboards, Kostenkontrollen und interne Nutzungsberichte.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/usage/current" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/usage/current", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+### Sprachnutzung aufschlüsseln
+
+Rufen Sie mit `GET /api/usage/voice` eine sprachspezifische Nutzungsaufschlüsselung ab. Die Antwort enthält typischerweise Werte zu Minuten, Anrufen und Assistentenaktivität innerhalb des aktuellen Abrechnungszeitraums.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/usage/voice" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/usage/voice", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
 
 ## Verwandte Seiten
 

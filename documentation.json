@@ -303,6 +303,11 @@
                     "icon": "building"
                   },
                   {
+                    "title": "CRM Groups",
+                    "path": "en/api-reference/crm-groups",
+                    "icon": "folder-tree"
+                  },
+                  {
                     "title": "CRM Opportunities",
                     "path": "en/api-reference/crm-opportunities",
                     "icon": "target"
@@ -671,6 +676,11 @@
                     "title": "CRM-Unternehmen",
                     "path": "de/api-reference/crm-companies",
                     "icon": "building"
+                  },
+                  {
+                    "title": "CRM-Gruppen",
+                    "path": "de/api-reference/crm-groups",
+                    "icon": "folder-tree"
                   },
                   {
                     "title": "CRM-Opportunities",
