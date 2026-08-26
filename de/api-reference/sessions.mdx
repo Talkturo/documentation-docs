@@ -1,0 +1,400 @@
+---
+title: Sitzungen
+description: Erstellen, auflisten, aktualisieren und beenden Sie Desktop-Sitzungen über die Talkturo API — verwalten Sie Echtzeit-Coaching-Sitzungen für die Close AI Desktop-App.
+---
+
+## Verwaltung von Sitzungen
+
+Verwalten Sie Desktop-Sitzungen für die Close AI Desktop-App mit REST-Endpunkten, die Sitzungen auflisten, neue Sitzungen erstellen, aktive Sitzungen aktualisieren, einzelne Sitzungen löschen und alle aktiven Sitzungen auf einmal beenden.
+
+| Methode | Endpunkt | Zweck |
+|---|---|---|
+| `GET` | `/api/sessions` | Sitzungen für Ihr Konto auflisten |
+| `POST` | `/api/sessions` | Eine neue Desktop-Sitzung erstellen |
+| `GET` | `/api/sessions/{id}` | Eine einzelne Sitzung anhand ihrer ID abrufen |
+| `PATCH` | `/api/sessions/{id}` | Metadaten oder Status einer Sitzung aktualisieren |
+| `DELETE` | `/api/sessions/{id}` | Eine Sitzung löschen |
+| `POST` | `/api/sessions/end-all` | Alle aktiven Sitzungen für Ihr Konto beenden |
+
+<Callout kind="info">
+
+Diese Endpunkte unterstützen Desktop-Sitzungsabläufe für Echtzeit-Coaching in der Close AI Desktop-App. Verwenden Sie den [Desktop-Authentifizierungsleitfaden](/de/api-reference/desktop), wenn Sie Desktop-Token oder den Anmeldeablauf separat implementieren.
+
+</Callout>
+
+## GET /api/sessions
+
+Listen Sie alle Sitzungen für das authentifizierte Konto ab. Verwenden Sie diesen Endpunkt, um aktive oder kürzlich erstellte Desktop-Sitzungen anzuzeigen.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/sessions" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "sessions": [
+    {
+      "id": "ses_7f3a2d1c",
+      "accountId": "acc_4c9d8e1a",
+      "status": "active",
+      "platform": "close-desktop",
+      "desktopTokenId": "dtk_a1b2c3d4",
+      "startedAt": "2025-01-14T10:15:00.000Z",
+      "endedAt": null,
+      "metadata": {
+        "workspace": "Acme SDR Team",
+        "userEmail": "jane@acme.com"
+      },
+      "createdAt": "2025-01-14T10:15:00.000Z",
+      "updatedAt": "2025-01-14T10:18:12.000Z"
+    }
+  ]
+}
+```
+</Response>
+
+### Abfrageparameter
+
+<ParamField query="status" param-type="string" required="false">
+Filtern Sie Sitzungen nach Status. Typische Werte sind `active` und `ended`.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Begrenzt die Anzahl der zurückgegebenen Sitzungen.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Überspringt eine Anzahl von Ergebnissen für die Paginierung.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="sessions" field-type="array">
+Enthält die Liste der Sitzungsobjekte für das authentifizierte Konto.
+</ResponseField>
+
+<ResponseField name="sessions[].id" field-type="string">
+Die eindeutige Sitzungs-ID.
+</ResponseField>
+
+<ResponseField name="sessions[].accountId" field-type="string">
+Die Konto-ID, der die Sitzung gehört.
+</ResponseField>
+
+<ResponseField name="sessions[].status" field-type="string">
+Der aktuelle Sitzungsstatus.
+</ResponseField>
+
+<ResponseField name="sessions[].platform" field-type="string">
+Die Client-Plattform, die die Sitzung erstellt hat.
+</ResponseField>
+
+<ResponseField name="sessions[].desktopTokenId" field-type="string">
+Die ID des Desktop-Tokens, das mit der Sitzung verknüpft ist.
+</ResponseField>
+
+<ResponseField name="sessions[].startedAt" field-type="string">
+Der ISO 8601-Zeitstempel, zu dem die Sitzung gestartet wurde.
+</ResponseField>
+
+<ResponseField name="sessions[].endedAt" field-type="string">
+Der ISO 8601-Zeitstempel, zu dem die Sitzung beendet wurde, oder `null`, wenn sie noch aktiv ist.
+</ResponseField>
+
+<ResponseField name="sessions[].metadata" field-type="object">
+Zusätzliche Sitzungsmetadaten, die zusammen mit der Sitzung gespeichert werden.
+</ResponseField>
+
+<ResponseField name="sessions[].createdAt" field-type="string">
+Der ISO 8601-Zeitstempel, zu dem die Sitzung erstellt wurde.
+</ResponseField>
+
+<ResponseField name="sessions[].updatedAt" field-type="string">
+Der ISO 8601-Zeitstempel der letzten Aktualisierung der Sitzung.
+</ResponseField>
+
+## POST /api/sessions
+
+Erstellen Sie eine neue Desktop-Sitzung, wenn sich ein Benutzer in der Close AI Desktop-App anmeldet oder eine neue Coaching-Sitzung startet.
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/sessions" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "platform": "close-desktop",
+    "desktopTokenId": "dtk_a1b2c3d4",
+    "metadata": {
+      "workspace": "Acme SDR Team",
+      "userEmail": "jane@acme.com"
+    }
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "session": {
+    "id": "ses_7f3a2d1c",
+    "accountId": "acc_4c9d8e1a",
+    "status": "active",
+    "platform": "close-desktop",
+    "desktopTokenId": "dtk_a1b2c3d4",
+    "startedAt": "2025-01-14T10:15:00.000Z",
+    "endedAt": null,
+    "metadata": {
+      "workspace": "Acme SDR Team",
+      "userEmail": "jane@acme.com"
+    },
+    "createdAt": "2025-01-14T10:15:00.000Z",
+    "updatedAt": "2025-01-14T10:15:00.000Z"
+  }
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="platform" param-type="string" required="true">
+Die Plattform, die die Sitzung erstellt. Verwenden Sie für Desktop-Sitzungen `close-desktop`.
+</ParamField>
+
+<ParamField body="desktopTokenId" param-type="string" required="true">
+Die ID des Desktop-Tokens, das für diese Sitzung verwendet wird.
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+Optionale Metadaten für die Sitzung, zum Beispiel Workspace- oder Benutzerdetails.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Sitzung erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="session" field-type="object">
+Das neu erstellte Sitzungsobjekt.
+</ResponseField>
+
+## GET /api/sessions/{id}
+
+Rufen Sie eine einzelne Sitzung anhand ihrer ID ab. Verwenden Sie diesen Endpunkt, wenn Sie den Status oder die Metadaten einer bestimmten Desktop-Sitzung prüfen müssen.
+
+<Request>
+```bash
+curl -X GET "https://api.talkturo.com/api/sessions/ses_7f3a2d1c" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "session": {
+    "id": "ses_7f3a2d1c",
+    "accountId": "acc_4c9d8e1a",
+    "status": "active",
+    "platform": "close-desktop",
+    "desktopTokenId": "dtk_a1b2c3d4",
+    "startedAt": "2025-01-14T10:15:00.000Z",
+    "endedAt": null,
+    "metadata": {
+      "workspace": "Acme SDR Team",
+      "userEmail": "jane@acme.com"
+    },
+    "createdAt": "2025-01-14T10:15:00.000Z",
+    "updatedAt": "2025-01-14T10:18:12.000Z"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Die eindeutige ID der Sitzung, die Sie abrufen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="session" field-type="object">
+Das Sitzungsobjekt, das der angegebenen ID entspricht.
+</ResponseField>
+
+## PATCH /api/sessions/{id}
+
+Aktualisieren Sie eine bestehende Sitzung, um ihren Status zu ändern oder Metadaten zu ergänzen. Verwenden Sie diesen Endpunkt typischerweise, wenn eine Sitzung endet oder wenn die Desktop-App zusätzliche Kontextdaten sendet.
+
+<Request>
+```bash
+curl -X PATCH "https://api.talkturo.com/api/sessions/ses_7f3a2d1c" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "ended",
+    "endedAt": "2025-01-14T11:05:00.000Z",
+    "metadata": {
+      "workspace": "Acme SDR Team",
+      "userEmail": "jane@acme.com",
+      "callId": "call_92c4d7e1"
+    }
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "session": {
+    "id": "ses_7f3a2d1c",
+    "accountId": "acc_4c9d8e1a",
+    "status": "ended",
+    "platform": "close-desktop",
+    "desktopTokenId": "dtk_a1b2c3d4",
+    "startedAt": "2025-01-14T10:15:00.000Z",
+    "endedAt": "2025-01-14T11:05:00.000Z",
+    "metadata": {
+      "workspace": "Acme SDR Team",
+      "userEmail": "jane@acme.com",
+      "callId": "call_92c4d7e1"
+    },
+    "createdAt": "2025-01-14T10:15:00.000Z",
+    "updatedAt": "2025-01-14T11:05:02.000Z"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Die eindeutige ID der Sitzung, die Sie aktualisieren möchten.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="status" param-type="string" required="false">
+Aktualisiert den Sitzungsstatus, zum Beispiel auf `active` oder `ended`.
+</ParamField>
+
+<ParamField body="endedAt" param-type="string" required="false">
+Setzt den ISO 8601-Zeitstempel, zu dem die Sitzung beendet wurde.
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+Ersetzt oder erweitert die mit der Sitzung gespeicherten Metadaten, abhängig von der Implementierung des Endpunkts.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Sitzung erfolgreich aktualisiert wurde.
+</ResponseField>
+
+<ResponseField name="session" field-type="object">
+Das aktualisierte Sitzungsobjekt.
+</ResponseField>
+
+<Callout kind="tip">
+
+Wenn Sie eine Sitzung beenden, senden Sie `status` mit dem Wert `ended` zusammen mit `endedAt`, damit Sitzungsdauer und Aktivitätsstatus konsistent bleiben.
+
+</Callout>
+
+## DELETE /api/sessions/{id}
+
+Löschen Sie eine einzelne Sitzung anhand ihrer ID. Verwenden Sie diesen Endpunkt, wenn Sie eine Sitzung entfernen müssen, anstatt sie nur als beendet zu markieren.
+
+<Request>
+```bash
+curl -X DELETE "https://api.talkturo.com/api/sessions/ses_7f3a2d1c" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "message": "Session deleted successfully"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Die eindeutige ID der Sitzung, die Sie löschen möchten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Sitzung erfolgreich gelöscht wurde.
+</ResponseField>
+
+<ResponseField name="message" field-type="string">
+Eine Bestätigungsnachricht nach erfolgreicher Löschung.
+</ResponseField>
+
+## POST /api/sessions/end-all
+
+Beenden Sie alle aktiven Sitzungen für das authentifizierte Konto in einer einzigen Anfrage. Das ist nützlich, wenn Sie Desktop-Zugriff global widerrufen oder nach einer Sicherheitsmaßnahme alle laufenden Sitzungen schließen müssen.
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/sessions/end-all" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "endedCount": 3
+}
+```
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="endedCount" field-type="integer">
+Die Anzahl der Sitzungen, die in dieser Anfrage beendet wurden.
+</ResponseField>
+
+<Callout kind="alert">
+
+Dieser Endpunkt kann mehrere aktive Desktop-Sitzungen gleichzeitig beenden. Verwenden Sie ihn nur, wenn Sie alle laufenden Sitzungen für das Konto absichtlich schließen möchten.
+
+</Callout>
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card title="Desktop-Authentifizierung" href="/de/api-reference/desktop" icon="lock" cta="Zur Referenz" />
+  <Card title="Close AI Desktop-App" href="/de/close-ai/overview" icon="monitor" cta="Zur Übersicht" />
+</Columns>

@@ -1,0 +1,554 @@
+---
+title: Benutzer und Konto
+description: Verwalten Sie Benutzerprofile, Abonnements, Workspaces und Geschäftseinstellungen über die Talkturo API — rufen Sie aktuelle Benutzerdaten ab, prüfen Sie Abonnement-Limits, listen Sie Workspaces auf und aktualisieren Sie Geschäftsprofile.
+---
+
+## Benutzer- und Kontoendpunkte
+
+Diese Endpunkte decken das aktuelle Benutzerprofil, Abonnementdaten, Workspace-Zugriff und Geschäftseinstellungen ab. Desktop-Endpunkte erwarten ein Desktop-JWT im `Authorization`-Header, während Kontoendpunkte mit Session-Cookie die aktive Web-Session verwenden.
+
+<Callout kind="info">
+
+**Base URL:** `https://app.talkturo.com`
+
+</Callout>
+
+### Authentifizierung nach Endpunkt
+
+<Tabs>
+  <Tab title="Desktop JWT" icon="lock">
+
+  Verwenden Sie für Desktop-Endpunkte ein Bearer-Token im `Authorization`-Header.
+
+  ```bash
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.signature_example_7xk29
+  ```
+
+  Diese Authentifizierung gilt für:
+
+  - `GET /api/users/me`
+  - `PUT /api/users/me`
+  - `GET /api/users/me/subscription`
+  - `GET /api/users/me/workspaces`
+
+  </Tab>
+  <Tab title="Session-Cookie" icon="shield">
+
+  Verwenden Sie für Kontoeinstellungen Ihre aktive Web-Session. Diese Endpunkte akzeptieren kein Desktop-JWT als Ersatz.
+
+  Diese Authentifizierung gilt für:
+
+  - `GET /api/account/business`
+  - `PUT /api/account/business`
+  - `PUT /api/account/language`
+
+  Der Endpunkt `PUT /api/account/language` ist nur für Workspace-Owner verfügbar.
+
+  </Tab>
+</Tabs>
+
+## Aktuellen Benutzer abrufen
+
+Rufen Sie das Profil des aktuell authentifizierten Desktop-Benutzers ab.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/users/me" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.signature_example_7xk29"
+```
+</Request>
+
+<Response>
+```json
+{
+  "uid": "usr_a1b2c3d4",
+  "email": "jane@acme.com",
+  "display_name": "Jane Chen",
+  "auto_update_enabled": true,
+  "has_migrated_to_firebase": true
+}
+```
+</Response>
+
+### Antwortfelder von GET /api/users/me
+
+<ResponseField name="uid" field-type="string" required="true">
+Eindeutige Kennung des aktuellen Benutzers.
+</ResponseField>
+
+<ResponseField name="email" field-type="string" required="true">
+E-Mail-Adresse des aktuellen Benutzers.
+</ResponseField>
+
+<ResponseField name="display_name" field-type="string" required="true">
+Anzeigename des Benutzers.
+</ResponseField>
+
+<ResponseField name="auto_update_enabled" field-type="boolean" required="true">
+Gibt an, ob automatische Updates im Desktop-Client aktiviert sind.
+</ResponseField>
+
+<ResponseField name="has_migrated_to_firebase" field-type="boolean" required="true">
+Gibt an, ob das Benutzerkonto zu Firebase migriert wurde.
+</ResponseField>
+
+## Aktuellen Benutzer aktualisieren
+
+Aktualisieren Sie den Anzeigenamen des aktuell authentifizierten Desktop-Benutzers.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/users/me" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.signature_example_7xk29" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "display_name": "Jane Chen"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "uid": "usr_a1b2c3d4",
+  "email": "jane@acme.com",
+  "display_name": "Jane Chen",
+  "auto_update_enabled": true,
+  "has_migrated_to_firebase": true
+}
+```
+</Response>
+
+### Request-Body für PUT /api/users/me
+
+<ParamField body="display_name" param-type="string" required="true">
+Neuer Anzeigename des aktuellen Benutzers.
+</ParamField>
+
+## Abonnement abrufen
+
+Rufen Sie den Abonnementstatus, Planinformationen, Limits und aktuelle Nutzung des authentifizierten Benutzers ab. Optional können Sie mit dem Header `X-Talkturo-Account` einen bestimmten Workspace-Kontext angeben.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/users/me/subscription" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.signature_example_7xk29" \
+  -H "X-Talkturo-Account: acme-sales"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "hasActiveSubscription": true,
+  "data": {
+    "active": true,
+    "plan": "team",
+    "source": "stripe",
+    "current_period_end": "2026-01-31T23:59:59.000Z",
+    "trial_ends_at": null,
+    "account_id": "acc_7f2k9m1q",
+    "account_slug": "acme-sales",
+    "access_blocked_reason": null,
+    "limits": {
+      "seats": 10,
+      "calls_per_month": 5000,
+      "session_max_minutes": 60,
+      "retention_days": 90,
+      "sales_modes": true
+    },
+    "usage": {
+      "calls_this_month": 842,
+      "calls_limit": 5000
+    }
+  }
+}
+```
+</Response>
+
+### Header und Antwortfelder für GET /api/users/me/subscription
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer-Token des Desktop-Benutzers.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string" required="false">
+Optionaler Workspace-Slug, um das Abonnement im Kontext eines bestimmten Workspace abzurufen.
+</ParamField>
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich verarbeitet wurde.
+</ResponseField>
+
+<ResponseField name="hasActiveSubscription" field-type="boolean" required="true">
+Gibt an, ob für den aktuellen Benutzer oder den angegebenen Workspace ein aktives Abonnement vorliegt.
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+Enthält die Abonnementdetails, Limits und Nutzungswerte.
+</ResponseField>
+
+#### Felder in `data`
+
+<ResponseField name="active" field-type="boolean" required="true">
+Gibt an, ob das Abonnement aktuell aktiv ist.
+</ResponseField>
+
+<ResponseField name="plan" field-type="string" required="true">
+Planname des aktiven Abonnements.
+</ResponseField>
+
+<ResponseField name="source" field-type="string" required="true">
+Quelle des Abonnements, zum Beispiel ein externer Billing-Anbieter.
+</ResponseField>
+
+<ResponseField name="current_period_end" field-type="string" required="true">
+Zeitpunkt, an dem der aktuelle Abrechnungszeitraum endet.
+</ResponseField>
+
+<ResponseField name="trial_ends_at" field-type="string" required="false">
+Zeitpunkt, an dem eine Testphase endet, falls vorhanden.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Eindeutige Kennung des Workspace-Kontos.
+</ResponseField>
+
+<ResponseField name="account_slug" field-type="string" required="true">
+Slug des Workspace-Kontos.
+</ResponseField>
+
+<ResponseField name="access_blocked_reason" field-type="string" required="false">
+Grund für einen gesperrten Zugriff, falls der Zugriff auf das Abonnement oder den Workspace eingeschränkt ist.
+</ResponseField>
+
+<ResponseField name="limits" field-type="object" required="true">
+Abonnementlimits für Plätze, Anrufe und verfügbare Funktionen.
+</ResponseField>
+
+<ResponseField name="usage" field-type="object" required="true">
+Aktuelle Nutzung im laufenden Zeitraum.
+</ResponseField>
+
+#### Felder in `limits`
+
+<ResponseField name="seats" field-type="number" required="true">
+Maximale Anzahl an Benutzerplätzen.
+</ResponseField>
+
+<ResponseField name="calls_per_month" field-type="number" required="true">
+Maximale Anzahl an Anrufen pro Monat.
+</ResponseField>
+
+<ResponseField name="session_max_minutes" field-type="number" required="true">
+Maximale Sitzungsdauer in Minuten.
+</ResponseField>
+
+<ResponseField name="retention_days" field-type="number" required="true">
+Anzahl der Tage, für die Daten aufbewahrt werden.
+</ResponseField>
+
+<ResponseField name="sales_modes" field-type="boolean" required="true">
+Gibt an, ob vertriebsbezogene Modi im Plan enthalten sind.
+</ResponseField>
+
+#### Felder in `usage`
+
+<ResponseField name="calls_this_month" field-type="number" required="true">
+Bisher verbrauchte Anrufe im aktuellen Monat.
+</ResponseField>
+
+<ResponseField name="calls_limit" field-type="number" required="true">
+Monatliches Anruflimit, das für die Nutzungsauswertung herangezogen wird.
+</ResponseField>
+
+## Workspaces auflisten
+
+Listen Sie alle Workspaces auf, auf die der aktuelle Desktop-Benutzer Zugriff hat.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/users/me/workspaces" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.signature_example_7xk29"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "workspaces": [
+    {
+      "account_id": "acc_7f2k9m1q",
+      "slug": "acme-sales",
+      "name": "Acme Sales",
+      "is_personal_account": false,
+      "role": "owner",
+      "has_desktop_plan": true,
+      "has_desktop_access": true,
+      "plan": "team"
+    },
+    {
+      "account_id": "acc_3d8n2p6r",
+      "slug": "jane-chen",
+      "name": "Jane Chen",
+      "is_personal_account": true,
+      "role": "owner",
+      "has_desktop_plan": false,
+      "has_desktop_access": true,
+      "plan": "free"
+    }
+  ]
+}
+```
+</Response>
+
+### Antwortfelder von GET /api/users/me/workspaces
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="workspaces" field-type="array" required="true">
+Liste aller Workspaces, auf die der aktuelle Benutzer zugreifen kann.
+</ResponseField>
+
+#### Felder pro Workspace
+
+<ResponseField name="account_id" field-type="string" required="true">
+Eindeutige Konto-ID des Workspace.
+</ResponseField>
+
+<ResponseField name="slug" field-type="string" required="true">
+Slug des Workspace.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Anzeigename des Workspace.
+</ResponseField>
+
+<ResponseField name="is_personal_account" field-type="boolean" required="true">
+Gibt an, ob es sich um einen persönlichen Workspace handelt.
+</ResponseField>
+
+<ResponseField name="role" field-type="string" required="true">
+Rolle des aktuellen Benutzers in diesem Workspace.
+</ResponseField>
+
+<ResponseField name="has_desktop_plan" field-type="boolean" required="true">
+Gibt an, ob für den Workspace ein Desktop-Plan hinterlegt ist.
+</ResponseField>
+
+<ResponseField name="has_desktop_access" field-type="boolean" required="true">
+Gibt an, ob der aktuelle Benutzer Desktop-Zugriff für diesen Workspace hat.
+</ResponseField>
+
+<ResponseField name="plan" field-type="string" required="true">
+Planname des Workspace.
+</ResponseField>
+
+## Geschäftsprofil abrufen
+
+Rufen Sie das Geschäftsprofil eines Workspace über dessen Slug ab. Dieser Endpunkt verwendet die aktive Session-Cookie-Authentifizierung.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/account/business?account=acme-sales" \
+  -H "Cookie: sb-access-token=session_example_4km82p; sb-refresh-token=refresh_example_9qp31x"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "business": {
+    "business_name": "Acme Sales GmbH",
+    "business_website": "https://acme-sales.com",
+    "business_industry": "Software",
+    "business_phone": "+49 30 12345678",
+    "business_city": "Berlin",
+    "business_state": "Berlin",
+    "business_country": "DE"
+  }
+}
+```
+</Response>
+
+### Query-Parameter und Antwortfelder für GET /api/account/business
+
+<ParamField query="account" param-type="string" required="true">
+Workspace-Slug, dessen Geschäftsprofil abgerufen werden soll.
+</ParamField>
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="business" field-type="object" required="true">
+Geschäftsprofil des angegebenen Workspace.
+</ResponseField>
+
+#### Felder in `business`
+
+<ResponseField name="business_name" field-type="string" required="true">
+Name des Unternehmens oder Workspace-Profils.
+</ResponseField>
+
+<ResponseField name="business_website" field-type="string" required="true">
+Website des Unternehmens.
+</ResponseField>
+
+<ResponseField name="business_industry" field-type="string" required="true">
+Branche des Unternehmens.
+</ResponseField>
+
+<ResponseField name="business_phone" field-type="string" required="true">
+Geschäftliche Telefonnummer.
+</ResponseField>
+
+<ResponseField name="business_city" field-type="string" required="true">
+Stadt des Unternehmens.
+</ResponseField>
+
+<ResponseField name="business_state" field-type="string" required="true">
+Bundesland, Region oder Staat des Unternehmens.
+</ResponseField>
+
+<ResponseField name="business_country" field-type="string" required="true">
+Ländercode oder Land des Unternehmens.
+</ResponseField>
+
+## Geschäftsprofil aktualisieren
+
+Aktualisieren Sie das Geschäftsprofil eines Workspace über Ihre aktive Session.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/account/business" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=session_example_4km82p; sb-refresh-token=refresh_example_9qp31x" \
+  -d '{
+    "account": "acme-sales",
+    "businessName": "Acme Sales GmbH",
+    "businessWebsite": "https://acme-sales.com",
+    "businessIndustry": "Software",
+    "businessPhone": "+49 30 12345678",
+    "businessCity": "Berlin",
+    "businessState": "Berlin",
+    "businessCountry": "DE"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "business": {
+    "business_name": "Acme Sales GmbH",
+    "business_website": "https://acme-sales.com",
+    "business_industry": "Software",
+    "business_phone": "+49 30 12345678",
+    "business_city": "Berlin",
+    "business_state": "Berlin",
+    "business_country": "DE"
+  }
+}
+```
+</Response>
+
+### Request-Body für PUT /api/account/business
+
+<ParamField body="account" param-type="string" required="true">
+Workspace-Slug, dessen Geschäftsprofil aktualisiert werden soll.
+</ParamField>
+
+<ParamField body="businessName" param-type="string" required="true">
+Name des Unternehmens.
+</ParamField>
+
+<ParamField body="businessWebsite" param-type="string" required="true">
+Website des Unternehmens.
+</ParamField>
+
+<ParamField body="businessIndustry" param-type="string" required="true">
+Branche des Unternehmens.
+</ParamField>
+
+<ParamField body="businessPhone" param-type="string" required="true">
+Geschäftliche Telefonnummer.
+</ParamField>
+
+<ParamField body="businessCity" param-type="string" required="true">
+Stadt des Unternehmens.
+</ParamField>
+
+<ParamField body="businessState" param-type="string" required="true">
+Bundesland, Region oder Staat des Unternehmens.
+</ParamField>
+
+<ParamField body="businessCountry" param-type="string" required="true">
+Ländercode oder Land des Unternehmens.
+</ParamField>
+
+## Sprache aktualisieren
+
+Aktualisieren Sie die Workspace-Sprache auf `en` oder `de`. Dieser Endpunkt akzeptiert nur Session-Cookie-Authentifizierung und nur Workspace-Owner dürfen ihn verwenden.
+
+<Callout kind="alert">
+
+Nur Owner eines Workspace können `PUT /api/account/language` verwenden.
+
+</Callout>
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/account/language" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=session_example_4km82p; sb-refresh-token=refresh_example_9qp31x" \
+  -d '{
+    "account": "acme-sales",
+    "language": "de"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "language": "de"
+}
+```
+</Response>
+
+### Request-Body für PUT /api/account/language
+
+<ParamField body="account" param-type="string" required="true">
+Workspace-Slug, dessen Sprache aktualisiert werden soll.
+</ParamField>
+
+<ParamField body="language" param-type="string" required="true" enum="en,de">
+Neue Workspace-Sprache. Zulässige Werte sind `en` und `de`.
+</ParamField>
+
+## Verwandte Ressourcen
+
+Lesen Sie weiter, wenn Sie Desktop-Authentifizierung oder Workspace-Verwaltung im Detail benötigen.
+
+<Columns cols={2}>
+  <Card
+    title="Desktop-Auth"
+    href="/de/api-reference/desktop"
+    icon="lock"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="Workspaces und Teams"
+    href="/de/workspaces"
+    icon="users"
+    cta="Workspace-Dokumentation öffnen"
+  />
+</Columns>

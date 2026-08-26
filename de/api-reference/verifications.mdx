@@ -1,0 +1,250 @@
+---
+title: Verifizierungen
+description: Erstellen, verwalten und übermitteln Sie regulatorische Compliance-Anmeldungen für Telefonnummern über die Talkturo API — verwalten Sie Twilio Regulatory Bundle-Erstellung, Dokument-Uploads und Live-Verifizierungsstatus.
+---
+
+## Verifizierungsanmeldungen über die API verwalten
+
+Mit den Verifizierungsendpunkten erstellen, aktualisieren und übermitteln Sie regulatorische Anmeldungen für Telefonnummern. Die API unterstützt den vollständigen Ablauf von der Erstellung eines Twilio Regulatory Bundles über Dokument-Uploads bis zur Prüfung des aktuellen Live-Status.
+
+<Callout kind="info">
+
+**Basis-URL:** `https://app.talkturo.com`  
+**Authentifizierung:** Session-Cookie über `enhanceRouteHandler` mit `auth`
+
+</Callout>
+
+## POST /api/verifications/filings
+
+Erstellen Sie eine neue regulatorische Anmeldung oder setzen Sie eine bestehende Anmeldung fort.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/verifications/filings" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=example_session_token" \
+  -d '{
+    "account": "acme-sales",
+    "carrier": "twilio",
+    "country": "DE",
+    "numberType": "local"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "bundleSid": "BU1234567890abcdef1234567890abcd",
+  "resumed": false
+}
+```
+</Response>
+
+### Anfrageparameter
+
+<ParamField body="account" param-type="string" required="true">
+Workspace-Slug der Anmeldung.
+</ParamField>
+
+<ParamField body="carrier" param-type="string" required="false">
+Optionaler Carrier für die Anmeldung.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="true">
+Zweistelliger ISO-Ländercode.
+</ParamField>
+
+<ParamField body="numberType" param-type="string" required="false" enum="local,toll-free,mobile,national">
+Typ der Telefonnummer. Der Standardwert ist `local`.
+</ParamField>
+
+<ParamField body="resubmitOf" param-type="string" required="false">
+Optionale Twilio Bundle-SID einer bestehenden Anmeldung, die erneut eingereicht werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anmeldung erfolgreich erstellt oder fortgesetzt wurde.
+</ResponseField>
+
+<ResponseField name="bundleSid" field-type="string" required="true">
+Twilio Bundle-SID der erstellten oder fortgesetzten Anmeldung.
+</ResponseField>
+
+<ResponseField name="resumed" field-type="boolean" required="true">
+`true`, wenn eine bestehende Anmeldung fortgesetzt wurde, andernfalls `false`.
+</ResponseField>
+
+## GET /api/verifications/filings/{bundleSid}
+
+Rufen Sie die Details einer bestehenden Verifizierungsanmeldung über ihre Bundle-SID ab.
+
+<Request>
+```bash
+curl "https://app.talkturo.com/api/verifications/filings/BU1234567890abcdef1234567890abcd" \
+  -H "Cookie: sb-access-token=example_session_token"
+```
+</Request>
+
+### Pfadparameter
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Twilio Bundle-SID der Verifizierungsanmeldung.
+</ParamField>
+
+## PUT /api/verifications/filings/{bundleSid}
+
+Aktualisieren Sie eine bestehende Verifizierungsanmeldung über ihre Bundle-SID.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/verifications/filings/BU1234567890abcdef1234567890abcd" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=example_session_token" \
+  -d '{
+    "account": "acme-sales",
+    "carrier": "twilio",
+    "country": "DE",
+    "numberType": "local"
+  }'
+```
+</Request>
+
+### Pfadparameter
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Twilio Bundle-SID der Verifizierungsanmeldung, die Sie aktualisieren möchten.
+</ParamField>
+
+<Callout kind="info">
+
+Die verfügbaren Felder für Aktualisierungen entsprechen dem Anfrageschema der Erstellung, sofern Ihre Anmeldung zusätzliche oder geänderte Angaben erfordert.
+
+</Callout>
+
+## POST /api/verifications/filings/{bundleSid}/submit
+
+Übermitteln Sie eine fertige Anmeldung zur regulatorischen Prüfung.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/verifications/filings/BU1234567890abcdef1234567890abcd/submit" \
+  -H "Cookie: sb-access-token=example_session_token"
+```
+</Request>
+
+### Pfadparameter
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Twilio Bundle-SID der Anmeldung, die Sie zur Prüfung übermitteln möchten.
+</ParamField>
+
+## GET /api/verifications/filings/{bundleSid}/documents
+
+Listen Sie die Dokumente auf, die einer Verifizierungsanmeldung zugeordnet sind.
+
+<Request>
+```bash
+curl "https://app.talkturo.com/api/verifications/filings/BU1234567890abcdef1234567890abcd/documents" \
+  -H "Cookie: sb-access-token=example_session_token"
+```
+</Request>
+
+### Pfadparameter
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Twilio Bundle-SID der Anmeldung, deren Dokumente Sie abrufen möchten.
+</ParamField>
+
+## POST /api/verifications/filings/{bundleSid}/documents
+
+Laden Sie ein Dokument für eine bestehende Verifizierungsanmeldung hoch.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/verifications/filings/BU1234567890abcdef1234567890abcd/documents" \
+  -H "Cookie: sb-access-token=example_session_token" \
+  -F "file=@handelsregisterauszug.pdf"
+```
+</Request>
+
+### Pfadparameter
+
+<ParamField path="bundleSid" param-type="string" required="true">
+Twilio Bundle-SID der Anmeldung, zu der Sie ein Dokument hochladen möchten.
+</ParamField>
+
+<Callout kind="tip">
+
+Wenn ein Dokument-Upload erfolgreich ist, ist das Dokument anschließend über denselben Dokumentenendpunkt abrufbar. Verwenden Sie diesen Endpunkt, um zu prüfen, ob alle erforderlichen Nachweise an die Anmeldung angehängt wurden.
+
+</Callout>
+
+## GET /api/verifications/live
+
+Rufen Sie den Live-Status von Verifizierungen ab.
+
+<Request>
+```bash
+curl "https://app.talkturo.com/api/verifications/live" \
+  -H "Cookie: sb-access-token=example_session_token"
+```
+</Request>
+
+Der Live-Endpunkt hilft Ihnen dabei, den aktuellen Status bereits laufender regulatorischer Verifizierungen zu prüfen, ohne einzelne Anmeldungen manuell zu öffnen.
+
+## Typischer Ablauf
+
+So verbinden sich die Endpunkte in einem vollständigen Verifizierungsprozess.
+
+<Steps>
+<Step title="Anmeldung erstellen oder fortsetzen" icon="plus">
+
+Senden Sie eine Anfrage an `POST /api/verifications/filings`, um ein neues Bundle anzulegen oder eine bestehende Anmeldung fortzusetzen.
+
+Ein erfolgreicher Aufruf gibt eine `bundleSid` zurück. Verwenden Sie diese SID in allen nachfolgenden Endpunkten.
+
+</Step>
+
+<Step title="Anmeldungsdetails prüfen und ergänzen" icon="edit">
+
+Rufen Sie die Anmeldung über `GET /api/verifications/filings/{bundleSid}` ab und aktualisieren Sie sie bei Bedarf mit `PUT /api/verifications/filings/{bundleSid}`.
+
+Wenn zusätzliche Angaben für Land, Nummerntyp oder Carrier erforderlich sind, pflegen Sie diese vor der Übermittlung ein.
+
+</Step>
+
+<Step title="Dokumente hochladen" icon="upload">
+
+Laden Sie alle erforderlichen Nachweise über `POST /api/verifications/filings/{bundleSid}/documents` hoch.
+
+Prüfen Sie danach mit `GET /api/verifications/filings/{bundleSid}/documents`, ob die Dokumente der Anmeldung korrekt zugeordnet wurden.
+
+</Step>
+
+<Step title="Anmeldung zur Prüfung übermitteln" icon="check-circle">
+
+Senden Sie die fertige Anmeldung an `POST /api/verifications/filings/{bundleSid}/submit`.
+
+Nach erfolgreicher Übermittlung können Sie den weiteren Fortschritt über den Live-Status-Endpunkt verfolgen.
+
+</Step>
+
+<Step title="Live-Status überwachen" icon="bar-chart">
+
+Fragen Sie `GET /api/verifications/live` ab, um den aktuellen Verifizierungsstatus zu überwachen.
+
+Dieser Schritt ist besonders nützlich, wenn Sie mehrere regulatorische Anmeldungen parallel verwalten.
+
+</Step>
+</Steps>
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card title="Telefonnummern" href="/de/api-reference/phone-numbers" icon="phone" cta="Zur Referenz" />
+  <Card title="Telefonie" href="/de/api-reference/telephony" icon="phone-call" cta="Zur Referenz" />
+</Columns>

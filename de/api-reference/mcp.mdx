@@ -1,0 +1,402 @@
+---
+title: MCP-Plugins
+description: Listen Sie MCP-Plugin-Anbieter auf, verwalten Sie Workspace-Verbindungen, wählen Sie Plugins für Assistenten aus und rufen Sie verfügbare Tools über die Talkturo API ab — integrieren Sie externe Tool-Anbieter mit KI-Sprachagenten.
+---
+
+## MCP-Plugins API-Referenz
+
+MCP-Plugins verbinden Ihre Assistenten mit externen Tool-Anbietern. Über diese Endpunkte können Sie verfügbare Anbieter abrufen, Workspace-Verbindungen prüfen, Plugins einem Assistenten zuweisen und die verfügbaren Tools einer Verbindung auflisten.
+
+<Callout kind="info">
+
+**Base URL:** `https://app.talkturo.com`  
+**Authentifizierung:** Session-Cookie (Supabase)
+
+</Callout>
+
+## MCP-Anbieter auflisten
+
+Rufen Sie alle verfügbaren MCP-Anbieter ab, die in Ihrem Workspace verwendet werden können.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/mcp/providers" \
+  -H "Cookie: sb-access-token=tk_example_session_cookie"
+```
+</Request>
+
+<Response>
+```json
+{
+  "providers": [
+    {
+      "id": "notion",
+      "name": "Notion",
+      "description": "Connect your Notion workspace",
+      "brandColor": "#000000",
+      "iconUrl": "https://app.talkturo.com/icons/notion.png"
+    },
+    {
+      "id": "hubspot",
+      "name": "HubSpot",
+      "description": "Connect your HubSpot account",
+      "brandColor": "#ff7a59",
+      "iconUrl": "https://app.talkturo.com/icons/hubspot.png"
+    }
+  ]
+}
+```
+</Response>
+
+### Endpunkt
+
+`GET /api/mcp/providers`
+
+### Antwortfelder
+
+<ResponseField name="providers" field-type="array" required="true">
+Liste der verfügbaren MCP-Anbieter.
+</ResponseField>
+
+<ResponseField name="providers[].id" field-type="string" required="true">
+Eindeutige Kennung des Anbieters.
+</ResponseField>
+
+<ResponseField name="providers[].name" field-type="string" required="true">
+Anzeigename des Anbieters.
+</ResponseField>
+
+<ResponseField name="providers[].description" field-type="string" required="true">
+Kurzbeschreibung des Anbieters.
+</ResponseField>
+
+<ResponseField name="providers[].brandColor" field-type="string" required="true">
+Markenfarbe des Anbieters, typischerweise als Hex-Wert.
+</ResponseField>
+
+<ResponseField name="providers[].iconUrl" field-type="string" required="true">
+Öffentliche URL zum Anbieter-Icon.
+</ResponseField>
+
+## Plugins und Verbindungen auflisten
+
+Rufen Sie alle Plugins für einen Workspace ab, einschließlich vorhandener Verbindungen. Wenn Sie `assistantId` übergeben, enthält die Antwort auch die Auswahl dieses Assistenten.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/mcp/plugins?accountSlug=acme-sales&assistantId=asst_9d3e1c7a" \
+  -H "Cookie: sb-access-token=tk_example_session_cookie"
+```
+</Request>
+
+<Response>
+```json
+{
+  "plugins": [
+    {
+      "id": "notion",
+      "name": "Notion",
+      "description": "Connect your Notion workspace",
+      "brandColor": "#000000",
+      "iconUrl": "https://app.talkturo.com/icons/notion.png",
+      "connections": [
+        {
+          "id": "conn_7f2c1a90",
+          "label": "Sales workspace",
+          "expiresAt": "2026-03-01T12:00:00.000Z",
+          "needsReauth": false
+        }
+      ],
+      "connectionId": "conn_7f2c1a90",
+      "enabledTools": [
+        "search_pages",
+        "create_page"
+      ],
+      "defaultTools": [
+        "search_pages"
+      ]
+    }
+  ]
+}
+```
+</Response>
+
+### Endpunkt
+
+`GET /api/mcp/plugins`
+
+### Query-Parameter
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Slug des Workspaces, für den Plugins und Verbindungen abgerufen werden.
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+ID des Assistenten. Wenn Sie diesen Wert angeben, enthält die Antwort die aktuelle Plugin-Auswahl des Assistenten, einschließlich `connectionId` und `enabledTools`.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="plugins" field-type="array" required="true">
+Liste der für den Workspace verfügbaren Plugins.
+</ResponseField>
+
+<ResponseField name="plugins[].id" field-type="string" required="true">
+Eindeutige Kennung des Plugins oder Anbieters.
+</ResponseField>
+
+<ResponseField name="plugins[].name" field-type="string" required="true">
+Anzeigename des Plugins.
+</ResponseField>
+
+<ResponseField name="plugins[].description" field-type="string" required="true">
+Kurzbeschreibung des Plugins.
+</ResponseField>
+
+<ResponseField name="plugins[].brandColor" field-type="string" required="true">
+Markenfarbe des Plugins.
+</ResponseField>
+
+<ResponseField name="plugins[].iconUrl" field-type="string" required="true">
+URL zum Plugin-Icon.
+</ResponseField>
+
+<ResponseField name="plugins[].connections" field-type="array" required="true">
+Vorhandene Workspace-Verbindungen für dieses Plugin.
+</ResponseField>
+
+<ResponseField name="plugins[].connections[].id" field-type="string" required="true">
+Eindeutige Kennung der Verbindung.
+</ResponseField>
+
+<ResponseField name="plugins[].connections[].label" field-type="string" required="true">
+Lesbare Bezeichnung der Verbindung.
+</ResponseField>
+
+<ResponseField name="plugins[].connections[].expiresAt" field-type="string" required="false">
+Ablaufzeit der Verbindung, falls der Anbieter zeitlich begrenzte Autorisierung verwendet.
+</ResponseField>
+
+<ResponseField name="plugins[].connections[].needsReauth" field-type="boolean" required="true">
+Gibt an, ob die Verbindung erneut autorisiert werden muss.
+</ResponseField>
+
+<ResponseField name="plugins[].connectionId" field-type="string" required="false">
+Die aktuell für den angegebenen Assistenten ausgewählte Verbindung.
+</ResponseField>
+
+<ResponseField name="plugins[].enabledTools" field-type="array" required="true">
+Liste der Tools, die für den Assistenten auf diesem Plugin aktiviert sind.
+</ResponseField>
+
+<ResponseField name="plugins[].defaultTools" field-type="array" required="true">
+Liste der Tools, die standardmäßig für dieses Plugin empfohlen oder aktiviert sind.
+</ResponseField>
+
+<Callout kind="tip">
+
+Wenn Sie nur die verfügbaren Verbindungen eines Workspaces prüfen möchten, rufen Sie `GET /api/mcp/plugins` nur mit `accountSlug` auf. Wenn Sie die aktuelle Auswahl eines Assistenten laden möchten, geben Sie zusätzlich `assistantId` an.
+
+</Callout>
+
+## Plugin für einen Assistenten auswählen
+
+Weisen Sie einem Assistenten ein Plugin, eine Verbindung und die aktivierten Tools zu. Wenn Sie ein leeres `tools`-Array senden, entfernt die API das Plugin vom Assistenten.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/mcp/plugins/select" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=tk_example_session_cookie" \
+  -d '{
+    "assistantId": "asst_9d3e1c7a",
+    "accountSlug": "acme-sales",
+    "provider": "notion",
+    "connectionId": "conn_7f2c1a90",
+    "tools": ["search_pages", "create_page"]
+  }'
+```
+</Request>
+
+<Response tabs="Plugin verbunden,Plugin entfernt">
+```json
+{
+  "ok": true,
+  "attached": true
+}
+```
+
+```json
+{
+  "ok": true,
+  "attached": false
+}
+```
+</Response>
+
+### Endpunkt
+
+`POST /api/mcp/plugins/select`
+
+### Request-Body
+
+<ParamField body="assistantId" param-type="string" required="true">
+ID des Assistenten, für den das Plugin ausgewählt oder entfernt wird.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Slug des Workspaces, in dem die Verbindung liegt.
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="true">
+Kennung des MCP-Anbieters oder Plugins.
+</ParamField>
+
+<ParamField body="connectionId" param-type="string" required="true">
+ID der Workspace-Verbindung, die mit dem Assistenten verknüpft werden soll.
+</ParamField>
+
+<ParamField body="tools" param-type="string[]" required="true">
+Liste der Tool-Namen, die für diesen Assistenten aktiviert werden sollen. Senden Sie ein leeres Array, um das Plugin vom Assistenten zu entfernen.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Gibt an, dass die Anfrage erfolgreich verarbeitet wurde.
+</ResponseField>
+
+<ResponseField name="attached" field-type="boolean" required="true">
+`true`, wenn das Plugin mit dem Assistenten verknüpft bleibt. `false`, wenn die Auswahl entfernt wurde.
+</ResponseField>
+
+<Callout kind="info">
+
+Ein leeres `tools`-Array entfernt das Plugin. Verwenden Sie diesen Endpunkt daher sowohl zum Aktualisieren als auch zum Trennen einer Plugin-Auswahl.
+
+</Callout>
+
+## Tools für eine Verbindung auflisten
+
+Rufen Sie die Tools ab, die für eine bestimmte Verbindung verfügbar sind. Verwenden Sie diesen Endpunkt, bevor Sie `POST /api/mcp/plugins/select` aufrufen, wenn Sie eine präzise Tool-Auswahl anbieten möchten.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/mcp/plugins/tools?accountSlug=acme-sales&connectionId=conn_7f2c1a90" \
+  -H "Cookie: sb-access-token=tk_example_session_cookie"
+```
+</Request>
+
+<Response>
+```json
+{
+  "tools": [
+    {
+      "name": "search_pages",
+      "description": "Search pages in the connected workspace"
+    },
+    {
+      "name": "create_page",
+      "description": "Create a new page in the connected workspace"
+    }
+  ],
+  "defaultTools": [
+    "search_pages"
+  ],
+  "capabilities": {
+    "supportsToolSelection": true
+  }
+}
+```
+</Response>
+
+### Endpunkt
+
+`GET /api/mcp/plugins/tools`
+
+### Query-Parameter
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Slug des Workspaces, zu dem die Verbindung gehört.
+</ParamField>
+
+<ParamField query="connectionId" param-type="string" required="true">
+ID der Verbindung, deren verfügbare Tools abgefragt werden.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="tools" field-type="array" required="true">
+Liste der verfügbaren Tools für die angegebene Verbindung.
+</ResponseField>
+
+<ResponseField name="tools[].name" field-type="string" required="true">
+Interner Name des Tools. Verwenden Sie diesen Wert im `tools`-Array von `POST /api/mcp/plugins/select`.
+</ResponseField>
+
+<ResponseField name="tools[].description" field-type="string" required="true">
+Kurzbeschreibung des Tools.
+</ResponseField>
+
+<ResponseField name="defaultTools" field-type="array" required="true">
+Standardmäßig ausgewählte oder empfohlene Tools für diese Verbindung.
+</ResponseField>
+
+<ResponseField name="capabilities" field-type="object" required="true">
+Zusätzliche Fähigkeiten oder Hinweise zur Verbindung und Tool-Auswahl.
+</ResponseField>
+
+## Typischer Ablauf
+
+Verwenden Sie diese Endpunkte in einer festen Reihenfolge, wenn Sie eine Plugin-Auswahl für einen Assistenten in Ihrer Oberfläche abbilden.
+
+<Steps>
+<Step title="Anbieter laden" icon="database">
+
+Rufen Sie `GET /api/mcp/providers` auf, um alle verfügbaren MCP-Anbieter anzuzeigen.
+
+Ein erfolgreicher Aufruf liefert ein `providers`-Array mit `id`, `name`, `description`, `brandColor` und `iconUrl`.
+
+</Step>
+
+<Step title="Plugins und Verbindungen des Workspaces laden" icon="plug">
+
+Rufen Sie `GET /api/mcp/plugins?accountSlug=...` auf, um die verfügbaren Plugins und vorhandenen Workspace-Verbindungen zu laden.
+
+Wenn Sie einen vorhandenen Assistenten bearbeiten, geben Sie zusätzlich `assistantId` an. Die Antwort enthält dann auch die aktuell ausgewählte Verbindung und die aktivierten Tools.
+
+</Step>
+
+<Step title="Verfügbare Tools einer Verbindung abrufen" icon="code">
+
+Rufen Sie `GET /api/mcp/plugins/tools` mit `accountSlug` und `connectionId` auf.
+
+Ein erfolgreicher Aufruf liefert ein `tools`-Array sowie `defaultTools`. Mit diesen Daten können Sie dem Benutzer eine konkrete Tool-Auswahl anzeigen.
+
+</Step>
+
+<Step title="Auswahl speichern" icon="check-circle">
+
+Senden Sie `POST /api/mcp/plugins/select` mit `assistantId`, `accountSlug`, `provider`, `connectionId` und `tools`.
+
+Wenn die Antwort `attached: true` enthält, ist das Plugin mit dem Assistenten verbunden. Wenn die Antwort `attached: false` enthält, wurde die Plugin-Auswahl entfernt.
+
+</Step>
+</Steps>
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card
+    title="Assistenten"
+    href="/de/api-reference/assistants"
+    icon="users"
+    cta="API-Referenz öffnen"
+  />
+  <Card
+    title="KI-Sprachagenten"
+    href="/de/assistants/overview"
+    icon="book-open"
+    cta="Übersicht öffnen"
+  />
+</Columns>

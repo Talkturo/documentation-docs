@@ -1,0 +1,414 @@
+---
+title: Zahlungsmethoden
+description: Listen Sie Zahlungsmethoden auf, fügen Sie diese hinzu, setzen Sie eine Standardmethode und entfernen Sie Zahlungsmethoden über die Talkturo API — verwalten Sie Stripe-basierte Karten für Workspace-Abrechnung und Guthabenkäufe.
+---
+
+## Verwaltung von Zahlungsmethoden
+
+Verwalten Sie gespeicherte Zahlungsmethoden für Workspace-Abrechnung und Guthabenkäufe über die Talkturo API. Diese Endpunkte arbeiten mit Stripe-basierten Karten und unterstützen Session-Cookies oder API-Schlüssel über `withApiAuth`.
+
+<Callout kind="info">
+
+**Base URL:** `https://app.talkturo.com`  
+**Authentifizierung:** Session-Cookie oder `Authorization: Bearer tk_...`
+
+</Callout>
+
+## Endpunkte
+
+### Zahlungsmethoden auflisten
+
+Rufen Sie alle aktiven und gespeicherten Zahlungsmethoden für einen Workspace ab.
+
+<Request tabs="cURL" show-lines="true">
+
+```bash
+curl -X GET "https://app.talkturo.com/api/payment-methods?accountId=acc_9f3a2b1c" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+
+</Request>
+
+<Response tabs="200,400" show-lines="false">
+
+```json
+{
+  "success": true,
+  "paymentMethods": [
+    {
+      "id": "c8b2b7d3-6df5-4d0f-8d18-2e23ef9df4f1",
+      "stripe_payment_method_id": "pm_1Qp7K2ABCD3EfghI9jKlmnOp",
+      "type": "card",
+      "card_brand": "visa",
+      "card_last4": "4242",
+      "card_exp_month": 12,
+      "card_exp_year": 2028,
+      "card_funding": "credit",
+      "is_default": true,
+      "is_active": true,
+      "billing_details": {
+        "name": "Jane Chen",
+        "email": "jane@acme.com"
+      },
+      "created_at": "2025-02-14T10:21:33.000Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "accountId is required"
+}
+```
+
+</Response>
+
+#### Anfrageparameter
+
+<ParamField query="accountId" param-type="string" required="false">
+
+Workspace-ID. Bei API-Schlüsseln ist dieser Wert optional, wenn der Schlüssel bereits an den Workspace gebunden ist.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="paymentMethods" field-type="array" required="true">
+
+Liste der gespeicherten Zahlungsmethoden des Workspace.
+
+</ResponseField>
+
+<ResponseField name="count" field-type="number" required="true">
+
+Anzahl der zurückgegebenen Zahlungsmethoden.
+
+</ResponseField>
+
+#### Objekte in `paymentMethods`
+
+<ResponseField name="id" field-type="string" required="true">
+
+Interne UUID der Zahlungsmethode in Talkturo.
+
+</ResponseField>
+
+<ResponseField name="stripe_payment_method_id" field-type="string" required="true">
+
+Stripe-ID der Zahlungsmethode, in der Regel beginnend mit `pm_`.
+
+</ResponseField>
+
+<ResponseField name="type" field-type="string" required="true">
+
+Typ der Zahlungsmethode. Für diese Endpunkte ist dies typischerweise `card`.
+
+</ResponseField>
+
+<ResponseField name="card_brand" field-type="string" required="false">
+
+Kartenmarke, zum Beispiel `visa` oder `mastercard`.
+
+</ResponseField>
+
+<ResponseField name="card_last4" field-type="string" required="false">
+
+Die letzten vier Ziffern der Karte.
+
+</ResponseField>
+
+<ResponseField name="card_exp_month" field-type="number" required="false">
+
+Ablaufmonat der Karte.
+
+</ResponseField>
+
+<ResponseField name="card_exp_year" field-type="number" required="false">
+
+Ablaufjahr der Karte.
+
+</ResponseField>
+
+<ResponseField name="card_funding" field-type="string" required="false">
+
+Finanzierungsart der Karte, zum Beispiel `credit` oder `debit`.
+
+</ResponseField>
+
+<ResponseField name="is_default" field-type="boolean" required="true">
+
+Gibt an, ob diese Zahlungsmethode aktuell die Standardmethode ist.
+
+</ResponseField>
+
+<ResponseField name="is_active" field-type="boolean" required="true">
+
+Gibt an, ob die Zahlungsmethode aktiv verwendet werden kann.
+
+</ResponseField>
+
+<ResponseField name="billing_details" field-type="object" required="false">
+
+Abrechnungsdetails, die von Stripe für die Zahlungsmethode gespeichert wurden.
+
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+
+Zeitpunkt der Erstellung im ISO-8601-Format.
+
+</ResponseField>
+
+### Zahlungsmethode hinzufügen
+
+Fügen Sie einem Workspace eine neue Stripe-Zahlungsmethode hinzu. Optional können Sie die neue Methode sofort als Standard festlegen.
+
+<Request tabs="cURL" show-lines="true">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/payment-methods" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "acc_9f3a2b1c",
+    "paymentMethodId": "pm_1Qp7K2ABCD3EfghI9jKlmnOp",
+    "setAsDefault": true
+  }'
+```
+
+</Request>
+
+<Response tabs="200,400" show-lines="false">
+
+```json
+{
+  "success": true,
+  "paymentMethod": {
+    "id": "c8b2b7d3-6df5-4d0f-8d18-2e23ef9df4f1",
+    "stripe_payment_method_id": "pm_1Qp7K2ABCD3EfghI9jKlmnOp",
+    "card_brand": "visa",
+    "card_last4": "4242",
+    "card_exp_month": 12,
+    "card_exp_year": 2028,
+    "is_default": true
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "accountId and paymentMethodId are required"
+}
+```
+
+</Response>
+
+#### Anfrage-Body
+
+<ParamField body="accountId" param-type="string" required="true" show-location="false">
+
+Workspace-ID, zu der die Zahlungsmethode hinzugefügt wird.
+
+</ParamField>
+
+<ParamField body="paymentMethodId" param-type="string" required="true" show-location="false">
+
+Stripe-ID der Zahlungsmethode. Verwenden Sie eine gültige ID, die mit `pm_` beginnt.
+
+</ParamField>
+
+<ParamField body="setAsDefault" param-type="boolean" required="false" show-location="false">
+
+Legt fest, ob die neue Zahlungsmethode direkt als Standard gesetzt wird. Standardwert ist `false`.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Zahlungsmethode erfolgreich hinzugefügt wurde.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod" field-type="object" required="true">
+
+Die neu gespeicherte Zahlungsmethode.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod.id" field-type="string" required="true">
+
+Interne UUID der neu erstellten Zahlungsmethode.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod.stripe_payment_method_id" field-type="string" required="true">
+
+Stripe-ID der gespeicherten Zahlungsmethode.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_brand" field-type="string" required="false">
+
+Kartenmarke der gespeicherten Karte.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_last4" field-type="string" required="false">
+
+Die letzten vier Ziffern der gespeicherten Karte.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_exp_month" field-type="number" required="false">
+
+Ablaufmonat der Karte.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod.card_exp_year" field-type="number" required="false">
+
+Ablaufjahr der Karte.
+
+</ResponseField>
+
+<ResponseField name="paymentMethod.is_default" field-type="boolean" required="true">
+
+Gibt an, ob diese Zahlungsmethode nun die Standardmethode ist.
+
+</ResponseField>
+
+### Zahlungsmethode entfernen
+
+Entfernen Sie eine gespeicherte Zahlungsmethode anhand ihrer internen UUID.
+
+<Request tabs="cURL" show-lines="true">
+
+```bash
+curl -X DELETE "https://app.talkturo.com/api/payment-methods/c8b2b7d3-6df5-4d0f-8d18-2e23ef9df4f1" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+
+</Request>
+
+<Response tabs="200,404" show-lines="false">
+
+```json
+{
+  "success": true,
+  "message": "Payment method deleted"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+Interne UUID der zu entfernenden Zahlungsmethode.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Zahlungsmethode erfolgreich entfernt wurde.
+
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+
+Statusmeldung der API. Bei Erfolg ist der Wert `Payment method deleted`.
+
+</ResponseField>
+
+### Standard-Zahlungsmethode festlegen
+
+Setzen Sie eine vorhandene gespeicherte Zahlungsmethode als Standard für künftige Abrechnungen und Guthabenkäufe.
+
+<Request tabs="cURL" show-lines="true">
+
+```bash
+curl -X PATCH "https://app.talkturo.com/api/payment-methods/c8b2b7d3-6df5-4d0f-8d18-2e23ef9df4f1" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -H "Content-Type: application/json"
+```
+
+</Request>
+
+<Response tabs="200,404" show-lines="false">
+
+```json
+{
+  "success": true,
+  "message": "Default payment method updated"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payment method not found"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+Interne UUID der Zahlungsmethode, die als Standard gesetzt werden soll.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Standard-Zahlungsmethode erfolgreich aktualisiert wurde.
+
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+
+Statusmeldung der API. Bei Erfolg ist der Wert `Default payment method updated`.
+
+</ResponseField>
+
+## Hinweise zur Verwendung
+
+<Callout kind="tip">
+
+Verwenden Sie beim Hinzufügen einer Karte die Stripe-`paymentMethodId` und beim Aktualisieren oder Löschen die interne Talkturo-`id`. Diese beiden Werte sind nicht austauschbar.
+
+</Callout>
+
+Wenn Sie einen API-Schlüssel verwenden, kann der Workspace-Kontext aus dem Schlüssel selbst abgeleitet werden. Bei sessionbasierten Anfragen müssen Sie den Workspace-Kontext gegebenenfalls explizit übergeben.
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card title="Abrechnung" href="/de/api-reference/billing" icon="credit-card" cta="Zur Referenz" />
+  <Card title="Guthaben" href="/de/api-reference/credits" icon="database" cta="Zur Referenz" />
+</Columns>

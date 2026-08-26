@@ -1,0 +1,359 @@
+---
+title: Stimme und TTS
+description: Listen Sie TTS-Stimmen auf, klonen Sie benutzerdefinierte Stimmen und rufen Sie unterstützte Sprachmodelle über die Talkturo API ab.
+---
+
+## Voice- und TTS-Endpunkte
+
+Diese Endpunkte listen verfügbare TTS-Stimmen auf, erstellen geklonte Stimmen aus Audioproben und geben die unterstützten Modelle eines Sprachanbieters zurück.
+
+<Callout kind="info">
+
+**Base URL:** `https://app.talkturo.com`
+
+Die Endpunkte auf dieser Seite verwenden unterschiedliche Authentifizierungsmodelle. `GET /api/tts-voices`, `GET /api/voice-providers/models` und `GET /api/voice-providers/voices` sind öffentlich. `POST /api/voice-cloning` erfordert eine angemeldete Sitzung per Session-Cookie.
+
+</Callout>
+
+## GET /api/tts-voices
+
+Listet Systemstimmen und geklonte Stimmen auf, die für TTS verfügbar sind. Dieser Endpunkt erfordert keine Authentifizierung.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/tts-voices?provider=elevenlabs&accountId=acc_2f8k9m1q" \
+  -H "Accept: application/json"
+```
+</Request>
+
+<Response>
+```json
+[
+  {
+    "id": "voice_01hzy7n4k2q8m3p6r9t1v5w8x",
+    "provider": "elevenlabs",
+    "voice_id": "EXAVITQu4vr4xnSDxMaL",
+    "name": "Rachel",
+    "description": "English female voice",
+    "language": "en",
+    "preview_url": "https://cdn.talkturo.com/voices/rachel-preview.mp3",
+    "metadata": {
+      "gender": "female",
+      "accent": "us"
+    },
+    "voice_model": "eleven_multilingual_v2",
+    "account_id": null,
+    "voice_type": "system"
+  },
+  {
+    "id": "voice_01hzy7q0n6b4d8f2j5k9m3p7r",
+    "provider": "elevenlabs",
+    "voice_id": "cln_8vkm2q4p9x1r6t3n",
+    "name": "Sales Demo Voice",
+    "description": "Custom cloned voice",
+    "language": "de",
+    "preview_url": "https://cdn.talkturo.com/voices/sales-demo-preview.mp3",
+    "metadata": {
+      "sample_count": 1
+    },
+    "voice_model": "eleven_multilingual_v2",
+    "account_id": "acc_2f8k9m1q",
+    "voice_type": "cloned"
+  }
+]
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="provider" param-type="string" required="false">
+
+Filtert Stimmen nach Anbieter.
+
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="false">
+
+Begrenzt die Antwort auf Stimmen, die einem bestimmten Account zugeordnet sind. Ohne `accountId` kann die Antwort Systemstimmen und andere öffentlich verfügbare Stimmen enthalten.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string">
+Eindeutige interne Kennung des Stimmeintrags.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string">
+Name des TTS-Anbieters, zum Beispiel `elevenlabs` oder `cartesia`.
+</ResponseField>
+
+<ResponseField name="voice_id" field-type="string">
+Anbieterspezifische Stimmen-ID, die für TTS-Anfragen verwendet wird.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+Anzeigename der Stimme.
+</ResponseField>
+
+<ResponseField name="description" field-type="string">
+Kurzbeschreibung der Stimme, falls verfügbar.
+</ResponseField>
+
+<ResponseField name="language" field-type="string">
+Sprachcode der Stimme.
+</ResponseField>
+
+<ResponseField name="preview_url" field-type="string">
+URL zu einer Hörprobe der Stimme, falls vorhanden.
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object">
+Zusätzliche anbieter- oder systembezogene Metadaten zur Stimme.
+</ResponseField>
+
+<ResponseField name="voice_model" field-type="string">
+Name des zugrunde liegenden Sprachmodells, das diese Stimme unterstützt.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string">
+Account-ID der Stimme. Bei Systemstimmen ist dieses Feld typischerweise `null`.
+</ResponseField>
+
+<ResponseField name="voice_type" field-type="string">
+Typ der Stimme. Erwartete Werte sind Systemstimmen und geklonte Stimmen.
+</ResponseField>
+
+## POST /api/voice-cloning
+
+Erstellt eine benutzerdefinierte geklonte Stimme aus einer Audioaufnahme. Dieser Endpunkt akzeptiert nur authentifizierte Anfragen mit Session-Cookie.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/voice-cloning" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -b "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --data '{
+    "accountId": "acc_2f8k9m1q",
+    "preferred_name": "Vertrieb DE",
+    "language": "de",
+    "audio_base64": "UklGRmQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=",
+    "audio_mime_type": "audio/wav"
+  }'
+```
+</Request>
+
+<Response tabs="200,400,403,502,500,503" default-tab="1">
+```json
+{
+  "success": true,
+  "voice": {
+    "id": "voice_01hzy8d4w3m7n2p5q9r6t1v4x",
+    "provider": "elevenlabs",
+    "voice_id": "cln_b7m4p2x9r6t1q8v3",
+    "name": "Vertrieb DE",
+    "description": "Custom cloned voice",
+    "language": "de",
+    "preview_url": "https://cdn.talkturo.com/voices/vertrieb-de-preview.mp3",
+    "metadata": {
+      "sample_count": 1
+    },
+    "voice_model": "eleven_multilingual_v2",
+    "account_id": "acc_2f8k9m1q",
+    "voice_type": "cloned"
+  }
+}
+```
+
+```json
+{
+  "error": "Invalid request body"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Voice provider upstream error"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+```json
+{
+  "error": "Voice cloning service unavailable"
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Account-ID, unter der die geklonte Stimme gespeichert wird.
+
+</ParamField>
+
+<ParamField body="preferred_name" param-type="string" required="false">
+
+Bevorzugter Anzeigename für die neue Stimme.
+
+</ParamField>
+
+<ParamField body="language" param-type="string" required="false">
+
+Sprachcode der aufgenommenen Stimme. Geben Sie dieses Feld an, wenn Sie die Stimme einer bestimmten Sprache zuordnen möchten.
+
+</ParamField>
+
+<ParamField body="audio_base64" param-type="string" required="true">
+
+Base64-kodierte Audiodaten, die als Enrollment-Probe für das Stimmklonen verwendet werden.
+
+</ParamField>
+
+<ParamField body="audio_mime_type" param-type="string" required="false">
+
+MIME-Typ der Audiodatei. Der Standardwert ist `audio/wav`.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean">
+Gibt an, ob das Stimmklonen erfolgreich war.
+</ResponseField>
+
+<ResponseField name="voice" field-type="object">
+Der neu erstellte Stimmeintrag mit derselben Struktur wie ein Element aus `GET /api/tts-voices`.
+</ResponseField>
+
+<Callout kind="alert">
+
+Senden Sie `audio_base64` als vollständige Base64-Zeichenfolge ohne Dateiupload per Multipart-Formular. Dieser Endpunkt erwartet JSON.
+
+</Callout>
+
+## GET /api/voice-providers/models
+
+Gibt die TTS-Modelle zurück, die für einen bestimmten Sprachanbieter verfügbar sind. Dieser Endpunkt ist öffentlich.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/voice-providers/models?provider=elevenlabs" \
+  -H "Accept: application/json"
+```
+</Request>
+
+<Response>
+```json
+[
+  {
+    "id": "eleven_multilingual_v2",
+    "name": "Eleven Multilingual v2"
+  },
+  {
+    "id": "eleven_turbo_v2_5",
+    "name": "Eleven Turbo v2.5"
+  }
+]
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="provider" param-type="string" required="true" enum="elevenlabs,cartesia,dashscope,inworld,kugel,fish">
+
+Name des Anbieters, dessen Modelle Sie abrufen möchten.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string">
+Eindeutige Kennung des Sprachmodells.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+Anzeigename des Sprachmodells.
+</ResponseField>
+
+## GET /api/voice-providers/voices
+
+Listet Stimmen direkt von einem Anbieter auf. Dieser Endpunkt ist veraltet und sollte nur für bestehende Integrationen verwendet werden.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/voice-providers/voices?provider=elevenlabs" \
+  -H "Accept: application/json"
+```
+</Request>
+
+<Response>
+```json
+[
+  {
+    "id": "EXAVITQu4vr4xnSDxMaL",
+    "name": "Rachel"
+  }
+]
+```
+</Response>
+
+<Callout kind="alert">
+
+Dieser Endpunkt ist veraltet. Verwenden Sie `GET /api/tts-voices`, um Stimmen anbieterübergreifend und mit einheitlicher Antwortstruktur abzurufen.
+
+</Callout>
+
+### Query-Parameter
+
+<ParamField query="provider" param-type="string" required="true" enum="elevenlabs,cartesia">
+
+Name des Anbieters, dessen Stimmen direkt abgefragt werden.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string">
+Anbieterspezifische Stimmen-ID.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+Anzeigename der Stimme.
+</ResponseField>
+
+## Hinweise zu Authentifizierung und Verhalten
+
+Die öffentlichen Endpunkte auf dieser Seite eignen sich für das Laden von Stimmenlisten und Modellkatalogen vor dem eigentlichen TTS-Aufruf. Der Endpunkt für das Stimmklonen erstellt dagegen eine accountgebundene Ressource und erfordert deshalb eine angemeldete Sitzung.
+
+Wenn Sie von `GET /api/voice-providers/voices` migrieren, verwenden Sie `GET /api/tts-voices` als neue Standardquelle. Die neuere Route liefert zusätzliche Felder wie `provider`, `voice_model`, `account_id` und `voice_type`, sodass Sie Systemstimmen und geklonte Stimmen mit demselben Schema verarbeiten können.
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card
+    title="KI-Sprachagenten"
+    href="/de/assistants/overview"
+    icon="users"
+    cta="Zur Übersicht"
+  />
+  <Card
+    title="Stimmenbibliothek"
+    href="/de/voice-library"
+    icon="book-open"
+    cta="Zur Stimmenbibliothek"
+  />
+</Columns>

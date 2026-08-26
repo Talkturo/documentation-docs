@@ -1,0 +1,799 @@
+---
+title: CRM Groups
+description: List, create, update, and inspect contact groups in the Talkturo CRM — organize contacts into groups for campaigns, assistant routing, and segmentation.
+---
+
+## Endpoint summary
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/crm/groups` | List groups for a workspace | Session cookie or API key |
+| `POST` | `/api/crm/groups` | Create a group | Session cookie or API key |
+| `GET` | `/api/crm/groups/{id}` | Get one group with contacts | Session cookie or API key |
+| `PUT` | `/api/crm/groups/{id}` | Rename a group | Session cookie or API key |
+| `DELETE` | `/api/crm/groups/{id}` | Not supported | Session cookie or API key |
+
+<Callout kind="info">
+
+Use the base URL `https://app.talkturo.com`. These endpoints accept either a Talkturo session cookie or an `Authorization` header with a Bearer API key. For API key requests, the team is derived from the key and any `teamId` value in the request is ignored.
+
+</Callout>
+
+<Callout kind="alert">
+
+`DELETE /api/crm/groups/{id}` always returns `405 Method Not Allowed`. Groups cannot be deleted. Rename the group instead, or leave it unused.
+
+</Callout>
+
+## List groups
+
+List all CRM groups in a workspace. Use `search` to filter groups by name.
+
+### Endpoint
+
+`GET https://app.talkturo.com/api/crm/groups`
+
+### Query parameters
+
+<ParamField query="teamId" param-type="string" required="true">
+
+Workspace ID. Required when you authenticate with a session cookie. Ignored for API key requests because the API key already scopes the request to a team.
+
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false">
+
+Case-insensitive filter applied to the group name.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/crm/groups?teamId=team_9f2c1a7d&search=vip" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/groups?teamId=team_9f2c1a7d&search=vip",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_example_9xmk7q2r"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response example
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "success": true,
+  "groups": [
+    {
+      "id": "grp_2c7f4f91",
+      "team_id": "team_9f2c1a7d",
+      "name": "VIP Accounts",
+      "is_default": false,
+      "created_at": "2025-01-14T18:22:11.000Z",
+      "updated_at": "2025-01-14T18:22:11.000Z",
+      "created_by": "usr_7b6d2c18",
+      "contact_count": 42
+    },
+    {
+      "id": "grp_85b1d603",
+      "team_id": "team_9f2c1a7d",
+      "name": "VIP Renewals",
+      "is_default": false,
+      "created_at": "2025-02-03T09:41:27.000Z",
+      "updated_at": "2025-02-03T09:41:27.000Z",
+      "created_by": "usr_7b6d2c18",
+      "contact_count": 8
+    }
+  ],
+  "count": 2
+}
+```
+
+```json
+{
+  "error": "Missing teamId"
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request succeeded.
+
+</ResponseField>
+
+<ResponseField name="groups" field-type="array" required="true">
+
+Array of groups that match the request filters.
+
+</ResponseField>
+
+<ResponseField name="groups[].id" field-type="string" required="true">
+
+Unique group ID.
+
+</ResponseField>
+
+<ResponseField name="groups[].team_id" field-type="string" required="true">
+
+Workspace ID that owns the group.
+
+</ResponseField>
+
+<ResponseField name="groups[].name" field-type="string" required="true">
+
+Group name. Names are unique within a team.
+
+</ResponseField>
+
+<ResponseField name="groups[].is_default" field-type="boolean" required="true">
+
+Whether the group is the default CRM group for the workspace.
+
+</ResponseField>
+
+<ResponseField name="groups[].created_at" field-type="string" required="true">
+
+Group creation timestamp in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="groups[].updated_at" field-type="string" required="true">
+
+Last update timestamp in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="groups[].created_by" field-type="string" required="false">
+
+User ID of the creator. This value can be null in some records.
+
+</ResponseField>
+
+<ResponseField name="groups[].contact_count" field-type="number" required="true">
+
+Exact number of contacts currently assigned to the group.
+
+</ResponseField>
+
+<ResponseField name="count" field-type="number" required="true">
+
+Number of groups returned in the `groups` array.
+
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing `teamId` for a session-authenticated request |
+| `500` | Database or server error |
+
+## Create group
+
+Create a new contact group in a workspace. Group names must be unique within the team.
+
+### Endpoint
+
+`POST https://app.talkturo.com/api/crm/groups`
+
+### Body parameters
+
+<ParamField body="teamId" param-type="string" required="true">
+
+Workspace ID. Required when you authenticate with a session cookie. Ignored for API key requests.
+
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+
+Group name. The name must be unique within the team.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/crm/groups" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "teamId": "team_9f2c1a7d",
+    "name": "Assistant Overflow"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/crm/groups", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    teamId: "team_9f2c1a7d",
+    name: "Assistant Overflow"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response example
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "grp_d3e801aa",
+    "team_id": "team_9f2c1a7d",
+    "name": "Assistant Overflow",
+    "is_default": false,
+    "created_at": "2025-03-06T12:18:44.000Z",
+    "updated_at": "2025-03-06T12:18:44.000Z",
+    "created_by": "usr_7b6d2c18",
+    "contact_count": 0
+  }
+}
+```
+
+```json
+{
+  "error": "A group with that name already exists"
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request succeeded.
+
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+
+The newly created group.
+
+</ResponseField>
+
+<ResponseField name="group.id" field-type="string" required="true">
+
+Unique group ID.
+
+</ResponseField>
+
+<ResponseField name="group.team_id" field-type="string" required="true">
+
+Workspace ID that owns the group.
+
+</ResponseField>
+
+<ResponseField name="group.name" field-type="string" required="true">
+
+Group name.
+
+</ResponseField>
+
+<ResponseField name="group.is_default" field-type="boolean" required="true">
+
+Whether the group is the default CRM group.
+
+</ResponseField>
+
+<ResponseField name="group.created_at" field-type="string" required="true">
+
+Creation timestamp in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="group.updated_at" field-type="string" required="true">
+
+Last update timestamp in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="group.created_by" field-type="string" required="false">
+
+User ID of the creator. This value can be null.
+
+</ResponseField>
+
+<ResponseField name="group.contact_count" field-type="number" required="true">
+
+Number of contacts currently assigned to the group.
+
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing `teamId`, missing `name`, or duplicate group name |
+| `500` | Database or server error |
+
+## Get group with contacts
+
+Fetch one group and the most recent contacts assigned to it. The response includes up to 100 contacts ordered by newest `added_at` first.
+
+### Endpoint
+
+`GET https://app.talkturo.com/api/crm/groups/{id}`
+
+<Callout kind="info">
+
+This endpoint requires `auth.accountId` in addition to authentication. If the request identity does not include an account context, the API returns `401`.
+
+</Callout>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/crm/groups/grp_2c7f4f91" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/groups/grp_2c7f4f91",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_example_9xmk7q2r"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response example
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "grp_2c7f4f91",
+    "team_id": "team_9f2c1a7d",
+    "name": "VIP Accounts",
+    "is_default": false,
+    "created_at": "2025-01-14T18:22:11.000Z",
+    "updated_at": "2025-01-22T10:09:02.000Z",
+    "created_by": "usr_7b6d2c18",
+    "contacts": [
+      {
+        "id": "ctc_19f4b0d8",
+        "first_name": "Jane",
+        "last_name": "Chen",
+        "email": "jane.chen@northstarhealth.com",
+        "phone": "+14155550132",
+        "job_title": "Revenue Operations Director",
+        "lead_status": "qualified"
+      },
+      {
+        "id": "ctc_88ca60e2",
+        "first_name": "Marcus",
+        "last_name": "Reed",
+        "email": "marcus.reed@lakesideelectric.com",
+        "phone": "+14155550177",
+        "job_title": "VP of Sales",
+        "lead_status": "new"
+      }
+    ],
+    "contact_count": 200
+  }
+}
+```
+
+```json
+{
+  "error": "Group not found"
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request succeeded.
+
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+
+The requested group record with contact data.
+
+</ResponseField>
+
+<ResponseField name="group.id" field-type="string" required="true">
+
+Unique group ID.
+
+</ResponseField>
+
+<ResponseField name="group.team_id" field-type="string" required="true">
+
+Workspace ID that owns the group.
+
+</ResponseField>
+
+<ResponseField name="group.name" field-type="string" required="true">
+
+Group name.
+
+</ResponseField>
+
+<ResponseField name="group.is_default" field-type="boolean" required="true">
+
+Whether the group is the default CRM group.
+
+</ResponseField>
+
+<ResponseField name="group.created_at" field-type="string" required="true">
+
+Creation timestamp in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="group.updated_at" field-type="string" required="true">
+
+Last update timestamp in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="group.created_by" field-type="string" required="false">
+
+User ID of the creator. This value can be null.
+
+</ResponseField>
+
+<ResponseField name="group.contacts" field-type="array" required="true">
+
+Up to 100 contacts in the group, ordered by newest assignment first.
+
+</ResponseField>
+
+<ResponseField name="group.contacts[].id" field-type="string" required="true">
+
+Unique contact ID.
+
+</ResponseField>
+
+<ResponseField name="group.contacts[].first_name" field-type="string" required="false">
+
+Contact first name.
+
+</ResponseField>
+
+<ResponseField name="group.contacts[].last_name" field-type="string" required="false">
+
+Contact last name.
+
+</ResponseField>
+
+<ResponseField name="group.contacts[].email" field-type="string" required="false">
+
+Contact email address.
+
+</ResponseField>
+
+<ResponseField name="group.contacts[].phone" field-type="string" required="false">
+
+Contact phone number.
+
+</ResponseField>
+
+<ResponseField name="group.contacts[].job_title" field-type="string" required="false">
+
+Contact job title.
+
+</ResponseField>
+
+<ResponseField name="group.contacts[].lead_status" field-type="string" required="false">
+
+Lead status for the contact.
+
+</ResponseField>
+
+<ResponseField name="group.contact_count" field-type="number" required="true">
+
+Total number of contacts in the group. This can be larger than the length of `group.contacts`.
+
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `401` | Missing authentication or missing account context |
+| `404` | Group not found |
+| `500` | Database or server error |
+
+## Update group
+
+Rename an existing group. This endpoint does not let you change whether a group is the default.
+
+### Endpoint
+
+`PUT https://app.talkturo.com/api/crm/groups/{id}`
+
+<Callout kind="alert">
+
+Do not send `is_default` in the request body. This endpoint does not support changing it.
+
+</Callout>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+### Body parameters
+
+<ParamField body="name" param-type="string" required="false">
+
+New group name. If you send `name`, it must not be an empty string.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request PUT \
+  --url "https://app.talkturo.com/api/crm/groups/grp_2c7f4f91" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "name": "Strategic Accounts"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/groups/grp_2c7f4f91",
+  {
+    method: "PUT",
+    headers: {
+      Authorization: "Bearer tk_example_9xmk7q2r",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: "Strategic Accounts"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response example
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "success": true,
+  "group": {
+    "id": "grp_2c7f4f91",
+    "team_id": "team_9f2c1a7d",
+    "name": "Strategic Accounts",
+    "is_default": false,
+    "created_at": "2025-01-14T18:22:11.000Z",
+    "updated_at": "2025-03-06T13:09:55.000Z",
+    "created_by": "usr_7b6d2c18",
+    "contact_count": 200
+  }
+}
+```
+
+```json
+{
+  "error": "Group name cannot be empty"
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request succeeded.
+
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+
+The updated group record.
+
+</ResponseField>
+
+<ResponseField name="group.id" field-type="string" required="true">
+
+Unique group ID.
+
+</ResponseField>
+
+<ResponseField name="group.team_id" field-type="string" required="true">
+
+Workspace ID that owns the group.
+
+</ResponseField>
+
+<ResponseField name="group.name" field-type="string" required="true">
+
+Updated group name.
+
+</ResponseField>
+
+<ResponseField name="group.is_default" field-type="boolean" required="true">
+
+Whether the group is the default CRM group.
+
+</ResponseField>
+
+<ResponseField name="group.created_at" field-type="string" required="true">
+
+Creation timestamp in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="group.updated_at" field-type="string" required="true">
+
+Last update timestamp in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="group.created_by" field-type="string" required="false">
+
+User ID of the creator. This value can be null.
+
+</ResponseField>
+
+<ResponseField name="group.contact_count" field-type="number" required="true">
+
+Number of contacts currently assigned to the group.
+
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Empty `name` or duplicate group name |
+| `401` | Missing authentication or missing account context |
+| `404` | Group not found |
+| `500` | Database or server error |
+
+## Delete group
+
+Deletion is not supported for CRM groups. The endpoint exists but always rejects the request.
+
+### Endpoint
+
+`DELETE https://app.talkturo.com/api/crm/groups/{id}`
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+### Request example
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/crm/groups/grp_2c7f4f91" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/groups/grp_2c7f4f91",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer tk_example_9xmk7q2r"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response example
+
+<Response tabs="405" default-tab="1">
+
+```json
+{
+  "error": "Groups cannot be deleted. Rename it instead, or leave it unused."
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="error" field-type="string" required="true">
+
+Human-readable error message explaining that group deletion is not supported.
+
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `405` | Groups cannot be deleted |
+
+## Related resources
+
+<Columns cols={3}>
+  <Card title="CRM Contacts" href="/en/api-reference/crm-contacts" icon="users" cta="View reference" />
+  <Card title="CRM Campaigns" href="/en/api-reference/crm-campaigns" icon="rocket" cta="View reference" />
+</Columns>
