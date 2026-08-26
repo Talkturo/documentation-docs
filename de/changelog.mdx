@@ -8,6 +8,29 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-26" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Maximale Anrufdauer für Kampagnen** — Lege eine maximale Anrufdauer (1–60 Minuten, Standard 15) für jede Kampagne fest. Der Assistent leitet 30 Sekunden vor dem Limit automatisch den Abschluss ein und beendet den Anruf beim Erreichen. Siehe [Kampagnenkonfiguration](/de/campaigns/configuration).
+  - **Begrüßung für eingehende Anrufe** — Füge eine separate Begrüßung hinzu, die abgespielt wird, wenn jemand anruft (Rückrufe, eingehende Leitungen oder Web-Anrufe), unabhängig von der ausgehenden Erstnachricht. Leer lassen, um dieselbe Begrüßung für beide Richtungen zu verwenden. Siehe [Assistentenkonfiguration](/de/assistants/configuration).
+  - **Do-Not-Call-Tool** — Dein KI-Sprachagent kann einen Kontakt jetzt während eines Live-Anrufs als „Nicht anrufen" markieren. Kampagnenzeilen zeigen ein DNC-Badge mit der Anzahl, und die Kampagnenstatistik enthält ein „Do not call"-Kachel. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Onboarding-Assistent neu aufgebaut** — Der Einrichtungsprozess beginnt jetzt mit der Wahl des Assistenten-Zwecks, enthält einen dedizierten Gesprächsschritt mit Live-Prompt-Generierung von deiner Website und ermöglicht die Verwendung einer bestehenden Telefonnummer statt eine neue zu kaufen. KI-Modellnamen und Plugin-Beschreibungen werden jetzt in deiner Sprache angezeigt. Siehe [Schnellstart](/de/quickstart).
+
+  ## Verbesserungen
+
+  - **Übersetzte Anrufergebnisse** — Anrufergebnisse wie „answered", „busy" und „voicemail" werden jetzt in deiner Sprache angezeigt statt als englische Rohstrings. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Gelöschte Kampagnen sind vollständig schreibgeschützt** — Gelöschte Kampagnen erscheinen jetzt abgedunkelt mit einem „Deleted"-Badge und ohne Aktionsbuttons, sodass ihr Zustand eindeutig erkennbar ist. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Onboarding-Plugins nach Zweck sortiert** — Im Onboarding-Tools-Schritt werden Plugins jetzt nach Relevanz für den Zweck deines Assistenten sortiert. Siehe [Schnellstart](/de/quickstart).
+
+  ## Bugfixes
+
+  - **„Pausiert · Unzureichendes Guthaben"-Badge** — Wenn eine Kampagne wegen niedrigem Guthaben automatisch pausiert wird, erscheint ein bernsteinfarbenes Badge auf der Kampagnenzeile. Beim Fortsetzen wird die Benachrichtigung entfernt. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Unbeantwortete Anrufe zeigen korrekte Zeit und Dauer** — Unbeantwortete und fehlgeschlagene Anrufe zeigen nicht mehr „1. Jan 1970" oder unsinnige Dauern. Die Dauer wird als `Xm Ys` angezeigt und unbeantwortete Anrufe zeigen `—`. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Abbrechen einer neuen Kampagne zeigt keine Geisterzeile mehr** — Ein Klick auf Abbrechen im Dialog für neue Kampagnen fügt nicht mehr kurzzeitig eine Entwurfszeile in die Kampagnenliste ein.
+  - **Onboarding: Anrufzusammenfassung erfordert gültige E-Mail** — Der Assistent blockiert jetzt den Fortschritt mit einer klaren Fehlermeldung, wenn die Anrufzusammenfassung aktiviert ist, aber keine E-Mail-Adresse angegeben wurde.
+  - **Onboarding: Race Condition bei Prompt-Generierung** — Das Ändern der Website oder des Zwecks und das Zurück-Navigieren lässt jetzt nicht mehr zu, dass ein älterer Generierungsauftrag das neuere Ergebnis überschreibt.
+</Update>
+
 <Update label="2026-08-22" description="v2.8.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

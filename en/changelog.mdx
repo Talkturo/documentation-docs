@@ -8,6 +8,29 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-26" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Max call duration for campaigns** — Set a maximum call length (1–60 minutes, default 15) on any campaign. The assistant automatically wraps up 30 seconds before the limit and ends the call at the cap. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Inbound greeting for assistants** — Add a separate greeting that plays when someone calls in (callbacks, inbound lines, or web calls), independent of your outbound first message. Leave blank to use the same greeting for both directions. See [Assistant Configuration](/en/assistants/configuration).
+  - **Do-Not-Call tool** — Your AI voice agent can now mark a contact as "Do not call" during a live call. Campaign rows show a DNC badge with the count, and campaign stats include a "Do not call" tile. See [Campaigns](/en/campaigns/overview).
+  - **Onboarding wizard rebuilt** — The setup flow now starts with choosing an assistant purpose, includes a dedicated conversation step with live prompt generation from your website, and lets you use an existing phone number instead of buying one. AI model names and plugin descriptions are now shown in your language. See [Quickstart](/en/quickstart).
+
+  ## Improvements
+
+  - **Translated call outcomes** — Call outcomes like "answered", "busy", and "voicemail" are now displayed in your language instead of raw English strings. See [Call Logs](/en/call-logs).
+  - **Deleted campaigns are fully read-only** — Deleted campaigns now appear dimmed with a "Deleted" badge and no action buttons, making their state unmistakable. See [Campaigns](/en/campaigns/overview).
+  - **Onboarding plugins sorted by purpose** — In the onboarding Tools step, plugins are now ordered by relevance to your assistant's purpose. See [Quickstart](/en/quickstart).
+
+  ## Bug Fixes
+
+  - **"Paused · Insufficient credits" badge** — When a campaign auto-pauses due to low credits, an amber badge now appears on the campaign row. Resuming clears the notice. See [Campaigns](/en/campaigns/overview).
+  - **Unanswered calls show correct time and duration** — Unanswered and failed calls no longer show "1 Jan 1970" or nonsensical durations. Duration displays as `Xm Ys` and unanswered calls show `—`. See [Call Logs](/en/call-logs).
+  - **Cancelling a new campaign no longer shows a ghost row** — Clicking Cancel on the new campaign dialog no longer briefly inserts a draft row into the campaign list.
+  - **Onboarding: call summary requires a valid email** — The wizard now blocks progress with a clear error if call summary is enabled but no email address is provided.
+  - **Onboarding: prompt generation race condition** — Changing your website or purpose and navigating back no longer lets an older generation job overwrite the newer result.
+</Update>
+
 <Update label="2026-08-22" description="v2.8.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
@@ -282,4 +305,3 @@ Track upcoming priorities for Talkturo's voice AI features.
 <Callout kind="info" collapsed="false">
   Subscribe to our changelog RSS feed or join the support mailing list at [info@talkturo.ai](mailto:info@talkturo.ai) for instant notifications.
 </Callout>
-
