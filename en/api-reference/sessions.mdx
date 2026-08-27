@@ -1,0 +1,670 @@
+---
+title: Sessions
+description: Create, list, update, and end desktop sessions through the Talkturo API — manage real-time coaching sessions for the Close AI desktop app.
+---
+
+## Endpoint summary
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/sessions` | List desktop sessions | Desktop JWT |
+| `POST` | `/api/sessions` | Create a session | Desktop JWT |
+| `GET` | `/api/sessions/{id}` | Get a session by ID | Desktop JWT |
+| `PATCH` | `/api/sessions/{id}` | Update or end a session | Desktop JWT |
+| `DELETE` | `/api/sessions/{id}` | Delete a session | Desktop JWT |
+| `POST` | `/api/sessions/end-all` | End all active sessions | Desktop JWT |
+
+<Callout kind="info">
+
+Authenticate every request with a desktop JWT in the `Authorization` header. To scope requests to a specific workspace, add the optional `X-Talkturo-Account` header.
+
+</Callout>
+
+## List sessions
+
+Return the desktop sessions available to the authenticated user.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/sessions" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt" \
+  --header "X-Talkturo-Account: acc_northstar_sales"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/sessions", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt",
+    "X-Talkturo-Account": "acc_northstar_sales",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,401">
+```json
+{
+  "sessions": [
+    {
+      "id": "f9c5808d-e1da-4f1f-b1f0-d0b2f9923fc6",
+      "user_id": "7f4f95a3-9f14-4f59-a9d4-e7b9250996de",
+      "uid": "sess_8h1r2m4q",
+      "account_id": "c2f8de7d-1f57-4388-b4f1-3102a5d34518",
+      "title": "Discovery call with Greenline Solar",
+      "session_type": "listen",
+      "started_at": "2026-02-18T15:04:11.000Z",
+      "ended_at": "2026-02-18T15:42:39.000Z",
+      "status": "completed",
+      "duration_seconds": 2308,
+      "updated_at": "2026-02-18T15:43:05.000Z"
+    },
+    {
+      "id": "3be8aaea-a2c8-466f-9984-b8780b3d6a50",
+      "user_id": "7f4f95a3-9f14-4f59-a9d4-e7b9250996de",
+      "uid": "sess_j7k2p9vn",
+      "account_id": "c2f8de7d-1f57-4388-b4f1-3102a5d34518",
+      "title": null,
+      "session_type": "ask",
+      "started_at": "2026-02-18T16:10:02.000Z",
+      "ended_at": null,
+      "status": "active",
+      "duration_seconds": null,
+      "updated_at": "2026-02-18T16:10:02.000Z"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+</Response>
+
+### Headers
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer token containing a desktop JWT.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string" required="false">
+Workspace scope for the request. Omit this header to use the default workspace available to the authenticated desktop user.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="sessions" field-type="array" required="true">
+Array of session objects visible to the authenticated user.
+</ResponseField>
+
+<ResponseField name="sessions[].id" field-type="string" required="true">
+Unique session UUID.
+</ResponseField>
+
+<ResponseField name="sessions[].user_id" field-type="string" required="true">
+UUID of the user who owns the session.
+</ResponseField>
+
+<ResponseField name="sessions[].uid" field-type="string" required="true">
+Client-facing session identifier used by the desktop app.
+</ResponseField>
+
+<ResponseField name="sessions[].account_id" field-type="string" required="true">
+Workspace UUID associated with the session.
+</ResponseField>
+
+<ResponseField name="sessions[].title" field-type="string|null" required="true">
+Optional session title.
+</ResponseField>
+
+<ResponseField name="sessions[].session_type" field-type="string" required="true">
+Session mode. Values are `ask` and `listen`.
+</ResponseField>
+
+<ResponseField name="sessions[].started_at" field-type="string" required="true">
+Session start time in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="sessions[].ended_at" field-type="string|null" required="true">
+Session end time in ISO 8601 format, or `null` while the session is still active.
+</ResponseField>
+
+<ResponseField name="sessions[].status" field-type="string" required="true">
+Current session status. Values are `active` and `completed`.
+</ResponseField>
+
+<ResponseField name="sessions[].duration_seconds" field-type="number|null" required="true">
+Computed session duration in seconds. Returns `null` until the session ends.
+</ResponseField>
+
+<ResponseField name="sessions[].updated_at" field-type="string" required="true">
+Last update time in ISO 8601 format.
+</ResponseField>
+
+### Errors
+
+| Status | Meaning |
+| --- | --- |
+| `401` | Missing or invalid desktop JWT |
+| `500` | Server error |
+
+## Create session
+
+Create a new desktop session, or return the existing active session when you use `getOrCreateActive`.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/sessions" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt" \
+  --header "X-Talkturo-Account: acc_northstar_sales" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "mode": "create",
+    "session_type": "listen"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/sessions", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt",
+    "X-Talkturo-Account": "acc_northstar_sales",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    mode: "create",
+    session_type: "listen",
+  }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400">
+```json
+{
+  "id": "3be8aaea-a2c8-466f-9984-b8780b3d6a50"
+}
+```
+
+```json
+{
+  "error": "Invalid session_type"
+}
+```
+</Response>
+
+### Headers
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer token containing a desktop JWT.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string" required="false">
+Workspace scope for the new session.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="mode" param-type="string" required="false" enum="create,getOrCreateActive">
+Session creation mode. Defaults to `create`. Use `getOrCreateActive` to reuse an existing active session instead of creating a new one.
+</ParamField>
+
+<ParamField body="session_type" param-type="string" required="false" enum="ask,listen">
+Session type for the desktop app. Defaults to `ask`.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" field-type="string" required="true">
+UUID of the created session, or the active session returned by `getOrCreateActive`.
+</ResponseField>
+
+### Errors
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Invalid request body |
+| `401` | Missing or invalid desktop JWT |
+| `500` | Server error |
+
+## Get session
+
+Return a single session by ID.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/sessions/f9c5808d-e1da-4f1f-b1f0-d0b2f9923fc6" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/sessions/f9c5808d-e1da-4f1f-b1f0-d0b2f9923fc6",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404">
+```json
+{
+  "session": {
+    "id": "f9c5808d-e1da-4f1f-b1f0-d0b2f9923fc6",
+    "user_id": "7f4f95a3-9f14-4f59-a9d4-e7b9250996de",
+    "uid": "sess_8h1r2m4q",
+    "account_id": "c2f8de7d-1f57-4388-b4f1-3102a5d34518",
+    "title": "Discovery call with Greenline Solar",
+    "session_type": "listen",
+    "status": "completed",
+    "notes": "Strong discovery questions. Missed budget confirmation.",
+    "voice_metrics": {
+      "talk_share_pct": 46,
+      "wpm": 132,
+      "patience_pct": 82,
+      "longest_monologue_seconds": 38
+    },
+    "started_at": "2026-02-18T15:04:11.000Z",
+    "ended_at": "2026-02-18T15:42:39.000Z",
+    "duration_seconds": 2308,
+    "updated_at": "2026-02-18T15:43:05.000Z",
+    "created_at": "2026-02-18T15:04:11.000Z"
+  }
+}
+```
+
+```json
+{
+  "error": "Session not found"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Session UUID.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer token containing a desktop JWT.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="session" field-type="object" required="true">
+Session record for the requested ID.
+</ResponseField>
+
+<ResponseField name="session.id" field-type="string" required="true">
+Unique session UUID.
+</ResponseField>
+
+<ResponseField name="session.user_id" field-type="string" required="true">
+UUID of the user who owns the session.
+</ResponseField>
+
+<ResponseField name="session.uid" field-type="string" required="true">
+Client-facing session identifier used by the desktop app.
+</ResponseField>
+
+<ResponseField name="session.account_id" field-type="string" required="true">
+Workspace UUID associated with the session.
+</ResponseField>
+
+<ResponseField name="session.title" field-type="string|null" required="true">
+Optional session title.
+</ResponseField>
+
+<ResponseField name="session.session_type" field-type="string" required="true">
+Session mode. Values are `ask` and `listen`.
+</ResponseField>
+
+<ResponseField name="session.status" field-type="string" required="true">
+Current session status. Values are `active` and `completed`.
+</ResponseField>
+
+<ResponseField name="session.notes" field-type="string|null" required="true">
+Optional session notes saved on the record.
+</ResponseField>
+
+<ResponseField name="session.voice_metrics" field-type="object|null" required="true">
+Aggregated voice coaching metrics for the session, if available.
+</ResponseField>
+
+<ResponseField name="session.voice_metrics.talk_share_pct" field-type="number" required="false">
+Percentage of session talk time attributed to the user.
+</ResponseField>
+
+<ResponseField name="session.voice_metrics.wpm" field-type="number" required="false">
+Estimated speaking rate in words per minute.
+</ResponseField>
+
+<ResponseField name="session.voice_metrics.patience_pct" field-type="number" required="false">
+Patience score expressed as a percentage.
+</ResponseField>
+
+<ResponseField name="session.voice_metrics.longest_monologue_seconds" field-type="number" required="false">
+Longest uninterrupted speaking segment in seconds.
+</ResponseField>
+
+<ResponseField name="session.started_at" field-type="string" required="true">
+Session start time in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="session.ended_at" field-type="string|null" required="true">
+Session end time in ISO 8601 format, or `null` if the session is active.
+</ResponseField>
+
+<ResponseField name="session.duration_seconds" field-type="number|null" required="true">
+Computed session duration in seconds.
+</ResponseField>
+
+<ResponseField name="session.updated_at" field-type="string" required="true">
+Last update time in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="session.created_at" field-type="string" required="true">
+Creation time in ISO 8601 format.
+</ResponseField>
+
+### Errors
+
+| Status | Meaning |
+| --- | --- |
+| `401` | Missing or invalid desktop JWT |
+| `404` | Session not found |
+| `500` | Server error |
+
+## Update session
+
+Update mutable fields on a session. Set `end` to `true` to complete the session, stamp `ended_at`, compute `duration_seconds`, and trigger background AI analysis.
+
+<Callout kind="alert">
+
+Ending a session is a state change, not a soft preview. When you send `end: true`, the API marks the session as `completed` and starts post-session analysis in the background.
+
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request PATCH \
+  --url "https://app.talkturo.com/api/sessions/f9c5808d-e1da-4f1f-b1f0-d0b2f9923fc6" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "title": "Discovery call with Greenline Solar",
+    "status": "completed",
+    "notes": "Strong discovery questions. Missed budget confirmation.",
+    "voice_metrics": {
+      "talk_share_pct": 46,
+      "wpm": 132,
+      "patience_pct": 82,
+      "longest_monologue_seconds": 38
+    },
+    "end": true
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/sessions/f9c5808d-e1da-4f1f-b1f0-d0b2f9923fc6",
+  {
+    method: "PATCH",
+    headers: {
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: "Discovery call with Greenline Solar",
+      status: "completed",
+      notes: "Strong discovery questions. Missed budget confirmation.",
+      voice_metrics: {
+        talk_share_pct: 46,
+        wpm: 132,
+        patience_pct: 82,
+        longest_monologue_seconds: 38,
+      },
+      end: true,
+    }),
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,404">
+```json
+{
+  "changes": 1
+}
+```
+
+```json
+{
+  "error": "Invalid status"
+}
+```
+
+```json
+{
+  "error": "Session not found"
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Session UUID.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer token containing a desktop JWT.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="title" param-type="string" required="false">
+Session title.
+</ParamField>
+
+<ParamField body="session_type" param-type="string" required="false" enum="ask,listen">
+Session mode.
+</ParamField>
+
+<ParamField body="status" param-type="string" required="false" enum="active,completed">
+Session status.
+</ParamField>
+
+<ParamField body="notes" param-type="string" required="false">
+Free-form notes attached to the session.
+</ParamField>
+
+<ParamField body="voice_metrics" param-type="object" required="false">
+Voice coaching metrics to store on the session.
+</ParamField>
+
+<ParamField body="talk_share_pct" param-type="number" required="false" show-location="false">
+Percentage of session talk time attributed to the user. Nested under `voice_metrics`.
+</ParamField>
+
+<ParamField body="wpm" param-type="number" required="false" show-location="false">
+Estimated speaking rate in words per minute. Nested under `voice_metrics`.
+</ParamField>
+
+<ParamField body="patience_pct" param-type="number" required="false" show-location="false">
+Patience score expressed as a percentage. Nested under `voice_metrics`.
+</ParamField>
+
+<ParamField body="longest_monologue_seconds" param-type="number" required="false" show-location="false">
+Longest uninterrupted speaking segment in seconds. Nested under `voice_metrics`.
+</ParamField>
+
+<ParamField body="end" param-type="boolean" required="false">
+When `true`, ends the session, sets `ended_at`, changes `status` to `completed`, computes `duration_seconds`, and triggers background AI analysis.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="changes" field-type="number" required="true">
+Number of rows updated.
+</ResponseField>
+
+### Errors
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Invalid request body |
+| `401` | Missing or invalid desktop JWT |
+| `404` | Session not found |
+| `500` | Server error |
+
+## Delete session
+
+Delete a session by ID.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/sessions/f9c5808d-e1da-4f1f-b1f0-d0b2f9923fc6" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/sessions/f9c5808d-e1da-4f1f-b1f0-d0b2f9923fc6",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt",
+    },
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "deleted": true
+}
+```
+</Response>
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Session UUID.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer token containing a desktop JWT.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="deleted" field-type="boolean" required="true">
+Returns `true` when the session was deleted.
+</ResponseField>
+
+### Errors
+
+| Status | Meaning |
+| --- | --- |
+| `401` | Missing or invalid desktop JWT |
+| `500` | Server error |
+
+## End all active sessions
+
+Complete every active session available to the authenticated desktop user.
+
+<Callout kind="alert">
+
+This endpoint ends all active sessions in scope for the authenticated user. Review your workspace scoping before calling it from automation or shutdown handlers.
+
+</Callout>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/sessions/end-all" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/sessions/end-all", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktopjwt",
+  },
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "changes": 2
+}
+```
+</Response>
+
+### Headers
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer token containing a desktop JWT.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="changes" field-type="number" required="true">
+Number of active sessions that were ended.
+</ResponseField>
+
+### Errors
+
+| Status | Meaning |
+| --- | --- |
+| `401` | Missing or invalid desktop JWT |
+| `500` | Server error |
+
+## Related resources
+
+<Columns cols={2}>
+  <Card title="Desktop Auth" href="/en/api-reference/desktop" icon="lock" cta="View reference" />
+  <Card title="Close AI Desktop App" href="/en/close-ai/overview" icon="monitor" cta="Read overview" />
+</Columns>

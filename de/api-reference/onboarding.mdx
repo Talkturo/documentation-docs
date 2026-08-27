@@ -1,0 +1,374 @@
+---
+title: Onboarding
+description: Starten, verfolgen und vervollständigen Sie den Talkturo-Onboarding-Assistenten über die API — erstellen Sie Workspaces, speichern Sie Assistenten-Konfigurationen, generieren Sie KI-Prompts und stellen Sie Assistenten mit Telefonnummern und Tool-Integrationen bereit.
+---
+
+## Onboarding-API
+
+Verwalten Sie den Talkturo-Onboarding-Assistenten vollständig über die API. Sie können einen Workspace erstellen oder übernehmen, Entwürfe für einzelne Schritte speichern, den generierten Prompt abrufen und das Onboarding mit der Bereitstellung eines Assistenten abschließen.
+
+<Callout kind="info">
+
+**Basis-URL:** `https://app.talkturo.com`  
+**Authentifizierung:** Session-Cookie (Supabase)
+
+</Callout>
+
+## Endpunkte
+
+### POST `/api/onboarding/start`
+
+Starten Sie einen neuen Onboarding-Ablauf und erstellen Sie den zugehörigen Workspace-Entwurf. Wenn Sie `accountSlug` angeben, übernimmt der Endpunkt einen vorhandenen Workspace statt einen neuen anzulegen.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/onboarding/start" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -d '{
+    "companyName": "Meyer Dental Group",
+    "website": "https://meyerdental.de",
+    "assistantName": "Praxisassistent",
+    "purpose": "Terminvereinbarung und telefonische Erstaufnahme",
+    "clientToken": "d2a6e2c4-59d2-4f63-a9aa-4d8693d9c2cb"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "accountId": "acc_7f3c2d91-6a8e-4b64-a5a8-9b4f3f90d8b1",
+  "slug": "meyer-dental-group"
+}
+```
+</Response>
+
+#### Request-Body
+
+<ParamField body="companyName" param-type="string" required="true">
+Name des Unternehmens. Muss zwischen 1 und 100 Zeichen lang sein.
+</ParamField>
+
+<ParamField body="website" param-type="string" required="false">
+Website des Unternehmens. Optional, maximal 500 Zeichen.
+</ParamField>
+
+<ParamField body="assistantName" param-type="string" required="false">
+Anzeigename für den Assistenten. Optional, maximal 100 Zeichen.
+</ParamField>
+
+<ParamField body="purpose" param-type="string" required="false">
+Freitext zur Beschreibung des Einsatzzwecks des Assistenten.
+</ParamField>
+
+<ParamField body="clientToken" param-type="string" required="true">
+UUID-basierter Idempotenz-Schlüssel. Verwenden Sie denselben Wert erneut, um doppelte Startanfragen sicher zu vermeiden.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="false">
+Übernimmt einen vorhandenen Workspace anhand seines Slugs, statt einen neuen Workspace zu erstellen.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="accountId" field-type="string" required="true">
+ID des Workspaces, der für das Onboarding verwendet wird.
+</ResponseField>
+
+<ResponseField name="slug" field-type="string" required="true">
+Slug des erstellten oder übernommenen Workspaces.
+</ResponseField>
+
+### POST `/api/onboarding/progress`
+
+Speichern Sie den Fortschritt eines einzelnen Onboarding-Schritts. Der Endpunkt akzeptiert den aktuellen Schritt und ein partielles `patch`-Objekt mit den Feldern, die Sie aktualisieren möchten.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/onboarding/progress" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -d '{
+    "step": "assistant",
+    "patch": {
+      "assistantName": "Praxisassistent",
+      "website": "https://meyerdental.de",
+      "purpose": "Terminvereinbarung und telefonische Erstaufnahme",
+      "language": "de",
+      "llmProvider": "openai",
+      "model": "gpt-4.1-mini"
+    }
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "ok": true
+}
+```
+</Response>
+
+#### Request-Body
+
+<ParamField body="step" param-type="string" required="true" enum="company,assistant,voice,conversation,tools,number,review">
+Aktueller Onboarding-Schritt. Erlaubte Werte sind `company`, `assistant`, `voice`, `conversation`, `tools`, `number` und `review`.
+</ParamField>
+
+<ParamField body="patch" param-type="object" required="true">
+Partielle Aktualisierung für den angegebenen Schritt. Senden Sie nur die Felder, die Sie speichern oder überschreiben möchten.
+</ParamField>
+
+#### Patch-Felder
+
+<ParamField body="assistantName" param-type="string" required="false" show-location="false">
+Name des Assistenten.
+</ParamField>
+
+<ParamField body="website" param-type="string" required="false" show-location="false">
+Website des Unternehmens oder der Marke.
+</ParamField>
+
+<ParamField body="purpose" param-type="string" required="false" show-location="false">
+Beschreibung, welche Aufgaben der Assistent übernehmen soll.
+</ParamField>
+
+<ParamField body="language" param-type="string" required="false" show-location="false">
+Sprache des Assistenten.
+</ParamField>
+
+<ParamField body="llmProvider" param-type="string" required="false" show-location="false">
+LLM-Anbieter für die Prompt- und Gesprächsgenerierung.
+</ParamField>
+
+<ParamField body="model" param-type="string" required="false" show-location="false">
+Modellname innerhalb des gewählten LLM-Anbieters.
+</ParamField>
+
+<ParamField body="voiceProvider" param-type="string" required="false" show-location="false">
+Anbieter für die Sprachsynthese.
+</ParamField>
+
+<ParamField body="voiceId" param-type="string" required="false" show-location="false">
+Interne oder provider-spezifische ID der ausgewählten Stimme.
+</ParamField>
+
+<ParamField body="voiceName" param-type="string" required="false" show-location="false">
+Lesbarer Name der ausgewählten Stimme.
+</ParamField>
+
+<ParamField body="voiceLanguage" param-type="string" required="false" show-location="false">
+Sprachcode oder Sprachbezeichnung der Stimme.
+</ParamField>
+
+<ParamField body="adaptTone" param-type="boolean" required="false" show-location="false">
+Steuert, ob der Tonfall automatisch an Unternehmen und Einsatzzweck angepasst wird.
+</ParamField>
+
+<ParamField body="callSummaryEnabled" param-type="boolean" required="false" show-location="false">
+Aktiviert Zusammenfassungen nach Anrufen.
+</ParamField>
+
+<ParamField body="callSummaryEmail" param-type="string" required="false" show-location="false">
+E-Mail-Adresse für den Versand von Anrufzusammenfassungen.
+</ParamField>
+
+<ParamField body="promptOverride" param-type="string" required="false" show-location="false">
+Manuelle Überschreibung des generierten Prompts. Maximal 20000 Zeichen.
+</ParamField>
+
+<ParamField body="firstMessageOverride" param-type="string" required="false" show-location="false">
+Manuelle Überschreibung der ersten Nachricht. Maximal 2000 Zeichen.
+</ParamField>
+
+<ParamField body="numberPurchased" param-type="boolean" required="false" show-location="false">
+Kennzeichnet, dass während des Onboardings eine Telefonnummer gekauft wurde.
+</ParamField>
+
+<ParamField body="numberSelectedId" param-type="string" required="false" show-location="false">
+ID einer bereits ausgewählten Telefonnummer.
+</ParamField>
+
+<ParamField body="numberSkipped" param-type="boolean" required="false" show-location="false">
+Kennzeichnet, dass der Telefonnummern-Schritt übersprungen wurde.
+</ParamField>
+
+<ParamField body="plugins" param-type="array" required="false" show-location="false">
+Liste der ausgewählten Plugin- oder Tool-Konfigurationen.
+</ParamField>
+
+<ParamField body="flowTemplates" param-type="array" required="false" show-location="false">
+Liste ausgewählter Flow-Vorlagen, die dem Assistenten hinzugefügt werden sollen.
+</ParamField>
+
+<ParamField body="kbFileIds" param-type="array" required="false" show-location="false">
+IDs der Wissensdatenbank-Dateien, die mit dem Assistenten verknüpft werden sollen.
+</ParamField>
+
+<ParamField body="businessOverride" param-type="object" required="false" show-location="false">
+Manuelle Überschreibung der Unternehmensdaten, die im Onboarding verwendet werden.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Gibt bei erfolgreichem Speichern des Schritts `true` zurück.
+</ResponseField>
+
+### GET `/api/onboarding/progress`
+
+Rufen Sie den aktuellen Onboarding-Entwurf zusammen mit dem zuletzt generierten Prompt ab. Dieser Endpunkt eignet sich, um einen bestehenden Entwurf im Frontend wiederherzustellen oder den aktuellen Stand vor dem Abschluss zu prüfen.
+
+<Request>
+```bash
+curl "https://app.talkturo.com/api/onboarding/progress" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response>
+```json
+{
+  "step": "review",
+  "generatedPrompt": {
+    "prompt": "Sie sind der telefonische Assistent von Meyer Dental Group. Sie helfen Anrufern bei Terminvereinbarungen und der telefonischen Erstaufnahme.",
+    "firstMessage": "Guten Tag, Sie sprechen mit dem Praxisassistenten der Meyer Dental Group. Wie kann ich Ihnen helfen?"
+  }
+}
+```
+</Response>
+
+#### Response-Felder
+
+<ResponseField name="step" field-type="string" required="true">
+Zuletzt gespeicherter Onboarding-Schritt.
+</ResponseField>
+
+<ResponseField name="generatedPrompt" field-type="object|null" required="true">
+Enthält den zuletzt generierten Prompt und die erste Nachricht oder `null`, wenn noch keine Generierung verfügbar ist.
+</ResponseField>
+
+<ResponseField name="generatedPrompt.prompt" field-type="string" required="false">
+Vollständiger generierter System-Prompt für den Assistenten.
+</ResponseField>
+
+<ResponseField name="generatedPrompt.firstMessage" field-type="string" required="false">
+Generierte erste Nachricht, mit der der Assistent Gespräche beginnt.
+</ResponseField>
+
+### POST `/api/onboarding/complete`
+
+Schließen Sie das Onboarding ab und stellen Sie den Assistenten bereit. Sie können dabei den generierten Prompt und die erste Nachricht überschreiben oder Unternehmensdaten für die endgültige Bereitstellung ergänzen.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/onboarding/complete" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -d '{
+    "prompt": "Sie sind der telefonische Assistent von Meyer Dental Group. Sie helfen Anrufern bei Terminvereinbarungen und der telefonischen Erstaufnahme.",
+    "firstMessage": "Guten Tag, Sie sprechen mit dem Praxisassistenten der Meyer Dental Group. Wie kann ich Ihnen helfen?",
+    "business": {
+      "name": "Meyer Dental Group",
+      "website": "https://meyerdental.de",
+      "phone": "+49 30 12345678",
+      "industry": "Zahnarztpraxis",
+      "city": "Berlin",
+      "state": "Berlin",
+      "country": "DE"
+    }
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "assistantId": "asst_2f18d7c4-6c07-4de2-9bf3-43b5d3d44c11",
+  "slug": "meyer-dental-group"
+}
+```
+</Response>
+
+#### Request-Body
+
+<ParamField body="prompt" param-type="string" required="false">
+Finaler Prompt für den Assistenten. Optional, maximal 20000 Zeichen.
+</ParamField>
+
+<ParamField body="firstMessage" param-type="string" required="false">
+Finale erste Nachricht des Assistenten. Optional, maximal 2000 Zeichen.
+</ParamField>
+
+<ParamField body="business" param-type="object" required="false">
+Optionale Unternehmensdaten für die endgültige Bereitstellung des Assistenten.
+</ParamField>
+
+#### Business-Felder
+
+<ParamField body="name" param-type="string" required="false" show-location="false">
+Name des Unternehmens.
+</ParamField>
+
+<ParamField body="website" param-type="string" required="false" show-location="false">
+Website des Unternehmens.
+</ParamField>
+
+<ParamField body="phone" param-type="string" required="false" show-location="false">
+Telefonnummer des Unternehmens.
+</ParamField>
+
+<ParamField body="industry" param-type="string" required="false" show-location="false">
+Branche des Unternehmens.
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false" show-location="false">
+Stadt des Unternehmens.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false" show-location="false">
+Bundesland, Region oder Staat des Unternehmens.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false" show-location="false">
+Land des Unternehmens.
+</ParamField>
+
+#### Response-Felder
+
+<ResponseField name="assistantId" field-type="string" required="true">
+ID des bereitgestellten Assistenten.
+</ResponseField>
+
+<ResponseField name="slug" field-type="string" required="true">
+Slug des Workspaces, in dem der Assistent bereitgestellt wurde.
+</ResponseField>
+
+## Hinweise zur Verwendung
+
+Speichern Sie den Fortschritt schrittweise über `POST /api/onboarding/progress`, statt alle Daten erst am Ende zu senden. So können Sie Entwürfe wiederherstellen, den generierten Prompt prüfen und den Onboarding-Ablauf unterbrechen, ohne Eingaben zu verlieren.
+
+<Callout kind="tip">
+
+Wenn Sie denselben Onboarding-Start wegen eines Netzwerkfehlers erneut senden müssen, verwenden Sie denselben `clientToken`. Das hilft, doppelte Workspaces oder doppelte Entwürfe zu vermeiden.
+
+</Callout>
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card
+    title="Assistenten"
+    href="/de/api-reference/assistants"
+    icon="users"
+    cta="API-Referenz öffnen"
+  />
+  <Card
+    title="Schnellstart"
+    href="/de/quickstart"
+    icon="rocket"
+    cta="Zum Schnellstart"
+  />
+</Columns>

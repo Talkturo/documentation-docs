@@ -285,6 +285,46 @@
                     "title": "Webhooks",
                     "path": "en/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "Sessions",
+                    "path": "en/api-reference/sessions",
+                    "icon": "headphones"
+                  },
+                  {
+                    "title": "Calls",
+                    "path": "en/api-reference/calls",
+                    "icon": "phone-call"
+                  },
+                  {
+                    "title": "Users and Account",
+                    "path": "en/api-reference/users",
+                    "icon": "user"
+                  },
+                  {
+                    "title": "Voice and TTS",
+                    "path": "en/api-reference/voice",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "MCP Plugins",
+                    "path": "en/api-reference/mcp",
+                    "icon": "plug"
+                  },
+                  {
+                    "title": "Payment Methods",
+                    "path": "en/api-reference/payment-methods",
+                    "icon": "credit-card"
+                  },
+                  {
+                    "title": "Onboarding",
+                    "path": "en/api-reference/onboarding",
+                    "icon": "rocket"
+                  },
+                  {
+                    "title": "Verifications",
+                    "path": "en/api-reference/verifications",
+                    "icon": "badge-check"
                   }
                 ]
               },
@@ -316,6 +356,11 @@
                     "title": "CRM Custom Fields",
                     "path": "en/api-reference/crm-custom-fields",
                     "icon": "sliders"
+                  },
+                  {
+                    "title": "CRM Groups",
+                    "path": "en/api-reference/crm-groups",
+                    "icon": "users"
                   }
                 ]
               },
@@ -655,6 +700,46 @@
                     "title": "Webhooks",
                     "path": "de/api-reference/webhooks",
                     "icon": "webhook"
+                  },
+                  {
+                    "title": "Sitzungen",
+                    "path": "de/api-reference/sessions",
+                    "icon": "headphones"
+                  },
+                  {
+                    "title": "Anrufe",
+                    "path": "de/api-reference/calls",
+                    "icon": "phone-call"
+                  },
+                  {
+                    "title": "Benutzer und Konto",
+                    "path": "de/api-reference/users",
+                    "icon": "user"
+                  },
+                  {
+                    "title": "Stimme und TTS",
+                    "path": "de/api-reference/voice",
+                    "icon": "mic"
+                  },
+                  {
+                    "title": "MCP-Plugins",
+                    "path": "de/api-reference/mcp",
+                    "icon": "plug"
+                  },
+                  {
+                    "title": "Zahlungsmethoden",
+                    "path": "de/api-reference/payment-methods",
+                    "icon": "credit-card"
+                  },
+                  {
+                    "title": "Onboarding",
+                    "path": "de/api-reference/onboarding",
+                    "icon": "rocket"
+                  },
+                  {
+                    "title": "Verifizierungen",
+                    "path": "de/api-reference/verifications",
+                    "icon": "badge-check"
                   }
                 ]
               },
@@ -686,6 +771,11 @@
                     "title": "CRM-Benutzerdefinierte Felder",
                     "path": "de/api-reference/crm-custom-fields",
                     "icon": "sliders"
+                  },
+                  {
+                    "title": "CRM-Gruppen",
+                    "path": "de/api-reference/crm-groups",
+                    "icon": "users"
                   }
                 ]
               },

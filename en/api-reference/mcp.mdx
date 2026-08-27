@@ -1,0 +1,485 @@
+---
+title: MCP Plugins
+description: List MCP plugin providers, manage workspace connections, select plugins for assistants, and retrieve available tools through the Talkturo API.
+---
+
+## Endpoint summary
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/mcp/providers` | List available MCP providers | Session cookie |
+| `GET` | `/api/mcp/plugins` | List plugins, connections, and assistant selections | Session cookie |
+| `POST` | `/api/mcp/plugins/select` | Attach or detach a plugin for an assistant | Session cookie |
+| `GET` | `/api/mcp/plugins/tools` | List tools available for a workspace connection | Session cookie |
+
+<Callout kind="info">
+
+All MCP plugin endpoints use the Talkturo web session for authentication. Send the authenticated Supabase session cookie with each request. These endpoints do not accept API keys.
+
+</Callout>
+
+## GET /api/mcp/providers
+
+Returns the MCP providers that Talkturo can connect to.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/mcp/providers" \
+  --header "Cookie: sb-access-token=sb_example_access_token; sb-refresh-token=sb_example_refresh_token"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/mcp/providers", {
+  method: "GET",
+  headers: {
+    Cookie: "sb-access-token=sb_example_access_token; sb-refresh-token=sb_example_refresh_token"
+  }
+})
+
+const data = await response.json()
+console.log(data)
+```
+</Request>
+
+<Response tabs="200,401" default-tab="1">
+```json
+{
+  "providers": [
+    {
+      "id": "google-drive",
+      "name": "Google Drive",
+      "description": "Search and retrieve files from Google Drive",
+      "brandColor": "#0F9D58",
+      "iconUrl": "https://app.talkturo.com/images/mcp/google-drive.png"
+    },
+    {
+      "id": "notion",
+      "name": "Notion",
+      "description": "Search pages and databases from connected Notion workspaces",
+      "brandColor": "#111111",
+      "iconUrl": "https://app.talkturo.com/images/mcp/notion.png"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+</Response>
+
+### Parameters
+
+This endpoint does not accept path, query, or request body parameters.
+
+### Response fields
+
+<ResponseField name="providers" field-type="array" required="true">
+Available MCP providers.
+</ResponseField>
+
+<ResponseField name="providers[].id" field-type="string" required="true">
+Provider identifier used when selecting a plugin for an assistant.
+</ResponseField>
+
+<ResponseField name="providers[].name" field-type="string" required="true">
+Human-readable provider name.
+</ResponseField>
+
+<ResponseField name="providers[].description" field-type="string" required="true">
+Short description of the provider and its integration.
+</ResponseField>
+
+<ResponseField name="providers[].brandColor" field-type="string" required="true">
+Provider brand color value.
+</ResponseField>
+
+<ResponseField name="providers[].iconUrl" field-type="string" required="true">
+Absolute URL for the provider icon.
+</ResponseField>
+
+## GET /api/mcp/plugins
+
+Returns MCP plugins for the workspace, including available connections and the current selection for an assistant when `assistantId` is provided.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/mcp/plugins?accountSlug=acme&assistantId=1d9d4e3c-5296-4f9b-a6b7-4f0f2f5851d4" \
+  --header "Cookie: sb-access-token=sb_example_access_token; sb-refresh-token=sb_example_refresh_token"
+```
+
+```javascript
+const url = new URL("https://app.talkturo.com/api/mcp/plugins")
+url.searchParams.set("accountSlug", "acme")
+url.searchParams.set("assistantId", "1d9d4e3c-5296-4f9b-a6b7-4f0f2f5851d4")
+
+const response = await fetch(url, {
+  method: "GET",
+  headers: {
+    Cookie: "sb-access-token=sb_example_access_token; sb-refresh-token=sb_example_refresh_token"
+  }
+})
+
+const data = await response.json()
+console.log(data)
+```
+</Request>
+
+<Response tabs="200,400,403,404" default-tab="1">
+```json
+{
+  "plugins": [
+    {
+      "id": "google-drive",
+      "name": "Google Drive",
+      "description": "Search and retrieve files from Google Drive",
+      "brandColor": "#0F9D58",
+      "iconUrl": "https://app.talkturo.com/images/mcp/google-drive.png",
+      "connections": [
+        {
+          "id": "8f2546ec-2f4f-4e1d-8f39-654f7f2bbf2d",
+          "label": "Operations workspace",
+          "expiresAt": "2026-01-15T18:25:43.511Z",
+          "needsReauth": false
+        }
+      ],
+      "connectionId": "8f2546ec-2f4f-4e1d-8f39-654f7f2bbf2d",
+      "enabledTools": [
+        "drive.search",
+        "drive.get_file"
+      ],
+      "defaultTools": [
+        "drive.search"
+      ]
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "accountSlug is required"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Assistant not found"
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace account slug.
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+Assistant UUID. When provided, the response includes the current plugin selection for that assistant in `connectionId` and `enabledTools`.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="plugins" field-type="array" required="true">
+Plugins available to the workspace.
+</ResponseField>
+
+<ResponseField name="plugins[].id" field-type="string" required="true">
+Plugin or provider identifier.
+</ResponseField>
+
+<ResponseField name="plugins[].name" field-type="string" required="true">
+Human-readable plugin name.
+</ResponseField>
+
+<ResponseField name="plugins[].description" field-type="string" required="true">
+Short description of the plugin.
+</ResponseField>
+
+<ResponseField name="plugins[].brandColor" field-type="string" required="true">
+Brand color associated with the plugin.
+</ResponseField>
+
+<ResponseField name="plugins[].iconUrl" field-type="string" required="true">
+Absolute URL for the plugin icon.
+</ResponseField>
+
+<ResponseField name="plugins[].connections" field-type="array" required="true">
+Workspace connections for this plugin provider.
+</ResponseField>
+
+<ResponseField name="plugins[].connections[].id" field-type="string" required="true">
+Connection UUID.
+</ResponseField>
+
+<ResponseField name="plugins[].connections[].label" field-type="string" required="true">
+Display label for the connection.
+</ResponseField>
+
+<ResponseField name="plugins[].connections[].expiresAt" field-type="string" required="false">
+Connection expiration timestamp in ISO 8601 format when the provider issues expiring credentials.
+</ResponseField>
+
+<ResponseField name="plugins[].connections[].needsReauth" field-type="boolean" required="true">
+Whether the connection requires reauthorization before tools can be used.
+</ResponseField>
+
+<ResponseField name="plugins[].connectionId" field-type="string" required="false">
+Currently selected connection UUID for the assistant and provider.
+</ResponseField>
+
+<ResponseField name="plugins[].enabledTools" field-type="array" required="true">
+Tool names currently enabled for the assistant on this plugin.
+</ResponseField>
+
+<ResponseField name="plugins[].defaultTools" field-type="array" required="true">
+Default tool names suggested for this plugin.
+</ResponseField>
+
+## POST /api/mcp/plugins/select
+
+Attaches a provider connection to an assistant and stores the selected tool list. If `tools` is an empty array, Talkturo detaches the plugin from the assistant and deletes the saved configuration.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/mcp/plugins/select" \
+  --header "Content-Type: application/json" \
+  --header "Cookie: sb-access-token=sb_example_access_token; sb-refresh-token=sb_example_refresh_token" \
+  --data '{
+    "assistantId": "1d9d4e3c-5296-4f9b-a6b7-4f0f2f5851d4",
+    "accountSlug": "acme",
+    "provider": "google-drive",
+    "connectionId": "8f2546ec-2f4f-4e1d-8f39-654f7f2bbf2d",
+    "tools": ["drive.search", "drive.get_file"]
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/mcp/plugins/select", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Cookie: "sb-access-token=sb_example_access_token; sb-refresh-token=sb_example_refresh_token"
+  },
+  body: JSON.stringify({
+    assistantId: "1d9d4e3c-5296-4f9b-a6b7-4f0f2f5851d4",
+    accountSlug: "acme",
+    provider: "google-drive",
+    connectionId: "8f2546ec-2f4f-4e1d-8f39-654f7f2bbf2d",
+    tools: ["drive.search", "drive.get_file"]
+  })
+})
+
+const data = await response.json()
+console.log(data)
+```
+</Request>
+
+<Response tabs="200,400,404" default-tab="1">
+```json
+{
+  "ok": true,
+  "attached": true
+}
+```
+
+```json
+{
+  "error": "tools must contain at most 100 items"
+}
+```
+
+```json
+{
+  "error": "Connection not found"
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="assistantId" param-type="string" required="true">
+Assistant UUID that will receive the plugin selection.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Workspace account slug.
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="true">
+Provider identifier returned by `GET /api/mcp/providers`.
+</ParamField>
+
+<ParamField body="connectionId" param-type="string" required="true">
+Connection UUID for the selected provider.
+</ParamField>
+
+<ParamField body="tools" param-type="string[]" required="true">
+List of tool names to enable for the assistant. Each item can contain up to 200 characters, and the array can contain up to 100 items. Send an empty array to detach the plugin from the assistant.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="attached" field-type="boolean" required="true">
+Whether a plugin configuration is attached after the request completes. `false` indicates the plugin was detached because `tools` was empty.
+</ResponseField>
+
+## GET /api/mcp/plugins/tools
+
+Returns the tools exposed by a specific workspace connection. Use this endpoint before saving a plugin selection so you can present the current tool list to the user.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/mcp/plugins/tools?accountSlug=acme&connectionId=8f2546ec-2f4f-4e1d-8f39-654f7f2bbf2d" \
+  --header "Cookie: sb-access-token=sb_example_access_token; sb-refresh-token=sb_example_refresh_token"
+```
+
+```javascript
+const url = new URL("https://app.talkturo.com/api/mcp/plugins/tools")
+url.searchParams.set("accountSlug", "acme")
+url.searchParams.set("connectionId", "8f2546ec-2f4f-4e1d-8f39-654f7f2bbf2d")
+
+const response = await fetch(url, {
+  method: "GET",
+  headers: {
+    Cookie: "sb-access-token=sb_example_access_token; sb-refresh-token=sb_example_refresh_token"
+  }
+})
+
+const data = await response.json()
+console.log(data)
+```
+</Request>
+
+<Response tabs="200,200 reauth required,400,404" default-tab="1">
+```json
+{
+  "tools": [
+    {
+      "name": "drive.search",
+      "description": "Search files and folders by name and content"
+    },
+    {
+      "name": "drive.get_file",
+      "description": "Fetch file metadata and downloadable content"
+    }
+  ],
+  "defaultTools": [
+    "drive.search"
+  ],
+  "capabilities": {
+    "plan": "tool_selection_required",
+    "stage": "production",
+    "blockedTools": [],
+    "warning": null
+  }
+}
+```
+
+```json
+{
+  "error": "reauth_required",
+  "tools": []
+}
+```
+
+```json
+{
+  "error": "connectionId is required"
+}
+```
+
+```json
+{
+  "error": "Connection not found"
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace account slug.
+</ParamField>
+
+<ParamField query="connectionId" param-type="string" required="true">
+Connection UUID.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="tools" field-type="array" required="true">
+Tools available through the selected connection. When reauthorization is required, this array is returned empty.
+</ResponseField>
+
+<ResponseField name="tools[].name" field-type="string" required="true">
+Tool identifier.
+</ResponseField>
+
+<ResponseField name="tools[].description" field-type="string" required="true">
+Human-readable description of the tool.
+</ResponseField>
+
+<ResponseField name="defaultTools" field-type="array" required="false">
+Default tool names recommended for the connection.
+</ResponseField>
+
+<ResponseField name="capabilities" field-type="object|null" required="false">
+Capability metadata for the connection, or `null` when no capability metadata is available.
+</ResponseField>
+
+<ResponseField name="capabilities.plan" field-type="string" required="false">
+Capability plan identifier.
+</ResponseField>
+
+<ResponseField name="capabilities.stage" field-type="string" required="false">
+Capability stage for the tool set.
+</ResponseField>
+
+<ResponseField name="capabilities.blockedTools" field-type="array" required="false">
+Tool names that are blocked for the current connection or plan.
+</ResponseField>
+
+<ResponseField name="capabilities.warning" field-type="string|null" required="false">
+Warning message to display alongside the tool list.
+</ResponseField>
+
+<ResponseField name="error" field-type="string" required="false">
+Returned with the value `reauth_required` when the connection must be reauthorized before tools can be listed.
+</ResponseField>
+
+## Error behavior
+
+All endpoints require an authenticated Talkturo session. Beyond `401 Unauthorized`, MCP plugin endpoints can return the following status codes depending on the route and workspace state:
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing or invalid query or body parameters |
+| `401` | Missing or invalid session |
+| `403` | Authenticated, but not allowed to access the workspace or assistant |
+| `404` | Requested assistant or connection was not found |
+| `500` | Unexpected server error |
+
+## Related resources
+
+<Columns cols={2}>
+  <Card title="Assistants" href="/en/api-reference/assistants" icon="users" cta="View reference" />
+  <Card title="AI Voice Agents" href="/en/assistants/overview" icon="rocket" cta="Read overview" />
+</Columns>

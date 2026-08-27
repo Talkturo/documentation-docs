@@ -1,0 +1,243 @@
+---
+title: Anrufe
+description: Rufen Sie Anrufaufzeichnungs-URLs und Flow-Ausführungsdaten über die Talkturo API ab — greifen Sie auf vor-signierte Aufzeichnungslinks und TurboFlow-Ausführungsverlauf zu.
+---
+
+## Anrufdaten abrufen
+
+Rufen Sie über die Calls API vor-signierte Aufzeichnungs-URLs und die zugehörigen TurboFlow-Ausführungen für einen einzelnen Anruf ab.
+
+<Callout kind="info">
+
+**Basis-URL:** `https://app.talkturo.com`  
+**Authentifizierung:** Session-Cookie
+
+</Callout>
+
+## Endpunkte auf einen Blick
+
+| Methode | Pfad | Zweck |
+|---|---|---|
+| `GET` | `/api/calls/{id}/recording-url` | Ruft eine vor-signierte URL für die Anrufaufzeichnung ab. |
+| `GET` | `/api/calls/{id}/flow-runs` | Ruft TurboFlow-Ausführungen ab, die mit einem Anruf verknüpft sind. |
+
+## Aufzeichnungs-URL abrufen
+
+Rufen Sie eine kurzlebige, vor-signierte URL ab, um auf die Aufzeichnung eines Anrufs zuzugreifen.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/calls/{id}/recording-url" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response tabs="200,400,403,404,500">
+```json
+{
+  "url": "https://presigned-url...",
+  "expiresIn": 600
+}
+```
+
+```json
+{
+  "error": "Invalid call ID"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Call not found"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+Die UUID des Anrufs.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="url" field-type="string" required="true">
+
+Die vor-signierte URL zur Anrufaufzeichnung.
+
+</ResponseField>
+
+<ResponseField name="expiresIn" field-type="number" required="true">
+
+Die Gültigkeitsdauer der URL in Sekunden.
+
+</ResponseField>
+
+### Fehlercodes
+
+| Status | Bedeutung |
+|---|---|
+| `400` | Die Anruf-ID ist ungültig oder fehlt. |
+| `403` | Sie haben keinen Zugriff auf diesen Anruf. |
+| `404` | Der Anruf wurde nicht gefunden. |
+| `500` | Der Server konnte die Aufzeichnungs-URL nicht erzeugen. |
+
+## Flow-Ausführungen für einen Anruf abrufen
+
+Rufen Sie TurboFlow-Ausführungen ab, die während oder im Zusammenhang mit einem bestimmten Anruf erstellt wurden.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/calls/{id}/flow-runs" \
+  -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+</Request>
+
+<Response tabs="200,400,403,404,500">
+```json
+{
+  "runs": [
+    {
+      "id": "run_01hxy9v8m4k2p7q3r5s6t7u8",
+      "flowId": "flw_01hxy8n2c9d4e6f7g8h9j0k1",
+      "name": "Post-call qualification",
+      "status": "completed",
+      "startedAt": "2024-03-14T10:15:00.000Z",
+      "finishedAt": "2024-03-14T10:15:04.000Z",
+      "error": null,
+      "input": {
+        "callId": "cal_01hxy7m1b2c3d4e5f6g7h8j9"
+      }
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Invalid call ID"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Call not found"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+Die UUID des Anrufs.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="runs" field-type="array" required="true">
+
+Eine Liste der TurboFlow-Ausführungen, die dem Anruf zugeordnet sind.
+
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+
+Die ID der Flow-Ausführung.
+
+</ResponseField>
+
+<ResponseField name="flowId" field-type="string" required="true">
+
+Die ID des zugehörigen TurboFlow.
+
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+
+Der Name der Flow-Ausführung.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+
+Der Status der Ausführung.
+
+</ResponseField>
+
+<ResponseField name="startedAt" field-type="string" required="true">
+
+Der Zeitstempel, zu dem die Ausführung gestartet wurde.
+
+</ResponseField>
+
+<ResponseField name="finishedAt" field-type="string" required="false">
+
+Der Zeitstempel, zu dem die Ausführung beendet wurde. Der Wert kann `null` sein, wenn die Ausführung noch läuft.
+
+</ResponseField>
+
+<ResponseField name="error" field-type="object" required="false">
+
+Fehlerdetails der Ausführung. Der Wert ist `null`, wenn die Ausführung erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="input" field-type="object" required="false">
+
+Die Eingabedaten, mit denen die Ausführung gestartet wurde.
+
+</ResponseField>
+
+### Fehlercodes
+
+| Status | Bedeutung |
+|---|---|
+| `400` | Die Anruf-ID ist ungültig oder fehlt. |
+| `403` | Sie haben keinen Zugriff auf diesen Anruf oder seine Flow-Ausführungen. |
+| `404` | Der Anruf wurde nicht gefunden. |
+| `500` | Der Server konnte die Flow-Ausführungen nicht abrufen. |
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card
+    title="TurboFlow"
+    href="/de/api-reference/turboflow"
+    icon="code"
+    cta="Zur Referenz"
+  />
+  <Card
+    title="Anrufprotokolle und Transkripte"
+    href="/de/call-logs"
+    icon="book-open"
+    cta="Zur Anleitung"
+  />
+</Columns>

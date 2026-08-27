@@ -1,0 +1,806 @@
+---
+title: Users and Account
+description: Manage user profiles, subscriptions, workspaces, and business settings through the Talkturo API — retrieve current user data, check subscription limits, list workspaces, and update business profiles.
+---
+
+## Endpoint summary
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/users/me` | Get the current desktop user profile | Desktop JWT |
+| `PUT` | `/api/users/me` | Update the current desktop user profile | Desktop JWT |
+| `GET` | `/api/users/me/subscription` | Get subscription status, limits, and usage | Desktop JWT |
+| `GET` | `/api/users/me/workspaces` | List workspaces available to the current user | Desktop JWT |
+| `GET` | `/api/account/business` | Get a workspace business profile | Session cookie |
+| `PUT` | `/api/account/business` | Update a workspace business profile | Session cookie |
+| `PUT` | `/api/account/language` | Update a workspace language | Session cookie, owner only |
+
+<Callout kind="info">
+
+Desktop user endpoints use desktop JWT authentication. Send the desktop token in the `Authorization` header as `Bearer dt_example_9xmk7q2r`.
+
+Workspace business endpoints use a session cookie from an authenticated web app session instead of a desktop JWT.
+
+</Callout>
+
+## Get current user
+
+Returns the authenticated desktop user's profile and desktop-specific settings.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url https://app.talkturo.com/api/users/me \
+  --header "Authorization: Bearer dt_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/users/me", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer dt_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,401,500" default-tab="1">
+```json
+{
+  "uid": "usr_7f3d2a91",
+  "email": "jane.chen@acme.com",
+  "display_name": "Jane Chen",
+  "auto_update_enabled": true,
+  "has_migrated_to_firebase": true
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Endpoint
+
+`GET https://app.talkturo.com/api/users/me`
+
+### Response fields
+
+<ResponseField name="uid" field-type="string" required="true">
+Unique identifier for the current user.
+</ResponseField>
+
+<ResponseField name="email" field-type="string" required="true">
+User email address.
+</ResponseField>
+
+<ResponseField name="display_name" field-type="string" required="true">
+Display name shown in Talkturo.
+</ResponseField>
+
+<ResponseField name="auto_update_enabled" field-type="boolean" required="true">
+Whether desktop auto-updates are enabled for the current user.
+</ResponseField>
+
+<ResponseField name="has_migrated_to_firebase" field-type="boolean" required="true">
+Whether the user account has been migrated to Firebase-based authentication.
+</ResponseField>
+
+## Update current user
+
+Updates the authenticated desktop user's profile.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request PUT \
+  --url https://app.talkturo.com/api/users/me \
+  --header "Authorization: Bearer dt_example_9xmk7q2r" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "display_name": "Jane Chen"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/users/me", {
+  method: "PUT",
+  headers: {
+    Authorization: "Bearer dt_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    display_name: "Jane Chen"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,401,500" default-tab="1">
+```json
+{
+  "uid": "usr_7f3d2a91"
+}
+```
+
+```json
+{
+  "error": "display_name is required"
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Endpoint
+
+`PUT https://app.talkturo.com/api/users/me`
+
+### Body parameters
+
+<ParamField body="display_name" param-type="string" required="true">
+New display name for the current user.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="uid" field-type="string" required="true">
+Unique identifier for the updated user.
+</ResponseField>
+
+## Get subscription
+
+Returns subscription state, account context, plan limits, and current usage for the authenticated desktop user.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url https://app.talkturo.com/api/users/me/subscription \
+  --header "Authorization: Bearer dt_example_9xmk7q2r" \
+  --header "X-Talkturo-Account: acme-sales"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/users/me/subscription", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer dt_example_9xmk7q2r",
+    "X-Talkturo-Account": "acme-sales"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,403,500" default-tab="1">
+```json
+{
+  "success": true,
+  "hasActiveSubscription": true,
+  "data": {
+    "active": true,
+    "plan": "desktop_pro",
+    "source": "stripe",
+    "current_period_end": "2026-01-31T23:59:59Z",
+    "trial_ends_at": null,
+    "account_id": "acc_3d92af11",
+    "account_slug": "acme-sales",
+    "access_blocked_reason": null,
+    "limits": {
+      "seats": 10,
+      "calls_per_month": 5000,
+      "session_max_minutes": 120,
+      "retention_days": 90,
+      "sales_modes": [
+        "inbound",
+        "outbound"
+      ]
+    },
+    "usage": {
+      "calls_this_month": 1240,
+      "calls_limit": 5000
+    }
+  }
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Endpoint
+
+`GET https://app.talkturo.com/api/users/me/subscription`
+
+### Headers
+
+<ParamField header="X-Talkturo-Account" param-type="string" required="false">
+Workspace slug used to resolve subscription data in a specific account context.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="hasActiveSubscription" field-type="boolean" required="true">
+Whether the current user or selected workspace has an active subscription.
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+Subscription details for the current user and, when provided, the selected workspace.
+</ResponseField>
+
+<ResponseField name="active" field-type="boolean" required="true">
+Whether the subscription is currently active.
+</ResponseField>
+
+<ResponseField name="plan" field-type="string" required="true">
+Plan identifier for the current subscription.
+</ResponseField>
+
+<ResponseField name="source" field-type="string" required="true">
+Billing source for the subscription.
+</ResponseField>
+
+<ResponseField name="current_period_end" field-type="string|null" required="true">
+ISO timestamp for the end of the current billing period.
+</ResponseField>
+
+<ResponseField name="trial_ends_at" field-type="string|null" required="true">
+ISO timestamp for the end of the trial period, or `null` when no trial is active.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string|null" required="true">
+Workspace account identifier associated with the subscription context.
+</ResponseField>
+
+<ResponseField name="account_slug" field-type="string|null" required="true">
+Workspace slug associated with the subscription context.
+</ResponseField>
+
+<ResponseField name="access_blocked_reason" field-type="string|null" required="true">
+Reason access is blocked, or `null` when access is allowed.
+</ResponseField>
+
+<ResponseField name="limits" field-type="object" required="true">
+Plan limits applied to the current subscription.
+</ResponseField>
+
+<ResponseField name="seats" field-type="integer" required="true">
+Maximum number of seats included in the plan.
+</ResponseField>
+
+<ResponseField name="calls_per_month" field-type="integer" required="true">
+Maximum number of calls allowed each month.
+</ResponseField>
+
+<ResponseField name="session_max_minutes" field-type="integer" required="true">
+Maximum session duration, in minutes.
+</ResponseField>
+
+<ResponseField name="retention_days" field-type="integer" required="true">
+Number of days data is retained under the plan.
+</ResponseField>
+
+<ResponseField name="sales_modes" field-type="array[string]" required="true">
+Allowed sales modes for the plan.
+</ResponseField>
+
+<ResponseField name="usage" field-type="object" required="true">
+Current usage values tracked against the plan.
+</ResponseField>
+
+<ResponseField name="calls_this_month" field-type="integer" required="true">
+Number of calls used in the current month.
+</ResponseField>
+
+<ResponseField name="calls_limit" field-type="integer" required="true">
+Call limit applied to the current subscription context.
+</ResponseField>
+
+<Callout kind="info">
+
+If you send `X-Talkturo-Account`, Talkturo resolves limits and usage for that workspace when the authenticated user has access to it.
+
+</Callout>
+
+## List workspaces
+
+Returns the workspaces available to the authenticated desktop user.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url https://app.talkturo.com/api/users/me/workspaces \
+  --header "Authorization: Bearer dt_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/users/me/workspaces", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer dt_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,500" default-tab="1">
+```json
+{
+  "success": true,
+  "workspaces": [
+    {
+      "account_id": "acc_3d92af11",
+      "slug": "acme-sales",
+      "name": "Acme Sales",
+      "is_personal_account": false,
+      "role": "owner",
+      "has_desktop_plan": true,
+      "has_desktop_access": true,
+      "plan": "desktop_pro"
+    },
+    {
+      "account_id": "acc_7d61ce20",
+      "slug": "jane-chen",
+      "name": "Jane Chen",
+      "is_personal_account": true,
+      "role": "owner",
+      "has_desktop_plan": false,
+      "has_desktop_access": true,
+      "plan": null
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Endpoint
+
+`GET https://app.talkturo.com/api/users/me/workspaces`
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="workspaces" field-type="array[object]" required="true">
+Workspaces the current user can access.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Workspace account identifier.
+</ResponseField>
+
+<ResponseField name="slug" field-type="string" required="true">
+Workspace slug.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Workspace display name.
+</ResponseField>
+
+<ResponseField name="is_personal_account" field-type="boolean" required="true">
+Whether the workspace is a personal account.
+</ResponseField>
+
+<ResponseField name="role" field-type="string" required="true">
+Current user's role in the workspace.
+</ResponseField>
+
+<ResponseField name="has_desktop_plan" field-type="boolean" required="true">
+Whether the workspace has a desktop plan.
+</ResponseField>
+
+<ResponseField name="has_desktop_access" field-type="boolean" required="true">
+Whether the current user can use desktop features in this workspace.
+</ResponseField>
+
+<ResponseField name="plan" field-type="string|null" required="true">
+Workspace plan identifier, or `null` when no plan is attached.
+</ResponseField>
+
+## Get business profile
+
+Returns the business profile for a workspace identified by slug.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/account/business?account=acme-sales" \
+  --header "Cookie: sb-access-token=sb_example_71k2xm; sb-refresh-token=sb_refresh_example_48znq1"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/account/business?account=acme-sales", {
+  method: "GET",
+  credentials: "include"
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,401,404,500" default-tab="1">
+```json
+{
+  "success": true,
+  "business": {
+    "business_name": "Acme Sales",
+    "business_website": "https://acme.com",
+    "business_industry": "Software",
+    "business_phone": "+14155550123",
+    "business_city": "San Francisco",
+    "business_state": "CA",
+    "business_country": "US"
+  }
+}
+```
+
+```json
+{
+  "error": "Missing required query parameter: account"
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Workspace not found"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Endpoint
+
+`GET https://app.talkturo.com/api/account/business`
+
+### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug whose business profile you want to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="business" field-type="object" required="true">
+Business profile for the requested workspace.
+</ResponseField>
+
+<ResponseField name="business_name" field-type="string|null" required="true">
+Business name for the workspace.
+</ResponseField>
+
+<ResponseField name="business_website" field-type="string|null" required="true">
+Business website URL.
+</ResponseField>
+
+<ResponseField name="business_industry" field-type="string|null" required="true">
+Business industry.
+</ResponseField>
+
+<ResponseField name="business_phone" field-type="string|null" required="true">
+Business phone number.
+</ResponseField>
+
+<ResponseField name="business_city" field-type="string|null" required="true">
+Business city.
+</ResponseField>
+
+<ResponseField name="business_state" field-type="string|null" required="true">
+Business state or region.
+</ResponseField>
+
+<ResponseField name="business_country" field-type="string|null" required="true">
+Two-character country code when set for the workspace.
+</ResponseField>
+
+## Update business profile
+
+Updates the business profile for a workspace identified by slug.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request PUT \
+  --url https://app.talkturo.com/api/account/business \
+  --header "Content-Type: application/json" \
+  --header "Cookie: sb-access-token=sb_example_71k2xm; sb-refresh-token=sb_refresh_example_48znq1" \
+  --data '{
+    "account": "acme-sales",
+    "businessName": "Acme Sales",
+    "businessWebsite": "https://acme.com",
+    "businessIndustry": "Software",
+    "businessPhone": "+14155550123",
+    "businessCity": "San Francisco",
+    "businessState": "CA",
+    "businessCountry": "US"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/account/business", {
+  method: "PUT",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    account: "acme-sales",
+    businessName: "Acme Sales",
+    businessWebsite: "https://acme.com",
+    businessIndustry: "Software",
+    businessPhone: "+14155550123",
+    businessCity: "San Francisco",
+    businessState: "CA",
+    businessCountry: "US"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,401,404,500" default-tab="1">
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "Invalid request body"
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Workspace not found"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Endpoint
+
+`PUT https://app.talkturo.com/api/account/business`
+
+### Body parameters
+
+<ParamField body="account" param-type="string" required="true">
+Workspace slug whose business profile you want to update.
+</ParamField>
+
+<ParamField body="businessName" param-type="string" required="false">
+Business name for the workspace.
+</ParamField>
+
+<ParamField body="businessWebsite" param-type="string" required="false">
+Business website URL.
+</ParamField>
+
+<ParamField body="businessIndustry" param-type="string" required="false">
+Business industry.
+</ParamField>
+
+<ParamField body="businessPhone" param-type="string" required="false">
+Business phone number.
+</ParamField>
+
+<ParamField body="businessCity" param-type="string" required="false">
+Business city.
+</ParamField>
+
+<ParamField body="businessState" param-type="string" required="false">
+Business state or region.
+</ParamField>
+
+<ParamField body="businessCountry" param-type="string" required="false">
+Two-character ISO country code.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the business profile update succeeded.
+</ResponseField>
+
+<Callout kind="alert">
+
+Validate `businessCountry` as a two-character ISO country code before sending the request. Invalid values can cause the update to fail with `400`.
+
+</Callout>
+
+## Update language
+
+Updates the language for a workspace. Only workspace owners can change this setting.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request PUT \
+  --url https://app.talkturo.com/api/account/language \
+  --header "Content-Type: application/json" \
+  --header "Cookie: sb-access-token=sb_example_71k2xm; sb-refresh-token=sb_refresh_example_48znq1" \
+  --data '{
+    "account": "acme-sales",
+    "language": "en"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/account/language", {
+  method: "PUT",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    account: "acme-sales",
+    language: "en"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,401,403,404,500" default-tab="1">
+```json
+{
+  "success": true,
+  "language": "en"
+}
+```
+
+```json
+{
+  "error": "Invalid language"
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Only workspace owners can update language"
+}
+```
+
+```json
+{
+  "error": "Workspace not found"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+</Response>
+
+### Endpoint
+
+`PUT https://app.talkturo.com/api/account/language`
+
+### Body parameters
+
+<ParamField body="account" param-type="string" required="true">
+Workspace slug whose language you want to update.
+</ParamField>
+
+<ParamField body="language" param-type="string" required="true" enum="en,de">
+Workspace language. Supported values are `en` and `de`.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Whether the language update succeeded.
+</ResponseField>
+
+<ResponseField name="language" field-type="string" required="true">
+Updated workspace language.
+</ResponseField>
+
+<Callout kind="alert">
+
+This endpoint rejects non-owner requests with `403`. Check the current user's workspace role before showing language controls in your application.
+
+</Callout>
+
+## Error codes
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing required input or invalid request body |
+| `401` | Authentication failed or no valid authenticated session exists |
+| `403` | Access is denied for the current user or workspace context |
+| `404` | The requested workspace was not found |
+| `500` | The server failed to complete the request |
+
+## Related resources
+
+<Columns cols={3}>
+  <Card title="Desktop Auth" href="/en/api-reference/desktop" icon="lock" cta="View reference" />
+  <Card title="Workspaces and Teams" href="/en/workspaces" icon="users" cta="View guide" />
+</Columns>

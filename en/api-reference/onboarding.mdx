@@ -1,0 +1,571 @@
+---
+title: Onboarding
+description: Start, progress, and complete the Talkturo onboarding wizard through the API — create workspaces, save drafts, generate prompts, and provision assistants.
+---
+
+## Endpoint summary
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `POST` | `/api/onboarding/start` | Start onboarding and create or adopt a workspace | Session cookie |
+| `POST` | `/api/onboarding/progress` | Save a wizard step draft | Session cookie |
+| `GET` | `/api/onboarding/progress` | Fetch the latest draft step and generated prompt | Session cookie |
+| `POST` | `/api/onboarding/complete` | Finish onboarding and provision the assistant | Session cookie |
+
+<Callout kind="info">
+
+All onboarding endpoints require a valid Supabase session cookie. These endpoints do not accept API keys.
+
+</Callout>
+
+## POST /api/onboarding/start
+
+Start an onboarding session by creating a new workspace or adopting an existing one.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/onboarding/start" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=session_example_7f9c2d1a" \
+  -d '{
+    "companyName": "Northwind Solar",
+    "website": "https://northwindsolar.com",
+    "assistantName": "Northwind Reception",
+    "purpose": "Answer inbound questions and qualify installation leads",
+    "clientToken": "7d9a3f2b-6f44-4a7d-9b1e-42a4e6c18c51"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/onboarding/start", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Cookie": "sb-access-token=session_example_7f9c2d1a"
+  },
+  body: JSON.stringify({
+    companyName: "Northwind Solar",
+    website: "https://northwindsolar.com",
+    assistantName: "Northwind Reception",
+    purpose: "Answer inbound questions and qualify installation leads",
+    clientToken: "7d9a3f2b-6f44-4a7d-9b1e-42a4e6c18c51"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,403,404" default-tab="1">
+```json
+{
+  "accountId": "7f4f7c8c-2a4a-4c1e-96ee-3dd9d7a4b0b1",
+  "slug": "northwind-solar"
+}
+```
+
+```json
+{
+  "error": "You do not have access to this workspace"
+}
+```
+
+```json
+{
+  "error": "Workspace not found"
+}
+```
+</Response>
+
+### Behavior
+
+Without `accountSlug`, the endpoint creates a new workspace through an idempotent RPC keyed by `clientToken`. Repeating the same request with the same `clientToken` returns the same workspace instead of creating a duplicate.
+
+With `accountSlug`, the endpoint adopts an existing workspace after verifying that your session belongs to that workspace.
+
+### Body parameters
+
+<ParamField body="companyName" param-type="string" required="true">
+Workspace company name. Must be 1 to 100 characters.
+</ParamField>
+
+<ParamField body="website" param-type="string" required="false">
+Company website URL. Maximum length is 500 characters.
+</ParamField>
+
+<ParamField body="assistantName" param-type="string" required="false">
+Initial assistant name. Maximum length is 100 characters.
+</ParamField>
+
+<ParamField body="purpose" param-type="string" required="false">
+Short description of what the assistant should do.
+</ParamField>
+
+<ParamField body="clientToken" param-type="string" required="true">
+UUID idempotency key for the start request. Reuse the same value when retrying the same onboarding start action.
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="false">
+Existing workspace slug to adopt instead of creating a new workspace.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="accountId" field-type="string" required="true">
+Workspace UUID created or adopted for onboarding.
+</ResponseField>
+
+<ResponseField name="slug" field-type="string" required="true">
+Workspace slug.
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Invalid request body or missing required fields |
+| `401` | No valid session |
+| `403` | Session user is not a member of the requested workspace |
+| `404` | Requested workspace was not found |
+| `500` | Internal server error |
+
+## POST /api/onboarding/progress
+
+Save a draft for the current onboarding step.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/onboarding/progress" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=session_example_7f9c2d1a" \
+  -d '{
+    "step": "conversation",
+    "patch": {
+      "purpose": "Answer inbound questions and book follow-up calls",
+      "language": "en",
+      "llmProvider": "openai",
+      "model": "gpt-4.1",
+      "adaptTone": true,
+      "callSummaryEnabled": true,
+      "callSummaryEmail": "ops@northwindsolar.com",
+      "promptOverride": "You are the front desk assistant for Northwind Solar. Answer questions about residential solar installation, financing, and appointment scheduling.",
+      "firstMessageOverride": "Thanks for calling Northwind Solar. How can I help today?"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/onboarding/progress", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Cookie": "sb-access-token=session_example_7f9c2d1a"
+  },
+  body: JSON.stringify({
+    step: "conversation",
+    patch: {
+      purpose: "Answer inbound questions and book follow-up calls",
+      language: "en",
+      llmProvider: "openai",
+      model: "gpt-4.1",
+      adaptTone: true,
+      callSummaryEnabled: true,
+      callSummaryEmail: "ops@northwindsolar.com",
+      promptOverride: "You are the front desk assistant for Northwind Solar. Answer questions about residential solar installation, financing, and appointment scheduling.",
+      firstMessageOverride: "Thanks for calling Northwind Solar. How can I help today?"
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "ok": true
+}
+```
+
+```json
+{
+  "error": "Invalid onboarding step"
+}
+```
+</Response>
+
+### Behavior
+
+This endpoint stores a partial draft for a single wizard step. If `website` or `purpose` changes in the patch, Talkturo also kicks off background prompt generation.
+
+### Body parameters
+
+<ParamField body="step" param-type="string" required="true" enum="company,assistant,voice,conversation,tools,number,review">
+Wizard step being saved.
+</ParamField>
+
+<ParamField body="patch" param-type="object" required="true">
+Partial onboarding draft to merge into the existing saved state for the current workspace.
+</ParamField>
+
+### Patch fields
+
+<ParamField body="patch.assistantName" param-type="string" required="false" show-location="false">
+Assistant display name.
+</ParamField>
+
+<ParamField body="patch.website" param-type="string" required="false" show-location="false">
+Business website used for onboarding context and prompt generation.
+</ParamField>
+
+<ParamField body="patch.purpose" param-type="string" required="false" show-location="false">
+Description of the assistant's job.
+</ParamField>
+
+<ParamField body="patch.language" param-type="string" required="false" show-location="false">
+Primary language for the assistant configuration.
+</ParamField>
+
+<ParamField body="patch.llmProvider" param-type="string" required="false" show-location="false">
+Model provider used during assistant provisioning.
+</ParamField>
+
+<ParamField body="patch.model" param-type="string" required="false" show-location="false">
+Model identifier for the selected language model provider.
+</ParamField>
+
+<ParamField body="patch.voiceProvider" param-type="string" required="false" show-location="false">
+Voice provider for synthesized speech.
+</ParamField>
+
+<ParamField body="patch.voiceId" param-type="string" required="false" show-location="false">
+Provider-specific voice identifier.
+</ParamField>
+
+<ParamField body="patch.voiceName" param-type="string" required="false" show-location="false">
+Human-readable voice name shown in the onboarding UI.
+</ParamField>
+
+<ParamField body="patch.voiceLanguage" param-type="string" required="false" show-location="false">
+Language or locale associated with the selected voice.
+</ParamField>
+
+<ParamField body="patch.adaptTone" param-type="boolean" required="false" show-location="false">
+Whether generated conversation text should adapt tone automatically.
+</ParamField>
+
+<ParamField body="patch.callSummaryEnabled" param-type="boolean" required="false" show-location="false">
+Whether to send post-call summaries.
+</ParamField>
+
+<ParamField body="patch.callSummaryEmail" param-type="string" required="false" show-location="false">
+Destination email for call summaries.
+</ParamField>
+
+<ParamField body="patch.promptOverride" param-type="string" required="false" show-location="false">
+Manual system prompt override. Maximum length is 20000 characters.
+</ParamField>
+
+<ParamField body="patch.firstMessageOverride" param-type="string" required="false" show-location="false">
+Manual first-message override. Maximum length is 2000 characters.
+</ParamField>
+
+<ParamField body="patch.numberPurchased" param-type="boolean" required="false" show-location="false">
+Whether onboarding already purchased a phone number.
+</ParamField>
+
+<ParamField body="patch.numberSelectedId" param-type="string" required="false" show-location="false">
+Selected phone number identifier.
+</ParamField>
+
+<ParamField body="patch.numberSkipped" param-type="boolean" required="false" show-location="false">
+Whether the number step was skipped.
+</ParamField>
+
+<ParamField body="patch.plugins" param-type="object" required="false" show-location="false">
+Map of provider names to plugin connection settings. Each provider entry can include `connectionId`, `enabled`, and `tools`.
+</ParamField>
+
+<ParamField body="patch.flowTemplates" param-type="string[]" required="false" show-location="false">
+Array of flow template UUIDs to clone during completion.
+</ParamField>
+
+<ParamField body="patch.kbFileIds" param-type="string[]" required="false" show-location="false">
+Array of knowledge base file UUIDs to attach during completion.
+</ParamField>
+
+<ParamField body="patch.businessOverride" param-type="object" required="false" show-location="false">
+Business profile values to prefer over generated or inferred values.
+</ParamField>
+
+### Nested patch objects
+
+<ParamField body="patch.plugins.provider.connectionId" param-type="string" required="false" show-location="false">
+Connection identifier for the external provider. Replace `provider` with the provider key you store in the `plugins` object.
+</ParamField>
+
+<ParamField body="patch.plugins.provider.enabled" param-type="boolean" required="false" show-location="false">
+Whether the provider integration is enabled.
+</ParamField>
+
+<ParamField body="patch.plugins.provider.tools" param-type="string[]" required="false" show-location="false">
+Tool identifiers enabled for that provider connection.
+</ParamField>
+
+<ParamField body="patch.businessOverride.name" param-type="string" required="false" show-location="false">
+Business name override.
+</ParamField>
+
+<ParamField body="patch.businessOverride.website" param-type="string" required="false" show-location="false">
+Business website override.
+</ParamField>
+
+<ParamField body="patch.businessOverride.phone" param-type="string" required="false" show-location="false">
+Business phone number override.
+</ParamField>
+
+<ParamField body="patch.businessOverride.industry" param-type="string" required="false" show-location="false">
+Business industry override.
+</ParamField>
+
+<ParamField body="patch.businessOverride.city" param-type="string" required="false" show-location="false">
+Business city override.
+</ParamField>
+
+<ParamField body="patch.businessOverride.state" param-type="string" required="false" show-location="false">
+Business state or region override.
+</ParamField>
+
+<ParamField body="patch.businessOverride.country" param-type="string" required="false" show-location="false">
+Business country override.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Returns `true` when the draft was saved.
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Invalid step or invalid patch payload |
+| `401` | No valid session |
+| `404` | Active onboarding workspace was not found |
+| `500` | Internal server error |
+
+<Callout kind="alert">
+
+Saving progress can trigger asynchronous prompt generation when `website` or `purpose` changes. A successful `200` response confirms the draft was saved, not that prompt generation has finished.
+
+</Callout>
+
+## GET /api/onboarding/progress
+
+Fetch the current draft step and the latest generated prompt, if one is available.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/onboarding/progress" \
+  -H "Cookie: sb-access-token=session_example_7f9c2d1a"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/onboarding/progress", {
+  headers: {
+    "Cookie": "sb-access-token=session_example_7f9c2d1a"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "step": "conversation",
+  "generatedPrompt": {
+    "prompt": "You are the front desk assistant for Northwind Solar. Help callers understand residential solar options, qualify their needs, and route urgent billing issues to a human.",
+    "firstMessage": "Thanks for calling Northwind Solar. How can I help today?"
+  }
+}
+```
+</Response>
+
+### Response fields
+
+<ResponseField name="step" field-type="string" required="true">
+Most recently saved onboarding step.
+</ResponseField>
+
+<ResponseField name="generatedPrompt" field-type="object|null" required="true">
+Latest generated prompt payload, or `null` if generation has not completed or has not started.
+</ResponseField>
+
+<ResponseField name="generatedPrompt.prompt" field-type="string" required="false">
+Generated assistant system prompt.
+</ResponseField>
+
+<ResponseField name="generatedPrompt.firstMessage" field-type="string" required="false">
+Generated opening message for the assistant.
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `401` | No valid session |
+| `404` | Active onboarding workspace was not found |
+| `500` | Internal server error |
+
+## POST /api/onboarding/complete
+
+Complete onboarding and provision the assistant, phone number, tools, and related resources.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/onboarding/complete" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: sb-access-token=session_example_7f9c2d1a" \
+  -d '{
+    "prompt": "You are the front desk assistant for Northwind Solar. Answer questions about residential solar installation, financing, and appointment scheduling.",
+    "firstMessage": "Thanks for calling Northwind Solar. How can I help today?",
+    "business": {
+      "name": "Northwind Solar",
+      "website": "https://northwindsolar.com",
+      "phone": "+14155550182",
+      "industry": "Solar",
+      "city": "San Diego",
+      "state": "CA",
+      "country": "US"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/onboarding/complete", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Cookie": "sb-access-token=session_example_7f9c2d1a"
+  },
+  body: JSON.stringify({
+    prompt: "You are the front desk assistant for Northwind Solar. Answer questions about residential solar installation, financing, and appointment scheduling.",
+    firstMessage: "Thanks for calling Northwind Solar. How can I help today?",
+    business: {
+      name: "Northwind Solar",
+      website: "https://northwindsolar.com",
+      phone: "+14155550182",
+      industry: "Solar",
+      city: "San Diego",
+      state: "CA",
+      country: "US"
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "assistantId": "asst_8f3b5a2d1c4e",
+  "slug": "northwind-solar"
+}
+```
+
+```json
+{
+  "error": "Prompt exceeds maximum length"
+}
+```
+</Response>
+
+### Behavior
+
+The endpoint resolves the final prompt, persists the business profile, creates the assistant configuration, attaches MCP plugins, attaches knowledge base files, clones selected flow templates, assigns a phone number, provisions a LiveKit trunk, and marks onboarding as complete.
+
+### Body parameters
+
+<ParamField body="prompt" param-type="string" required="false">
+Final system prompt to save on the assistant. Maximum length is 20000 characters.
+</ParamField>
+
+<ParamField body="firstMessage" param-type="string" required="false">
+Final assistant opening message. Maximum length is 2000 characters.
+</ParamField>
+
+<ParamField body="business" param-type="object" required="false">
+Business profile values to save before assistant provisioning.
+</ParamField>
+
+### Business fields
+
+<ParamField body="business.name" param-type="string" required="false" show-location="false">
+Business name.
+</ParamField>
+
+<ParamField body="business.website" param-type="string" required="false" show-location="false">
+Business website URL.
+</ParamField>
+
+<ParamField body="business.phone" param-type="string" required="false" show-location="false">
+Business phone number.
+</ParamField>
+
+<ParamField body="business.industry" param-type="string" required="false" show-location="false">
+Business industry.
+</ParamField>
+
+<ParamField body="business.city" param-type="string" required="false" show-location="false">
+Business city.
+</ParamField>
+
+<ParamField body="business.state" param-type="string" required="false" show-location="false">
+Business state or region.
+</ParamField>
+
+<ParamField body="business.country" param-type="string" required="false" show-location="false">
+Two-character ISO country code.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="assistantId" field-type="string" required="true">
+Created assistant identifier.
+</ResponseField>
+
+<ResponseField name="slug" field-type="string" required="true">
+Workspace slug for the completed onboarding.
+</ResponseField>
+
+### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Invalid payload or failed validation |
+| `401` | No valid session |
+| `404` | Active onboarding workspace was not found |
+| `500` | Internal server error |
+
+<Callout kind="alert">
+
+Completion is a provisioning operation with multiple side effects. Retrying after a network failure can create ambiguity unless your integration first checks onboarding state and assistant creation results.
+
+</Callout>
+
+## Related resources
+
+<Columns cols={3}>
+  <Card title="Assistants" href="/en/api-reference/assistants" icon="users" cta="View reference" />
+  <Card title="Quick Start" href="/en/quickstart" icon="rocket" cta="Open guide" />
+</Columns>

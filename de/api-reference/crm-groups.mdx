@@ -1,0 +1,410 @@
+---
+title: CRM-Gruppen
+description: Listen Sie Kontaktgruppen auf, erstellen und aktualisieren Sie sie und rufen Sie Gruppenkontakte für Kampagnen, Routing und Segmentierung ab.
+---
+
+## Endpunkte für CRM-Gruppen
+
+Verwenden Sie die CRM-Gruppen-Endpunkte, um Kontaktgruppen in Ihrem Workspace zu verwalten. Sie können Gruppen auflisten, neue Gruppen erstellen, eine einzelne Gruppe mit ihren Kontakten abrufen und bestehende Gruppen umbenennen.
+
+<Callout kind="info">
+
+Authentifizieren Sie diese Endpunkte entweder mit einem Session-Cookie oder mit einem API-Schlüssel über `withApiAuth`.
+
+</Callout>
+
+### Basis-URL
+
+```text
+https://app.talkturo.com
+```
+
+### Authentifizierung
+
+<ParamField header="Authorization" param-type="string" required="false">
+Verwenden Sie `Bearer tk_example_9xmk7q2r`, wenn Sie einen API-Schlüssel senden. Wenn Sie mit einer Browser-Sitzung arbeiten, wird stattdessen das Session-Cookie verwendet.
+</ParamField>
+
+## Gruppen auflisten
+
+Rufen Sie alle Gruppen eines Teams ab und filtern Sie optional nach dem Gruppennamen.
+
+### Endpunkt
+
+```http
+GET /api/crm/groups
+```
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/groups?teamId=9f3d2c41-6b5e-4d4f-9b7c-0f1a2b3c4d5e&search=Sales" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "groups": [
+    {
+      "id": "c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132",
+      "team_id": "9f3d2c41-6b5e-4d4f-9b7c-0f1a2b3c4d5e",
+      "name": "Sales",
+      "is_default": false,
+      "created_at": "2025-01-15T10:30:00.000Z",
+      "updated_at": "2025-01-20T08:45:00.000Z",
+      "created_by": "2a7e4f10-0f93-4a55-a4b0-51b5ec2d8f11",
+      "contact_count": 42
+    }
+  ],
+  "count": 1
+}
+```
+</Response>
+
+### Query-Parameter
+
+<ParamField query="teamId" param-type="string" required="true">
+Workspace-ID des Teams. Bei Session-Authentifizierung ist dieser Wert erforderlich. Bei API-Schlüsseln wird das Team aus dem Schlüsselkontext abgeleitet.
+</ParamField>
+
+<ParamField query="search" param-type="string" required="false">
+Optionaler `ilike`-Filter für den Gruppennamen.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="groups" field-type="array" required="true">
+Liste der gefundenen Gruppen.
+</ResponseField>
+
+<ResponseField name="count" field-type="number" required="true">
+Anzahl der zurückgegebenen Gruppen.
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+Eindeutige UUID der Gruppe.
+</ResponseField>
+
+<ResponseField name="team_id" field-type="string" required="true">
+UUID des Teams, zu dem die Gruppe gehört.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">
+Anzeigename der Gruppe.
+</ResponseField>
+
+<ResponseField name="is_default" field-type="boolean" required="true">
+Kennzeichnet, ob es sich um die Standardgruppe des Teams handelt.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Zeitpunkt der Erstellung im ISO-Format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Zeitpunkt der letzten Aktualisierung im ISO-Format.
+</ResponseField>
+
+<ResponseField name="created_by" field-type="string" required="true">
+UUID des Benutzers, der die Gruppe erstellt hat.
+</ResponseField>
+
+<ResponseField name="contact_count" field-type="number" required="true">
+Exakte Anzahl der Kontakte in dieser Gruppe.
+</ResponseField>
+
+### Fehlercodes
+
+- `400` — `teamId` fehlt
+- `500` — Datenbankfehler oder unerwarteter Serverfehler
+
+## Gruppe erstellen
+
+Erstellen Sie eine neue Gruppe in einem Team. Der Gruppenname muss innerhalb des Teams eindeutig sein.
+
+### Endpunkt
+
+```http
+POST /api/crm/groups
+```
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/groups" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -d '{
+    "teamId": "9f3d2c41-6b5e-4d4f-9b7c-0f1a2b3c4d5e",
+    "name": "Enterprise Leads"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "group": {
+    "id": "d2a7b3aa-8d7a-43f1-92bc-4a9c6f57a8e1",
+    "team_id": "9f3d2c41-6b5e-4d4f-9b7c-0f1a2b3c4d5e",
+    "name": "Enterprise Leads",
+    "is_default": false,
+    "created_at": "2025-01-21T09:15:00.000Z",
+    "updated_at": "2025-01-21T09:15:00.000Z",
+    "created_by": "2a7e4f10-0f93-4a55-a4b0-51b5ec2d8f11"
+  }
+}
+```
+</Response>
+
+### Request-Body
+
+<ParamField body="teamId" param-type="string" required="true">
+Workspace-ID des Teams. Bei Session-Authentifizierung ist dieser Wert erforderlich. Bei API-Schlüsseln wird `teamId` ignoriert und das Team des Schlüssels verwendet.
+</ParamField>
+
+<ParamField body="name" param-type="string" required="true">
+Name der Gruppe. Der Name muss innerhalb des Teams eindeutig sein.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Gruppe erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+Die neu erstellte Gruppe.
+</ResponseField>
+
+### Fehlercodes
+
+- `400` — `teamId` oder `name` fehlt oder der Gruppenname existiert bereits
+- `500` — Datenbankfehler oder unerwarteter Serverfehler
+
+## Gruppe mit Kontakten abrufen
+
+Rufen Sie eine einzelne Gruppe zusammen mit bis zu 100 Kontakten ab. Die Kontakte werden zuerst nach dem neuesten `added_at` zurückgegeben.
+
+### Endpunkt
+
+```http
+GET /api/crm/groups/{id}
+```
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "group": {
+    "id": "c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132",
+    "team_id": "9f3d2c41-6b5e-4d4f-9b7c-0f1a2b3c4d5e",
+    "name": "Sales",
+    "is_default": false,
+    "created_at": "2025-01-15T10:30:00.000Z",
+    "updated_at": "2025-01-20T08:45:00.000Z",
+    "created_by": "2a7e4f10-0f93-4a55-a4b0-51b5ec2d8f11",
+    "contacts": [
+      {
+        "id": "7c1a91b4-52fd-44e1-bbd4-8f75a2d4e7d9",
+        "first_name": "Mara",
+        "last_name": "Schneider",
+        "email": "mara.schneider@acme.de",
+        "phone": "+49-30-555-0188",
+        "job_title": "Head of Operations",
+        "lead_status": "qualified"
+      }
+    ],
+    "contact_count": 200
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Gruppe.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+Die angeforderte Gruppe mit ihren Kontakten und der Gesamtanzahl der Kontakte.
+</ResponseField>
+
+<ResponseField name="contacts" field-type="array" required="true">
+Bis zu 100 Kontakte aus der Gruppe, sortiert nach dem neuesten `added_at`.
+</ResponseField>
+
+<ResponseField name="contact_count" field-type="number" required="true">
+Gesamtanzahl der Kontakte in der Gruppe.
+</ResponseField>
+
+<ResponseField name="first_name" field-type="string" required="true">
+Vorname des Kontakts.
+</ResponseField>
+
+<ResponseField name="last_name" field-type="string" required="true">
+Nachname des Kontakts.
+</ResponseField>
+
+<ResponseField name="email" field-type="string" required="true">
+E-Mail-Adresse des Kontakts.
+</ResponseField>
+
+<ResponseField name="phone" field-type="string" required="true">
+Telefonnummer des Kontakts.
+</ResponseField>
+
+<ResponseField name="job_title" field-type="string" required="true">
+Berufsbezeichnung des Kontakts.
+</ResponseField>
+
+<ResponseField name="lead_status" field-type="string" required="true">
+Aktueller Lead-Status des Kontakts.
+</ResponseField>
+
+### Fehlercodes
+
+- `401` — kein `accountId` im Authentifizierungskontext
+- `404` — Gruppe nicht gefunden
+- `500` — Datenbankfehler oder unerwarteter Serverfehler
+
+## Gruppe aktualisieren
+
+Benennen Sie eine bestehende Gruppe um. Über diesen Endpunkt können Sie nur den Namen ändern.
+
+### Endpunkt
+
+```http
+PUT /api/crm/groups/{id}
+```
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r" \
+  -d '{
+    "name": "Outbound Priority"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "group": {
+    "id": "c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132",
+    "team_id": "9f3d2c41-6b5e-4d4f-9b7c-0f1a2b3c4d5e",
+    "name": "Outbound Priority",
+    "is_default": false,
+    "created_at": "2025-01-15T10:30:00.000Z",
+    "updated_at": "2025-01-22T07:20:00.000Z",
+    "created_by": "2a7e4f10-0f93-4a55-a4b0-51b5ec2d8f11"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Gruppe, die Sie aktualisieren möchten.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="name" param-type="string" required="false">
+Neuer Name der Gruppe. Wenn `name` gesendet wird, darf der Wert nicht leer sein.
+</ParamField>
+
+<Callout kind="info">
+
+`is_default` kann über diesen Endpunkt nicht bearbeitet werden.
+
+</Callout>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Aktualisierung erfolgreich war.
+</ResponseField>
+
+<ResponseField name="group" field-type="object" required="true">
+Die aktualisierte Gruppe.
+</ResponseField>
+
+### Fehlercodes
+
+- `400` — leerer Name oder doppelter Gruppenname
+- `401` — kein `accountId` im Authentifizierungskontext
+- `404` — Gruppe nicht gefunden
+- `500` — Datenbankfehler oder unerwarteter Serverfehler
+
+## Gruppen können nicht gelöscht werden
+
+Der Lösch-Endpunkt ist vorhanden, unterstützt das Löschen von Gruppen aber nicht.
+
+### Endpunkt
+
+```http
+DELETE /api/crm/groups/{id}
+```
+
+<Callout kind="alert">
+
+Dieser Endpunkt gibt immer `405 Method Not Allowed` zurück. Löschen Sie Gruppen nicht über die API. Benennen Sie die Gruppe stattdessen um oder lassen Sie sie ungenutzt.
+
+</Callout>
+
+<Request>
+```bash
+curl -X DELETE "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132" \
+  -H "Authorization: Bearer tk_example_9xmk7q2r"
+```
+</Request>
+
+<Response>
+```json
+{
+  "error": "Groups cannot be deleted. Rename it instead, or leave it unused."
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Gruppe.
+</ParamField>
+
+### Fehlercodes
+
+- `405` — Methode nicht erlaubt; Gruppen können nicht gelöscht werden
+
+## Verwandte Ressourcen
+
+<Columns cols={2}>
+  <Card title="CRM-Kontakte" href="/de/api-reference/crm-contacts" icon="users" cta="Zur Referenz" />
+  <Card title="CRM-Kampagnen" href="/de/api-reference/crm-campaigns" icon="rocket" cta="Zur Referenz" />
+</Columns>
