@@ -8,6 +8,27 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-27" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Begrüßung für eingehende Anrufe** — Assistenten können jetzt eine eigene Begrüßung für eingehende Anrufe, Rückrufe und Web-Anrufe verwenden, während ausgehende Anrufe die ursprüngliche erste Nachricht behalten. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Maximale Anrufdauer für Kampagnen** — Lege ein Limit von 1–60 Minuten pro Anruf in den Kampagneneinstellungen fest; Anrufe, die das Limit überschreiten, werden automatisch beendet. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Do-Not-Call-Tracking** — Do-Not-Call-Statistiken auf Kampagnen- und Kontakt-Ebene sind jetzt in der Kampagnendetailansicht sichtbar. Kampagnen pausieren zudem automatisch, wenn das Guthaben erschöpft ist. Siehe [Kampagnen](/de/campaigns/overview).
+
+  ## Verbesserungen
+
+  - **Aktualisierte LLM- und Realtime-Modellliste** — Google Gemini 3.x-Modelle, DeepSeek V4 Pro und Kimi K2.6 sind jetzt verfügbar. Qwen wurde entfernt und Gemini Live `-latest` ist der empfohlene Standard für Realtime. Siehe [Features](/de/features).
+  - **Detaillierte Anrufkosten-Aufschlüsselung** — Anrufprotokolle zeigen jetzt Plattform-, Telefonie-, Realtime-, TTS- und STT-Kostenzeilen mit Ergebnisfilterung, sodass du genau siehst, wohin dein Guthaben fließt. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Telefonie-Zuverlässigkeit** — Wenn Telefonnummern zwischen Assistenten verschoben werden, werden SIP-Trunks und Dispatch-Regeln automatisch abgeglichen, veraltete Ressourcen bereinigt und ein-/ausgehende Anrufe deaktiviert, wenn keine Nummern mehr zugewiesen sind. Siehe [Telefonie](/de/telephony).
+
+  ## Bugfixes
+
+  - **Telefonie-Speichern für Twilio-Assistenten** — Behoben: 500-Fehler beim Speichern von Telefonie-Einstellungen für Twilio-basierte Assistenten. Twilio-Nummern werden nicht mehr an die Telnyx-Verbindung gesendet und eine leere Telnyx-Verbindung wird korrekt behandelt. Siehe [Telefonie](/de/telephony).
+  - **Erkennung von Anrufbeantworter-Einstellungen** — Das Ändern von Anrufbeantworter-Erkennung, -Aktion oder -Nachricht aktiviert jetzt korrekt die Speichern-Schaltfläche im Telefonie-Tab.
+  - **CRM-Gruppen-Dispatch-Regeln** — Eingehende Anrufe werden nach einer Gruppenänderung jetzt an die korrekte CRM-Gruppe geroutet, statt bei der alten zu bleiben. Siehe [Telefonie](/de/telephony).
+  - **Abrechnungs-Guthaben-Schutz** — Unbekannte Stripe-Produkte vergeben keine Phantom-Guthaben mehr. Nur erkannte Guthabenprodukte erzeugen Guthaben, was unerwartete Kontostandsänderungen verhindert. Siehe [Abrechnung](/de/billing).
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
