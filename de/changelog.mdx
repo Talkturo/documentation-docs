@@ -8,6 +8,34 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Kontaktgruppen** — Organisiere Kontakte in Gruppen für gezielte Kampagnen-Ansprache. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Delta-Zielgruppenmodus** — Beim Erstellen einer Kampagne kannst du wählen, nur Kontakte anzurufen, die noch nicht angerufen wurden, nach einem bestimmten Datum hinzugefügt wurden oder aus einem bestimmten Import stammen — statt der gesamten Gruppe. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Zielgruppen-Vorschau** — Sieh vor dem Start einer Kampagne, wie viele Kontakte eingeschrieben werden. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Live-Kampagnen** — Halte Kampagnen kontinuierlich offen für neue Kontakte, die einer Gruppe hinzugefügt werden, sodass neu importierte Kontakte automatisch eingeschrieben werden. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Import-Charge-Tracking** — CSV-Importe werden als Chargen erfasst, wodurch Delta-Zielgruppenfilter nach spezifischem Import möglich werden. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Aktionen für geplante Kampagnen** — Starte jetzt, kehre zum Entwurf zurück oder brich geplante Kampagnen direkt aus der Kampagnenliste oder Detailansicht ab. Siehe [Kampagnen](/de/campaigns/overview).
+
+  ## Verbesserungen
+
+  - **In-App-Bestätigung beim Löschen von Kontakten** — Beim Löschen eines Kontakts erscheint jetzt ein klares Bestätigungsdialog mit dem Namen des Kontakts, das den Standard-Browser-Dialog ersetzt. Siehe [Kontakte](/de/crm/contacts).
+  - **Inline-Validierung im Kampagnenformular** — Fehlende Felder im Kampagnen-Erstellungsdialog werden jetzt direkt im Formular hervorgehoben, nicht nur als Toast-Benachrichtigung. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Schnellere Aktualisierung der Kampagnenliste** — Die Kampagnenliste aktualisiert sich sofort nach dem Erstellen einer neuen Kampagne.
+  - **Neueinschreibung plant neu** — Das erneute Hinzufügen eines Kontakts, der bereits in einer Kampagne ist, plant jetzt dessen nächsten Anruf neu, statt ihn zu überspringen.
+  - **Aktualisierte Kampagnen-Startbenachrichtigung** — Die Startbestätigung spiegelt jetzt die tatsächliche ~15-Sekunden-Startzeit des Dialers wider.
+
+  ## Bugfixes
+
+  - **Race-Condition bei Kampagnenerstellung** — Der Kampagnen-Erstellungsdialog kann nicht mehr während des Sendens geschlossen werden, was unvollständige Kampagnen-Setups verhindert.
+  - **Delta-Filter-Zurücksetzung** — Beim Wechsel vom Delta-Modus zurück zu „Alle berechtigten" werden jetzt alle Delta-Filter korrekt zurückgesetzt.
+  - **Do-Not-Call-Behandlung** — Kontakte ohne gesetztes Do-Not-Call-Flag werden nicht mehr fälschlich von Kampagnen ausgeschlossen.
+  - **Behandlung leerer Filter** — Die Auswahl von keinen Kontakten oder Import-Chargen führt jetzt korrekt zu keinen Treffern statt zur Einschreibung der gesamten Gruppe.
+  - **Webhook-Secret-Exposition** — Webhook-Secrets werden nicht mehr in Kampagnen-API-Antworten zurückgegeben.
+  - **Kampagnen-Aktivierungsreihenfolge** — Kampagnen werden jetzt erst aktiviert, nachdem Kontakte erfolgreich eingeschrieben wurden, was leere Kampagnen-Starts verhindert.
+</Update>
+
 <Update label="2026-08-22" description="v2.8.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

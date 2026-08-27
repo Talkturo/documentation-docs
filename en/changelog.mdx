@@ -8,6 +8,34 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Contact groups** — Organize contacts into groups for targeted campaign outreach. See [Campaigns](/en/campaigns/overview).
+  - **Delta audience mode** — When creating a campaign, choose to dial only contacts not yet called, added after a specific date, or from a specific import — instead of the entire group. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Audience preview** — Preview how many contacts will be enrolled before launching a campaign. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Live campaigns** — Keep campaigns continuously open for new contacts added to a group, so newly imported contacts are automatically enrolled. See [Campaigns](/en/campaigns/overview).
+  - **Import batch tracking** — CSV imports are tracked as batches, enabling delta audience filters by specific import. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Scheduled campaign actions** — Start now, revert to draft, or cancel scheduled campaigns directly from the campaign list or detail view. See [Campaigns](/en/campaigns/overview).
+
+  ## Improvements
+
+  - **In-app contact deletion confirmation** — Deleting a contact now shows a clear confirmation dialog with the contact's name, replacing the browser's default prompt. See [Contacts](/en/crm/contacts).
+  - **Inline campaign form validation** — Missing fields in the campaign creation dialog are now highlighted directly in the form, not just as a toast notification. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Faster campaign list refresh** — The campaign list updates immediately after creating a new campaign.
+  - **Re-enrollment reschedules in place** — Re-adding a contact already in a campaign now reschedules their next call instead of skipping them.
+  - **Updated campaign start notification** — The start confirmation now reflects the actual ~15-second dialer startup time.
+
+  ## Bug Fixes
+
+  - **Campaign creation race condition** — The campaign creation dialog can no longer be closed mid-submit, preventing incomplete campaign setups.
+  - **Delta filter reset** — Switching from delta mode back to "all eligible" now correctly clears all delta filters.
+  - **Do-Not-Call handling** — Contacts with an unset Do-Not-Call flag are no longer incorrectly excluded from campaigns.
+  - **Empty filter handling** — Selecting no contacts or import batches now correctly matches no contacts instead of enrolling the entire group.
+  - **Webhook secret exposure** — Webhook secrets are no longer returned in campaign API responses.
+  - **Campaign activation timing** — Campaigns now activate only after contacts are successfully enrolled, preventing empty campaign starts.
+</Update>
+
 <Update label="2026-08-22" description="v2.8.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
