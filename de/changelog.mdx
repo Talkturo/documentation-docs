@@ -8,6 +8,31 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-27" description="v2.10.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Separate eingehende Begrüßung** — Assistenten können jetzt eine eigene Begrüßung für eingehende Anrufe, Rückrufe und Web-Anrufe haben, unabhängig von der ausgehenden Eröffnungsnachricht. Verfügbar im Prompt-Tab mit Unterstützung für CRM-Variablen. Siehe [Assistenten](/de/assistants/configuration).
+  - **Do-Not-Call-Ergebnisse bei Live-Anrufen** — Sprachanrufe können jetzt ein Do-Not-Call-Ergebnis aufzeichnen. Kontakte behalten Grund, Zeitstempel und Quelle der Anfrage, und Kampagnen zeigen DNC-Zähler und Badges. Siehe [Kampagnen](/de/campaigns/overview).
+
+  ## Verbesserungen
+
+  - **Aktualisiertes LLM-Modellverzeichnis** — DeepSeek V4 Pro und Kimi K2.6 hinzugefügt, ausgemusterte Gemini 2.x durch aktuelle 3.x-Modelle ersetzt und Gemini Live auf die Empfehlung des `-latest`-Modellbezeichners aktualisiert. Nicht mehr verfügbare Qwen-Modelle entfernt. Siehe [Features](/de/features).
+  - **Verbesserte Kostentransparenz** — Anrufdetails zeigen jetzt Telefonie- und Echtzeit-Kostenzeilen, STT/TTS-Dauerdetails sowie Plattform- und Carrier-Minuten-Komponenten in Kostenschätzungen. Conversations unterstützt außerdem das Filtern nach Anrufergebnis. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Pause-Grund bei unzureichendem Guthaben** — Pausierte Kampagnen erklären jetzt, wenn unzureichendes Guthaben die Pause verursacht hat, und der Grund wird beim Fortsetzen automatisch gelöscht.
+  - **Maximale Anrufdauer bei Kampagnen** — Die maximale Anrufdauer wird jetzt korrekt gespeichert und während der Kampagnenausführung angewendet.
+  - **Gelöschte Kampagnen sind schreibgeschützt** — Gelöschte Kampagnen können nicht mehr gestartet, pausiert, fortgesetzt oder erneut gelöscht werden. Siehe [Kampagnen](/de/campaigns/overview).
+
+  ## Bugfixes
+
+  - **CRM-Gruppen-Dispatch-Routing** — Das Ändern der CRM-Gruppe eines Assistenten erstellt jetzt die Dispatch-Regel neu, sodass eingehende Anrufe der richtigen Gruppe zugeordnet werden. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Telefonie-Speichern für Twilio-Workspaces** — Leere Telnyx-Verbindungswerte werden als „keine Verbindung" statt als Fehler behandelt, und das Ändern von Voicemail-Einstellungen aktiviert die Speichern-Schaltfläche korrekt. Siehe [Telefonie](/de/telephony).
+  - **Assistenten-Speichern erhält Trunk-Kennungen** — Assistenten-Speichern überschreibt keine LiveKit-eigenen Trunk-Kennungen mehr. Telefonie-Steuerungen bleiben speicherbar, wenn die zuletzt zugewiesene Telefonnummer deaktiviert oder entfernt wird. Siehe [Telefonie](/de/telephony).
+  - **Unbekannte Stripe-Produkte** — Unerkannte Stripe-Zahlungen erstellen keine Credits mehr über eine Fallback-Rate. Sie bleiben als Zahlungen sichtbar, ohne den Guthabenstand zu beeinflussen. Siehe [Abrechnung](/de/billing).
+  - **Anzeige unbeantworteter Anrufe** — Unbeantwortete Anrufe in Conversations zeigen jetzt die tatsächliche Anrufzeit und lassen eine irreführende Dauer weg, statt epochenbasierte Daten anzuzeigen. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Bereinigung von Kampagnen-Vorschau-Entwürfen** — Das Abbrechen eines Kampagnen-Vorschau-Entwurfs wartet jetzt auf die Löschung, bevor die Kampagnenliste aktualisiert wird.
+  - **Onboarding-Validierung** — Die Konfiguration des Anrufzusammenfassungs-Empfängers erfordert jetzt einen Empfänger, und Verwerfen macht nichts, wenn kein Entwurf vorhanden ist.
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
@@ -104,7 +129,7 @@ Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von T
   ## Neue Features
 
   - **Detaillierte Carrier-Ablehnung pro Dokument** — Wenn ein Carrier ein Verifizierungsdokument ablehnt, siehst du jetzt genau, welches Dokument abgelehnt wurde und warum, und kannst nur dieses Dokument ersetzen, statt den gesamten Antrag neu einzureichen. Siehe [Telefonie](/de/telephony).
-  - **Carrier-Anforderungen im Vergleich** — Vor der Auswahl eines Carriers für die regulatorische Verifizierung siehst du eine Seiten-an-Seiten-Übersicht, was jeder Carrier verlangt — Anzahl der Positionen und Dokumente —, damit du die einfachere Option vorab wählen kannst. Siehe [Telefonie](/de/telephony).
+  - **Carrier-Anforderungen im Vergleich** — Vor der Auswahl eines Carriers für die regulatorische Verifizierung siehst du eine Seiten-an-Seite-Übersicht, was jeder Carrier verlangt — Anzahl der Positionen und Dokumente —, damit du die einfachere Option vorab wählen kannst. Siehe [Telefonie](/de/telephony).
   - **Adressbasierte Stadt für Verifizierung** — Die Verifizierungsstadt wird jetzt aus der eingegebenen Adresse abgeleitet statt aus einem Dropdown-Menü. Das verhindert stille Fehler und unterstützt Unternehmen mit Sitz in beliebigen Städten. Eine „Weiteren Standort hinzufügen"-Schaltfläche ermöglicht Unternehmen mit mehreren Büros separate Verifizierungen einzureichen. Siehe [Telefonie](/de/telephony).
   - **„Beim Carrier nachprüfen"-Schaltfläche** — Löse manuell eine Live-Statusabfrage beim Carrier für ausstehende Verifizierungen aus, anstatt auf die nächste automatische Synchronisation zu warten. Siehe [Telefonie](/de/telephony).
 

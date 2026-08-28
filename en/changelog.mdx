@@ -8,6 +8,31 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-27" description="v2.10.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Separate inbound greeting** — Assistants can now have a dedicated greeting for inbound calls, callbacks, and web calls, independent of the outbound opening message. Available in the Prompt tab with support for CRM variables. See [Assistants](/en/assistants/configuration).
+  - **Do-Not-Call outcomes on live calls** — Voice calls can now record a do-not-call outcome. Contacts retain the reason, timestamp, and source of the request, and campaigns show DNC counts and badges. See [Campaigns](/en/campaigns/overview).
+
+  ## Improvements
+
+  - **Updated LLM model catalogue** — Added DeepSeek V4 Pro and Kimi K2.6, replaced retired Gemini 2.x with current 3.x models, and updated Gemini Live to recommend the `-latest` model identifier. Removed Qwen models no longer available. See [Features](/en/features).
+  - **Improved cost visibility** — Call details now show telephony and realtime cost lines, STT/TTS duration details, and platform and carrier-minute components in cost estimates. Conversations also supports filtering by call outcome. See [Call Logs](/en/call-logs).
+  - **Insufficient-credits pause reason** — Paused campaigns now explain when insufficient credits caused the pause, and the reason clears automatically once the campaign resumes.
+  - **Campaign max call duration** — Maximum call duration is now correctly stored and applied during campaign execution.
+  - **Deleted campaigns are read-only** — Deleted campaigns can no longer be started, paused, resumed, or deleted again. See [Campaigns](/en/campaigns/overview).
+
+  ## Bug Fixes
+
+  - **CRM group dispatch routing** — Changing an assistant's CRM group now rebuilds its inbound dispatch rule so new inbound calls are filed into the correct group. See [Campaigns](/en/campaigns/overview).
+  - **Telephony save for Twilio workspaces** — Empty Telnyx connection values are treated as "no connection" instead of an error, and changing voicemail settings correctly enables the Save button. See [Telephony](/en/telephony).
+  - **Assistant saves preserve trunk identifiers** — Assistant saves no longer overwrite LiveKit-owned trunk identifiers. Telephony controls remain saveable when the last assigned phone number is disabled or removed. See [Telephony](/en/telephony).
+  - **Unknown Stripe products** — Unrecognized Stripe payments no longer create credits using a fallback rate. They remain visible as payments without affecting the credit balance. See [Billing](/en/billing).
+  - **Unanswered call display** — Unanswered calls in Conversations now show the actual placed time and omit a misleading duration instead of rendering epoch-based dates. See [Call Logs](/en/call-logs).
+  - **Campaign preview-draft cleanup** — Canceling a campaign preview draft now waits for deletion before refreshing the campaign list.
+  - **Onboarding validation** — Call-summary configuration now requires a recipient, and discarding does nothing when there's no draft to discard.
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
@@ -310,4 +335,3 @@ Track upcoming priorities for Talkturo's voice AI features.
 <Callout kind="info" collapsed="false">
   Subscribe to our changelog RSS feed or join the support mailing list at [info@talkturo.ai](mailto:info@talkturo.ai) for instant notifications.
 </Callout>
-
