@@ -8,6 +8,35 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-29" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Onboarding-Assistent** — Neue Workspaces werden durch ein mehrstufiges Setup geführt: Unternehmensdetails, Sprachauswahl mit Vorschau, Tool- und Integrationsauswahl, Telefonnummernkauf und eine abschließende Überprüfung. Siehe [Schnellstart](/de/quickstart).
+  - **MCP-Plugin-Verbindungen** — Verbinde externe Tools wie Calendly, Cal.com, HubSpot und Gmail über sicheres OAuth mit deinen Assistenten. Wähle individuell, welche Tools jeder Assistent nutzen darf. Siehe [Integrationen](/de/integrations).
+  - **TurboFlow-Vorlagenbibliothek** — Vorgefertigte Workflow-Vorlagen, die du pro Workspace installieren kannst, inklusive fertiger E-Mail-Tools. Siehe [TurboFlow](/de/turboflow/overview).
+  - **Inbound-Begrüßung** — Lege eine eigene erste Nachricht für eingehende Anrufe fest, getrennt von der Outbound-Begrüßung. Siehe [Assistenten](/de/assistants/configuration).
+  - **Maximale Anrufdauer für Kampagnen** — Lege eine maximale Anrufdauer pro Kampagne fest, um Anrufe im erwarteten Rahmen zu halten. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Do-Not-Call-Badges** — Kontakte mit Do-Not-Call-Flag zeigen jetzt ein sichtbares Badge, und Kampagnenzähler erfassen, wie viele Kontakte ausgeschlossen wurden. Siehe [Kontakte](/de/crm/contacts).
+
+  ## Verbesserungen
+
+  - **Ursprungsabhängige Telefonie-Preisgestaltung** — Kostenschätzungen für Anrufe berücksichtigen jetzt das Ursprungsland, nicht nur das Zielland, sodass die Preise das tatsächliche Carrier-Routing widerspiegeln. Siehe [Abrechnung](/de/billing).
+  - **Aktualisierte LLM-Modellauswahl** — Google Gemini-Modelle auf die aktuelle 3.x-Serie aktualisiert, DeepSeek V4 Pro und Kimi K2.6 hinzugefügt, und ausgemusterte Qwen-Modelle entfernt. Siehe [Features](/de/features).
+  - **Paginierung der CRM-Kontakte** — Die Kontaktliste nutzt jetzt serverseitige Paginierung, sodass große Kontaktdatenbanken schnell laden, ohne an Zeilengrenzen zu stoßen. Siehe [Kontakte](/de/crm/contacts).
+  - **Kampagnen-Kontakt-Status-Synchronisation** — Wenn ein Kampagnen-Anruf abgeschlossen wird, aktualisiert sich der Kontakt-Status im CRM automatisch. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Kostenaufschlüsselung in Konversationen** — Anrufeinträge in der Konversationsansicht zeigen jetzt eine pro-Anruf-Kostenaufschlüsselung. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Pause-Grund bei unzureichendem Guthaben** — Kampagnen, die wegen zu geringem Guthaben pausiert wurden, zeigen den Grund jetzt klar an, und er wird beim Fortsetzen automatisch entfernt. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Anzeige unbeantworteter Anrufe** — Unbeantwortete Anrufe in der Konversationsansicht zeigen jetzt den Zeitpunkt des Anrufs ohne Dauer, statt leer zu erscheinen. Siehe [Anrufprotokolle](/de/call-logs).
+
+  ## Bugfixes
+
+  - **Telefonie-Carrier-Zuordnungsfehler** — Twilio-Telefonnummern werden nicht mehr an Telnyx-Verbindungen übertragen, was fehlerhaftes Routing verhindert. Siehe [Telefonie](/de/telephony).
+  - **Veraltete LiveKit-Trunks** — Nummern, die einem anderen Trunk zugewiesen sind, werden jetzt automatisch entfernt, und veraltete Trunks und Regeln werden bereinigt. Siehe [Telefonie](/de/telephony).
+  - **Randfälle beim Speichern der Telefonie** — Das Speichern von Telefonie-Einstellungen mit einer leeren Telnyx-Verbindung führt nicht mehr zu Fehlern, und das Bearbeiten von Voicemail-Einstellungen aktiviert jetzt korrekt die Speichern-Schaltfläche. Siehe [Telefonie](/de/telephony).
+  - **Unbekannte Stripe-Produkte** — Unbekannte Stripe-Produkte in Abrechnungs-Webhooks gewähren keine Phantom-Guthaben mehr. Siehe [Abrechnung](/de/billing).
+  - **TurboFlow-Connector-Vorschläge** — Der TurboFlow-Assistent schlägt keine Connector mehr vor, die aus dem Produkt entfernt wurden. Siehe [TurboFlow](/de/turboflow/overview).
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

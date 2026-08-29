@@ -8,6 +8,35 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-29" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Onboarding wizard** — New workspaces are guided through a multi-step setup: company details, voice selection with previews, tool and integration selection, phone number purchase, and a final review. See [Quickstart](/en/quickstart).
+  - **MCP plugin connections** — Connect external tools like Calendly, Cal.com, HubSpot, and Gmail to your assistants via secure OAuth. Choose which tools each assistant can use individually. See [Integrations](/en/integrations).
+  - **TurboFlow template library** — Ready-made workflow templates you can install per workspace, including pre-built email tools. See [TurboFlow](/en/turboflow/overview).
+  - **Inbound greeting** — Set a dedicated first message for inbound calls, separate from the outbound greeting. See [Assistants](/en/assistants/configuration).
+  - **Campaign max call duration** — Set a maximum call duration per campaign to keep calls within expected bounds. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Do-Not-Call badges** — Contacts flagged as Do-Not-Call now show a visible badge, and campaign counters track how many contacts were excluded. See [Contacts](/en/crm/contacts).
+
+  ## Improvements
+
+  - **Origin-aware telephony pricing** — Call cost estimates now factor in the origin country, not just the destination, so pricing reflects real carrier routing. See [Billing](/en/billing).
+  - **Updated LLM model selection** — Google Gemini models updated to the latest 3.x series, DeepSeek V4 Pro and Kimi K2.6 added, and retired Qwen models removed. See [Features](/en/features).
+  - **CRM contacts pagination** — The contacts list now uses server-side pagination, so large contact databases load quickly without hitting row limits. See [Contacts](/en/crm/contacts).
+  - **Campaign contact status sync** — When a campaign call completes, the contact's status in CRM updates automatically. See [Campaigns](/en/campaigns/overview).
+  - **Cost breakdown in conversations** — Call entries in the conversations view now show a per-call cost breakdown. See [Call Logs](/en/call-logs).
+  - **Insufficient-credits pause reason** — Campaigns paused due to low credits now display the reason clearly, and it clears automatically on resume. See [Campaigns](/en/campaigns/overview).
+  - **Unanswered call display** — Unanswered calls in the conversations view now show the time the call was placed with no duration, instead of appearing blank. See [Call Logs](/en/call-logs).
+
+  ## Bug Fixes
+
+  - **Telephony carrier mismatch** — Twilio phone numbers are no longer pushed to Telnyx connections, preventing misrouted calls. See [Telephony](/en/telephony).
+  - **Stale LiveKit trunks** — Numbers assigned to a different trunk are now evicted automatically, and stale trunks and rules are cleaned up. See [Telephony](/en/telephony).
+  - **Telephony save edge cases** — Saving telephony settings with an empty Telnyx connection no longer errors, and editing voicemail settings now correctly enables the Save button. See [Telephony](/en/telephony).
+  - **Stripe unknown products** — Unknown Stripe products in billing webhooks no longer grant phantom credits. See [Billing](/en/billing).
+  - **TurboFlow connector suggestions** — The TurboFlow assistant no longer suggests connectors that have been removed from the product. See [TurboFlow](/en/turboflow/overview).
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
