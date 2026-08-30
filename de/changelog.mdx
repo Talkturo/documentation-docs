@@ -8,25 +8,27 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
-<Update label="2026-08-27" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
+<Update label="2026-08-30" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
-  - **Begrüßung für eingehende Anrufe** — Assistenten können jetzt eine eigene Begrüßung für eingehende Anrufe, Rückrufe und Web-Anrufe verwenden, während ausgehende Anrufe die ursprüngliche erste Nachricht behalten. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
-  - **Maximale Anrufdauer für Kampagnen** — Lege ein Limit von 1–60 Minuten pro Anruf in den Kampagneneinstellungen fest; Anrufe, die das Limit überschreiten, werden automatisch beendet. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
-  - **Do-Not-Call-Tracking** — Do-Not-Call-Statistiken auf Kampagnen- und Kontakt-Ebene sind jetzt in der Kampagnendetailansicht sichtbar. Kampagnen pausieren zudem automatisch, wenn das Guthaben erschöpft ist. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Gespeicherte Karten von Agent-Zahlungslinks** — Beim Kauf über einen Agent-Zahlungslink kann die Karte jetzt als Standardzahlungsmethode für den Workspace gespeichert werden. Auto-Reload und zukünftige Abbuchungen verwenden diese Karte automatisch. Siehe [Abrechnung](/de/billing).
+  - **Bis zu 20 gleichzeitige Kampagnen-Anrufe** — Kampagnen unterstützen jetzt bis zu 20 gleichzeitige Anrufe (zuvor 10). Passe das Nebenläufigkeitslimit im Kampagnen-Detailmodal an, während die Kampagne pausiert ist. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Cal.com-Integration auf Talkturo-Infrastruktur** — Die Cal.com-Scheduling-Integration läuft jetzt auf Talkturo-eigenen Servern. Bestehende Verbindungen benötigen ggf. eine einmalige Neuanmeldung. Siehe [Integrationen](/de/integrations).
 
   ## Verbesserungen
 
-  - **Aktualisierte LLM- und Realtime-Modellliste** — Google Gemini 3.x-Modelle, DeepSeek V4 Pro und Kimi K2.6 sind jetzt verfügbar. Qwen wurde entfernt und Gemini Live `-latest` ist der empfohlene Standard für Realtime. Siehe [Features](/de/features).
-  - **Detaillierte Anrufkosten-Aufschlüsselung** — Anrufprotokolle zeigen jetzt Plattform-, Telefonie-, Realtime-, TTS- und STT-Kostenzeilen mit Ergebnisfilterung, sodass du genau siehst, wohin dein Guthaben fließt. Siehe [Anrufprotokolle](/de/call-logs).
-  - **Telefonie-Zuverlässigkeit** — Wenn Telefonnummern zwischen Assistenten verschoben werden, werden SIP-Trunks und Dispatch-Regeln automatisch abgeglichen, veraltete Ressourcen bereinigt und ein-/ausgehende Anrufe deaktiviert, wenn keine Nummern mehr zugewiesen sind. Siehe [Telefonie](/de/telephony).
+  - **Ursprungsabhängige Anrufpreise** — Anrufkosten berücksichtigen jetzt sowohl Ursprungs- als auch Zielland, mit Routentyp-Klassifizierung (Mobil, Festnetz, Sonderrufnummern, Sonstige). Abrechnungsschätzungen und Anrufprotokolle zeigen diese genauere Aufschlüsselung. Siehe [Abrechnung](/de/billing).
+  - **Serverseitige Kontakt-Paginierung** — Kontaktlisten paginieren jetzt über die ersten 100 Datensätze hinaus, mit Seitensteuerung und Gesamtanzahl. Siehe [Kontakte](/de/crm/contacts).
+  - **Kampagnen-Ergebnisse synchronisieren ins CRM** — Abgeschlossene Kampagnen-Anrufe aktualisieren automatisch den CRM-Kontaktstatus — Kontakte wechseln von „neu" zu „kontaktiert" und der letzte Kontaktzeitstempel wird aktualisiert. Siehe [Kontakte](/de/crm/contacts).
+  - **Genauere Kostenschätzungen** — Abrechnungsschätzungen für Assistenten verwenden jetzt die eigene Telefonnummer des Assistenten als Preisursprung für präzisere Kostenschätzungen. Siehe [Abrechnung](/de/billing).
+  - **Automatische SIP-Trunk-Aktualisierung** — Wenn Telefonnummern zwischen Assistenten verschoben werden, werden SIP-Trunks automatisch bereinigt und neu erstellt. Siehe [Telefonie](/de/telephony).
 
   ## Bugfixes
 
-  - **Telefonie-Speichern für Twilio-Assistenten** — Behoben: 500-Fehler beim Speichern von Telefonie-Einstellungen für Twilio-basierte Assistenten. Twilio-Nummern werden nicht mehr an die Telnyx-Verbindung gesendet und eine leere Telnyx-Verbindung wird korrekt behandelt. Siehe [Telefonie](/de/telephony).
-  - **Erkennung von Anrufbeantworter-Einstellungen** — Das Ändern von Anrufbeantworter-Erkennung, -Aktion oder -Nachricht aktiviert jetzt korrekt die Speichern-Schaltfläche im Telefonie-Tab.
-  - **CRM-Gruppen-Dispatch-Regeln** — Eingehende Anrufe werden nach einer Gruppenänderung jetzt an die korrekte CRM-Gruppe geroutet, statt bei der alten zu bleiben. Siehe [Telefonie](/de/telephony).
-  - **Abrechnungs-Guthaben-Schutz** — Unbekannte Stripe-Produkte vergeben keine Phantom-Guthaben mehr. Nur erkannte Guthabenprodukte erzeugen Guthaben, was unerwartete Kontostandsänderungen verhindert. Siehe [Abrechnung](/de/billing).
+  - **Tabelle für Zahlungsmethoden in Produktion wiederhergestellt** — Behoben: Ein Produktionsproblem, bei dem das System für gespeicherte Karten fehlte, was dazu führte, dass Auto-Reload „Keine gespeicherte Karte hinterlegt" meldete. Siehe [Abrechnung](/de/billing).
+  - **Phantom-Guthaben verhindert** — Unbekannte Stripe-Produkte erzeugen keine Guthaben mehr über eine Fallback-Konvertierung, was Phantom-Guthaben verhindert. Siehe [Abrechnung](/de/billing).
+  - **Telefonie-Einstellungen speichern für Twilio-Workspaces** — Twilio-basierte Workspaces können jetzt Telefonie-Einstellungen speichern, ohne wegen fehlender Telnyx-Verbindung abgelehnt zu werden. Siehe [Telefonie](/de/telephony).
+  - **Anrufbeantworter-Änderungen aktivieren Speichern** — Änderungen an Anrufbeantworter-Erkennung, Aktion und Nachricht werden jetzt als ungespeicherte Änderungen erkannt, sodass die Schaltfläche „Speichern" korrekt aktiviert wird. Siehe [Telefonie](/de/telephony).
 </Update>
 
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>

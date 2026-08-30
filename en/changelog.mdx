@@ -8,25 +8,27 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
-<Update label="2026-08-27" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
+<Update label="2026-08-30" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
-  - **Inbound greeting** — Assistants can now use a dedicated greeting for inbound calls, callbacks, and web calls, while outbound calls keep the original first message. See [Assistant Configuration](/en/assistants/configuration).
-  - **Maximum campaign call duration** — Set a cap of 1–60 minutes per call in campaign settings; calls that exceed the limit are ended automatically. See [Campaign Configuration](/en/campaigns/configuration).
-  - **Do-Not-Call tracking** — Campaign and contact-level Do-Not-Call statistics are now visible in the campaign detail view. Campaigns also pause automatically when credits run out. See [Campaigns](/en/campaigns/overview).
+  - **Saved cards from agent payment links** — When someone buys through an agent payment link, their card can now be saved as the default payment method for the workspace. Auto-reload and future charges use this card automatically. See [Billing](/en/billing).
+  - **Up to 20 concurrent campaign calls** — Campaigns now support up to 20 simultaneous calls (up from 10). Adjust the concurrency limit from the campaign detail modal while a campaign is paused. See [Campaigns](/en/campaigns/overview).
+  - **Cal.com integration on Talkturo infrastructure** — The Cal.com scheduling integration now runs on Talkturo-hosted servers. Existing connections may need a one-time reauthorization. See [Integrations](/en/integrations).
 
   ## Improvements
 
-  - **Updated LLM and realtime model list** — Google Gemini 3.x models, DeepSeek V4 Pro, and Kimi K2.6 are now available. Qwen has been removed, and Gemini Live `-latest` is the recommended default for realtime. See [Features](/en/features).
-  - **Detailed call cost breakdowns** — Call logs now show platform, telephony, realtime, TTS, and STT cost lines with outcome filtering, so you can see exactly where credits go. See [Call Logs](/en/call-logs).
-  - **Telephony reliability** — When phone numbers move between assistants, SIP trunks and dispatch rules are reconciled automatically, stale resources are cleaned up, and inbound/outbound calling is disabled when no numbers remain assigned. See [Telephony](/en/telephony).
+  - **Origin-aware call pricing** — Call costs now factor in both the origin and destination country, with route-type classification (mobile, landline, special, other). Billing estimates and call logs reflect this more accurate breakdown. See [Billing](/en/billing).
+  - **Server-side contact pagination** — Contact lists now paginate beyond the first 100 records, with page controls and a total count. See [Contacts](/en/crm/contacts).
+  - **Campaign outcomes sync to CRM** — Completed campaign calls automatically update CRM contact state — contacts move from "new" to "contacted" and last-contacted timestamps are refreshed. See [Contacts](/en/crm/contacts).
+  - **More accurate cost estimates** — Assistant billing estimates now use the assistant's own phone number as the pricing origin for more precise cost projections. See [Billing](/en/billing).
+  - **Automatic SIP trunk reconciliation** — When phone numbers move between assistants, SIP trunks are automatically cleaned up and recreated to match the new assignment. See [Telephony](/en/telephony).
 
   ## Bug Fixes
 
-  - **Twilio assistant telephony saves** — Fixed 500 errors when saving telephony settings for Twilio-based assistants. Twilio numbers are no longer sent to the Telnyx connection, and an empty Telnyx connection is handled correctly. See [Telephony](/en/telephony).
-  - **Voicemail setting detection** — Changing voicemail detection, action, or message now correctly enables the Save button in the Telephony tab.
-  - **CRM group dispatch rules** — Inbound calls are now routed to the correct CRM group after a group change, instead of staying on the old one. See [Telephony](/en/telephony).
-  - **Billing credit safeguard** — Unknown Stripe products no longer grant phantom credits. Only recognized credit products mint credits, preventing unexpected balance changes. See [Billing](/en/billing).
+  - **Payment methods table restored in production** — Fixed a production issue where the saved-card system was missing, causing auto-reload to report "No saved card on file." See [Billing](/en/billing).
+  - **Phantom credit prevention** — Unknown Stripe products no longer create credits through a fallback conversion, preventing phantom credit grants. See [Billing](/en/billing).
+  - **Telephony settings save for Twilio workspaces** — Twilio-based workspaces can now save telephony settings without being rejected for lacking a Telnyx connection. See [Telephony](/en/telephony).
+  - **Voicemail changes enable Save** — Edits to voicemail detection, action, and message are now recognized as unsaved changes, so the Save button activates correctly. See [Telephony](/en/telephony).
 </Update>
 
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
