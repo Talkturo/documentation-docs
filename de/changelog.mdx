@@ -8,6 +8,29 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-30" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Gespeicherte Karten von Agent-Zahlungslinks** — Beim Kauf über einen Agent-Zahlungslink kann die Karte jetzt als Standardzahlungsmethode für den Workspace gespeichert werden. Auto-Reload und zukünftige Abbuchungen verwenden diese Karte automatisch. Siehe [Abrechnung](/de/billing).
+  - **Bis zu 20 gleichzeitige Kampagnen-Anrufe** — Kampagnen unterstützen jetzt bis zu 20 gleichzeitige Anrufe (zuvor 10). Passe das Nebenläufigkeitslimit im Kampagnen-Detailmodal an, während die Kampagne pausiert ist. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Cal.com-Integration auf Talkturo-Infrastruktur** — Die Cal.com-Scheduling-Integration läuft jetzt auf Talkturo-eigenen Servern. Bestehende Verbindungen benötigen ggf. eine einmalige Neuanmeldung. Siehe [Integrationen](/de/integrations).
+
+  ## Verbesserungen
+
+  - **Ursprungsabhängige Anrufpreise** — Anrufkosten berücksichtigen jetzt sowohl Ursprungs- als auch Zielland, mit Routentyp-Klassifizierung (Mobil, Festnetz, Sonderrufnummern, Sonstige). Abrechnungsschätzungen und Anrufprotokolle zeigen diese genauere Aufschlüsselung. Siehe [Abrechnung](/de/billing).
+  - **Serverseitige Kontakt-Paginierung** — Kontaktlisten paginieren jetzt über die ersten 100 Datensätze hinaus, mit Seitensteuerung und Gesamtanzahl. Siehe [Kontakte](/de/crm/contacts).
+  - **Kampagnen-Ergebnisse synchronisieren ins CRM** — Abgeschlossene Kampagnen-Anrufe aktualisieren automatisch den CRM-Kontaktstatus — Kontakte wechseln von „neu" zu „kontaktiert" und der letzte Kontaktzeitstempel wird aktualisiert. Siehe [Kontakte](/de/crm/contacts).
+  - **Genauere Kostenschätzungen** — Abrechnungsschätzungen für Assistenten verwenden jetzt die eigene Telefonnummer des Assistenten als Preisursprung für präzisere Kostenschätzungen. Siehe [Abrechnung](/de/billing).
+  - **Automatische SIP-Trunk-Aktualisierung** — Wenn Telefonnummern zwischen Assistenten verschoben werden, werden SIP-Trunks automatisch bereinigt und neu erstellt. Siehe [Telefonie](/de/telephony).
+
+  ## Bugfixes
+
+  - **Tabelle für Zahlungsmethoden in Produktion wiederhergestellt** — Behoben: Ein Produktionsproblem, bei dem das System für gespeicherte Karten fehlte, was dazu führte, dass Auto-Reload „Keine gespeicherte Karte hinterlegt" meldete. Siehe [Abrechnung](/de/billing).
+  - **Phantom-Guthaben verhindert** — Unbekannte Stripe-Produkte erzeugen keine Guthaben mehr über eine Fallback-Konvertierung, was Phantom-Guthaben verhindert. Siehe [Abrechnung](/de/billing).
+  - **Telefonie-Einstellungen speichern für Twilio-Workspaces** — Twilio-basierte Workspaces können jetzt Telefonie-Einstellungen speichern, ohne wegen fehlender Telnyx-Verbindung abgelehnt zu werden. Siehe [Telefonie](/de/telephony).
+  - **Anrufbeantworter-Änderungen aktivieren Speichern** — Änderungen an Anrufbeantworter-Erkennung, Aktion und Nachricht werden jetzt als ungespeicherte Änderungen erkannt, sodass die Schaltfläche „Speichern" korrekt aktiviert wird. Siehe [Telefonie](/de/telephony).
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

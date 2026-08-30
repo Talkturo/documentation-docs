@@ -8,6 +8,29 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-30" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Saved cards from agent payment links** — When someone buys through an agent payment link, their card can now be saved as the default payment method for the workspace. Auto-reload and future charges use this card automatically. See [Billing](/en/billing).
+  - **Up to 20 concurrent campaign calls** — Campaigns now support up to 20 simultaneous calls (up from 10). Adjust the concurrency limit from the campaign detail modal while a campaign is paused. See [Campaigns](/en/campaigns/overview).
+  - **Cal.com integration on Talkturo infrastructure** — The Cal.com scheduling integration now runs on Talkturo-hosted servers. Existing connections may need a one-time reauthorization. See [Integrations](/en/integrations).
+
+  ## Improvements
+
+  - **Origin-aware call pricing** — Call costs now factor in both the origin and destination country, with route-type classification (mobile, landline, special, other). Billing estimates and call logs reflect this more accurate breakdown. See [Billing](/en/billing).
+  - **Server-side contact pagination** — Contact lists now paginate beyond the first 100 records, with page controls and a total count. See [Contacts](/en/crm/contacts).
+  - **Campaign outcomes sync to CRM** — Completed campaign calls automatically update CRM contact state — contacts move from "new" to "contacted" and last-contacted timestamps are refreshed. See [Contacts](/en/crm/contacts).
+  - **More accurate cost estimates** — Assistant billing estimates now use the assistant's own phone number as the pricing origin for more precise cost projections. See [Billing](/en/billing).
+  - **Automatic SIP trunk reconciliation** — When phone numbers move between assistants, SIP trunks are automatically cleaned up and recreated to match the new assignment. See [Telephony](/en/telephony).
+
+  ## Bug Fixes
+
+  - **Payment methods table restored in production** — Fixed a production issue where the saved-card system was missing, causing auto-reload to report "No saved card on file." See [Billing](/en/billing).
+  - **Phantom credit prevention** — Unknown Stripe products no longer create credits through a fallback conversion, preventing phantom credit grants. See [Billing](/en/billing).
+  - **Telephony settings save for Twilio workspaces** — Twilio-based workspaces can now save telephony settings without being rejected for lacking a Telnyx connection. See [Telephony](/en/telephony).
+  - **Voicemail changes enable Save** — Edits to voicemail detection, action, and message are now recognized as unsaved changes, so the Save button activates correctly. See [Telephony](/en/telephony).
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
