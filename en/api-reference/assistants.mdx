@@ -143,6 +143,10 @@ The assistant name.
 An optional template identifier. When present, Talkturo sets the assistant type from the template.
 </ParamField>
 
+<ParamField body="groupId" param-type="string" required="false">
+An optional CRM group UUID. When provided, the assistant is assigned to this group. If omitted, the assistant uses the default CRM group for the workspace.
+</ParamField>
+
 ### Response fields
 
 <ResponseField name="success" field-type="boolean" required="true">
@@ -670,6 +674,340 @@ Estimated credits-per-minute contribution from STT, TTS, LLM, and telephony comp
 Total estimated credits per minute.
 </ResponseField>
 
+## Telephony phone numbers
+
+List active phone numbers available to an assistant or assign phone numbers to an assistant. The list endpoint returns active, non-deleted numbers belonging to the account when they are either unassigned or already assigned to the requested assistant.
+
+### List phone numbers
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/telephony/phone-numbers`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+The account UUID that owns the assistant and phone numbers.
+</ParamField>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/phone-numbers?accountId=9a6e7d1c-3fd1-4af6-a3ab-b0e9d3ac4a71" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/phone-numbers?accountId=9a6e7d1c-3fd1-4af6-a3ab-b0e9d3ac4a71",
+  {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "numbers": [
+    {
+      "id": "2d4f8a91-0b2e-4d7c-9f31-6c5a8b7e2d10",
+      "phone_number": "+14155550142",
+      "accountKey": "acme-sales",
+      "accountLabel": "Acme Sales",
+      "accountSid": "AC7f3a91d2e4b6c8f0a1b2c3d4e5f6a7b"
+    }
+  ]
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Active, non-deleted phone numbers belonging to the account that are unassigned or already assigned to the assistant. Each number includes `accountKey`, `accountLabel`, and `accountSid` decorations.
+</ResponseField>
+
+### Assign phone numbers
+
+Assign one or more phone numbers to an assistant. Send an empty array to unassign all phone numbers from the assistant.
+
+### Endpoint
+
+`PATCH /api/assistants/{assistantId}/telephony/phone-numbers`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="false">
+The account slug that owns the assistant and phone numbers.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array of UUID strings" required="true">
+Phone number UUIDs to assign. Send an empty array to unassign all phone numbers.
+</ParamField>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X PATCH "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/phone-numbers" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "phoneNumberIds": [
+      "2d4f8a91-0b2e-4d7c-9f31-6c5a8b7e2d10"
+    ]
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/telephony/phone-numbers",
+  {
+    method: "PATCH",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      phoneNumberIds: [
+        "2d4f8a91-0b2e-4d7c-9f31-6c5a8b7e2d10"
+      ]
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "message": "Phone numbers assigned successfully"
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the phone numbers were assigned successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+The value is `Phone numbers assigned successfully`.
+</ResponseField>
+
+<Callout kind="alert">
+
+The endpoint returns `400` when `phoneNumberIds` is not an array, `404` when the account or assistant is not found, `409` when carrier synchronization fails, and `502` when the LiveKit routing rebuild fails.
+
+</Callout>
+
+## Set CRM group
+
+Assign an assistant to a CRM group by sending the account slug and group UUID.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/crm-group`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+The account slug that owns the assistant.
+</ParamField>
+
+<ParamField body="groupId" param-type="string" required="true">
+The CRM group UUID.
+</ParamField>
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/crm-group" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "groupId": "3b7e1c92-6a4d-48f0-9d25-1e8c5a7b4f30"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/crm-group",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      accountSlug: "acme-sales",
+      groupId: "3b7e1c92-6a4d-48f0-9d25-1e8c5a7b4f30"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
+    "group_id": "3b7e1c92-6a4d-48f0-9d25-1e8c5a7b4f30"
+  }
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the CRM group was assigned successfully.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+The assistant with its updated CRM group assignment.
+</ResponseField>
+
+<ResponseField name="assistant.id" field-type="string" required="true">
+The assistant UUID.
+</ResponseField>
+
+<ResponseField name="assistant.group_id" field-type="string" required="true">
+The assigned CRM group UUID.
+</ResponseField>
+
+<ResponseField name="warning" field-type="string" required="false">
+A warning may be returned when the database update succeeds but the LiveKit routing resynchronization fails.
+</ResponseField>
+
+## Test webhook
+
+Queue a synthetic `call.ended` webhook event to verify an assistant's webhook configuration and delivery flow. The assistant must have `webhook_enabled=true`, a `webhook_url`, and a configured `webhook_secret`.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/webhooks/test`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Request body
+
+No request body is required.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/webhooks/test" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/webhooks/test",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "success": true,
+  "delivery_id": "6e2f9a14-7c3b-4d8e-a501-2b6f9c4d7e80",
+  "message": "Test event queued"
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the synthetic webhook event was queued.
+</ResponseField>
+
+<ResponseField name="delivery_id" field-type="string" required="true">
+The UUID of the queued webhook delivery.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+The value is `Test event queued`.
+</ResponseField>
+
+The queued payload uses the `call.ended` event type and includes `source: "test"` so you can distinguish it from a production call event.
+
+<Callout kind="alert">
+
+The endpoint returns `400` when the assistant webhook is not configured and `404` when the assistant is not found.
+
+</Callout>
+
 ## Common response shape
 
 All mutation endpoints on this page return a top-level `success` field. Depending on the operation, the response also includes either an `assistant` object or a `message`.
@@ -702,3 +1040,7 @@ Returned by the delete endpoint.
 | `POST` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Create or update a tool configuration |
 | `DELETE` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Delete tool configuration(s) |
 | `GET` | `/api/assistants/{assistantId}/billing/estimate` | Estimate credits per minute |
+| `GET` | `/api/assistants/{assistantId}/telephony/phone-numbers` | List phone numbers assigned or assignable to an assistant |
+| `PATCH` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Assign phone numbers to an assistant |
+| `POST` | `/api/assistants/{assistantId}/crm-group` | Set the assistant's CRM group |
+| `POST` | `/api/assistants/{assistantId}/webhooks/test` | Send a test webhook event |

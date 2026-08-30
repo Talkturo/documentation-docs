@@ -25,6 +25,10 @@ Basispfad: `/api/assistants`
 | `POST` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Werkzeugkonfiguration erstellen oder aktualisieren |
 | `DELETE` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Werkzeugkonfiguration(en) löschen |
 | `GET` | `/api/assistants/{assistantId}/billing/estimate` | Kostenschätzung pro Minute |
+| `GET` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Telefonnummern auflisten, die einem Assistenten zugeordnet oder zuweisbar sind |
+| `PATCH` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Telefonnummern einem Assistenten zuweisen |
+| `POST` | `/api/assistants/{assistantId}/crm-group` | CRM-Gruppe des Assistenten festlegen |
+| `POST` | `/api/assistants/{assistantId}/webhooks/test` | Test-Webhook-Ereignis senden |
 
 ## Einen Assistenten erstellen
 
@@ -89,6 +93,10 @@ Der Anzeigename des Assistenten.
 
 <ParamField body="templateId" param-type="string" required="false">
 Optionale Vorlagen-ID. Wenn angegeben, setzt Talkturo den Assistententyp aus dieser Vorlage.
+</ParamField>
+
+<ParamField body="groupId" param-type="string" required="false">
+Optionale UUID einer CRM-Gruppe. Wenn angegeben, wird der Assistent dieser Gruppe zugeordnet. Wenn weggelassen, verwendet der Assistent die Standard-CRM-Gruppe des Workspaces.
 </ParamField>
 
 ### Antwortfelder
@@ -617,6 +625,292 @@ Aufschlüsselung der geschätzten Kosten pro Minute nach STT-, TTS-, LLM- und Te
 <ResponseField name="estimated_credits_per_minute" field-type="number" required="true">
 Geschätzte Gesamtkosten pro Minute in Credits.
 </ResponseField>
+
+## Telefonie-Telefonnummern
+
+Mit den Telefonie-Endpunkten listen Sie verfügbare Telefonnummern auf und weisen sie einem Assistenten zu. Der GET-Endpunkt berücksichtigt nur aktive, nicht gelöschte Telefonnummern des Kontos, die keinem Assistenten oder bereits dem angeforderten Assistenten zugeordnet sind.
+
+### Telefonnummern auflisten
+
+Rufen Sie Telefonnummern ab, die dem Konto gehören und für den angegebenen Assistenten verfügbar oder bereits zugewiesen sind.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X GET "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/phone-numbers" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/phone-numbers", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "numbers": [
+    {
+      "accountKey": "acme-sales",
+      "accountLabel": "Acme Sales",
+      "accountSid": "PN7f3a2c1d9e8b6a54"
+    }
+  ]
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, für den verfügbare oder zugewiesene Telefonnummern abgerufen werden.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Aktive, nicht gelöschte Telefonnummern, die dem Konto gehören und keinem anderen Assistenten oder dem angeforderten Assistenten zugeordnet sind.
+</ResponseField>
+
+<ResponseField name="numbers[].accountKey" field-type="string" required="true">
+Interner Kontoschlüssel der Telefonnummer.
+</ResponseField>
+
+<ResponseField name="numbers[].accountLabel" field-type="string" required="true">
+Anzeigename des Kontos, dem die Telefonnummer gehört.
+</ResponseField>
+
+<ResponseField name="numbers[].accountSid" field-type="string" required="true">
+Eindeutige Kennung des Telefoniekontos.
+</ResponseField>
+
+### Telefonnummern zuweisen
+
+Weisen Sie einem Assistenten eine oder mehrere Telefonnummern zu. Ein leeres Array in `phoneNumberIds` hebt alle bestehenden Zuordnungen des Assistenten auf.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X PATCH "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/phone-numbers" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "phoneNumberIds": [
+      "4b6f8e21-5c39-4a7d-91e2-8d6f0b3c2a17",
+      "9c1d7e42-8a56-4f30-b2e9-6a1c5d8f7b04"
+    ]
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/telephony/phone-numbers", {
+  method: "PATCH",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountSlug: "acme-sales",
+    phoneNumberIds: [
+      "4b6f8e21-5c39-4a7d-91e2-8d6f0b3c2a17",
+      "9c1d7e42-8a56-4f30-b2e9-6a1c5d8f7b04"
+    ]
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,404,409,502">
+```json
+{
+  "success": true,
+  "message": "Phone numbers assigned successfully"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dem Telefonnummern zugewiesen werden.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="accountSlug" param-type="string" required="false">
+Optionaler Kontoslug, in dem die Telefonnummern verwaltet werden.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+Array von UUIDs der Telefonnummern, die dem Assistenten zugewiesen werden sollen. Ein leeres Array hebt alle Zuordnungen auf.
+</ParamField>
+
+<Callout kind="alert">
+Der PATCH-Endpunkt kann `400`, `404`, `409` oder `502` zurückgeben, wenn die Anfrage ungültig ist, Ressourcen fehlen, eine Zuordnung kollidiert oder der Telefonieanbieter nicht erreichbar ist.
+</Callout>
+
+## CRM-Gruppe festlegen
+
+Legen Sie die CRM-Gruppe eines Assistenten fest, indem Sie die Konto-UUID beziehungsweise den Kontoslug und die Gruppen-UUID übergeben. Nach der Datenbankaktualisierung synchronisiert Talkturo das LiveKit-Routing.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/crm-group" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme-sales",
+    "groupId": "f2a84c19-6d37-4b50-9e21-7c8d5a3b0f46"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/crm-group", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accountSlug: "acme-sales",
+    groupId: "f2a84c19-6d37-4b50-9e21-7c8d5a3b0f46"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200">
+```json
+{
+  "success": true,
+  "assistant": {
+    "id": "7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e",
+    "group_id": "f2a84c19-6d37-4b50-9e21-7c8d5a3b0f46"
+  }
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen CRM-Gruppe festgelegt wird.
+</ParamField>
+
+### Request-Body
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Der Slug des Kontos, in dem die CRM-Gruppe liegt.
+</ParamField>
+
+<ParamField body="groupId" param-type="string" required="true">
+Die UUID der CRM-Gruppe, die dem Assistenten zugeordnet werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Aktualisierte Kennungen des Assistenten.
+</ResponseField>
+
+<ResponseField name="assistant.id" field-type="string" required="true">
+Die UUID des Assistenten.
+</ResponseField>
+
+<ResponseField name="assistant.group_id" field-type="string" required="true">
+Die UUID der zugewiesenen CRM-Gruppe.
+</ResponseField>
+
+<ResponseField name="warning" field-type="string" required="false">
+Warnung, wenn die LiveKit-Routing-Resynchronisierung nach der Datenbankaktualisierung fehlgeschlagen ist.
+</ResponseField>
+
+## Webhook testen
+
+Senden Sie ein synthetisches `call.ended`-Ereignis, um die konfigurierte Webhook-Zustellung eines Assistenten zu prüfen. Der Assistent muss `webhook_enabled=true`, eine `webhook_url` und ein `webhook_secret` konfiguriert haben.
+
+### Testereignis senden
+
+Der Endpunkt benötigt keinen Request-Body. Talkturo erstellt das Ereignis mit `source: "test"` und reiht es zur Zustellung ein.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/webhooks/test" \
+  -H "Authorization: Bearer tk_test_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/assistants/7d2d1b8f-1f2e-4c24-8d31-6bf0c3d54b4e/webhooks/test", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_test_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,404">
+```json
+{
+  "success": true,
+  "delivery_id": "c8e14a72-3f69-4b05-a921-6d7c2e8f0b43",
+  "message": "Test event queued"
+}
+```
+</Response>
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten, dessen Webhook-Konfiguration getestet wird.
+</ParamField>
+
+### Request-Body
+
+Für diesen Endpunkt ist kein Request-Body erforderlich.
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob das Testereignis erfolgreich zur Zustellung eingereiht wurde.
+</ResponseField>
+
+<ResponseField name="delivery_id" field-type="string" required="true">
+UUID der erzeugten Webhook-Zustellung.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Bestätigung, dass das Testereignis eingereiht wurde.
+</ResponseField>
+
+<Callout kind="alert">
+Der Endpunkt gibt `400` zurück, wenn der Webhook nicht vollständig konfiguriert ist, und `404`, wenn der Assistent nicht gefunden wurde.
+</Callout>
 
 ## Gemeinsame Antwortstruktur
 

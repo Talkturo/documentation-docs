@@ -1,38 +1,122 @@
 ---
 title: CRM-Unternehmen
 description: >-
-  Unternehmen im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen —
-  Organisationsdatensätze mit benutzerdefinierten Feldern und Kontaktzuordnungen
-  verwalten.
+  Veraltete Unternehmensendpunkte im Talkturo-CRM referenzieren, bestehende Datensätze verwalten und auf CRM-Gruppen als Ersatz migrieren.
 ---
 ## Unternehmen im CRM verwalten
 
-Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge aktualisieren, löschen und die zugeordneten Kontakte eines Unternehmens abfragen.
+Die Unternehmensendpunkte im Talkturo-CRM sind veraltet. Verwenden Sie bestehende Endpunkte nur noch für kompatible Lese-, Änderungs- und Löschvorgänge und migrieren Sie neue Organisationsstrukturen zu [CRM-Gruppen](/de/api-reference/crm-groups).
 
 Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung.
 
-<Callout kind="info" collapsed="false">
-  Die Listenansicht unterstützt Seitennummerierung und Suche. Die Detailendpunkte arbeiten mit der Unternehmens-ID aus dem CRM.
+<Callout kind="alert" collapsed="false">
+
+Unternehmen sind deprecated. Das Erstellen neuer Unternehmen mit `POST /api/crm/companies` ist nicht mehr möglich und gibt `410 Gone` zurück. Verwenden Sie CRM-Gruppen als Ersatz für neue Organisationsstrukturen.
+
 </Callout>
 
 ## Endpunktübersicht
 
-| Methode  | Pfad                               | Zweck                                 |
-| -------- | ---------------------------------- | ------------------------------------- |
-| `GET`    | `/api/crm/companies`               | Unternehmen auflisten                 |
-| `POST`   | `/api/crm/companies`               | Unternehmen erstellen                 |
-| `GET`    | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen         |
-| `PATCH`  | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             |
-| `DELETE` | `/api/crm/companies/{id}`          | Unternehmen löschen                   |
-| `GET`    | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten |
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/crm/companies` | Unternehmen auflisten |
+| `POST` | `/api/crm/companies` | Nicht verfügbar, gibt `410 Gone` zurück |
+| `GET` | `/api/crm/companies/{id}` | Einzelnes Unternehmen abrufen |
+| `PATCH` | `/api/crm/companies/{id}` | Unternehmen aktualisieren |
+| `DELETE` | `/api/crm/companies/{id}` | Unternehmen löschen |
+| `GET` | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten |
+
+## Unternehmensobjekt
+
+Ein Unternehmensobjekt enthält CRM-Metadaten, Adressdaten, benutzerdefinierte Felder und die Anzahl zugeordneter Kontakte.
+
+<ResponseField name="id" field-type="string" required="true" deprecated="false">
+  Eindeutige ID des Unternehmens.
+</ResponseField>
+
+<ResponseField name="team_id" field-type="string" required="true" deprecated="false">
+  ID des Teams, dem das Unternehmen zugeordnet ist.
+</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true" deprecated="false">
+  Name des Unternehmens.
+</ResponseField>
+
+<ResponseField name="website" field-type="string" required="false" deprecated="false">
+  Webadresse des Unternehmens, falls hinterlegt.
+</ResponseField>
+
+<ResponseField name="industry" field-type="string" required="false" deprecated="false">
+  Branche oder Marktsegment des Unternehmens.
+</ResponseField>
+
+<ResponseField name="company_size" field-type="string" required="false" deprecated="false">
+  Größenkategorie des Unternehmens.
+</ResponseField>
+
+<ResponseField name="address_line1" field-type="string" required="false" deprecated="false">
+  Erste Zeile der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="address_line2" field-type="string" required="false" deprecated="false">
+  Zweite Zeile der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="city" field-type="string" required="false" deprecated="false">
+  Ort der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="state" field-type="string" required="false" deprecated="false">
+  Bundesland, Kanton oder Region der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="postal_code" field-type="string" required="false" deprecated="false">
+  Postleitzahl der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="country" field-type="string" required="false" deprecated="false">
+  Land der Geschäftsadresse.
+</ResponseField>
+
+<ResponseField name="phone" field-type="string" required="false" deprecated="false">
+  Telefonnummer des Unternehmens.
+</ResponseField>
+
+<ResponseField name="notes" field-type="string" required="false" deprecated="false">
+  Interne Notizen zum Unternehmen.
+</ResponseField>
+
+<ResponseField name="custom_fields" field-type="object" required="false" deprecated="false">
+  Benutzerdefinierte Felder des Unternehmens.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true" deprecated="false">
+  Zeitpunkt der Erstellung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true" deprecated="false">
+  Zeitpunkt der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="created_by" field-type="string" required="false" deprecated="false">
+  ID des Benutzers, der das Unternehmen erstellt hat.
+</ResponseField>
+
+<ResponseField name="updated_by" field-type="string" required="false" deprecated="false">
+  ID des Benutzers, der das Unternehmen zuletzt aktualisiert hat.
+</ResponseField>
+
+<ResponseField name="contact_count" field-type="integer" required="true" deprecated="false">
+  Anzahl der Kontakte, die dem Unternehmen zugeordnet sind.
+</ResponseField>
 
 ## Unternehmen auflisten
 
-Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise abzurufen oder mit einer Suchanfrage zu filtern.
+Rufen Sie `GET /api/crm/companies` auf, um bestehende Unternehmensdatensätze mit Begrenzung und Offset abzurufen oder nach einem Suchbegriff zu filtern.
 
 <Request show-lines="true">
   ```bash
-  curl -X GET "https://api.talkturo.local/api/crm/companies?page=1&limit=20&search=Acme" \
+  curl -X GET "https://api.talkturo.local/api/crm/companies?limit=20&offset=0&search=Acme" \
     -H "Cookie: sb-session=example_session_token"
   ```
 </Request>
@@ -44,31 +128,44 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
     "companies": [
       {
         "id": "cmp_9f2c7a1d",
+        "team_id": "team_7c4e91b2",
         "name": "Acme Industrial Group",
         "website": "https://acme-industrial.com",
-        "industry": "Manufacturing"
-      },
-      {
-        "id": "cmp_2b7d1e4a",
-        "name": "Acme Logistics GmbH",
-        "website": "https://acme-logistics.de",
-        "industry": "Logistics"
+        "industry": "Manufacturing",
+        "company_size": "201-500",
+        "address_line1": "Industriestraße 18",
+        "address_line2": "Building A",
+        "city": "Hamburg",
+        "state": "Hamburg",
+        "postal_code": "20457",
+        "country": "Germany",
+        "phone": "+49 40 55550123",
+        "notes": "Primary manufacturing partner",
+        "custom_fields": {
+          "account_tier": "enterprise"
+        },
+        "created_at": "2024-02-12T09:30:00Z",
+        "updated_at": "2024-06-18T14:45:00Z",
+        "created_by": "usr_4e8a2c19",
+        "updated_by": "usr_4e8a2c19",
+        "contact_count": 12
       }
     ],
-    "total": 42,
-    "page": 1
+    "count": 1,
+    "limit": 20,
+    "offset": 0
   }
   ```
 </Response>
 
 ### Query-Parameter
 
-<ParamField query="page" param-type="integer" required="false" deprecated="false" show-location="true">
-  Die Seitennummer der Ergebnisliste.
+<ParamField query="limit" param-type="integer" required="false" deprecated="false" show-location="true">
+  Maximale Anzahl der zurückgegebenen Unternehmen.
 </ParamField>
 
-<ParamField query="limit" param-type="integer" required="false" deprecated="false" show-location="true">
-  Die maximale Anzahl der zurückgegebenen Unternehmen pro Seite.
+<ParamField query="offset" param-type="integer" required="false" deprecated="false" show-location="true">
+  Anzahl der Datensätze, die vor dem ersten zurückgegebenen Unternehmen übersprungen werden.
 </ParamField>
 
 <ParamField query="search" param-type="string" required="false" deprecated="false" show-location="true">
@@ -85,33 +182,21 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
   Liste der gefundenen Unternehmensdatensätze.
 </ResponseField>
 
-<ResponseField name="companies[].id" field-type="string" required="true" deprecated="false">
-  Eindeutige ID des Unternehmens.
+<ResponseField name="count" field-type="integer" required="true" deprecated="false">
+  Anzahl der in dieser Antwort enthaltenen Unternehmen.
 </ResponseField>
 
-<ResponseField name="companies[].name" field-type="string" required="true" deprecated="false">
-  Name des Unternehmens.
+<ResponseField name="limit" field-type="integer" required="true" deprecated="false">
+  Für die Anfrage verwendete maximale Anzahl von Datensätzen.
 </ResponseField>
 
-<ResponseField name="companies[].website" field-type="string" required="false" deprecated="false">
-  Webadresse des Unternehmens, falls hinterlegt.
-</ResponseField>
-
-<ResponseField name="companies[].industry" field-type="string" required="false" deprecated="false">
-  Branche des Unternehmens, falls hinterlegt.
-</ResponseField>
-
-<ResponseField name="total" field-type="integer" required="true" deprecated="false">
-  Gesamtzahl der Treffer über alle Seiten hinweg.
-</ResponseField>
-
-<ResponseField name="page" field-type="integer" required="true" deprecated="false">
-  Die aktuelle Ergebnisseite.
+<ResponseField name="offset" field-type="integer" required="true" deprecated="false">
+  Für die Anfrage verwendeter Offset.
 </ResponseField>
 
 ## Unternehmen erstellen
 
-Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CRM anzulegen.
+`POST /api/crm/companies` ist veraltet und erstellt keine neuen Unternehmensdatensätze mehr. Jede Anfrage an diesen Endpunkt gibt `410 Gone` zurück.
 
 <Request show-lines="true">
   ```bash
@@ -121,10 +206,33 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
     -d '{
       "name": "Northwind Health Partners",
       "website": "https://northwind-health.com",
-      "industry": "Healthcare",
-      "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
+      "industry": "Healthcare"
     }'
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "error": "Companies are gone. Create a group via POST /api/crm/groups instead."
+  }
+  ```
+</Response>
+
+<Callout kind="info" collapsed="false">
+
+Verwenden Sie [CRM-Gruppen](/de/api-reference/crm-groups), wenn Sie neue Organisationsstrukturen anlegen oder Kontakte gruppieren müssen.
+
+</Callout>
+
+## Einzelnes Unternehmen abrufen
+
+Rufen Sie `GET /api/crm/companies/{id}` auf, um einen bestehenden Unternehmensdatensatz anhand seiner ID abzurufen.
+
+<Request show-lines="true">
+  ```bash
+  curl -X GET "https://api.talkturo.local/api/crm/companies/cmp_9f2c7a1d" \
+    -H "Cookie: sb-session=example_session_token"
   ```
 </Request>
 
@@ -133,60 +241,32 @@ Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CR
   {
     "success": true,
     "company": {
-      "id": "cmp_c4a91e7b",
-      "name": "Northwind Health Partners",
-      "website": "https://northwind-health.com",
-      "industry": "Healthcare",
-      "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
+      "id": "cmp_9f2c7a1d",
+      "team_id": "team_7c4e91b2",
+      "name": "Acme Industrial Group",
+      "website": "https://acme-industrial.com",
+      "industry": "Manufacturing",
+      "company_size": "201-500",
+      "address_line1": "Industriestraße 18",
+      "address_line2": "Building A",
+      "city": "Hamburg",
+      "state": "Hamburg",
+      "postal_code": "20457",
+      "country": "Germany",
+      "phone": "+49 40 55550123",
+      "notes": "Primary manufacturing partner",
+      "custom_fields": {
+        "account_tier": "enterprise"
+      },
+      "created_at": "2024-02-12T09:30:00Z",
+      "updated_at": "2024-06-18T14:45:00Z",
+      "created_by": "usr_4e8a2c19",
+      "updated_by": "usr_4e8a2c19",
+      "contact_count": 12
     }
   }
   ```
 </Response>
-
-### Request-Body
-
-<ParamField body="name" param-type="string" required="true" deprecated="false" show-location="true">
-  Name des Unternehmens.
-</ParamField>
-
-<ParamField body="website" param-type="string" required="false" deprecated="false" show-location="true">
-  Webadresse des Unternehmens.
-</ParamField>
-
-<ParamField body="industry" param-type="string" required="false" deprecated="false" show-location="true">
-  Branche oder Marktsegment des Unternehmens.
-</ParamField>
-
-<ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
-  Telefonnummer des Unternehmens.
-</ParamField>
-
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Postanschrift oder Geschäftsadresse des Unternehmens.
-</ParamField>
-
-### Antwortfelder
-
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
-  Gibt an, ob das Unternehmen erfolgreich erstellt wurde.
-</ResponseField>
-
-<ResponseField name="company" field-type="object" required="true" deprecated="false">
-  Der neu angelegte Unternehmensdatensatz.
-</ResponseField>
-
-<ResponseField name="company.id" field-type="string" required="true" deprecated="false">
-  Eindeutige ID des neuen Unternehmens.
-</ResponseField>
-
-<Callout kind="tip" collapsed="false">
-  Wenn Sie Unternehmensdatensätze später mit Kontakten oder Opportunities verknüpfen möchten, speichern Sie die zurückgegebene `company.id` direkt nach dem Erstellen.
-</Callout>
-
-## Einzelnes Unternehmen abrufen
-
-Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdatensatz anhand seiner ID abzurufen.
 
 ### Pfadparameter
 
@@ -194,7 +274,7 @@ Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdate
   Eindeutige ID des Unternehmens.
 </ParamField>
 
-### Antwortstruktur
+### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true" deprecated="false">
   Gibt an, ob die Anfrage erfolgreich war.
@@ -204,13 +284,41 @@ Rufen Sie `GET /api/crm/companies/{id}` auf, um einen einzelnen Unternehmensdate
   Der angeforderte Unternehmensdatensatz.
 </ResponseField>
 
-<ResponseField name="company.id" field-type="string" required="true" deprecated="false">
-  Eindeutige ID des Unternehmens.
-</ResponseField>
-
 ## Unternehmen aktualisieren
 
 Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehmens zu ändern. Der Endpunkt gibt den aktualisierten Datensatz zurück.
+
+<Request show-lines="true">
+  ```bash
+  curl -X PATCH "https://api.talkturo.local/api/crm/companies/cmp_9f2c7a1d" \
+    -H "Content-Type: application/json" \
+    -H "Cookie: sb-session=example_session_token" \
+    -d '{
+      "industry": "Industrial Technology",
+      "company_size": "501-1000",
+      "notes": "Expanded manufacturing partner"
+    }'
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "success": true,
+    "company": {
+      "id": "cmp_9f2c7a1d",
+      "team_id": "team_7c4e91b2",
+      "name": "Acme Industrial Group",
+      "industry": "Industrial Technology",
+      "company_size": "501-1000",
+      "notes": "Expanded manufacturing partner",
+      "contact_count": 12,
+      "updated_at": "2024-06-19T10:15:00Z",
+      "updated_by": "usr_4e8a2c19"
+    }
+  }
+  ```
+</Response>
 
 ### Pfadparameter
 
@@ -232,15 +340,47 @@ Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehm
   Aktualisierte Branchenangabe.
 </ParamField>
 
+<ParamField body="company_size" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Größenkategorie des Unternehmens.
+</ParamField>
+
+<ParamField body="address_line1" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte erste Zeile der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="address_line2" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte zweite Zeile der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierter Ort der Geschäftsadresse.
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisiertes Bundesland, Kanton oder aktualisierte Region.
+</ParamField>
+
+<ParamField body="postal_code" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte Postleitzahl.
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisiertes Land.
+</ParamField>
+
 <ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
   Aktualisierte Telefonnummer.
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Aktualisierte Geschäftsadresse.
+<ParamField body="notes" param-type="string" required="false" deprecated="false" show-location="true">
+  Aktualisierte interne Notizen.
 </ParamField>
 
-### Antwortstruktur
+<ParamField body="custom_fields" param-type="object" required="false" deprecated="false" show-location="true">
+  Aktualisierte benutzerdefinierte Felder.
+</ParamField>
+
+### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true" deprecated="false">
   Gibt an, ob die Aktualisierung erfolgreich war.
@@ -252,7 +392,22 @@ Senden Sie `PATCH /api/crm/companies/{id}`, um vorhandene Felder eines Unternehm
 
 ## Unternehmen löschen
 
-Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz aus dem CRM zu entfernen.
+Senden Sie `DELETE /api/crm/companies/{id}`, um einen bestehenden Unternehmensdatensatz aus dem CRM zu entfernen.
+
+<Request show-lines="true">
+  ```bash
+  curl -X DELETE "https://api.talkturo.local/api/crm/companies/cmp_9f2c7a1d" \
+    -H "Cookie: sb-session=example_session_token"
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "success": true
+  }
+  ```
+</Response>
 
 ### Pfadparameter
 
@@ -260,19 +415,45 @@ Senden Sie `DELETE /api/crm/companies/{id}`, um einen Unternehmensdatensatz aus 
   Eindeutige ID des zu löschenden Unternehmens.
 </ParamField>
 
-### Antwortstruktur
+### Antwortfelder
 
 <ResponseField name="success" field-type="boolean" required="true" deprecated="false">
   Gibt an, ob der Datensatz erfolgreich gelöscht wurde.
 </ResponseField>
 
 <Callout kind="alert" collapsed="false">
-  Das Löschen eines Unternehmens ist als Operation destruktiv. Prüfen Sie vor dem Entfernen, ob nachgelagerte Prozesse oder verknüpfte Datensätze die Unternehmens-ID noch verwenden.
+
+Das Löschen eines Unternehmens ist destruktiv. Prüfen Sie vor dem Entfernen, ob nachgelagerte Prozesse oder verknüpfte Datensätze die Unternehmens-ID noch verwenden.
+
 </Callout>
 
 ## Kontakte eines Unternehmens auflisten
 
 Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen, die einem Unternehmen zugeordnet sind.
+
+<Request show-lines="true">
+  ```bash
+  curl -X GET "https://api.talkturo.local/api/crm/companies/cmp_9f2c7a1d/contacts" \
+    -H "Cookie: sb-session=example_session_token"
+  ```
+</Request>
+
+<Response show-lines="true">
+  ```json
+  {
+    "success": true,
+    "contacts": [
+      {
+        "id": "cnt_71d4a8c2",
+        "first_name": "Maria",
+        "last_name": "Schmidt",
+        "email": "maria.schmidt@acme-industrial.com",
+        "company_id": "cmp_9f2c7a1d"
+      }
+    ]
+  }
+  ```
+</Response>
 
 ### Pfadparameter
 
@@ -292,7 +473,13 @@ Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen
 
 ## Verwandte Ressourcen
 
-<Columns cols="2">
+<Columns cols={2}>
+  <Card title="CRM-Gruppen" href="/de/api-reference/crm-groups" icon="users" cta="Zum Ersatz" horizontal="false">
+
+    Verwenden Sie CRM-Gruppen für neue Organisationsstrukturen und Gruppierungen.
+
+  </Card>
+
   <Card title="CRM-Kontakte" href="/de/api-reference/crm-contacts" icon="users" cta="Zur Referenz" horizontal="false">
 
   </Card>
@@ -301,4 +488,3 @@ Rufen Sie `GET /api/crm/companies/{id}/contacts` auf, um alle Kontakte abzurufen
 
   </Card>
 </Columns>
-

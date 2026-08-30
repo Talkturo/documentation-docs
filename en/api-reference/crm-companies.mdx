@@ -1,36 +1,42 @@
 ---
 title: CRM Companies
-description: Create, list, update, delete, and retrieve companies in the Talkturo CRM — manage organization records with custom fields and contact associations.
+description: List, retrieve, update, and delete legacy company records in the Talkturo CRM; companies are deprecated, use CRM Groups for new organization records.
 ---
 
-## Manage CRM company records
+## Manage legacy CRM company records
 
-Use the CRM Companies endpoints to store organization records, attach custom fields, and retrieve contacts associated with each company.
+Use the CRM Companies endpoints to list, retrieve, update, and delete existing organization records. Companies are deprecated and cannot be created.
 
-<Callout kind="info">
+<Callout kind="alert">
 
-All CRM Companies endpoints require session cookie authentication. Send requests from an authenticated Talkturo session.
+Companies are deprecated. Creating new companies is no longer supported. `POST /api/crm/companies` returns `410 Gone`. Use CRM Groups (`POST /api/crm/groups`) instead. Existing company records can still be listed, retrieved, updated, and deleted.
 
 </Callout>
 
 ## Endpoints at a glance
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/crm/companies` | List companies |
-| `POST` | `/api/crm/companies` | Create a company |
-| `GET` | `/api/crm/companies/{id}` | Retrieve a company |
-| `PATCH` | `/api/crm/companies/{id}` | Update a company |
-| `DELETE` | `/api/crm/companies/{id}` | Delete a company |
-| `GET` | `/api/crm/companies/{id}/contacts` | List contacts for a company |
+| Method | Endpoint | Purpose | Status |
+| --- | --- | --- | --- |
+| `GET` | `/api/crm/companies` | List companies | Supported |
+| `POST` | `/api/crm/companies` | Create a company | Deprecated, returns `410 Gone` |
+| `GET` | `/api/crm/companies/{id}` | Retrieve a company | Supported |
+| `PATCH` | `/api/crm/companies/{id}` | Update a company | Supported |
+| `DELETE` | `/api/crm/companies/{id}` | Delete a company | Supported |
+| `GET` | `/api/crm/companies/{id}/contacts` | List contacts for a company | Supported |
 
 ## Company object
 
-Company responses return a company record with core fields such as `id`, `name`, `website`, and `industry`. Records may also include additional standard or custom CRM fields stored on the company.
+Company responses include the organization record, audit metadata, custom fields, and the number of associated contacts.
 
 <ResponseField name="id" field-type="string" required="true">
 
 Unique company identifier in UUID format.
+
+</ResponseField>
+
+<ResponseField name="team_id" field-type="string" required="true">
+
+Identifier of the team that owns the company record.
 
 </ResponseField>
 
@@ -52,35 +58,115 @@ Industry label for the company.
 
 </ResponseField>
 
+<ResponseField name="company_size" field-type="string">
+
+Company size classification.
+
+</ResponseField>
+
+<ResponseField name="address_line1" field-type="string">
+
+Primary street address.
+
+</ResponseField>
+
+<ResponseField name="address_line2" field-type="string">
+
+Additional street address information.
+
+</ResponseField>
+
+<ResponseField name="city" field-type="string">
+
+City where the company is located.
+
+</ResponseField>
+
+<ResponseField name="state" field-type="string">
+
+State or region where the company is located.
+
+</ResponseField>
+
+<ResponseField name="postal_code" field-type="string">
+
+Postal or ZIP code for the company address.
+
+</ResponseField>
+
+<ResponseField name="country" field-type="string">
+
+Country where the company is located.
+
+</ResponseField>
+
 <ResponseField name="phone" field-type="string">
 
 Primary phone number for the company.
 
 </ResponseField>
 
-<ResponseField name="address" field-type="string">
+<ResponseField name="notes" field-type="string">
 
-Company address.
+Free-form notes associated with the company.
+
+</ResponseField>
+
+<ResponseField name="custom_fields" field-type="object">
+
+Custom CRM fields stored on the company record.
+
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string">
+
+Timestamp when the company was created.
+
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string">
+
+Timestamp when the company was last updated.
+
+</ResponseField>
+
+<ResponseField name="created_by" field-type="string">
+
+Identifier of the user who created the company.
+
+</ResponseField>
+
+<ResponseField name="updated_by" field-type="string">
+
+Identifier of the user who last updated the company.
+
+</ResponseField>
+
+<ResponseField name="contact_count" field-type="integer">
+
+Number of contacts associated with the company.
 
 </ResponseField>
 
 ## List companies
 
-Retrieve a paginated list of companies. Use `search` to filter results by a search term.
+Retrieve legacy companies with optional team, text, and industry filters. The `search` filter performs a case-insensitive substring match against the company name and website.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://app.talkturo.com/api/crm/companies?page=1&limit=25&search=Acme" \
+curl -X GET "https://app.talkturo.com/api/crm/companies?teamId=team_7f3a91&limit=50&offset=0&search=acme&industry=Manufacturing" \
+  -H "Authorization: Bearer tk_live_example_7f3a91b2c4d5" \
   -H "Cookie: sb-session=example_session_cookie"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://app.talkturo.com/api/crm/companies?page=1&limit=25&search=Acme",
+  "https://app.talkturo.com/api/crm/companies?teamId=team_7f3a91&limit=50&offset=0&search=acme&industry=Manufacturing",
   {
     method: "GET",
     credentials: "include",
     headers: {
+      "Authorization": "Bearer tk_live_example_7f3a91b2c4d5",
       "Content-Type": "application/json"
     }
   }
@@ -98,44 +184,65 @@ console.log(data);
   "companies": [
     {
       "id": "8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132",
+      "team_id": "team_7f3a91",
       "name": "Acme Manufacturing",
       "website": "https://acmemanufacturing.com",
       "industry": "Manufacturing",
+      "company_size": "201-500",
+      "address_line1": "1450 Market Street",
+      "address_line2": "Suite 400",
+      "city": "San Francisco",
+      "state": "CA",
+      "postal_code": "94103",
+      "country": "US",
       "phone": "+1-415-555-0142",
-      "address": "1450 Market Street, San Francisco, CA 94103"
-    },
-    {
-      "id": "d948c0e2-7ed3-4d94-a26b-c73db7fc32ea",
-      "name": "Northwind Health",
-      "website": "https://northwindhealth.com",
-      "industry": "Healthcare",
-      "phone": "+1-312-555-0188",
-      "address": "210 W Madison St, Chicago, IL 60606"
+      "notes": "West Coast manufacturing account",
+      "custom_fields": {
+        "account_tier": "enterprise"
+      },
+      "created_at": "2024-02-14T09:30:00.000Z",
+      "updated_at": "2024-07-22T16:45:00.000Z",
+      "created_by": "usr_4d8e21",
+      "updated_by": "usr_9a7c31",
+      "contact_count": 12
     }
   ],
-  "total": 2,
-  "page": 1
+  "count": 1,
+  "limit": 50,
+  "offset": 0
 }
 ```
 </Response>
 
 ### Query parameters
 
-<ParamField query="page" param-type="integer" required="false">
+<ParamField query="teamId" param-type="string" required="false">
 
-Page number to return.
-
-</ParamField>
-
-<ParamField query="limit" param-type="integer" required="false">
-
-Maximum number of companies to return per page.
+Team identifier used to scope the query. Required when the authenticated request does not resolve an account or team.
 
 </ParamField>
 
 <ParamField query="search" param-type="string" required="false">
 
-Search term used to filter company records.
+Case-insensitive substring filter applied to the company name or website.
+
+</ParamField>
+
+<ParamField query="industry" param-type="string" required="false">
+
+Exact industry value used to filter companies.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximum number of companies to return. Defaults to `50`.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Number of matching companies to skip before returning results. Defaults to `0`.
 
 </ParamField>
 
@@ -149,40 +256,38 @@ Returns `true` when the request succeeds.
 
 <ResponseField name="companies" field-type="array" required="true">
 
-Array of company records for the current page.
+Array of company records matching the filters.
 
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
+<ResponseField name="count" field-type="integer" required="true">
 
-Total number of matching company records.
+Number of company records returned in the current response.
 
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
+<ResponseField name="limit" field-type="integer" required="true">
 
-Current page number in the paginated result.
+Maximum number of companies requested for the response.
+
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+
+Number of matching companies skipped before the returned records.
 
 </ResponseField>
 
 ## Create a company
 
-Create a new company record by sending the company name and any additional fields you want to store.
+Company creation is no longer supported. The endpoint returns `410 Gone` for every request.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/companies" \
+  -H "Authorization: Bearer tk_live_example_7f3a91b2c4d5" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=example_session_cookie" \
-  -d '{
-    "name": "Acme Manufacturing",
-    "website": "https://acmemanufacturing.com",
-    "industry": "Manufacturing",
-    "phone": "+1-415-555-0142",
-    "address": "1450 Market Street, San Francisco, CA 94103",
-    "employee_count": 240,
-    "account_owner": "Maya Patel"
-  }'
+  -H "Cookie: sb-session=example_session_cookie"
 ```
 
 ```javascript
@@ -190,17 +295,9 @@ const response = await fetch("https://app.talkturo.com/api/crm/companies", {
   method: "POST",
   credentials: "include",
   headers: {
+    "Authorization": "Bearer tk_live_example_7f3a91b2c4d5",
     "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    name: "Acme Manufacturing",
-    website: "https://acmemanufacturing.com",
-    industry: "Manufacturing",
-    phone: "+1-415-555-0142",
-    address: "1450 Market Street, San Francisco, CA 94103",
-    employee_count: 240,
-    account_owner: "Maya Patel"
-  })
+  }
 });
 
 const data = await response.json();
@@ -208,79 +305,19 @@ console.log(data);
 ```
 </Request>
 
-<Response tabs="200">
+<Response tabs="410">
 ```json
 {
-  "success": true,
-  "company": {
-    "id": "8b0c9f0d-9c9b-4d5b-9d4f-6d0c2c7f0132",
-    "name": "Acme Manufacturing",
-    "website": "https://acmemanufacturing.com",
-    "industry": "Manufacturing",
-    "phone": "+1-415-555-0142",
-    "address": "1450 Market Street, San Francisco, CA 94103",
-    "employee_count": 240,
-    "account_owner": "Maya Patel"
-  }
+  "error": "Companies are gone. Create a group via POST /api/crm/groups instead."
 }
 ```
 </Response>
 
-### Body parameters
-
-<ParamField body="name" param-type="string" required="true">
-
-Company name.
-
-</ParamField>
-
-<ParamField body="website" param-type="string" required="false">
-
-Company website URL.
-
-</ParamField>
-
-<ParamField body="industry" param-type="string" required="false">
-
-Industry label for the company.
-
-</ParamField>
-
-<ParamField body="phone" param-type="string" required="false">
-
-Primary company phone number.
-
-</ParamField>
-
-<ParamField body="address" param-type="string" required="false">
-
-Company address.
-
-</ParamField>
-
-<ParamField body="custom fields" param-type="object" required="false">
-
-Any additional CRM fields to store on the company record. Custom field names and value types depend on your CRM configuration.
-
-</ParamField>
-
-### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-
-Returns `true` when the company is created successfully.
-
-</ResponseField>
-
-<ResponseField name="company" field-type="object" required="true">
-
-The created company record, including its generated `id`.
-
-</ResponseField>
+Use the [CRM Groups API](/en/api-reference/crm-groups) to create new organization records.
 
 ## Get a company
 
-Retrieve a single company by its ID.
+Retrieve an existing company by its ID.
 
 ### Path parameters
 
@@ -300,7 +337,7 @@ Returns `true` when the company is found.
 
 <ResponseField name="company" field-type="object" required="true">
 
-The requested company record.
+The requested company record with the fields defined in the [Company object](#company-object) section.
 
 </ResponseField>
 
@@ -336,21 +373,63 @@ Updated industry label.
 
 </ParamField>
 
+<ParamField body="company_size" param-type="string" required="false">
+
+Updated company size classification.
+
+</ParamField>
+
+<ParamField body="address_line1" param-type="string" required="false">
+
+Updated primary street address.
+
+</ParamField>
+
+<ParamField body="address_line2" param-type="string" required="false">
+
+Updated additional street address information.
+
+</ParamField>
+
+<ParamField body="city" param-type="string" required="false">
+
+Updated city.
+
+</ParamField>
+
+<ParamField body="state" param-type="string" required="false">
+
+Updated state or region.
+
+</ParamField>
+
+<ParamField body="postal_code" param-type="string" required="false">
+
+Updated postal or ZIP code.
+
+</ParamField>
+
+<ParamField body="country" param-type="string" required="false">
+
+Updated country.
+
+</ParamField>
+
 <ParamField body="phone" param-type="string" required="false">
 
 Updated primary phone number.
 
 </ParamField>
 
-<ParamField body="address" param-type="string" required="false">
+<ParamField body="notes" param-type="string" required="false">
 
-Updated company address.
+Updated notes for the company.
 
 </ParamField>
 
-<ParamField body="custom fields" param-type="object" required="false">
+<ParamField body="custom_fields" param-type="object" required="false">
 
-Additional company fields to update. Include only the custom fields you want to change.
+Custom CRM fields to update. Include only the fields you want to change.
 
 </ParamField>
 
@@ -364,13 +443,13 @@ Returns `true` when the update succeeds.
 
 <ResponseField name="company" field-type="object" required="true">
 
-The updated company record.
+The updated company record with the fields defined in the [Company object](#company-object) section.
 
 </ResponseField>
 
 ## Delete a company
 
-Delete a company by its ID.
+Delete an existing company by its ID.
 
 ### Path parameters
 
@@ -396,7 +475,7 @@ Deletion status message. Successful responses return `Company deleted`.
 
 ## List contacts for a company
 
-Retrieve the contacts associated with a specific company.
+Retrieve the contacts associated with an existing company.
 
 ### Path parameters
 
@@ -440,6 +519,6 @@ Contact last name.
 
 ## Common patterns
 
-Use `GET /api/crm/companies` when you need pagination and search across company records. Use `GET /api/crm/companies/{id}` when you already have the company ID and need the full record.
+Use `GET /api/crm/companies` to search and paginate existing company records with `limit` and `offset`. Use `GET /api/crm/companies/{id}` when you already have the company ID and need the complete legacy record.
 
-Create and update requests accept standard fields plus custom CRM fields. If your workspace defines additional fields on companies, include them directly in the JSON body using the field names configured in your CRM.
+Use `PATCH /api/crm/companies/{id}` to update existing records and `DELETE /api/crm/companies/{id}` to remove them. New company creation is unavailable, so create new organization records with `POST /api/crm/groups` through the [CRM Groups API](/en/api-reference/crm-groups).

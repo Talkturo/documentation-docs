@@ -402,6 +402,275 @@ UUID der Gruppe.
 
 - `405` — Methode nicht erlaubt; Gruppen können nicht gelöscht werden
 
+## Gruppenkontakte verwalten
+
+Fügen Sie Kontakte zu einer Gruppe hinzu, listen Sie diese auf oder entfernen Sie sie. Diese Endpunkte verwalten die Zuordnung zwischen Kontakten und Gruppen — sie erstellen oder löschen keine Kontaktdatensätze.
+
+### Endpunkte
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/crm/groups/{id}/contacts` | Kontakte einer Gruppe auflisten |
+| `POST` | `/api/crm/groups/{id}/contacts` | Kontakt zu einer Gruppe hinzufügen |
+| `DELETE` | `/api/crm/groups/{id}/contacts` | Kontakt aus einer Gruppe entfernen |
+
+### Gruppenkontakte auflisten
+
+Rufen Sie seitenweise Kontakte ab, die zu einer bestimmten Gruppe gehören, sortiert nach neuester Zuordnung zuerst.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132/contacts?limit=50&offset=0" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132/contacts?limit=50&offset=0",
+  {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer tk_example_9xmk7q2r"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,404">
+```json
+{
+  "success": true,
+  "contacts": [
+    {
+      "id": "7c1a91b4-52fd-44e1-bbd4-8f75a2d4e7d9",
+      "first_name": "Mara",
+      "last_name": "Schneider",
+      "email": "mara.schneider@acme.de",
+      "phone": "+49-30-555-0188",
+      "job_title": "Head of Operations",
+      "lead_status": "qualified"
+    }
+  ],
+  "count": 42,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+```json
+{
+  "error": "Group not found"
+}
+```
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID der Gruppe.
+
+</ParamField>
+
+#### Query-Parameter
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximale Anzahl der zurückgegebenen Kontakte. Standardwert ist `100`.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Anzahl der Kontakte, die vor der Rückgabe übersprungen werden. Standardwert ist `0`.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="contacts" field-type="array" required="true">
+
+Array von Kontaktdatensätzen in der Gruppe. Jedes Element enthält die vollständige Kontaktzeile.
+
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+
+Gesamtanzahl der Kontakte in der Gruppe vor der Paginierung.
+
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true">
+
+Für die Antwort verwendete Seitengröße.
+
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+
+Für die Antwort verwendeter Offset.
+
+</ResponseField>
+
+### Kontakt zu einer Gruppe hinzufügen
+
+Ordnen Sie einen bestehenden Kontakt einer Gruppe zu. Das Hinzufügen eines Kontakts, der bereits in der Gruppe ist, ist idempotent — der Endpunkt gibt Erfolg zurück, ohne ein Duplikat zu erstellen.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132/contacts" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contactId": "7c1a91b4-52fd-44e1-bbd4-8f75a2d4e7d9"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132/contacts",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer tk_example_9xmk7q2r",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      contactId: "7c1a91b4-52fd-44e1-bbd4-8f75a2d4e7d9"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,404">
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "contactId is required"
+}
+```
+
+```json
+{
+  "error": "Group not found"
+}
+```
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID der Gruppe.
+
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="contactId" param-type="string" required="true">
+
+UUID des Kontakts, der zur Gruppe hinzugefügt werden soll. Der Kontakt muss zum selben Workspace wie die Gruppe gehören.
+
+</ParamField>
+
+#### Fehlercodes
+
+| Status | Bedeutung |
+| --- | --- |
+| `400` | Ungültiger JSON-Body oder fehlende `contactId` |
+| `404` | Gruppe oder Kontakt nicht gefunden oder Kontakt gehört zu einem anderen Workspace |
+| `500` | Datenbank- oder Serverfehler |
+
+### Kontakt aus einer Gruppe entfernen
+
+Entfernen Sie einen Kontakt aus einer Gruppe, indem Sie die Kontakt-ID als Query-Parameter übergeben. Dies entfernt nur die Gruppenzuordnung — es löscht keinen Kontakt-Datensatz.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132/contacts?contactId=7c1a91b4-52fd-44e1-bbd4-8f75a2d4e7d9" \
+  --header "Authorization: Bearer tk_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/crm/groups/c3b4a9a8-8d52-4fd0-9c52-6c1c6c9a1132/contacts?contactId=7c1a91b4-52fd-44e1-bbd4-8f75a2d4e7d9",
+  {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer tk_example_9xmk7q2r"
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400,404">
+```json
+{
+  "success": true
+}
+```
+
+```json
+{
+  "error": "contactId is required"
+}
+```
+
+```json
+{
+  "error": "Group not found"
+}
+```
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID der Gruppe.
+
+</ParamField>
+
+#### Query-Parameter
+
+<ParamField query="contactId" param-type="string" required="true">
+
+UUID des Kontakts, der aus der Gruppe entfernt werden soll.
+
+</ParamField>
+
+<Callout kind="info">
+
+Das Entfernen eines Kontakts, der nicht in der Gruppe ist, gibt ebenfalls `{ "success": true }` zurück. Der Endpunkt prüft nicht, ob die Zuordnung existiert, bevor er den Löschversuch durchführt.
+
+</Callout>
+
 ## Verwandte Ressourcen
 
 <Columns cols={2}>
