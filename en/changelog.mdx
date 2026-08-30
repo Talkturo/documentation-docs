@@ -8,6 +8,27 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-27" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Inbound greeting** — Assistants can now use a dedicated greeting for inbound calls, callbacks, and web calls, while outbound calls keep the original first message. See [Assistant Configuration](/en/assistants/configuration).
+  - **Maximum campaign call duration** — Set a cap of 1–60 minutes per call in campaign settings; calls that exceed the limit are ended automatically. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Do-Not-Call tracking** — Campaign and contact-level Do-Not-Call statistics are now visible in the campaign detail view. Campaigns also pause automatically when credits run out. See [Campaigns](/en/campaigns/overview).
+
+  ## Improvements
+
+  - **Updated LLM and realtime model list** — Google Gemini 3.x models, DeepSeek V4 Pro, and Kimi K2.6 are now available. Qwen has been removed, and Gemini Live `-latest` is the recommended default for realtime. See [Features](/en/features).
+  - **Detailed call cost breakdowns** — Call logs now show platform, telephony, realtime, TTS, and STT cost lines with outcome filtering, so you can see exactly where credits go. See [Call Logs](/en/call-logs).
+  - **Telephony reliability** — When phone numbers move between assistants, SIP trunks and dispatch rules are reconciled automatically, stale resources are cleaned up, and inbound/outbound calling is disabled when no numbers remain assigned. See [Telephony](/en/telephony).
+
+  ## Bug Fixes
+
+  - **Twilio assistant telephony saves** — Fixed 500 errors when saving telephony settings for Twilio-based assistants. Twilio numbers are no longer sent to the Telnyx connection, and an empty Telnyx connection is handled correctly. See [Telephony](/en/telephony).
+  - **Voicemail setting detection** — Changing voicemail detection, action, or message now correctly enables the Save button in the Telephony tab.
+  - **CRM group dispatch rules** — Inbound calls are now routed to the correct CRM group after a group change, instead of staying on the old one. See [Telephony](/en/telephony).
+  - **Billing credit safeguard** — Unknown Stripe products no longer grant phantom credits. Only recognized credit products mint credits, preventing unexpected balance changes. See [Billing](/en/billing).
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
