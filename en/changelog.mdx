@@ -8,6 +8,22 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-08-31" description="v3.1.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Campaign scheduling with calling days and time windows** — Campaigns now support selecting specific days of the week for calling, setting an optional end date, and configuring up to four time windows per day. Each day can have its own schedule, with fallback to default slots when no day-specific window is set. See [Campaigns](/en/campaigns/overview) and [Campaign Configuration](/en/campaigns/configuration).
+  - **Voicemail count in campaign statistics** — The campaign detail modal now displays voicemail totals alongside call statistics, giving you a clearer picture of campaign reach. See [Campaigns](/en/campaigns/overview).
+
+  ## Improvements
+
+  - **Telephony and realtime costs in the billing usage chart** — The billing usage chart now includes telephony (carrier) and realtime credit costs, so the chart's total matches the credits card — especially useful for phone calls where carrier charges make up most of the cost. See [Billing](/en/billing).
+  - **Polished campaign time-slot editor** — The per-day time-slot editor now uses chips, icon buttons, and row dividers for a cleaner, more intuitive layout. See [Campaign Configuration](/en/campaigns/configuration).
+
+  ## Bug Fixes
+
+  - **OAuth connections no longer reported as cancelled** — Fixed an issue where OAuth connections from integration providers with strict Cross-Origin-Opener-Policy headers were incorrectly reported as cancelled. The callback now uses multiple communication channels to reliably deliver the connection result to the app. See [Integrations](/en/integrations).
+</Update>
+
 <Update label="2026-08-30" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 

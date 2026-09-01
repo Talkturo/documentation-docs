@@ -8,6 +8,22 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-08-31" description="v3.1.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Kampagnenplanung mit Anruftagen und Zeitfenstern** — Kampagnen unterstützen jetzt die Auswahl bestimmter Wochentage für Anrufe, ein optionales Enddatum und bis zu vier Zeitfenster pro Tag. Jeder Tag kann einen eigenen Zeitplan haben, mit Fallback auf Standard-Slots, wenn kein tagesspezifisches Fenster festgelegt ist. Siehe [Kampagnen](/de/campaigns/overview) und [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Anrufbeantworter-Zähler in Kampagnenstatistik** — Das Kampagnen-Detailmodal zeigt jetzt Anrufbeantworter-Gesamtzahlen neben den Anrufstatistiken und gibt dir ein klareres Bild der Kampagnenreichweite. Siehe [Kampagnen](/de/campaigns/overview).
+
+  ## Verbesserungen
+
+  - **Telefonie- und Echtzeit-Kosten im Abrechnungs-Usage-Diagramm** — Das Abrechnungs-Usage-Diagramm enthält jetzt Telefonie- (Carrier-) und Echtzeit-Guthabenkosten, sodass die Diagrammsumme mit der Guthabenkarte übereinstimmt — besonders nützlich bei Telefonanrufen, bei denen Carrier-Kosten den Großteil ausmachen. Siehe [Abrechnung](/de/billing).
+  - **Überarbeiteter Kampagnen-Zeitfenster-Editor** — Der tagesspezifische Zeitfenster-Editor verwendet jetzt Chips, Icon-Buttons und Zeilentrenner für ein aufgeräumteres, intuitiveres Layout. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+
+  ## Bugfixes
+
+  - **OAuth-Verbindungen nicht mehr fälschlich als abgebrochen gemeldet** — Behoben: Ein Problem, bei dem OAuth-Verbindungen von Integrationsanbietern mit strikten Cross-Origin-Opener-Policy-Headern fälschlich als abgebrochen gemeldet wurden. Der Callback nutzt jetzt mehrere Kommunikationskanäle, um das Verbindungsergebnis zuverlässig an die App zu liefern. Siehe [Integrationen](/de/integrations).
+</Update>
+
 <Update label="2026-08-30" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
