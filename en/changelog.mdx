@@ -50,7 +50,7 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
 
   - **Payment methods table restored in production** — Fixed a production issue where the saved-card system was missing, causing auto-reload to report "No saved card on file." See [Billing](/en/billing).
   - **Phantom credit prevention** — Unknown Stripe products no longer create credits through a fallback conversion, preventing phantom credit grants. See [Billing](/en/billing).
-  - **Telephony settings save for Twilio workspaces** — Twilio-based workspaces can now save telephony settings without being rejected for lacking a Telnyx connection. See [Telephony](/en/telephony).
+  - **Telephony settings save across carriers** — Workspaces can now save telephony settings without being rejected for lacking a carrier connection. See [Telephony](/en/telephony).
   - **Voicemail changes enable Save** — Edits to voicemail detection, action, and message are now recognized as unsaved changes, so the Save button activates correctly. See [Telephony](/en/telephony).
 </Update>
 
@@ -189,18 +189,18 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
   ## New Features
 
   - **Credits and profile menu on mobile** — Your credit balance and profile menu are now accessible from the mobile top bar, so you can check credits and manage your account without switching to desktop. See [Billing](/en/billing).
-  - **Telnyx city-level verification enforcement** — Telnyx phone number purchases now enforce city-level regulatory verification, matching the protection Twilio already provides. This prevents buying numbers in cities you aren't verified for. See [Telephony](/en/telephony).
+  - **City-level verification enforcement** — Phone number purchases now enforce city-level regulatory verification. This prevents buying numbers in cities you aren't verified for. See [Telephony](/en/telephony).
 
   ## Improvements
 
   - **Compliance city selector redesigned** — When requesting regulatory verification, you must now explicitly select or enter your city. A new note explains that approval covers only that city — not the entire country. See [Telephony](/en/telephony).
   - **Admin account search improved** — Admin account search now matches name, email, and workspace slug, case-insensitively, making it faster to locate the right account.
-  - **Expired Telnyx verifications detected** — Expired carrier approvals for Telnyx are now automatically detected and re-evaluated, keeping the purchase gate accurate over time. See [Telephony](/en/telephony).
+  - **Expired carrier verifications detected** — Expired carrier approvals are now automatically detected and re-evaluated, keeping the purchase gate accurate over time. See [Telephony](/en/telephony).
 
   ## Bug Fixes
 
   - **Mobile menu scrolling** — The mobile hamburger menu now scrolls on small screens, so all navigation items — including sign-out — are always reachable.
-  - **Twilio compliance approval webhook** — Real-time approval notifications from Twilio are now processed correctly instead of being silently skipped, so approvals reflect immediately.
+  - **Compliance approval webhook** — Real-time carrier approval notifications are now processed correctly instead of being silently skipped, so approvals reflect immediately.
   - **Verification review dialog layout** — Fixed a layout issue where long field names caused the admin verification review dialog to clip labels and buttons.
   - **Regulatory bundle renewal logging** — Fixed a logging error in the nightly regulatory bundle renewal job that made it impossible to distinguish successful renewals from carrier outages.
 </Update>
@@ -210,7 +210,7 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
 
   - **Transcription Settings panel** — Configure how your AI assistant processes caller speech directly in the assistant editor. Add up to 100 custom keyterms (names, product names, spellings), enable smart formatting, profanity filtering, sensitive-data redaction, GDPR training opt-out, speaker diarization, and provider-specific options for Deepgram and AssemblyAI. See [Features](/en/features).
   - **German localization for transcription settings** — All transcription setting labels, help texts, and descriptions are now fully translated into German.
-  - **Dual-carrier phone number purchasing** — Workspaces can now buy and use phone numbers from two Talkturo carriers at the same time, plus their own connected Twilio account. See [Quickstart](/en/quickstart).
+  - **Dual-carrier phone number purchasing** — Workspaces can now buy and use phone numbers from two Talkturo carriers at the same time. See [Quickstart](/en/quickstart).
 
   ## Improvements
 

@@ -50,7 +50,7 @@ Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von T
 
   - **Tabelle für Zahlungsmethoden in Produktion wiederhergestellt** — Behoben: Ein Produktionsproblem, bei dem das System für gespeicherte Karten fehlte, was dazu führte, dass Auto-Reload „Keine gespeicherte Karte hinterlegt" meldete. Siehe [Abrechnung](/de/billing).
   - **Phantom-Guthaben verhindert** — Unbekannte Stripe-Produkte erzeugen keine Guthaben mehr über eine Fallback-Konvertierung, was Phantom-Guthaben verhindert. Siehe [Abrechnung](/de/billing).
-  - **Telefonie-Einstellungen speichern für Twilio-Workspaces** — Twilio-basierte Workspaces können jetzt Telefonie-Einstellungen speichern, ohne wegen fehlender Telnyx-Verbindung abgelehnt zu werden. Siehe [Telefonie](/de/telephony).
+  - **Telefonie-Einstellungen speichern über Carrier hinweg** — Workspaces können jetzt Telefonie-Einstellungen speichern, ohne wegen fehlender Carrier-Verbindung abgelehnt zu werden. Siehe [Telefonie](/de/telephony).
   - **Anrufbeantworter-Änderungen aktivieren Speichern** — Änderungen an Anrufbeantworter-Erkennung, Aktion und Nachricht werden jetzt als ungespeicherte Änderungen erkannt, sodass die Schaltfläche „Speichern" korrekt aktiviert wird. Siehe [Telefonie](/de/telephony).
 </Update>
 
@@ -189,18 +189,18 @@ Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von T
   ## Neue Features
 
   - **Guthaben und Profilmenü auf mobil** — Dein Guthabenstand und das Profilmenü sind jetzt in der mobilen Top-Bar erreichbar, sodass du Guthaben prüfen und dein Konto verwalten kannst, ohne auf den Desktop zu wechseln. Siehe [Abrechnung](/de/billing).
-  - **Telnyx-City-Level-Verifizierung erzwungen** — Telefonnummernkäufe über Telnyx erzwingen jetzt die City-Level-Verifizierung, analog zum Schutz, den Twilio bereits bietet. Das verhindert den Kauf von Nummern in Städten, für die du nicht verifiziert bist. Siehe [Telefonie](/de/telephony).
+  - **City-Level-Verifizierung erzwungen** — Telefonnummernkäufe erzwingen jetzt die City-Level-Verifizierung. Das verhindert den Kauf von Nummern in Städten, für die du nicht verifiziert bist. Siehe [Telefonie](/de/telephony).
 
   ## Verbesserungen
 
   - **Compliance-Stadtauswahl neu gestaltet** — Bei der Beantragung einer regulatorischen Verifizierung musst du jetzt explizit eine Stadt auswählen oder eingeben. Ein neuer Hinweis erklärt, dass die Freigabe nur für diese Stadt gilt — nicht für das gesamte Land. Siehe [Telefonie](/de/telephony).
   - **Admin-Kontosuche verbessert** — Die Admin-Kontosuche findet jetzt Name, E-Mail und Workspace-Slug unabhängig von Groß-/Kleinschreibung, sodass sich Konten schneller finden lassen.
-  - **Abgelaufene Telnyx-Verifizierungen erkannt** — Abgelaufene Carrier-Freigaben für Telnyx werden jetzt automatisch erkannt und neu bewertet, damit das Kauf-Gate über die Zeit korrekt bleibt. Siehe [Telefonie](/de/telephony).
+  - **Abgelaufene Carrier-Verifizierungen erkannt** — Abgelaufene Carrier-Freigaben werden jetzt automatisch erkannt und neu bewertet, damit das Kauf-Gate über die Zeit korrekt bleibt. Siehe [Telefonie](/de/telephony).
 
   ## Bugfixes
 
   - **Mobiles Menü scrollt** — Das mobile Hamburger-Menü scrollt jetzt auf kleinen Bildschirmen, sodass alle Navigationspunkte — inklusive Abmelden — immer erreichbar sind.
-  - **Twilio-Compliance-Freigabe-Webhook** — Echtzeit-Freigabebenachrichtigungen von Twilio werden jetzt korrekt verarbeitet statt still ignoriert, sodass Freigaben sofort sichtbar werden.
+  - **Compliance-Freigabe-Webhook** — Echtzeit-Freigabebenachrichtigungen vom Carrier werden jetzt korrekt verarbeitet statt still ignoriert, sodass Freigaben sofort sichtbar werden.
   - **Layout des Verifizierungsprüfungsdialogs** — Behoben: Lange Feldnamen führten dazu, dass im Admin-Verifizierungsprüfungsdialog Labels und Buttons abgeschnitten wurden.
   - **Logging bei nächtlicher Bundle-Erneuerung** — Behoben: Ein Logging-Fehler im nächtlichen Job zur Erneuerung regulatorischer Bundles machte es unmöglich, erfolgreiche Erneuerungen von Carrier-Ausfällen zu unterscheiden.
 </Update>
@@ -210,7 +210,7 @@ Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von T
 
   - **Panel für Transkriptionseinstellungen** — Konfiguriere direkt im Assistenteneditor, wie dein KI-Assistent die Sprache der Anrufenden verarbeitet. Füge bis zu 100 benutzerdefinierte Keyterms hinzu (Namen, Produktnamen, Schreibweisen), aktiviere Smart Formatting, Profanitätsfilter, Redaktion sensibler Daten, GDPR-Training-Opt-out, Speaker Diarization sowie anbieterspezifische Optionen für Deepgram und AssemblyAI. Siehe [Features](/de/features).
   - **Deutsche Lokalisierung der Transkriptionseinstellungen** — Alle Labels, Hilfetexte und Beschreibungen der Transkriptionseinstellungen sind jetzt vollständig auf Deutsch übersetzt.
-  - **Telefonnummernkauf über zwei Carrier** — Workspaces können jetzt gleichzeitig Telefonnummern von zwei Talkturo-Carriern sowie vom eigenen verbundenen Twilio-Account kaufen und nutzen. Siehe [Schnellstart](/de/quickstart).
+  - **Telefonnummernkauf über zwei Carrier** — Workspaces können jetzt gleichzeitig Telefonnummern von zwei Talkturo-Carriern kaufen und nutzen. Siehe [Schnellstart](/de/quickstart).
 
   ## Verbesserungen
 
