@@ -54,6 +54,27 @@ Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von T
   - **Anrufbeantworter-Änderungen aktivieren Speichern** — Änderungen an Anrufbeantworter-Erkennung, Aktion und Nachricht werden jetzt als ungespeicherte Änderungen erkannt, sodass die Schaltfläche „Speichern" korrekt aktiviert wird. Siehe [Telefonie](/de/telephony).
 </Update>
 
+<Update label="2026-08-27" description="v2.9.1" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Begrüßung für eingehende Anrufe** — Lege eine separate Begrüßung für eingehende Anrufe, Rückrufe und Web-Anrufe fest, sodass Anrufende die richtige Nachricht hören, unabhängig davon, wie sie dich erreichen. Die bestehende Outbound-Begrüßung bleibt unangetastet. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Maximale Anrufdauer für Kampagnen** — Begrenze, wie lange einzelne Kampagnen-Anrufe laufen können. Lege eine maximale Dauer in Minuten im Kampagnen-Editor fest. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Neu gestaltetes Onboarding** — Ein neuer Setup-Flow extrahiert deine Begrüßung, deinen Prompt und deine Unternehmensdaten von deiner Website, lädt Knowledge-Base-Dateien hoch und bietet einen Schnell-Setup-Modus, der unnötige Schritte überspringt. Enthält eine Standardstimme und deutsche Fallback-Prompts. Siehe [Schnellstart](/de/quickstart).
+  - **Do-Not-Call-Schutz während Live-Anrufen** — Verhindert das Hinzufügen einer Nummer zur Do-Not-Call-Liste während eines aktiven Anrufs, mit Anrufergebnis-Tracking pro Kontakt und Kampagnen-DNC-Zählern mit Badges. Siehe [Kampagnen](/de/campaigns/overview).
+
+  ## Verbesserungen
+
+  - **Aktualisierter LLM-Modellkatalog** — Google Gemini 3.x-Modelle ersetzen die eingestellten 2.x-Versionen. DeepSeek V4 Pro und Kimi K2.6 hinzugefügt; Qwen entfernt. Gemini Live verwendet jetzt standardmäßig den stabilen `-latest`-Bezeichner. Siehe [Features](/de/features).
+  - **Pause-Grund bei unzureichendem Guthaben** — Kampagnen zeigen jetzt einen klaren Grund an, wenn sie wegen unzureichendem Guthaben pausieren, und der Grund wird beim Fortsetzen automatisch gelöscht. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Intelligentere CRM-Importe** — Weise alle importierten Kontakte in einem Schritt einem einzigen Unternehmen zu. Du erhältst außerdem eine Bestätigung, bevor aus Importdaten viele Unternehmen erstellt werden. Siehe [Kontakte](/de/crm/contacts).
+  - **Schnell-Setup überspringt Unternehmens-Schritte** — Das Onboarding im Schnell-Setup-Modus erfordert keine Unternehmenskonfiguration mehr, sodass du schneller zu deinem ersten Assistenten kommst. Siehe [Schnellstart](/de/quickstart).
+
+  ## Bugfixes
+
+  - **Falsche Daten bei unbeantworteten Anrufen** — Unbeantwortete Anrufe in der Konversationsansicht zeigen jetzt die tatsächliche Anrufzeit statt Epoch-Zeitstempel und keine irreführenden Dauerangaben mehr. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Onboarding-Modus überlappt zwischen Durchläufen** — Behoben: Die Wahl zwischen Schnell-Setup und vollem Setup aus einem vorherigen Onboarding-Durchlauf wurde in den nächsten übernommen. Siehe [Schnellstart](/de/quickstart).
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
