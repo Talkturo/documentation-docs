@@ -8,6 +8,29 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-09-02" description="v3.1.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Anruferfolgs-Scoring** — Definiere für jeden Assistenten, was einen erfolgreichen Anruf ausmacht, mit KI-generierten Kriterien. Jeder Anruf wird nach deiner Definition mit 1–10 bewertet, und die Erfolgsraten werden im Dashboard angezeigt. EU-Scoring-Regeln sind optional und standardmäßig deaktiviert. Siehe [Intelligence](/de/intelligence).
+  - **Close.com-CRM-Integration** — Verbinde dein Close.com-Konto mit einem API-Key, mit Tools für Assistenten und Workflows. Verbindungen werden mit deinem Kontonamen beschriftet, zur einfachen Identifikation. Siehe [Integrationen](/de/integrations).
+  - **Telefonnummern für Finnland, Niederlande, Estland und das Vereinigte Königreich** — Kaufe lokale Mobilnummern in vier neuen Ländern mit vollständiger Compliance-Unterstützung, einschließlich Finnlands vereinfachter adressbasierter Verifizierung. Siehe [Telefonie](/de/telephony).
+  - **Tagesbasierte Kampagnenplanung** — Wähle, an welchen Wochentagen deine Kampagne läuft, lege Tageszeitfenster fest, füge ein Enddatum hinzu und verfolge Anrufbeantworter-Statistiken — alles im Kampagnen-Editor. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Telefonie-Nutzung in Abrechnungsdiagrammen** — Das Abrechnungs-Nutzungsdiagramm enthält jetzt Telefonie- und Realtime-Credits neben den bestehenden Metriken. Siehe [Abrechnung](/de/billing).
+  - **Kopierbare Gruppen-IDs** — Jede Kontaktgruppe zeigt jetzt eine kopierbare ID in der Gruppenliste, was es einfacher macht, Gruppen in API-Aufrufen zu referenzieren. Siehe [Kampagnen](/de/campaigns/overview).
+
+  ## Verbesserungen
+
+  - **Mehr anrufbare Länder** — Finnland, Niederlande, Estland, Polen und das Vereinigte Königreich sind jetzt in Testanruf-, Transfer- und Rückruf-Dropdowns verfügbar. Siehe [Telefonie](/de/telephony).
+  - **Länderspezifische Compliance-Anforderungen** — Verifizierungsanforderungen entsprechen jetzt dem, was der Carrier des jeweiligen Landes tatsächlich verlangt: nur Name für die Niederlande, Adressnachweis-Dokument für das Vereinigte Königreich. Siehe [Telefonie](/de/telephony).
+
+  ## Bugfixes
+
+  - **Trenddiagramme vermissen heutige Anrufe** — Tages-Buckets wurden in der falschen Zeitzone erzeugt, wodurch heutige Anrufe erst am nächsten Tag in den Trenddiagrammen erschienen. Siehe [Intelligence](/de/intelligence).
+  - **OAuth-Verbindungen durch Browser-Isolation blockiert** — Integrationsverbindungen werden jetzt zuverlässig abgeschlossen, auch wenn Browser-Cross-Origin-Isolation den Popup-Handshake blockiert. Siehe [Integrationen](/de/integrations).
+  - **Verifizierung blockiert bei nicht erforderlichen Dokumenten** — Einreichungen wurden fälschlich abgelehnt, wenn die Verordnung eines Landes keine hochgeladenen Dokumente verlangt. Siehe [Telefonie](/de/telephony).
+  - **Adressfehler beim deutschen Telefonnummernkauf** — Die Adresse des Bundles wird jetzt beibehalten und vor Ort neu validiert, statt beim Kauf ausgetauscht zu werden, was fehlgeschlagene Käufe verhindert. Siehe [Telefonie](/de/telephony).
+</Update>
+
 <Update label="2026-08-30" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
