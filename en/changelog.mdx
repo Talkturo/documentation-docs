@@ -8,6 +8,29 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-02" description="v3.1.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Call success scoring** — Define what makes a successful call for each assistant using AI-generated criteria. Every call is scored 1–10 against your definition, with success rates displayed on the dashboard. EU scoring rules are opt-in and off by default. See [Intelligence](/en/intelligence).
+  - **Close.com CRM integration** — Connect your Close.com account using an API key, with tools available for assistants and workflows. Connections are labeled with your account name for easy identification. See [Integrations](/en/integrations).
+  - **Phone numbers for Finland, Netherlands, Estonia, and the UK** — Purchase local mobile numbers in four new countries with full compliance support, including Finland's simplified address-only verification. See [Telephony](/en/telephony).
+  - **Per-day campaign scheduling** — Choose which days of the week your campaign runs, set per-day time slots, add an end date, and track voicemail statistics — all from the campaign editor. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Telephony usage in billing charts** — The billing usage chart now includes telephony and realtime credits alongside existing metrics. See [Billing](/en/billing).
+  - **Copyable group IDs** — Each contact group now displays a copyable ID in the groups list, making it easier to reference groups in API calls. See [Campaigns](/en/campaigns/overview).
+
+  ## Improvements
+
+  - **More callable countries** — Finland, Netherlands, Estonia, Poland, and the UK are now available in test-call, transfer, and callback dropdowns. See [Telephony](/en/telephony).
+  - **Country-specific compliance requirements** — Verification requirements now match what each country's carrier actually asks for: name-only for the Netherlands, proof-of-address document for the UK. See [Telephony](/en/telephony).
+
+  ## Bug Fixes
+
+  - **Dashboard trend charts missing today's calls** — Day buckets were seeded in the wrong timezone, causing today's calls to not appear in trend charts until the next day. See [Intelligence](/en/intelligence).
+  - **OAuth connections blocked by browser isolation** — Integration connections now complete reliably even when browser cross-origin isolation blocks the popup handshake. See [Integrations](/en/integrations).
+  - **Verification blocked when no documents required** — Submissions were incorrectly rejected when a country's regulation requires no uploaded documents. See [Telephony](/en/telephony).
+  - **German phone number purchase address errors** — The bundle's own address is now kept and revalidated in place instead of being swapped during purchase, preventing failed purchases. See [Telephony](/en/telephony).
+</Update>
+
 <Update label="2026-08-30" description="v3.0.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
