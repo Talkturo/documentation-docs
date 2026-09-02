@@ -54,6 +54,27 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
   - **Voicemail changes enable Save** — Edits to voicemail detection, action, and message are now recognized as unsaved changes, so the Save button activates correctly. See [Telephony](/en/telephony).
 </Update>
 
+<Update label="2026-08-27" description="v2.9.1" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Inbound greetings** — Set a separate greeting for inbound calls, callbacks, and web calls, so callers hear the right message regardless of how they reach you. The existing outbound greeting stays untouched. See [Assistant Configuration](/en/assistants/configuration).
+  - **Maximum campaign call duration** — Limit how long individual campaign calls can run. Set a maximum duration in minutes from the campaign editor. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Redesigned onboarding** — A new setup flow extracts your greeting, prompt, and company details from your website, uploads knowledge-base files, and offers a Quick Setup mode that skips unnecessary steps. Includes a default voice and German fallback prompts. See [Quickstart](/en/quickstart).
+  - **Live-call Do-Not-Call protection** — Prevents adding a number to your Do-Not-Call list during an active call, with call outcomes tracked per contact and campaign DNC counters with badges. See [Campaigns](/en/campaigns/overview).
+
+  ## Improvements
+
+  - **Updated LLM model catalog** — Google Gemini 3.x models replace retired 2.x versions. DeepSeek V4 Pro and Kimi K2.6 added; Qwen removed. Gemini Live now defaults to the stable `-latest` identifier. See [Features](/en/features).
+  - **Insufficient-credits pause reason** — Campaigns now show a clear reason when they pause due to insufficient credits, and the reason is cleared automatically when you resume. See [Campaigns](/en/campaigns/overview).
+  - **Smarter CRM imports** — Assign all imported contacts to a single company in one step. You'll also see a confirmation before mass-creating companies from import data. See [Contacts](/en/crm/contacts).
+  - **Quick Setup skips company steps** — Onboarding in Quick Setup mode no longer requires company configuration, getting you to your first assistant faster. See [Quickstart](/en/quickstart).
+
+  ## Bug Fixes
+
+  - **Unanswered calls showing wrong dates** — Unanswered calls in the Conversations view now show the actual placed time instead of epoch timestamps, and no longer display misleading durations. See [Call Logs](/en/call-logs).
+  - **Onboarding mode leaking between runs** — Fixed an issue where the Quick Setup vs. full setup choice from a previous onboarding run could carry over to the next. See [Quickstart](/en/quickstart).
+</Update>
+
 <Update label="2026-08-25" description="v2.9.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
