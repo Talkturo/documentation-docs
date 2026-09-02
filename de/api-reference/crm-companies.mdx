@@ -1,15 +1,18 @@
 ---
 title: CRM-Unternehmen
 description: >-
-  Unternehmen im Talkturo-CRM erstellen, auflisten, aktualisieren und löschen —
-  Organisationsdatensätze mit benutzerdefinierten Feldern und Kontaktzuordnungen
-  verwalten.
+  Veraltete CRM-Unternehmens-API für Listen, Erstellung, Änderungen und Löschung,
+  mit Hinweis auf die Ablösung durch CRM-Gruppen.
 ---
-## Unternehmen im CRM verwalten
+<Callout kind="alert" collapsed="false">
+  Die CRM-Unternehmens-API ist veraltet. Unternehmen werden durch [CRM-Gruppen](/de/api-reference/crm-groups) ersetzt. Verwenden Sie für neue Integrationen die CRM-Gruppen-API.
+</Callout>
+
+## Veraltete Unternehmen im CRM verwalten
 
 Unternehmensendpunkte verwalten Organisationsdatensätze im Talkturo-CRM. Sie können Unternehmen auflisten, neue Datensätze anlegen, einzelne Unternehmen abrufen, bestehende Einträge aktualisieren, löschen und die zugeordneten Kontakte eines Unternehmens abfragen.
 
-Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung.
+Alle Endpunkte in diesem Abschnitt sind veraltet und verwenden Session-Authentifizierung. Senden Sie die Anfragen aus einer angemeldeten Anwendungssitzung.
 
 <Callout kind="info" collapsed="false">
   Die Listenansicht unterstützt Seitennummerierung und Suche. Die Detailendpunkte arbeiten mit der Unternehmens-ID aus dem CRM.
@@ -17,18 +20,22 @@ Alle Endpunkte in diesem Abschnitt verwenden Session-Authentifizierung. Senden S
 
 ## Endpunktübersicht
 
-| Methode  | Pfad                               | Zweck                                 |
-| -------- | ---------------------------------- | ------------------------------------- |
-| `GET`    | `/api/crm/companies`               | Unternehmen auflisten                 |
-| `POST`   | `/api/crm/companies`               | Unternehmen erstellen                 |
-| `GET`    | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen         |
-| `PATCH`  | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             |
-| `DELETE` | `/api/crm/companies/{id}`          | Unternehmen löschen                   |
-| `GET`    | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten |
+| Methode  | Pfad                               | Zweck                                 | Status                         |
+| -------- | ---------------------------------- | ------------------------------------- | ------------------------------ |
+| `GET`    | `/api/crm/companies`               | Unternehmen auflisten                 | Veraltet                      |
+| `POST`   | `/api/crm/companies`               | Unternehmen erstellen                 | Veraltet; gibt 410 Gone zurück |
+| `GET`    | `/api/crm/companies/{id}`          | Einzelnes Unternehmen abrufen         | Veraltet                      |
+| `PATCH`  | `/api/crm/companies/{id}`          | Unternehmen aktualisieren             | Veraltet                      |
+| `DELETE` | `/api/crm/companies/{id}`          | Unternehmen löschen                   | Veraltet                      |
+| `GET`    | `/api/crm/companies/{id}/contacts` | Kontakte eines Unternehmens auflisten | Veraltet                      |
 
 ## Unternehmen auflisten
 
 Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise abzurufen oder mit einer Suchanfrage zu filtern.
+
+<Callout kind="info" collapsed="false">
+  `GET /api/crm/companies` ist veraltet, bleibt aber weiterhin funktionsfähig. Verwenden Sie für neue Integrationen die Gruppenendpunkte.
+</Callout>
 
 <Request show-lines="true">
   ```bash
@@ -62,6 +69,10 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
 </Response>
 
 ### Query-Parameter
+
+<ParamField query="teamId" param-type="string" required="true" deprecated="false" show-location="true">
+  ID des Teams, dessen Unternehmen abgerufen werden.
+</ParamField>
 
 <ParamField query="page" param-type="integer" required="false" deprecated="false" show-location="true">
   Die Seitennummer der Ergebnisliste.
@@ -111,77 +122,10 @@ Rufen Sie `GET /api/crm/companies` auf, um Unternehmensdatensätze seitenweise a
 
 ## Unternehmen erstellen
 
-Senden Sie `POST /api/crm/companies`, um einen neuen Unternehmensdatensatz im CRM anzulegen.
+`POST /api/crm/companies` ist veraltet und gibt HTTP 410 Gone zurück. Der Endpunkt erstellt keine neuen Unternehmensdatensätze mehr.
 
-<Request show-lines="true">
-  ```bash
-  curl -X POST "https://api.talkturo.local/api/crm/companies" \
-    -H "Content-Type: application/json" \
-    -H "Cookie: sb-session=example_session_token" \
-    -d '{
-      "name": "Northwind Health Partners",
-      "website": "https://northwind-health.com",
-      "industry": "Healthcare",
-      "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
-    }'
-  ```
-</Request>
-
-<Response show-lines="true">
-  ```json
-  {
-    "success": true,
-    "company": {
-      "id": "cmp_c4a91e7b",
-      "name": "Northwind Health Partners",
-      "website": "https://northwind-health.com",
-      "industry": "Healthcare",
-      "phone": "+49 30 55550123",
-      "address": "Friedrichstraße 120, 10117 Berlin"
-    }
-  }
-  ```
-</Response>
-
-### Request-Body
-
-<ParamField body="name" param-type="string" required="true" deprecated="false" show-location="true">
-  Name des Unternehmens.
-</ParamField>
-
-<ParamField body="website" param-type="string" required="false" deprecated="false" show-location="true">
-  Webadresse des Unternehmens.
-</ParamField>
-
-<ParamField body="industry" param-type="string" required="false" deprecated="false" show-location="true">
-  Branche oder Marktsegment des Unternehmens.
-</ParamField>
-
-<ParamField body="phone" param-type="string" required="false" deprecated="false" show-location="true">
-  Telefonnummer des Unternehmens.
-</ParamField>
-
-<ParamField body="address" param-type="string" required="false" deprecated="false" show-location="true">
-  Postanschrift oder Geschäftsadresse des Unternehmens.
-</ParamField>
-
-### Antwortfelder
-
-<ResponseField name="success" field-type="boolean" required="true" deprecated="false">
-  Gibt an, ob das Unternehmen erfolgreich erstellt wurde.
-</ResponseField>
-
-<ResponseField name="company" field-type="object" required="true" deprecated="false">
-  Der neu angelegte Unternehmensdatensatz.
-</ResponseField>
-
-<ResponseField name="company.id" field-type="string" required="true" deprecated="false">
-  Eindeutige ID des neuen Unternehmens.
-</ResponseField>
-
-<Callout kind="tip" collapsed="false">
-  Wenn Sie Unternehmensdatensätze später mit Kontakten oder Opportunities verknüpfen möchten, speichern Sie die zurückgegebene `company.id` direkt nach dem Erstellen.
+<Callout kind="alert" collapsed="false">
+  Verweisen Sie Clients auf `POST /api/crm/groups`, um neue CRM-Gruppen anzulegen. Verwenden Sie die [CRM-Gruppen-Referenz](/de/api-reference/crm-groups) für Request- und Antwortfelder.
 </Callout>
 
 ## Einzelnes Unternehmen abrufen

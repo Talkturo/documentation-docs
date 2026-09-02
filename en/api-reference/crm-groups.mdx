@@ -12,6 +12,9 @@ description: List, create, update, and inspect contact groups in the Talkturo CR
 | `GET` | `/api/crm/groups/{id}` | Get one group with contacts | Session cookie or API key |
 | `PUT` | `/api/crm/groups/{id}` | Rename a group | Session cookie or API key |
 | `DELETE` | `/api/crm/groups/{id}` | Not supported | Session cookie or API key |
+| `GET` | `/api/crm/groups/{id}/contacts` | List contacts in a group | Session cookie or API key |
+| `POST` | `/api/crm/groups/{id}/contacts` | Add a contact to a group | Session cookie or API key |
+| `DELETE` | `/api/crm/groups/{id}/contacts` | Remove a contact from a group | Session cookie or API key |
 
 <Callout kind="info">
 
@@ -480,7 +483,7 @@ Whether the group is the default CRM group.
 
 <ResponseField name="group.created_at" field-type="string" required="true">
 
-Creation timestamp in ISO 8601 format.
+Group creation timestamp in ISO 8601 format.
 
 </ResponseField>
 
@@ -790,6 +793,171 @@ Human-readable error message explaining that group deletion is not supported.
 | Status | Meaning |
 | --- | --- |
 | `405` | Groups cannot be deleted |
+
+## Group contact membership
+
+Manage which contacts belong to a CRM group. Add, remove, and list contacts within a group using these membership endpoints.
+
+### List contacts in a group
+
+Retrieve paginated contacts for a specific group. Results are ordered by membership creation time, newest first.
+
+#### Endpoint
+
+`GET https://app.talkturo.com/api/crm/groups/{id}/contacts`
+
+#### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximum number of contacts to return. Defaults to 100.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Number of contacts to skip for pagination. Defaults to 0.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request succeeded.
+
+</ResponseField>
+
+<ResponseField name="contacts" field-type="array" required="true">
+
+Array of contact records in the group.
+
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+
+Total number of contacts in the group.
+
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true">
+
+Pagination limit used for this request.
+
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+
+Pagination offset used for this request.
+
+</ResponseField>
+
+#### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `401` | Missing authentication or account context |
+| `404` | Group not found or does not belong to the account |
+
+### Add a contact to a group
+
+Add a contact to a CRM group. The contact and group must both belong to the same account. This operation is idempotent, so adding a contact that is already in the group returns success without creating a duplicate.
+
+#### Endpoint
+
+`POST https://app.talkturo.com/api/crm/groups/{id}/contacts`
+
+#### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+#### Body parameters
+
+<ParamField body="contactId" param-type="string" required="true">
+
+UUID of the contact to add. The contact must belong to the same account as the group.
+
+</ParamField>
+
+<Callout kind="info">
+
+API keys require the `contacts:write` scope for this endpoint.
+
+</Callout>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the contact is added or was already a member.
+
+</ResponseField>
+
+#### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing `contactId` |
+| `401` | Missing authentication or account context |
+| `404` | Group or contact not found |
+
+### Remove a contact from a group
+
+Remove a contact from a CRM group by contact ID. Removing a contact that is not in the group still returns success.
+
+#### Endpoint
+
+`DELETE https://app.talkturo.com/api/crm/groups/{id}/contacts?contactId={contactId}`
+
+#### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+
+Group UUID.
+
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="contactId" param-type="string" required="true">
+
+UUID of the contact to remove from the group.
+
+</ParamField>
+
+<Callout kind="info">
+
+API keys require the `contacts:write` scope for this endpoint.
+
+</Callout>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Returns `true` when the contact is removed or was not a member.
+
+</ResponseField>
+
+#### Error responses
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing `contactId` |
+| `401` | Missing authentication or account context |
+| `404` | Group not found or does not belong to the account |
 
 ## Related resources
 

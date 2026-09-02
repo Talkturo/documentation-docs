@@ -11,6 +11,12 @@ description: List TTS voices, clone custom voices, and retrieve voice provider m
 | `POST` | `/api/voice-cloning` | Create a cloned voice from an enrollment audio sample | Session cookie |
 | `GET` | `/api/voice-providers/models` | List supported models for a voice provider | Public |
 | `GET` | `/api/voice-providers/voices` | List provider voices from legacy providers | Public, deprecated |
+| `GET` | `/api/voice-cloning` | List cloned voices for an account | Session cookie |
+| `DELETE` | `/api/voice-cloning/{voiceId}` | Delete a cloned voice | Session cookie |
+| `POST` | `/api/tts-voices/cartesia-preview` | Generate a Cartesia voice preview | Session cookie |
+| `POST` | `/api/tts-voices/dashscope-preview` | Generate a DashScope voice preview | Session cookie |
+| `POST` | `/api/tts-voices/inworld-preview` | Generate an Inworld voice preview | Session cookie |
+| `POST` | `/api/tts-voices/kugel-preview` | Generate a Kugel voice preview | Session cookie |
 
 <Callout kind="info">
 
@@ -468,6 +474,75 @@ Voice language label when available.
 | Status | Meaning |
 | --- | --- |
 | `400` | The `provider` query parameter is missing or invalid. |
+
+## List cloned voices
+
+Retrieve cloned voices for a specific account. Requires an authenticated session and account membership.
+
+### Endpoint
+
+`GET /api/voice-cloning`
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+Account UUID to list cloned voices for.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="voices" field-type="array">
+Array of cloned voice records. Each record includes `id`, `provider`, `voice_id`, `name`, `description`, `language`, `preview_url`, `metadata`, `voice_model`, `account_id`, and `voice_type`, which is always `cloned`.
+</ResponseField>
+
+## Delete a cloned voice
+
+Remove a cloned voice by its ID. The voice is removed from both Talkturo and the provider when applicable.
+
+### Endpoint
+
+`DELETE /api/voice-cloning/{voiceId}`
+
+### Path parameters
+
+<ParamField path="voiceId" param-type="string" required="true">
+The ID of the cloned voice to delete.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the cloned voice is deleted.
+</ResponseField>
+
+## Voice previews
+
+Generate preview audio for specific TTS providers. All preview endpoints require session authentication and return an audio response or a URL to the generated preview audio.
+
+| Method | Path | Provider |
+| --- | --- | --- |
+| `POST` | `/api/tts-voices/cartesia-preview` | Cartesia |
+| `POST` | `/api/tts-voices/dashscope-preview` | DashScope |
+| `POST` | `/api/tts-voices/inworld-preview` | Inworld |
+| `POST` | `/api/tts-voices/kugel-preview` | Kugel/Fish |
+
+Each preview endpoint accepts a voice ID and preview text in the request body, generates a short audio sample, and returns the preview audio. Use these endpoints to let users audition voices before assigning them to an assistant.
+
+### Common body parameters
+
+<ParamField body="voiceId" param-type="string" required="true">
+Provider-specific voice ID to preview.
+</ParamField>
+
+<ParamField body="text" param-type="string" required="true">
+Text to synthesize for the preview.
+</ParamField>
+
+### Common response
+
+<ResponseField name="url" field-type="string">
+URL to the generated preview audio file, or the audio data directly depending on the provider.
+</ResponseField>
 
 ## Related resources
 

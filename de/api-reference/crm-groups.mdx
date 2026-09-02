@@ -402,6 +402,135 @@ UUID der Gruppe.
 
 - `405` — Methode nicht erlaubt; Gruppen können nicht gelöscht werden
 
+## Gruppen-Kontakt-Mitgliedschaft
+
+Verwalten Sie, welche Kontakte zu einer CRM-Gruppe gehören. Fügen Sie Kontakte hinzu, entfernen Sie sie und listen Sie Kontakte innerhalb einer Gruppe über diese Mitgliedschafts-Endpunkte auf.
+
+### Kontakte in einer Gruppe auflisten
+
+Rufen Sie seitenweise Kontakte für eine bestimmte Gruppe ab. Ergebnisse sind nach Mitgliedschafts-Erstellungszeit sortiert, neueste zuerst.
+
+#### Endpunkt
+
+```http
+GET /api/crm/groups/{id}/contacts
+```
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Gruppe.
+</ParamField>
+
+#### Abfrageparameter
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximale Anzahl der zurückgegebenen Kontakte. Standardwert 100.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Anzahl der zu überspringenden Kontakte für Paginierung. Standardwert 0.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt an, ob die Anfrage erfolgreich war.
+</ResponseField>
+
+<ResponseField name="contacts" field-type="array" required="true">
+Array von Kontaktdatensätzen in der Gruppe.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Gesamtzahl der Kontakte in der Gruppe.
+</ResponseField>
+
+<ResponseField name="limit" field-type="integer" required="true">
+Verwendetes Paginierungslimit für diese Anfrage.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Verwendeter Paginierungsoffset für diese Anfrage.
+</ResponseField>
+
+#### Fehlercodes
+
+- `401` — Fehlende Authentifizierung oder Kontokontext
+- `404` — Gruppe nicht gefunden oder gehört nicht zum Konto
+
+### Einen Kontakt zu einer Gruppe hinzufügen
+
+Fügen Sie einen Kontakt zu einer CRM-Gruppe hinzu. Der Kontakt und die Gruppe müssen beide zum selben Konto gehören. Dieser Vorgang ist idempotent: Das Hinzufügen eines bereits in der Gruppe befindlichen Kontakts gibt Erfolg zurück, ohne ein Duplikat zu erstellen.
+
+#### Endpunkt
+
+```http
+POST /api/crm/groups/{id}/contacts
+```
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Gruppe.
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="contactId" param-type="string" required="true">
+UUID des hinzuzufügenden Kontakts. Der Kontakt muss zum selben Konto wie die Gruppe gehören.
+</ParamField>
+
+API-Schlüssel benötigen den Scope `contacts:write` für diesen Endpunkt.
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Kontakt hinzugefügt wurde oder bereits Mitglied war.
+</ResponseField>
+
+#### Fehlercodes
+
+- `400` — `contactId` fehlt
+- `401` — Fehlende Authentifizierung oder Kontokontext
+- `404` — Gruppe oder Kontakt nicht gefunden
+
+### Einen Kontakt aus einer Gruppe entfernen
+
+Entfernen Sie einen Kontakt anhand seiner Kontakt-ID aus einer CRM-Gruppe. Das Entfernen eines Kontakts, der nicht in der Gruppe ist, gibt trotzdem Erfolg zurück.
+
+#### Endpunkt
+
+```http
+DELETE /api/crm/groups/{id}/contacts?contactId={contactId}
+```
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+UUID der Gruppe.
+</ParamField>
+
+#### Abfrageparameter
+
+<ParamField query="contactId" param-type="string" required="true">
+UUID des zu entfernenden Kontakts.
+</ParamField>
+
+API-Schlüssel benötigen den Scope `contacts:write` für diesen Endpunkt.
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Kontakt entfernt wurde oder nicht Mitglied war.
+</ResponseField>
+
+#### Fehlercodes
+
+- `400` — `contactId` fehlt
+- `401` — Fehlende Authentifizierung oder Kontokontext
+- `404` — Gruppe nicht gefunden oder gehört nicht zum Konto
+
 ## Verwandte Ressourcen
 
 <Columns cols={2}>
