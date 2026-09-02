@@ -40,3 +40,60 @@ Weitere Informationen finden Sie unter [Authentifizierung](/de/api-reference/aut
 
   </Tab>
 </Tabs>
+
+## Antwortformat verstehen
+
+Die meisten Endpunkte geben JSON in einem einheitlichen Format zurück, sodass Sie Erfolg und Misserfolg vorhersehbar behandeln können. Erfolgreiche Antworten geben ein `success`-Flag und Antwortdaten zurück, während fehlgeschlagene Antworten ein `success`-Flag und Fehlerdetails zurückgeben.
+
+### HTTP-Statuscodes
+
+| Status | Bedeutung |
+| --- | --- |
+| `200` | Anfrage erfolgreich |
+| `201` | Ressource erstellt |
+| `400` | Ungültige Anfrage |
+| `401` | Nicht autorisiert |
+| `402` | Ungenügendes Guthaben |
+| `403` | Verboten |
+| `404` | Nicht gefunden |
+| `500` | Serverfehler |
+
+## Ratenlimits
+
+API-Schlüssel sind standardmäßig auf 1000 Anfragen pro Stunde begrenzt. Wenn Sie Hintergrundjobs, Wiederholungen oder Massensynchronisierungen entwickeln, fügen Sie Backoff- und Wiederholungsbehandlung hinzu.
+
+## Endpunktgruppen durchsuchen
+
+Beginnen Sie mit der Gruppe, die zur Ressource oder zum Workflow passt, den Sie integrieren möchten. Jede Referenzseite dokumentiert Endpunkte, Authentifizierungsanforderungen und Anfrage-/Antwortdetails.
+
+<Columns cols={2}>
+  <Card title="Authentifizierung" href="/de/api-reference/authentication" icon="lock" cta="Referenz öffnen">Authentifizieren Sie Anfragen mit API-Schlüsseln, Sitzungs-Cookies und JWT-Bearer-Token.</Card>
+  <Card title="API-Schlüssel" href="/de/api-reference/api-keys" icon="shield" cta="Referenz öffnen">Erstellen, auflisten, aktualisieren und widerrufen Sie API-Schlüssel.</Card>
+  <Card title="Assistenten" href="/de/api-reference/assistants" icon="users" cta="Referenz öffnen">Erstellen, aktualisieren, klonen und löschen Sie Sprachassistenten.</Card>
+  <Card title="Telefonie" href="/de/api-reference/telephony" icon="phone" cta="Referenz öffnen">Konfigurieren Sie ein- und ausgehende Anrufe und Telefonieeinstellungen.</Card>
+  <Card title="Telefonnummern" href="/de/api-reference/phone-numbers" icon="hash" cta="Referenz öffnen">Suchen, kaufen, abrufen und freigeben von Telefonnummern.</Card>
+  <Card title="Guthaben" href="/de/api-reference/credits" icon="bar-chart" cta="Referenz öffnen">Guthaben prüfen, Auto-Reload verwalten und Checkout starten.</Card>
+  <Card title="Abrechnung" href="/de/api-reference/billing" icon="database" cta="Referenz öffnen">Rechnungen und abrechnungsbezogene Endpunkte.</Card>
+  <Card title="CRM-Kontakte" href="/de/api-reference/crm-contacts" icon="users" cta="Referenz öffnen">Kontaktdatensätze auflisten, erstellen, aktualisieren und importieren.</Card>
+  <Card title="CRM-Unternehmen" href="/de/api-reference/crm-companies" icon="folder" cta="Referenz öffnen">Unternehmensdatensätze verwalten (veraltet).</Card>
+  <Card title="CRM-Opportunities" href="/de/api-reference/crm-opportunities" icon="rocket" cta="Referenz öffnen">Opportunities für Pipeline- und Revenue-Workflows verwalten.</Card>
+  <Card title="CRM-Benutzerdefinierte Felder" href="/de/api-reference/crm-custom-fields" icon="settings" cta="Referenz öffnen">Benutzerdefinierte CRM-Felder definieren und verwalten.</Card>
+  <Card title="CRM-Kampagnen" href="/de/api-reference/crm-campaigns" icon="play-circle" cta="Referenz öffnen">Ausgehende Kampagnen, Kontakte und Dashboards verwalten.</Card>
+  <Card title="CRM-Gruppen" href="/de/api-reference/crm-groups" icon="users" cta="Referenz öffnen">Kontakte in Gruppen organisieren für Kampagnen und Routing.</Card>
+  <Card title="TurboFlow" href="/de/api-reference/turboflow" icon="zap" cta="Referenz öffnen">Workflow-Automatisierungen, Trigger, Integrationen und Tools.</Card>
+  <Card title="Webhooks" href="/de/api-reference/webhooks" icon="upload" cta="Referenz öffnen">Event-Callbacks und Webhook-Endpunkte empfangen.</Card>
+  <Card title="Desktop-Authentifizierung" href="/de/api-reference/desktop" icon="monitor" cta="Referenz öffnen">Desktop-Clients mit JWT-Bearer-Token authentifizieren.</Card>
+  <Card title="Wissensdatenbank" href="/de/api-reference/knowledge-base" icon="book-open" cta="Referenz öffnen">Wissensdatenbank-Dateien hochladen, auflisten und entfernen.</Card>
+  <Card title="Sitzungen" href="/de/api-reference/sessions" icon="headphones" cta="Referenz öffnen">Sprach- und Browsersitzungen erstellen, auflisten und beenden.</Card>
+  <Card title="Anrufe" href="/de/api-reference/calls" icon="phone-call" cta="Referenz öffnen">Anrufaufzeichnungen, Transkripte und Zusammenfassungen abrufen.</Card>
+  <Card title="Benutzer und Konto" href="/de/api-reference/users" icon="user" cta="Referenz öffnen">Benutzerprofile, Kontoeinstellungen und Workspaces verwalten.</Card>
+  <Card title="Stimme und TTS" href="/de/api-reference/voice" icon="mic" cta="Referenz öffnen">TTS-Stimmen, Sprachanbieter-Modelle und Voice-Cloning.</Card>
+  <Card title="MCP-Plugins" href="/de/api-reference/mcp" icon="plug" cta="Referenz öffnen">MCP-Plugin-Integrationen und -Tools verbinden und verwalten.</Card>
+  <Card title="Zahlungsmethoden" href="/de/api-reference/payment-methods" icon="credit-card" cta="Referenz öffnen">Gespeicherte Zahlungsmethoden auflisten und verwalten.</Card>
+  <Card title="Onboarding" href="/de/api-reference/onboarding" icon="rocket" cta="Referenz öffnen">Workspace-Onboarding-Flows starten, verfolgen und abschließen.</Card>
+  <Card title="Verifizierungen" href="/de/api-reference/verifications" icon="badge-check" cta="Referenz öffnen">Regulatorische Verifizierungen, Adressen und Anträge verwalten.</Card>
+</Columns>
+
+## Mit dem häufigsten Integrationspfad beginnen
+
+Die meisten externen Entwickler beginnen mit API-Schlüsseln und gehen dann zu Assistenten-, Telefonie- oder CRM-Endpunkten über, je nach Produkt.

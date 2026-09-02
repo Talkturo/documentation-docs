@@ -15,6 +15,21 @@ Die Endpunkte auf dieser Seite verwenden unterschiedliche Authentifizierungsmode
 
 </Callout>
 
+## Endpunktübersicht
+
+| Methode | Pfad | Beschreibung | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/tts-voices` | Systemstimmen und geklonte Stimmen auflisten | Öffentlich |
+| `POST` | `/api/voice-cloning` | Geklonte Stimme aus Audioprobe erstellen | Session-Cookie |
+| `GET` | `/api/voice-providers/models` | Unterstützte Modelle eines Anbieters auflisten | Öffentlich |
+| `GET` | `/api/voice-providers/voices` | Legacy-Stimmenkatalog abrufen | Öffentlich, veraltet |
+| `GET` | `/api/voice-cloning` | Geklonte Stimmen für ein Konto auflisten | Session-Cookie |
+| `DELETE` | `/api/voice-cloning/{voiceId}` | Geklonte Stimme löschen | Session-Cookie |
+| `POST` | `/api/tts-voices/cartesia-preview` | Cartesia-Stimmvorschau generieren | Session-Cookie |
+| `POST` | `/api/tts-voices/dashscope-preview` | DashScope-Stimmvorschau generieren | Session-Cookie |
+| `POST` | `/api/tts-voices/inworld-preview` | Inworld-Stimmvorschau generieren | Session-Cookie |
+| `POST` | `/api/tts-voices/kugel-preview` | Kugel-Stimmvorschau generieren | Session-Cookie |
+
 ## GET /api/tts-voices
 
 Listet Systemstimmen und geklonte Stimmen auf, die für TTS verfügbar sind. Dieser Endpunkt erfordert keine Authentifizierung.
@@ -340,6 +355,89 @@ Anzeigename der Stimme.
 Die öffentlichen Endpunkte auf dieser Seite eignen sich für das Laden von Stimmenlisten und Modellkatalogen vor dem eigentlichen TTS-Aufruf. Der Endpunkt für das Stimmklonen erstellt dagegen eine accountgebundene Ressource und erfordert deshalb eine angemeldete Sitzung.
 
 Wenn Sie von `GET /api/voice-providers/voices` migrieren, verwenden Sie `GET /api/tts-voices` als neue Standardquelle. Die neuere Route liefert zusätzliche Felder wie `provider`, `voice_model`, `account_id` und `voice_type`, sodass Sie Systemstimmen und geklonte Stimmen mit demselben Schema verarbeiten können.
+
+## Geklonte Stimmen auflisten
+
+Rufen Sie geklonte Stimmen für ein bestimmtes Konto ab. Erfordert eine authentifizierte Sitzung und Kontomitgliedschaft.
+
+### Endpunkt
+
+`GET /api/voice-cloning`
+
+### Query-Parameter
+
+<ParamField query="accountId" param-type="string" required="true">
+
+Konto-UUID, für die geklonte Stimmen aufgelistet werden sollen.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="voices" field-type="array">
+
+Array von geklonten Stimmeinträgen. Jeder Eintrag enthält `id`, `provider`, `voice_id`, `name`, `description`, `language`, `preview_url`, `metadata`, `voice_model`, `account_id` und `voice_type`. `voice_type` ist immer `cloned`.
+
+</ResponseField>
+
+## Geklonte Stimme löschen
+
+Entfernen Sie eine geklonte Stimme anhand ihrer ID. Die Stimme wird sowohl aus Talkturo als auch vom Anbieter entfernt, sofern zutreffend.
+
+### Endpunkt
+
+`DELETE /api/voice-cloning/{voiceId}`
+
+### Pfadparameter
+
+<ParamField path="voiceId" param-type="string" required="true">
+
+Die ID der zu löschenden geklonten Stimme.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt `true` zurück, wenn die geklonte Stimme gelöscht wurde.
+
+</ResponseField>
+
+## Stimmvorschauen
+
+Generieren Sie Vorschau-Audio für bestimmte TTS-Anbieter. Alle Vorschau-Endpunkte erfordern Session-Authentifizierung und geben eine Audio-Antwort oder eine URL zum generierten Vorschau-Audio zurück.
+
+| Methode | Pfad | Anbieter |
+| --- | --- | --- |
+| `POST` | `/api/tts-voices/cartesia-preview` | Cartesia |
+| `POST` | `/api/tts-voices/dashscope-preview` | DashScope |
+| `POST` | `/api/tts-voices/inworld-preview` | Inworld |
+| `POST` | `/api/tts-voices/kugel-preview` | Kugel/Fish |
+
+Jeder Vorschau-Endpunkt akzeptiert eine Stimmen-ID und Vorschautext im Request-Body, generiert eine kurze Audioprobe und gibt das Vorschau-Audio zurück. Verwenden Sie diese Endpunkte, um Benutzern das Anhören von Stimmen zu ermöglichen, bevor sie einem Assistenten zugewiesen werden.
+
+### Allgemeine Body-Parameter
+
+<ParamField body="voiceId" param-type="string" required="true">
+
+Anbieterspezifische Stimmen-ID für die Vorschau.
+
+</ParamField>
+
+<ParamField body="text" param-type="string" required="true">
+
+Text, der für die Vorschau synthetisiert werden soll.
+
+</ParamField>
+
+### Allgemeine Antwort
+
+<ResponseField name="url" field-type="string">
+
+URL zur generierten Vorschau-Audiodatei oder die Audiodaten direkt, je nach Anbieter.
+
+</ResponseField>
 
 ## Verwandte Ressourcen
 

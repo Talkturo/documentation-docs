@@ -9,6 +9,8 @@ description: Retrieve call recording URLs and flow execution runs associated wit
 | --- | --- | --- | --- |
 | `GET` | `/api/calls/{id}/recording-url` | Get a pre-signed recording URL for a call | Session cookie |
 | `GET` | `/api/calls/{id}/flow-runs` | List TurboFlow runs associated with a call | Session cookie |
+| `GET` | `/api/transcripts` | Retrieve call transcripts | Session cookie |
+| `GET` | `/api/summaries` | Retrieve call summaries | Session cookie |
 
 <Callout kind="info">
 
@@ -243,6 +245,70 @@ The input payload or extracted context associated with the run. Its exact shape 
 - `403` — Your user is authenticated but is not a member of the workspace that owns the call.
 - `404` — The call does not exist.
 - `500` — The server failed to query associated flow runs.
+
+## Retrieve transcripts
+
+Retrieve call transcripts for the authenticated workspace. Supports optional filtering by call ID or date range.
+
+### Endpoint
+
+`GET /api/transcripts`
+
+### Query parameters
+
+<ParamField query="callId" param-type="string" required="false">
+Filter transcripts by a specific call ID.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of transcripts to return.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of transcripts to skip for pagination.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="transcripts" field-type="array" required="true">
+Array of transcript objects. Each transcript includes the call ID, transcript text, segments, and timestamps.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Total number of transcripts matching the query.
+</ResponseField>
+
+## Retrieve summaries
+
+Retrieve call summaries for the authenticated workspace. Supports optional filtering by call ID or date range.
+
+### Endpoint
+
+`GET /api/summaries`
+
+### Query parameters
+
+<ParamField query="callId" param-type="string" required="false">
+Filter summaries by a specific call ID.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of summaries to return.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of summaries to skip for pagination.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="summaries" field-type="array" required="true">
+Array of summary objects. Each summary includes the call ID, summary text, key outcomes, and metadata.
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+Total number of summaries matching the query.
+</ResponseField>
 
 ## Notes on access control
 

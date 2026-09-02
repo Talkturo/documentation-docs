@@ -20,6 +20,8 @@ Rufen Sie über die Calls API vor-signierte Aufzeichnungs-URLs und die zugehöri
 |---|---|---|
 | `GET` | `/api/calls/{id}/recording-url` | Ruft eine vor-signierte URL für die Anrufaufzeichnung ab. |
 | `GET` | `/api/calls/{id}/flow-runs` | Ruft TurboFlow-Ausführungen ab, die mit einem Anruf verknüpft sind. |
+| `GET` | `/api/transcripts` | Ruft Anruf-Transkripte ab. |
+| `GET` | `/api/summaries` | Ruft Anruf-Zusammenfassungen ab. |
 
 ## Aufzeichnungs-URL abrufen
 
@@ -224,6 +226,90 @@ Die Eingabedaten, mit denen die Ausführung gestartet wurde.
 | `403` | Sie haben keinen Zugriff auf diesen Anruf oder seine Flow-Ausführungen. |
 | `404` | Der Anruf wurde nicht gefunden. |
 | `500` | Der Server konnte die Flow-Ausführungen nicht abrufen. |
+
+## Transkripte abrufen
+
+Rufen Sie Anruf-Transkripte für den authentifizierten Workspace ab. Unterstützt optionale Filterung nach Anruf-ID oder Datumsbereich.
+
+### Endpunkt
+
+`GET /api/transcripts`
+
+### Query-Parameter
+
+<ParamField query="callId" param-type="string" required="false">
+
+Transkripte nach einer bestimmten Anruf-ID filtern.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximale Anzahl der zurückgegebenen Transkripte.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Anzahl der zu überspringenden Transkripte für Paginierung.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="transcripts" field-type="array" required="true">
+
+Array von Transkriptobjekten. Jedes Transkript enthält die Anruf-ID, Transkripttext, Segmente und Zeitstempel.
+
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+
+Gesamtzahl der Transkripte, die der Abfrage entsprechen.
+
+</ResponseField>
+
+## Zusammenfassungen abrufen
+
+Rufen Sie Anruf-Zusammenfassungen für den authentifizierten Workspace ab. Unterstützt optionale Filterung nach Anruf-ID oder Datumsbereich.
+
+### Endpunkt
+
+`GET /api/summaries`
+
+### Query-Parameter
+
+<ParamField query="callId" param-type="string" required="false">
+
+Zusammenfassungen nach einer bestimmten Anruf-ID filtern.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+
+Maximale Anzahl der zurückgegebenen Zusammenfassungen.
+
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+
+Anzahl der zu überspringenden Zusammenfassungen für Paginierung.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="summaries" field-type="array" required="true">
+
+Array von Zusammenfassungsobjekten. Jede Zusammenfassung enthält die Anruf-ID, Zusammenfassungstext, wichtige Ergebnisse und Metadaten.
+
+</ResponseField>
+
+<ResponseField name="count" field-type="integer" required="true">
+
+Gesamtzahl der Zusammenfassungen, die der Abfrage entsprechen.
+
+</ResponseField>
 
 ## Verwandte Ressourcen
 

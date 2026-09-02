@@ -670,6 +670,460 @@ Estimated credits-per-minute contribution from STT, TTS, LLM, and telephony comp
 Total estimated credits per minute.
 </ResponseField>
 
+## Knowledge base attachments
+
+Manage knowledge-base files attached to an assistant. Attach existing files from the account library. These endpoints do not upload new files. See [Knowledge Base](/en/api-reference/knowledge-base) for file upload and management.
+
+| Method | Path | Purpose | Auth | Scope |
+| --- | --- | --- | --- | --- |
+| `GET` | `/api/assistants/{assistantId}/knowledge-base` | List attached knowledge-base files | API key or session | `kb:read` |
+| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Attach an existing file | API key or session | `kb:write` |
+| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Detach a file | API key or session | `kb:write` |
+
+### List knowledge-base files
+
+Retrieve all knowledge-base files attached to the assistant. Results are ordered by attachment creation time, newest first.
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/knowledge-base`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="files" field-type="array" required="true">
+Array of attached knowledge-base file objects. Each object includes `id`, `filename`, `mime_type`, `size_bytes`, `status`, `status_error`, `char_count`, `chunk_count`, `created_at`, and `updated_at`.
+</ResponseField>
+
+### Attach a knowledge-base file
+
+Attach an existing knowledge-base file from the account library to the assistant. The file must already exist and belong to the same account as the assistant. This operation is idempotent. Attaching a file that is already attached returns success without creating a duplicate.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/knowledge-base`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="file_id" param-type="string" required="true">
+UUID of the knowledge-base file to attach. The file must already exist in the account library.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file is attached or was already attached.
+</ResponseField>
+
+<ResponseField name="idempotent" field-type="boolean" required="false">
+Returns `true` when the file was already attached and no new attachment was created.
+</ResponseField>
+
+### Detach a knowledge-base file
+
+Remove a knowledge-base file from an assistant. This only removes the attachment. The underlying file remains in the account library. Detaching a non-existent attachment still returns success.
+
+### Endpoint
+
+`DELETE /api/assistants/{assistantId}/knowledge-base/{fileId}`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+<ParamField path="fileId" param-type="string" required="true">
+UUID of the knowledge-base file to detach.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the file is detached or was not attached.
+</ResponseField>
+
+## Telephony management
+
+Manage inbound and outbound telephony for an assistant. These endpoints provision and configure LiveKit trunks, assign phone numbers, and start test calls.
+
+<Callout kind="alert">
+
+Most telephony management endpoints require session authentication and do not support API key authentication. Only the phone-numbers list endpoint supports API keys.
+
+</Callout>
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/assistants/{assistantId}/telephony/phone-numbers` | List phone numbers assigned to the assistant | API key or session |
+| `PATCH` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Assign phone numbers to the assistant | API key or session |
+| `POST` | `/api/assistants/{assistantId}/telephony/inbound` | Enable or disable inbound calling | Session only |
+| `POST` | `/api/assistants/{assistantId}/telephony/outbound` | Enable or disable outbound calling | Session only |
+| `POST` | `/api/assistants/{assistantId}/telephony/settings` | Update telephony settings (phone numbers, voicemail, compliance) | Session only |
+| `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Start a test call | Session only |
+| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Assign phone numbers with carrier validation | Session only |
+
+### List assigned phone numbers
+
+Retrieve active, non-deleted phone numbers assigned to the assistant. Results include numbers that are unassigned or assigned to this assistant, sorted by phone number ascending.
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/telephony/phone-numbers`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="accountSlug" param-type="string" required="false">
+Account slug to resolve the workspace.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Array of phone number objects. Each object includes `id`, `phone_number`, `status`, `is_trial`, `trial_expires_at`, `assistant_id`, `provider`, `ownership_type`, `country_code`, `provider_account_id`, `provider_account_sid`, and account label fields.
+</ResponseField>
+
+### Assign phone numbers (PATCH)
+
+Assign phone numbers to the assistant. All existing assignments are removed first, then the supplied IDs are assigned. LiveKit routing is resynchronized for affected assistants.
+
+### Endpoint
+
+`PATCH /api/assistants/{assistantId}/telephony/phone-numbers`
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="false">
+Account slug for workspace resolution.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+Array of phone number UUIDs to assign.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when phone numbers are assigned successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Confirmation message.
+</ResponseField>
+
+### Enable or disable inbound calling
+
+Toggle inbound calling for the assistant. Enabling requires at least one active, non-deleted phone number assigned to the assistant. Talkturo provisions or updates the LiveKit inbound trunk and dispatch rule when enabling, and removes them when disabling.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/telephony/inbound`
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Account slug for workspace resolution.
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean" required="true">
+Set to `true` to enable inbound calling, or `false` to disable it.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the operation succeeds.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Updated assistant telephony state including `id`, `inbound_enabled`, `outbound_enabled`, `livekit_inbound_trunk_id`, and `livekit_dispatch_rule_id`.
+</ResponseField>
+
+### Enable or disable outbound calling
+
+Toggle outbound calling for the assistant. Enabling requires at least one active assigned phone number. Talkturo provisions or updates the LiveKit outbound trunk when enabling, and removes it when disabling.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/telephony/outbound`
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Account slug for workspace resolution.
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean" required="true">
+Set to `true` to enable outbound calling, or `false` to disable it.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the operation succeeds.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Updated assistant telephony state including `id`, `inbound_enabled`, `outbound_enabled`, and `livekit_outbound_trunk_id`.
+</ResponseField>
+
+### Update telephony settings
+
+Configure phone number assignments, voicemail, compliance, and destination country in a single request. This endpoint handles LiveKit provisioning, voicemail detection, and compliance consent flows.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/telephony/settings`
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Account slug for workspace resolution.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+Array of phone number UUIDs to assign. IDs are deduplicated automatically.
+</ParamField>
+
+<ParamField body="inboundEnabled" param-type="boolean" required="true">
+Whether to enable inbound calling.
+</ParamField>
+
+<ParamField body="outboundEnabled" param-type="boolean" required="true">
+Whether to enable outbound calling.
+</ParamField>
+
+<ParamField body="telnyxConnectionId" param-type="string" required="false">
+Telnyx connection credential ID. An empty string is converted to null.
+</ParamField>
+
+<ParamField body="destinationCountry" param-type="string" required="false">
+Destination country code for outbound routing. Set to null for automatic region routing. Valid values: `ae`, `au`, `br`, `ch`, `de`, `fr`, `gb`, `il`, `in`, `jp`, `sa`, `sg`, `us`, `za`.
+</ParamField>
+
+<ParamField body="voicemail" param-type="object" required="false">
+Voicemail detection settings. Includes `detectionEnabled` (boolean), `action` (string, maximum 40 characters), and `message` (string, maximum 2000 characters).
+</ParamField>
+
+<ParamField body="compliance" param-type="object" required="false">
+Compliance consent settings. Includes `enabled` (boolean), `templateId` (string, UUID when non-null), `briefingText` (string, maximum 2000 characters), `language` (string, maximum 20 characters), `requireAck` (boolean), `fallbackPolicy` (`retry`, `block`, or `continue`), and `ackTimeoutSeconds` (integer, 3 to 60). When `compliance.enabled` is `true`, either `templateId` or non-blank `briefingText` is required.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when telephony settings are updated successfully.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Updated assistant telephony state.
+</ResponseField>
+
+<ResponseField name="assignedActive" field-type="number" required="true">
+Number of active phone numbers assigned after the update.
+</ResponseField>
+
+<Callout kind="info">
+
+Telephony settings are applied atomically. If LiveKit provisioning fails, the route rolls back all enabled flags and trunk IDs to their previous state.
+
+</Callout>
+
+### Start a test call
+
+Initiate a test call using the assistant's telephony configuration. Requires sufficient account credits and outbound calling to be enabled.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/telephony/test-call`
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Account slug for workspace resolution.
+</ParamField>
+
+<ParamField body="fromNumber" param-type="string" required="true">
+The from phone number. Must be assigned to the assistant, active, and non-deleted.
+</ParamField>
+
+<ParamField body="toNumber" param-type="string" required="true">
+The destination phone number. Normalized to E.164 format automatically.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the test call is initiated.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+The LiveKit room name created for the test call.
+</ResponseField>
+
+<ResponseField name="sipCallId" field-type="string" required="false">
+The SIP call ID if the call was created successfully.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Confirmation message with the destination number.
+</ResponseField>
+
+<Callout kind="alert">
+
+Test calls require sufficient account credits. If the balance is too low, the API returns HTTP 402 with the current balance and minimum required credits.
+
+</Callout>
+
+## CRM group assignment
+
+Assign a CRM group to an assistant. The CRM group determines which contacts the assistant can access during calls. The group must belong to the same account as the assistant.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/crm-group`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Account slug for workspace resolution.
+</ParamField>
+
+<ParamField body="groupId" param-type="string" required="true">
+UUID of the CRM group to assign. The group must belong to the same account.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the CRM group is assigned successfully.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Updated assistant record including `id` and `group_id`.
+</ResponseField>
+
+<ResponseField name="warning" field-type="string" required="false">
+Returned when the database assignment succeeds but LiveKit resynchronization fails. The assignment is still saved.
+</ResponseField>
+
+## Webhook testing
+
+Send a test webhook event to verify that the assistant's webhook configuration is working. The endpoint generates a synthetic `call.ended` event and queues it for delivery. It does not make a real call or synchronously invoke the webhook.
+
+<Callout kind="info">
+
+The assistant must have webhooks enabled with both a URL and secret configured before testing.
+
+</Callout>
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/webhooks/test`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the test event is queued.
+</ResponseField>
+
+<ResponseField name="delivery_id" field-type="string" required="true">
+UUID of the queued webhook delivery.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Confirmation message. Value is `Test event queued`.
+</ResponseField>
+
+## Workflow tool attachment
+
+Attach a published TurboFlow workflow to an assistant as a callable tool. The assistant can invoke the workflow during calls. The workflow's name, description, and parameters are resolved from the published flow version at call time.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/tools/workflow`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="flow_id" param-type="string" required="true">
+UUID of the published workflow to attach.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="config" field-type="object" required="true">
+The inserted `assistant_tool_configs` row including `id`, `assistant_id`, `account_id`, `tool_type` (set to `workflow`), `config` (containing `flow_id`), and `is_enabled`.
+</ResponseField>
+
+<Callout kind="alert">
+
+Attaching the same workflow twice to the same assistant returns HTTP 409 with error `workflow_already_attached`.
+
+</Callout>
+
+### Detach a workflow tool
+
+Remove a workflow tool from an assistant by configuration ID.
+
+### Endpoint
+
+`DELETE /api/assistants/{assistantId}/tools/workflow?config_id={configId}`
+
+### Query parameters
+
+<ParamField query="config_id" param-type="string" required="true">
+The tool configuration UUID to remove.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Returns `true` when the workflow tool is detached.
+</ResponseField>
+
 ## Common response shape
 
 All mutation endpoints on this page return a top-level `success` field. Depending on the operation, the response also includes either an `assistant` object or a `message`.
@@ -692,13 +1146,27 @@ Returned by the delete endpoint.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | ` /api/assistants ` | Create an assistant |
-| `PATCH` | ` /api/assistants/{assistantId} ` | Update an assistant |
-| `DELETE` | ` /api/assistants/{assistantId} ` | Delete an assistant |
-| `POST` | ` /api/assistants/{assistantId}/clone ` | Clone an assistant |
-| `GET` | ` /api/assistants/{assistantId}/usage-stats ` | Retrieve usage statistics |
+| `POST` | `/api/assistants` | Create an assistant |
+| `PATCH` | `/api/assistants/{assistantId}` | Update an assistant |
+| `DELETE` | `/api/assistants/{assistantId}` | Delete an assistant |
+| `POST` | `/api/assistants/{assistantId}/clone` | Clone an assistant |
+| `GET` | `/api/assistants/{assistantId}/usage-stats` | Retrieve usage statistics |
 | `GET` | `/api/assistants/{assistantId}/tool-configs` | List tool configurations |
 | `GET` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Get a specific tool configuration |
 | `POST` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Create or update a tool configuration |
 | `DELETE` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Delete tool configuration(s) |
 | `GET` | `/api/assistants/{assistantId}/billing/estimate` | Estimate credits per minute |
+| `GET` | `/api/assistants/{assistantId}/knowledge-base` | List attached knowledge-base files |
+| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Attach a knowledge-base file |
+| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Detach a knowledge-base file |
+| `GET` | `/api/assistants/{assistantId}/telephony/phone-numbers` | List assigned phone numbers |
+| `PATCH` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Assign phone numbers |
+| `POST` | `/api/assistants/{assistantId}/telephony/inbound` | Enable or disable inbound calling |
+| `POST` | `/api/assistants/{assistantId}/telephony/outbound` | Enable or disable outbound calling |
+| `POST` | `/api/assistants/{assistantId}/telephony/settings` | Update telephony settings |
+| `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Start a test call |
+| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Assign phone numbers with carrier validation |
+| `POST` | `/api/assistants/{assistantId}/crm-group` | Assign a CRM group |
+| `POST` | `/api/assistants/{assistantId}/webhooks/test` | Queue a test webhook event |
+| `POST` | `/api/assistants/{assistantId}/tools/workflow` | Attach a workflow tool |
+| `DELETE` | `/api/assistants/{assistantId}/tools/workflow` | Detach a workflow tool |

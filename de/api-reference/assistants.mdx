@@ -25,6 +25,20 @@ Basispfad: `/api/assistants`
 | `POST` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Werkzeugkonfiguration erstellen oder aktualisieren |
 | `DELETE` | `/api/assistants/{assistantId}/tool-configs/{toolType}` | Werkzeugkonfiguration(en) löschen |
 | `GET` | `/api/assistants/{assistantId}/billing/estimate` | Kostenschätzung pro Minute |
+| `GET` | `/api/assistants/{assistantId}/knowledge-base` | Angehängte Wissensdatenbank-Dateien auflisten |
+| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Wissensdatenbank-Datei anhängen |
+| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Wissensdatenbank-Datei trennen |
+| `GET` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Zugewiesene Telefonnummern auflisten |
+| `PATCH` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Telefonnummern zuweisen |
+| `POST` | `/api/assistants/{assistantId}/telephony/inbound` | Eingehende Anrufe aktivieren/deaktivieren |
+| `POST` | `/api/assistants/{assistantId}/telephony/outbound` | Ausgehende Anrufe aktivieren/deaktivieren |
+| `POST` | `/api/assistants/{assistantId}/telephony/settings` | Telefonieeinstellungen aktualisieren |
+| `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Testanruf starten |
+| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Telefonnummern mit Carrier-Validierung zuweisen |
+| `POST` | `/api/assistants/{assistantId}/crm-group` | CRM-Gruppe zuweisen |
+| `POST` | `/api/assistants/{assistantId}/webhooks/test` | Test-Webhook-Event einreihen |
+| `POST` | `/api/assistants/{assistantId}/tools/workflow` | Workflow-Werkzeug anhängen |
+| `DELETE` | `/api/assistants/{assistantId}/tools/workflow` | Workflow-Werkzeug trennen |
 
 ## Einen Assistenten erstellen
 
@@ -616,6 +630,440 @@ Aufschlüsselung der geschätzten Kosten pro Minute nach STT-, TTS-, LLM- und Te
 
 <ResponseField name="estimated_credits_per_minute" field-type="number" required="true">
 Geschätzte Gesamtkosten pro Minute in Credits.
+</ResponseField>
+
+## Wissensdatenbank-Anhänge
+
+Verwalten Sie Wissensdatenbank-Dateien, die an einen Assistenten angehängt sind. Hängen Sie vorhandene Dateien aus der Kontobibliothek an. Diese Endpunkte laden keine neuen Dateien hoch. Siehe [Wissensdatenbank](/de/api-reference/knowledge-base) für Datei-Upload und -Verwaltung.
+
+| Methode | Pfad | Beschreibung | Auth | Scope |
+| --- | --- | --- | --- | --- |
+| `GET` | `/api/assistants/{assistantId}/knowledge-base` | Angehängte Wissensdatenbank-Dateien auflisten | API-Schlüssel oder Session | `kb:read` |
+| `POST` | `/api/assistants/{assistantId}/knowledge-base` | Vorhandene Datei anhängen | API-Schlüssel oder Session | `kb:write` |
+| `DELETE` | `/api/assistants/{assistantId}/knowledge-base/{fileId}` | Datei trennen | API-Schlüssel oder Session | `kb:write` |
+
+### Angehängte Wissensdatenbank-Dateien auflisten
+
+Ruft alle Wissensdatenbank-Dateien ab, die an den Assistenten angehängt sind. Ergebnisse sind nach Anhänge-Erstellungszeit sortiert, neueste zuerst.
+
+### Endpunkt
+
+`GET /api/assistants/{assistantId}/knowledge-base`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Anfrage erfolgreich ist.
+</ResponseField>
+
+<ResponseField name="files" field-type="array" required="true">
+Array von angehängten Wissensdatenbank-Dateiobjekten. Jedes Objekt enthält `id`, `filename`, `mime_type`, `size_bytes`, `status`, `status_error`, `char_count`, `chunk_count`, `created_at` und `updated_at`.
+</ResponseField>
+
+### Wissensdatenbank-Datei anhängen
+
+Hängen Sie eine vorhandene Wissensdatenbank-Datei aus der Kontobibliothek an den Assistenten an. Die Datei muss bereits existieren und zum selben Konto wie der Assistenten gehören. Dieser Vorgang ist idempotent, das Anhängen einer bereits angehängten Datei gibt Erfolg zurück, ohne ein Duplikat zu erstellen.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/knowledge-base`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="file_id" param-type="string" required="true">
+UUID der Wissensdatenbank-Datei, die angehängt werden soll. Die Datei muss bereits in der Kontobibliothek existieren.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Datei angehängt wurde oder bereits angehängt war.
+</ResponseField>
+
+<ResponseField name="idempotent" field-type="boolean" required="false">
+Gibt `true` zurück, wenn die Datei bereits angehängt war und kein neuer Anhang erstellt wurde.
+</ResponseField>
+
+### Wissensdatenbank-Datei trennen
+
+Entfernen Sie eine Wissensdatenbank-Datei von einem Assistenten. Dies entfernt nur den Anhang. Die zugrunde liegende Datei bleibt in der Kontobibliothek. Das Trennen eines nicht vorhandenen Anhangs gibt trotzdem Erfolg zurück.
+
+### Endpunkt
+
+`DELETE /api/assistants/{assistantId}/knowledge-base/{fileId}`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+<ParamField path="fileId" param-type="string" required="true">
+UUID der Wissensdatenbank-Datei, die getrennt werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Datei getrennt wurde oder nicht angehängt war.
+</ResponseField>
+
+## Telefonieverwaltung
+
+Verwalten Sie ein- und ausgehende Telefonie für einen Assistenten. Diese Endpunkte stellen LiveKit-Trunks bereit, konfigurieren diese, weisen Telefonnummern zu und starten Testanrufe.
+
+Die meisten Telefonieverwaltungs-Endpunkte erfordern Session-Authentifizierung und unterstützen keine API-Schlüssel-Authentifizierung. Nur der Endpunkt zum Auflisten von Telefonnummern unterstützt API-Schlüssel.
+
+| Methode | Pfad | Beschreibung | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Dem Assistenten zugewiesene Telefonnummern auflisten | API-Schlüssel oder Session |
+| `PATCH` | `/api/assistants/{assistantId}/telephony/phone-numbers` | Telefonnummern dem Assistenten zuweisen | API-Schlüssel oder Session |
+| `POST` | `/api/assistants/{assistantId}/telephony/inbound` | Eingehende Anrufe aktivieren oder deaktivieren | Nur Session |
+| `POST` | `/api/assistants/{assistantId}/telephony/outbound` | Ausgehende Anrufe aktivieren oder deaktivieren | Nur Session |
+| `POST` | `/api/assistants/{assistantId}/telephony/settings` | Telefonieeinstellungen aktualisieren (Telefonnummern, Anrufbeantworter, Compliance) | Nur Session |
+| `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Testanruf starten | Nur Session |
+| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Telefonnummern mit Carrier-Validierung zuweisen | Nur Session |
+
+### Zugewiesene Telefonnummern auflisten
+
+Ruft aktive, nicht gelöschte Telefonnummern ab, die dem Assistenten zugewiesen sind. Ergebnisse umfassen Nummern, die nicht zugewiesen oder diesem Assistenten zugewiesen sind, sortiert nach Telefonnummer aufsteigend.
+
+### Endpunkt
+
+`GET /api/assistants/{assistantId}/telephony/phone-numbers`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Abfrageparameter
+
+<ParamField query="accountSlug" param-type="string" required="false">
+Kontoslug zur Workspace-Auflösung.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Anfrage erfolgreich ist.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Array von Telefonnummern-Objekten. Jedes Objekt enthält `id`, `phone_number`, `status`, `is_trial`, `trial_expires_at`, `assistant_id`, `provider`, `ownership_type`, `country_code`, `provider_account_id`, `provider_account_sid` und Konto-Label-Felder.
+</ResponseField>
+
+### Telefonnummern zuweisen (PATCH)
+
+Weisen Sie dem Assistenten Telefonnummern zu. Alle vorhandenen Zuweisungen werden zuerst entfernt, dann werden die angegebenen IDs zugewiesen. LiveKit-Routing wird für betroffene Assistenten neu synchronisiert.
+
+### Endpunkt
+
+`PATCH /api/assistants/{assistantId}/telephony/phone-numbers`
+
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="false">
+Kontoslug zur Workspace-Auflösung.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+Array von Telefonnummern-UUIDs, die zugewiesen werden sollen.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn Telefonnummern erfolgreich zugewiesen wurden.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Bestätigungsmeldung.
+</ResponseField>
+
+### Eingehende Anrufe aktivieren oder deaktivieren
+
+Schalten Sie eingehende Anrufe für den Assistenten um. Das Aktivieren erfordert mindestens eine aktive, nicht gelöschte Telefonnummer, die dem Assistenten zugewiesen ist. Talkturo stellt den LiveKit-Eingehend-Trunk und die Dispatch-Regel beim Aktivieren bereit oder aktualisiert sie und entfernt sie beim Deaktivieren.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/telephony/inbound`
+
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Kontoslug zur Workspace-Auflösung.
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean" required="true">
+Auf `true` setzen, um eingehende Anrufe zu aktivieren, oder auf `false`, um sie zu deaktivieren.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Vorgang erfolgreich ist.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Aktualisierter Telefoniestatus des Assistenten einschließlich `id`, `inbound_enabled`, `outbound_enabled`, `livekit_inbound_trunk_id` und `livekit_dispatch_rule_id`.
+</ResponseField>
+
+### Ausgehende Anrufe aktivieren oder deaktivieren
+
+Schalten Sie ausgehende Anrufe für den Assistenten um. Das Aktivieren erfordert mindestens eine aktive zugewiesene Telefonnummer. Talkturo stellt den LiveKit-Ausgehend-Trunk beim Aktivieren bereit oder aktualisiert ihn und entfernt ihn beim Deaktivieren.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/telephony/outbound`
+
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Kontoslug zur Workspace-Auflösung.
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean" required="true">
+Auf `true` setzen, um ausgehende Anrufe zu aktivieren, oder auf `false`, um sie zu deaktivieren.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Vorgang erfolgreich ist.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Aktualisierter Telefoniestatus des Assistenten einschließlich `id`, `inbound_enabled`, `outbound_enabled` und `livekit_outbound_trunk_id`.
+</ResponseField>
+
+### Telefonieeinstellungen aktualisieren
+
+Konfigurieren Sie Telefonnummern-Zuweisungen, Anrufbeantworter, Compliance und Zielland in einer einzigen Anfrage. Dieser Endpunkt verarbeitet LiveKit-Bereitstellung, Anrufbeantworter-Erkennung und Compliance-Zustimmungs-Workflows.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/telephony/settings`
+
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Kontoslug zur Workspace-Auflösung.
+</ParamField>
+
+<ParamField body="phoneNumberIds" param-type="array" required="true">
+Array von Telefonnummern-UUIDs, die zugewiesen werden sollen. IDs werden automatisch dedupliziert.
+</ParamField>
+
+<ParamField body="inboundEnabled" param-type="boolean" required="true">
+Ob eingehende Anrufe aktiviert werden sollen.
+</ParamField>
+
+<ParamField body="outboundEnabled" param-type="boolean" required="true">
+Ob ausgehende Anrufe aktiviert werden sollen.
+</ParamField>
+
+<ParamField body="telnyxConnectionId" param-type="string" required="false">
+Telnyx-Verbindungs-Credential-ID. Eine leere Zeichenfolge wird zu `null` konvertiert.
+</ParamField>
+
+<ParamField body="destinationCountry" param-type="string" required="false">
+Zielländercode für ausgehendes Routing. Auf `null` für automatisches Regions-Routing setzen. Gültige Werte: `ae`, `au`, `br`, `ch`, `de`, `fr`, `gb`, `il`, `in`, `jp`, `sa`, `sg`, `us`, `za`.
+</ParamField>
+
+<ParamField body="voicemail" param-type="object" required="false">
+Anrufbeantworter-Erkennungseinstellungen. Enthält `detectionEnabled` (boolean), `action` (string, maximal 40 Zeichen) und `message` (string, maximal 2000 Zeichen).
+</ParamField>
+
+<ParamField body="compliance" param-type="object" required="false">
+Compliance-Zustimmungseinstellungen. Enthält `enabled` (boolean), `templateId` (string, UUID wenn nicht-null), `briefingText` (string, maximal 2000 Zeichen), `language` (string, maximal 20 Zeichen), `requireAck` (boolean), `fallbackPolicy` (`retry`, `block` oder `continue`) und `ackTimeoutSeconds` (integer, 3 bis 60). Wenn `compliance.enabled` `true` ist, ist entweder `templateId` oder nicht-leerer `briefingText` erforderlich.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn Telefonieeinstellungen erfolgreich aktualisiert wurden.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Aktualisierter Telefoniestatus des Assistenten.
+</ResponseField>
+
+<ResponseField name="assignedActive" field-type="number" required="true">
+Anzahl der aktiven Telefonnummern, die nach der Aktualisierung zugewiesen sind.
+</ResponseField>
+
+Telefonieeinstellungen werden atomar angewendet. Wenn die LiveKit-Bereitstellung fehlschlägt, setzt die Route alle aktivierten Flags und Trunk-IDs auf ihren vorherigen Status zurück.
+
+### Testanruf starten
+
+Starten Sie einen Testanruf mit der Telefoniekonfiguration des Assistenten. Erfordert ausreichende Kontoguthaben und aktivierte ausgehende Anrufe.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/telephony/test-call`
+
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Kontoslug zur Workspace-Auflösung.
+</ParamField>
+
+<ParamField body="fromNumber" param-type="string" required="true">
+Die Absender-Telefonnummer. Muss dem Assistenten zugewiesen, aktiv und nicht gelöscht sein.
+</ParamField>
+
+<ParamField body="toNumber" param-type="string" required="true">
+Die Ziel-Telefonnummer. Wird automatisch ins E.164-Format normalisiert.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Testanruf gestartet wurde.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+Der für den Testanruf erstellte LiveKit-Raumname.
+</ResponseField>
+
+<ResponseField name="sipCallId" field-type="string" required="false">
+Die SIP-Anruf-ID, wenn der Anruf erfolgreich erstellt wurde.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Bestätigungsmeldung mit der Zielnummer.
+</ResponseField>
+
+Testanrufe erfordern ausreichende Kontoguthaben. Wenn das Guthaben zu niedrig ist, gibt die API HTTP 402 mit dem aktuellen Guthaben und dem mindestens erforderlichen Guthaben zurück.
+
+## CRM-Gruppenzuweisung
+
+Weisen Sie einem Assistenten eine CRM-Gruppe zu. Die CRM-Gruppe bestimmt, welche Kontakte der Assistent während Anrufen aufrufen kann. Die Gruppe muss zum selben Konto wie der Assistent gehören.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/crm-group`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Kontoslug zur Workspace-Auflösung.
+</ParamField>
+
+<ParamField body="groupId" param-type="string" required="true">
+UUID der zuzuweisenden CRM-Gruppe. Die Gruppe muss zum selben Konto gehören.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die CRM-Gruppe erfolgreich zugewiesen wurde.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="true">
+Aktualisierter Assistent-Datensatz einschließlich `id` und `group_id`.
+</ResponseField>
+
+<ResponseField name="warning" field-type="string" required="false">
+Wird zurückgegeben, wenn die Datenbankzuweisung erfolgreich ist, aber die LiveKit-Neusynchronisierung fehlschlägt. Die Zuweisung wird dennoch gespeichert.
+</ResponseField>
+
+## Webhook-Test
+
+Senden Sie ein Test-Webhook-Event, um zu überprüfen, ob die Webhook-Konfiguration des Assistenten funktioniert. Der Endpunkt generiert ein synthetisches `call.ended`-Event und reiht es zur Zustellung ein. Er führt keinen echten Anruf durch und ruft den Webhook nicht synchron auf.
+
+Der Assistent muss Webhooks aktiviert haben mit sowohl URL als auch Secret konfiguriert, bevor getestet wird.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/webhooks/test`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn das Test-Event eingereiht wurde.
+</ResponseField>
+
+<ResponseField name="delivery_id" field-type="string" required="true">
+UUID der eingereihten Webhook-Zustellung.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Bestätigungsmeldung. Wert ist `Test event queued`.
+</ResponseField>
+
+## Workflow-Werkzeug-Anhang
+
+Hängen Sie einen veröffentlichten TurboFlow-Workflow als aufrufbares Werkzeug an einen Assistenten an. Der Assistent kann den Workflow während Anrufen aufrufen. Name, Beschreibung und Parameter des Workflows werden zur Laufzeit aus der veröffentlichten Flow-Version ermittelt.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/tools/workflow`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="flow_id" param-type="string" required="true">
+UUID des zu anhängenden veröffentlichten Workflows.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="config" field-type="object" required="true">
+Die eingefügte `assistant_tool_configs`-Zeile einschließlich `id`, `assistant_id`, `account_id`, `tool_type` (auf `workflow` gesetzt), `config` (enthält `flow_id`) und `is_enabled`.
+</ResponseField>
+
+Das doppelte Anhängen desselben Workflows an denselben Assistenten gibt HTTP 409 mit dem Fehler `workflow_already_attached` zurück.
+
+### Workflow-Werkzeug trennen
+
+Entfernen Sie ein Workflow-Werkzeug von einem Assistenten anhand der Konfigurations-ID.
+
+### Endpunkt
+
+`DELETE /api/assistants/{assistantId}/tools/workflow?config_id={configId}`
+
+### Abfrageparameter
+
+<ParamField query="config_id" param-type="string" required="true">
+Die zu entfernende Werkzeugkonfigurations-UUID.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Gibt `true` zurück, wenn das Workflow-Werkzeug getrennt wurde.
 </ResponseField>
 
 ## Gemeinsame Antwortstruktur
