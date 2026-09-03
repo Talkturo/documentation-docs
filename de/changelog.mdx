@@ -8,6 +8,24 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **AI Employee — Self-Service für Voice-Agent-Erstellung** — Besucher können einen Entwurf eines Voice-Agents aus einer Website-URL oder einer Geschäftsbeschreibung generieren, ihn mit einem kostenlosen Browser-Demo-Anruf testen, Dokumente hochladen, einen Anwendungsfall wählen und über einen geteilten Zahlungslink kaufen. Nach dem Kauf werden der Entwurfs-Agent und seine Dokumente in den Workspace des Käufers übernommen, wobei die Dokumente in die Knowledge Base importiert werden. Siehe [KI-Sprachagenten](/de/assistants/overview).
+
+  ## Verbesserungen
+
+  - **Admin-verwaltete Anwendungsfälle** — Admins können AI-Employee-Anwendungsfälle mit lokalisierten Bezeichnungen, bearbeitbaren Kern-Prompts, Aktivierungsschaltern und benutzerdefinierter Reihenfolge erstellen und verwalten.
+  - **Dedizierte AI-Employee-Zahlungslinks** — Admins können jetzt Zahlungslinks speziell für AI-Employee-Käufe erstellen, getrennt von Standard-Agent-Zahlungslinks. Siehe [Abrechnung](/de/billing).
+  - **Umfangreichere Entwurfs-Prompts** — AI-Employee-Entwurfs-Agents generieren jetzt umfangreichere, websitebasierte Prompts mit anwendungsfallspezifischer Steuerung.
+  - **Eingebetteter Dokumentinhalt in Demo-Anrufen** — Hochgeladene TXT- und Markdown-Dateien werden direkt in den Prompt des Entwurfs-Agents eingefügt, sodass Demo-Anrufe diese Geschäftsinformationen sofort nutzen können. PDFs und Word-Dokumente werden nach dem Kauf in die Knowledge Base verarbeitet. Siehe [Knowledge Base](/de/knowledge-base).
+  - **Nicht zwischengespeicherte Zahlungslink-Seiten** — Zahlungslink-Seiten laden jetzt immer Live-Daten, sodass aktuelle Preise und Entwurfszustände ohne veraltete Cache-Inhalte angezeigt werden.
+
+  ## Bugfixes
+
+  - **Irrelevanter Setup-Gebühr-Hinweis bei gebührenfreien Links** — Die Zahlungs-Erfolgsseite zeigt keinen Setup-Gebühr-Hinweis mehr, wenn der Link keine Setup-Gebühr erhebt.
+</Update>
+
 <Update label="2026-09-02" description="v3.1.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
