@@ -8,6 +8,24 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **AI Employee — self-service voice agent creation** — Visitors can generate a draft voice agent from a website URL or business description, test it with a free browser-based demo call, upload supporting documents, choose a use case, and purchase through a shared payment link. After purchase, the draft agent and its documents are claimed into the buyer's workspace, with documents imported into the Knowledge Base. See [AI Voice Agents](/en/assistants/overview).
+
+  ## Improvements
+
+  - **Admin-managed use cases** — Admins can create and manage AI Employee use cases with localized labels, editable core prompts, activation toggles, and custom ordering.
+  - **Dedicated AI Employee payment links** — Admins can now create payment links specifically for AI Employee purchases, distinct from standard agent payment links. See [Billing](/en/billing).
+  - **Richer draft prompts** — AI Employee draft agents now generate richer, website-grounded prompts with use-case-specific guidance.
+  - **Inlined document content in demo calls** — Uploaded TXT and Markdown files are added directly to the draft agent's prompt so demo calls can reference that business information immediately. PDFs and Word documents are processed into the Knowledge Base after purchase. See [Knowledge Base](/en/knowledge-base).
+  - **Uncached payment link pages** — Payment link pages now always load live data, ensuring current pricing and draft state without stale cached content.
+
+  ## Bug Fixes
+
+  - **Irrelevant setup-fee note on zero-fee links** — The payment success page no longer shows a setup-fee explanation when the link charges no setup fee.
+</Update>
+
 <Update label="2026-09-02" description="v3.1.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
