@@ -8,6 +8,22 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-05" description="v3.3.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Payment Methods management** — A new Billing tab lets you view, add, set as default, and remove saved cards. Adding a card uses Stripe's secure checkout, and safeguards prevent removing a card that's still needed by auto-reload or a Desktop App subscription. Your default card stays synchronized with Stripe. See [Billing](/en/billing).
+
+  ## Improvements
+
+  - **Campaign caller-ID management** — Edit which phone numbers serve as caller IDs directly from the campaign detail dialog while a campaign is paused. See [Campaigns](/en/campaigns/overview).
+  - **Warn before unassigning campaign-linked numbers** — The assistant telephony number selector now shows which campaigns depend on a number before you remove it, preventing accidental disruption. See [Telephony](/en/telephony).
+  - **Stripe-side card removal sync** — When a card is removed directly in Stripe, the change is mirrored in your workspace automatically, keeping your saved payment methods consistent. See [Billing](/en/billing).
+
+  ## Bug Fixes
+
+  - **Stale campaign caller-ID cleanup** — When phone numbers are unassigned, reassigned, or released, stale campaign caller-ID records are now automatically removed so paused campaigns don't resume with invalid numbers. See [Campaigns](/en/campaigns/overview).
+</Update>
+
 <Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 

@@ -8,6 +8,22 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-09-05" description="v3.3.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Verwaltung von Zahlungsmethoden** — Ein neuer Abrechnungs-Tab ermöglicht das Anzeigen, Hinzufügen, als Standard festlegen und Entfernen gespeicherter Karten. Das Hinzufügen einer Karte erfolgt über den sicheren Stripe-Checkout, und Schutzmaßnahmen verhindern das Entfernen einer Karte, die noch für Auto-Reload oder eine Desktop-App-Abonnement benötigt wird. Deine Standardkarte bleibt mit Stripe synchronisiert. Siehe [Abrechnung](/de/billing).
+
+  ## Verbesserungen
+
+  - **Kampagnen-Anrufer-ID-Verwaltung** — Bearbeite direkt im Kampagnen-Detaildialog, welche Telefonnummern als Anrufer-IDs dienen, während eine Kampagne pausiert ist. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Warnung vor Zuweisungsaufhebung kampagnenverknüpfter Nummern** — Der Telefonie-Nummernauswahl im Assistenten zeigt jetzt, welche Kampagnen von einer Nummer abhängen, bevor du sie entfernst, und verhindert versehentliche Störungen. Siehe [Telefonie](/de/telephony).
+  - **Stripe-seitige Kartenentfernungs-Synchronisation** — Wenn eine Karte direkt in Stripe entfernt wird, wird die Änderung automatisch in deinem Workspace gespiegelt, sodass deine gespeicherten Zahlungsmethoden konsistent bleiben. Siehe [Abrechnung](/de/billing).
+
+  ## Bugfixes
+
+  - **Bereinigung veralteter Kampagnen-Anrufer-IDs** — Wenn Telefonnummern zugewiesen aufgehoben, neu zugewiesen oder freigegeben werden, werden veraltete Kampagnen-Anrufer-ID-Einträge jetzt automatisch entfernt, sodass pausierte Kampagnen nicht mit ungültigen Nummern fortgesetzt werden. Siehe [Kampagnen](/de/campaigns/overview).
+</Update>
+
 <Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
