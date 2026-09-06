@@ -1,402 +1,667 @@
 ---
 title: MCP-Plugins
-description: Listen Sie MCP-Plugin-Anbieter auf, verwalten Sie Workspace-Verbindungen, wählen Sie Plugins für Assistenten aus und rufen Sie verfügbare Tools über die Talkturo API ab — integrieren Sie externe Tool-Anbieter mit KI-Sprachagenten.
+description: Referenz für die MCP-Plugin-API zum Auflisten von Providern, Verwalten von Verbindungen und Abschließen von OAuth-Autorisierungen
 ---
 
-## MCP-Plugins API-Referenz
+## Endpunktübersicht
 
-MCP-Plugins verbinden Ihre Assistenten mit externen Tool-Anbietern. Über diese Endpunkte können Sie verfügbare Anbieter abrufen, Workspace-Verbindungen prüfen, Plugins einem Assistenten zuweisen und die verfügbaren Tools einer Verbindung auflisten.
+Die MCP-Plugin-API verwaltet Provider, Plugin-Verbindungen und verfügbare Tools für einen Workspace. Sie unterstützt API-Key-Verbindungen und OAuth-Autorisierungen.
+
+| Methode | Endpunkt | Zweck |
+| --- | --- | --- |
+| `GET` | `/api/mcp/providers` | Verfügbare Provider abrufen |
+| `GET` | `/api/mcp/plugins` | Plugins und ihre Verbindungen abrufen |
+| `POST` | `/api/mcp/plugins/select` | Eine Verbindung oder Tools für ein Plugin auswählen |
+| `GET` | `/api/mcp/plugins/tools` | Tools eines Plugins abrufen |
+| `POST` | `/api/mcp/plugins/connect-key` | Eine Verbindung mit einem API-Key erstellen |
+| `POST` | `/api/mcp/oauth/authorize` | Eine OAuth-Autorisierungs-URL erstellen |
+| `GET` | `/api/mcp/oauth/callback` | OAuth-Callback verarbeiten |
 
 <Callout kind="info">
 
-**Base URL:** `https://app.talkturo.com`  
-**Authentifizierung:** Session-Cookie (Supabase)
+Alle Endpunkte erfordern eine authentifizierte Session. Verwende die Session-Cookie des angemeldeten Workspaces für die Anfragen.
 
 </Callout>
 
-## MCP-Anbieter auflisten
+## Provider auflisten
 
-Rufen Sie alle verfügbaren MCP-Anbieter ab, die in Ihrem Workspace verwendet werden können.
+### `GET /api/mcp/providers`
+
+Ruft die MCP-Provider ab, die für die Plugin-Auswahl und Verbindung verfügbar sind.
 
 <Request>
+
 ```bash
-curl -X GET "https://app.talkturo.com/api/mcp/providers" \
-  -H "Cookie: sb-access-token=tk_example_session_cookie"
+curl "https://app.talkturo.com/api/mcp/providers" \
+  -H "Cookie: session=authenticated-session-cookie"
 ```
+
 </Request>
 
+<ParamField query="accountSlug" param-type="string" required="false">
+
+Wenn der Endpunkt eine Workspace-Zuordnung unterstützt, identifiziert dieser Wert den Workspace. Verwende den in deiner Anwendung konfigurierten Workspace-Slug.
+
+</ParamField>
+
 <Response>
+
 ```json
 {
-  "providers": [
-    {
-      "id": "notion",
-      "name": "Notion",
-      "description": "Connect your Notion workspace",
-      "brandColor": "#000000",
-      "iconUrl": "https://app.talkturo.com/icons/notion.png"
-    },
-    {
-      "id": "hubspot",
-      "name": "HubSpot",
-      "description": "Connect your HubSpot account",
-      "brandColor": "#ff7a59",
-      "iconUrl": "https://app.talkturo.com/icons/hubspot.png"
-    }
-  ]
+  "providers": []
 }
 ```
+
 </Response>
 
-### Endpunkt
+### Fehlerverhalten
 
-`GET /api/mcp/providers`
+Der Endpunkt kann bei einer nicht authentifizierten Session oder einem fehlgeschlagenen Ladevorgang einen Fehler zurückgeben. Fehlerantworten enthalten ein `error`-Feld.
 
-### Antwortfelder
+## Plugins auflisten
 
-<ResponseField name="providers" field-type="array" required="true">
-Liste der verfügbaren MCP-Anbieter.
-</ResponseField>
+### `GET /api/mcp/plugins`
 
-<ResponseField name="providers[].id" field-type="string" required="true">
-Eindeutige Kennung des Anbieters.
-</ResponseField>
-
-<ResponseField name="providers[].name" field-type="string" required="true">
-Anzeigename des Anbieters.
-</ResponseField>
-
-<ResponseField name="providers[].description" field-type="string" required="true">
-Kurzbeschreibung des Anbieters.
-</ResponseField>
-
-<ResponseField name="providers[].brandColor" field-type="string" required="true">
-Markenfarbe des Anbieters, typischerweise als Hex-Wert.
-</ResponseField>
-
-<ResponseField name="providers[].iconUrl" field-type="string" required="true">
-Öffentliche URL zum Anbieter-Icon.
-</ResponseField>
-
-## Plugins und Verbindungen auflisten
-
-Rufen Sie alle Plugins für einen Workspace ab, einschließlich vorhandener Verbindungen. Wenn Sie `assistantId` übergeben, enthält die Antwort auch die Auswahl dieses Assistenten.
+Ruft die Plugins eines Workspaces und deren gespeicherte Verbindungen ab. Wenn du `assistantId` angibst, berücksichtigt die Antwort die Konfiguration des zugehörigen Assistants.
 
 <Request>
+
 ```bash
-curl -X GET "https://app.talkturo.com/api/mcp/plugins?accountSlug=acme-sales&assistantId=asst_9d3e1c7a" \
-  -H "Cookie: sb-access-token=tk_example_session_cookie"
+curl "https://app.talkturo.com/api/mcp/plugins?accountSlug=acme&assistantId=assistant-123" \
+  -H "Cookie: session=authenticated-session-cookie"
 ```
+
 </Request>
 
+<ParamField query="accountSlug" param-type="string" required="true">
+
+Slug des Workspaces, für den die Plugins abgerufen werden.
+
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+
+Optionaler Assistant, dessen Plugin-Auswahl und aktivierte Tools berücksichtigt werden. Der Assistant muss zum angegebenen Workspace gehören.
+
+</ParamField>
+
 <Response>
+
 ```json
 {
   "plugins": [
     {
-      "id": "notion",
-      "name": "Notion",
-      "description": "Connect your Notion workspace",
-      "brandColor": "#000000",
-      "iconUrl": "https://app.talkturo.com/icons/notion.png",
+      "id": "close",
+      "name": "Close",
+      "description": "CRM integration",
+      "brandColor": "#1F8A70",
+      "iconUrl": null,
+      "authKind": "api_key",
+      "keyHelpUrl": null,
       "connections": [
         {
-          "id": "conn_7f2c1a90",
-          "label": "Sales workspace",
-          "expiresAt": "2026-03-01T12:00:00.000Z",
+          "id": "conn_a1b2c3d4",
+          "label": "Sales Close",
+          "expiresAt": null,
           "needsReauth": false
         }
       ],
-      "connectionId": "conn_7f2c1a90",
-      "enabledTools": [
-        "search_pages",
-        "create_page"
-      ],
-      "defaultTools": [
-        "search_pages"
-      ]
+      "connectionId": "conn_a1b2c3d4",
+      "enabledTools": ["contacts.list"],
+      "defaultTools": ["contacts.list", "contacts.get"]
     }
   ]
 }
 ```
+
 </Response>
-
-### Endpunkt
-
-`GET /api/mcp/plugins`
-
-### Query-Parameter
-
-<ParamField query="accountSlug" param-type="string" required="true">
-Slug des Workspaces, für den Plugins und Verbindungen abgerufen werden.
-</ParamField>
-
-<ParamField query="assistantId" param-type="string" required="false">
-ID des Assistenten. Wenn Sie diesen Wert angeben, enthält die Antwort die aktuelle Plugin-Auswahl des Assistenten, einschließlich `connectionId` und `enabledTools`.
-</ParamField>
-
-### Antwortfelder
 
 <ResponseField name="plugins" field-type="array" required="true">
+
 Liste der für den Workspace verfügbaren Plugins.
+
 </ResponseField>
 
-<ResponseField name="plugins[].id" field-type="string" required="true">
-Eindeutige Kennung des Plugins oder Anbieters.
+<ResponseField name="id" field-type="string" required="true">
+
+Eindeutige Kennung des Providers.
+
 </ResponseField>
 
-<ResponseField name="plugins[].name" field-type="string" required="true">
+<ResponseField name="name" field-type="string" required="true">
+
 Anzeigename des Plugins.
+
 </ResponseField>
 
-<ResponseField name="plugins[].description" field-type="string" required="true">
-Kurzbeschreibung des Plugins.
+<ResponseField name="description" field-type="string" required="true">
+
+Beschreibung der Plugin-Integration.
+
 </ResponseField>
 
-<ResponseField name="plugins[].brandColor" field-type="string" required="true">
+<ResponseField name="brandColor" field-type="string" required="true">
+
 Markenfarbe des Plugins.
+
 </ResponseField>
 
-<ResponseField name="plugins[].iconUrl" field-type="string" required="true">
-URL zum Plugin-Icon.
+<ResponseField name="iconUrl" field-type="string" required="false">
+
+URL zum Plugin-Symbol. Wenn kein Symbol vorhanden ist, ist der Wert `null`.
+
 </ResponseField>
 
-<ResponseField name="plugins[].connections" field-type="array" required="true">
-Vorhandene Workspace-Verbindungen für dieses Plugin.
+<ResponseField name="authKind" field-type="string" required="true">
+
+Authentifizierungsmethode des Providers.
+
 </ResponseField>
 
-<ResponseField name="plugins[].connections[].id" field-type="string" required="true">
+<ResponseField name="keyHelpUrl" field-type="string" required="false">
+
+URL mit Hinweisen zum Abrufen des API-Keys. Wenn keine Anleitung vorhanden ist, ist der Wert `null`.
+
+</ResponseField>
+
+<ResponseField name="connections" field-type="array" required="true">
+
+Gespeicherte Verbindungen für das Plugin. Das Array kann leer sein.
+
+</ResponseField>
+
+<ResponseField name="connectionId" field-type="string" required="false">
+
+Aktuell für den Assistant ausgewählte Verbindung. Der Wert ist `null`, wenn keine Verbindung ausgewählt ist.
+
+</ResponseField>
+
+<ResponseField name="enabledTools" field-type="array" required="true">
+
+Für den Assistant aktivierte Tools. Der Standardwert ist ein leeres Array.
+
+</ResponseField>
+
+<ResponseField name="defaultTools" field-type="array" required="true">
+
+Vom Provider konfigurierte Standard-Tools.
+
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="true">
+
 Eindeutige Kennung der Verbindung.
+
 </ResponseField>
 
-<ResponseField name="plugins[].connections[].label" field-type="string" required="true">
-Lesbare Bezeichnung der Verbindung.
+<ResponseField name="label" field-type="string" required="true">
+
+Anzeigename der Verbindung.
+
 </ResponseField>
 
-<ResponseField name="plugins[].connections[].expiresAt" field-type="string" required="false">
-Ablaufzeit der Verbindung, falls der Anbieter zeitlich begrenzte Autorisierung verwendet.
+<ResponseField name="expiresAt" field-type="string" required="false">
+
+Ablaufzeit der Verbindung. Der Wert ist `null`, wenn keine Ablaufzeit festgelegt ist.
+
 </ResponseField>
 
-<ResponseField name="plugins[].connections[].needsReauth" field-type="boolean" required="true">
+<ResponseField name="needsReauth" field-type="boolean" required="true">
+
 Gibt an, ob die Verbindung erneut autorisiert werden muss.
-</ResponseField>
 
-<ResponseField name="plugins[].connectionId" field-type="string" required="false">
-Die aktuell für den angegebenen Assistenten ausgewählte Verbindung.
-</ResponseField>
-
-<ResponseField name="plugins[].enabledTools" field-type="array" required="true">
-Liste der Tools, die für den Assistenten auf diesem Plugin aktiviert sind.
-</ResponseField>
-
-<ResponseField name="plugins[].defaultTools" field-type="array" required="true">
-Liste der Tools, die standardmäßig für dieses Plugin empfohlen oder aktiviert sind.
-</ResponseField>
-
-<Callout kind="tip">
-
-Wenn Sie nur die verfügbaren Verbindungen eines Workspaces prüfen möchten, rufen Sie `GET /api/mcp/plugins` nur mit `accountSlug` auf. Wenn Sie die aktuelle Auswahl eines Assistenten laden möchten, geben Sie zusätzlich `assistantId` an.
-
-</Callout>
-
-## Plugin für einen Assistenten auswählen
-
-Weisen Sie einem Assistenten ein Plugin, eine Verbindung und die aktivierten Tools zu. Wenn Sie ein leeres `tools`-Array senden, entfernt die API das Plugin vom Assistenten.
-
-<Request>
-```bash
-curl -X POST "https://app.talkturo.com/api/mcp/plugins/select" \
-  -H "Content-Type: application/json" \
-  -H "Cookie: sb-access-token=tk_example_session_cookie" \
-  -d '{
-    "assistantId": "asst_9d3e1c7a",
-    "accountSlug": "acme-sales",
-    "provider": "notion",
-    "connectionId": "conn_7f2c1a90",
-    "tools": ["search_pages", "create_page"]
-  }'
-```
-</Request>
-
-<Response tabs="Plugin verbunden,Plugin entfernt">
-```json
-{
-  "ok": true,
-  "attached": true
-}
-```
-
-```json
-{
-  "ok": true,
-  "attached": false
-}
-```
-</Response>
-
-### Endpunkt
-
-`POST /api/mcp/plugins/select`
-
-### Request-Body
-
-<ParamField body="assistantId" param-type="string" required="true">
-ID des Assistenten, für den das Plugin ausgewählt oder entfernt wird.
-</ParamField>
-
-<ParamField body="accountSlug" param-type="string" required="true">
-Slug des Workspaces, in dem die Verbindung liegt.
-</ParamField>
-
-<ParamField body="provider" param-type="string" required="true">
-Kennung des MCP-Anbieters oder Plugins.
-</ParamField>
-
-<ParamField body="connectionId" param-type="string" required="true">
-ID der Workspace-Verbindung, die mit dem Assistenten verknüpft werden soll.
-</ParamField>
-
-<ParamField body="tools" param-type="string[]" required="true">
-Liste der Tool-Namen, die für diesen Assistenten aktiviert werden sollen. Senden Sie ein leeres Array, um das Plugin vom Assistenten zu entfernen.
-</ParamField>
-
-### Antwortfelder
-
-<ResponseField name="ok" field-type="boolean" required="true">
-Gibt an, dass die Anfrage erfolgreich verarbeitet wurde.
-</ResponseField>
-
-<ResponseField name="attached" field-type="boolean" required="true">
-`true`, wenn das Plugin mit dem Assistenten verknüpft bleibt. `false`, wenn die Auswahl entfernt wurde.
 </ResponseField>
 
 <Callout kind="info">
 
-Ein leeres `tools`-Array entfernt das Plugin. Verwenden Sie diesen Endpunkt daher sowohl zum Aktualisieren als auch zum Trennen einer Plugin-Auswahl.
+Die Antwort wird mit `Cache-Control: no-store` ausgeliefert. API-Keys und andere Zugangsdaten werden nicht in der Antwort zurückgegeben.
 
 </Callout>
 
-## Tools für eine Verbindung auflisten
+## Plugin-Verbindung und Tools auswählen
 
-Rufen Sie die Tools ab, die für eine bestimmte Verbindung verfügbar sind. Verwenden Sie diesen Endpunkt, bevor Sie `POST /api/mcp/plugins/select` aufrufen, wenn Sie eine präzise Tool-Auswahl anbieten möchten.
+### `POST /api/mcp/plugins/select`
+
+Wählt die Verbindung und die aktivierten Tools eines Plugins für einen Assistant aus.
 
 <Request>
+
 ```bash
-curl -X GET "https://app.talkturo.com/api/mcp/plugins/tools?accountSlug=acme-sales&connectionId=conn_7f2c1a90" \
-  -H "Cookie: sb-access-token=tk_example_session_cookie"
+curl "https://app.talkturo.com/api/mcp/plugins/select" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session=authenticated-session-cookie" \
+  -d '{
+    "accountSlug": "acme",
+    "assistantId": "assistant-123",
+    "provider": "close",
+    "connectionId": "conn_a1b2c3d4",
+    "enabledTools": ["contacts.list"]
+  }'
 ```
+
 </Request>
 
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Slug des Workspaces, für den die Auswahl gespeichert wird.
+
+</ParamField>
+
+<ParamField body="assistantId" param-type="string" required="true">
+
+Kennung des Assistants, dessen Plugin-Konfiguration aktualisiert wird.
+
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="true">
+
+Kennung des Providers, für den die Auswahl gespeichert wird.
+
+</ParamField>
+
+<ParamField body="connectionId" param-type="string" required="false">
+
+Kennung der zu verwendenden Verbindung. Verwende `null`, wenn keine Verbindung ausgewählt werden soll.
+
+</ParamField>
+
+<ParamField body="enabledTools" param-type="array" required="false">
+
+Liste der Tool-Kennungen, die für den Assistant aktiviert werden sollen.
+
+</ParamField>
+
 <Response>
+
 ```json
 {
-  "tools": [
-    {
-      "name": "search_pages",
-      "description": "Search pages in the connected workspace"
-    },
-    {
-      "name": "create_page",
-      "description": "Create a new page in the connected workspace"
-    }
-  ],
-  "defaultTools": [
-    "search_pages"
-  ],
-  "capabilities": {
-    "supportsToolSelection": true
-  }
+  "ok": true
 }
 ```
+
 </Response>
 
-### Endpunkt
+### Fehlerverhalten
 
-`GET /api/mcp/plugins/tools`
+Die API weist die Anfrage zurück, wenn der Workspace, der Assistant, der Provider oder die Verbindung nicht gefunden wird oder nicht zum authentifizierten Workspace gehört.
 
-### Query-Parameter
+## Plugin-Tools auflisten
+
+### `GET /api/mcp/plugins/tools`
+
+Ruft die Tools eines MCP-Plugins ab. Verwende die zurückgegebenen Tool-Kennungen, um die Auswahl eines Assistants zu konfigurieren.
+
+<Request>
+
+```bash
+curl "https://app.talkturo.com/api/mcp/plugins/tools?accountSlug=acme&provider=close" \
+  -H "Cookie: session=authenticated-session-cookie"
+```
+
+</Request>
 
 <ParamField query="accountSlug" param-type="string" required="true">
-Slug des Workspaces, zu dem die Verbindung gehört.
+
+Slug des Workspaces, für den die Tools abgerufen werden.
+
 </ParamField>
 
-<ParamField query="connectionId" param-type="string" required="true">
-ID der Verbindung, deren verfügbare Tools abgefragt werden.
+<ParamField query="provider" param-type="string" required="true">
+
+Kennung des Providers, dessen Tools abgerufen werden.
+
 </ParamField>
 
-### Antwortfelder
+<Response>
 
-<ResponseField name="tools" field-type="array" required="true">
-Liste der verfügbaren Tools für die angegebene Verbindung.
+```json
+{
+  "tools": []
+}
+```
+
+</Response>
+
+### Fehlerverhalten
+
+Ein unbekannter Provider oder ein Workspace ohne Zugriff auf den Provider führt zu einer Fehlerantwort. Das Format der Fehlerantwort enthält ein `error`-Feld.
+
+## Verbindung mit einem API-Key erstellen
+
+### `POST /api/mcp/plugins/connect-key`
+
+Erstellt eine Plugin-Verbindung mit einem API-Key. Der API-Key wird nicht in der Antwort zurückgegeben.
+
+<Request>
+
+```bash
+curl "https://app.talkturo.com/api/mcp/plugins/connect-key" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session=authenticated-session-cookie" \
+  -d '{
+    "accountSlug": "acme",
+    "provider": "close",
+    "apiKey": "dkai_example_9xmk7q2r",
+    "label": "Sales Close"
+  }'
+```
+
+</Request>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Slug des Workspaces, in dem die Verbindung gespeichert wird. Der Wert wird vor der Validierung von Leerzeichen am Anfang und Ende bereinigt.
+
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="true">
+
+Kennung des Providers. Der Wert wird vor der Validierung von Leerzeichen am Anfang und Ende bereinigt.
+
+</ParamField>
+
+<ParamField body="apiKey" param-type="string" required="true">
+
+API-Key des Providers. Der Wert wird vor der Validierung von Leerzeichen am Anfang und Ende bereinigt.
+
+</ParamField>
+
+<ParamField body="label" param-type="string" required="false">
+
+Anzeigename der Verbindung. Wenn der Wert fehlt oder leer ist, wird automatisch ein Standardname erzeugt.
+
+</ParamField>
+
+<Response>
+
+```json
+{
+  "ok": true,
+  "connectionId": "conn_a1b2c3d4",
+  "label": "Sales Close"
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+
+Gibt an, ob die Verbindung erfolgreich erstellt wurde.
+
 </ResponseField>
 
-<ResponseField name="tools[].name" field-type="string" required="true">
-Interner Name des Tools. Verwenden Sie diesen Wert im `tools`-Array von `POST /api/mcp/plugins/select`.
+<ResponseField name="connectionId" field-type="string" required="true">
+
+Kennung der neu erstellten Verbindung.
+
 </ResponseField>
 
-<ResponseField name="tools[].description" field-type="string" required="true">
-Kurzbeschreibung des Tools.
+<ResponseField name="label" field-type="string" required="true">
+
+Gespeicherter Anzeigename der Verbindung.
+
 </ResponseField>
 
-<ResponseField name="defaultTools" field-type="array" required="true">
-Standardmäßig ausgewählte oder empfohlene Tools für diese Verbindung.
+<Callout kind="alert">
+
+Der API-Key wird nur zur Verbindung mit dem Provider verwendet und nicht in der Antwort zurückgegeben. Übertrage API-Keys ausschließlich über HTTPS.
+
+</Callout>
+
+### Mögliche Fehlerwerte
+
+| Status | `error` |
+| --- | --- |
+| `401` | `unauthorized` |
+| `400` | `missing_params` |
+| `404` | `unknown_provider` |
+| `404` | `account_not_found` |
+| `403` | `forbidden` |
+| `422` | `no_tools` |
+| `422` | `invalid_key` |
+| `502` | `provider_unreachable` |
+| `500` | `save_failed` |
+| `500` | `connect_failed` |
+
+## OAuth-Autorisierungs-URL erstellen
+
+### `POST /api/mcp/oauth/authorize`
+
+Erstellt eine OAuth-Autorisierungs-URL für einen Provider. Öffne die zurückgegebene URL in einem Browserfenster, damit der Provider die Verbindung autorisieren kann.
+
+<Request>
+
+```bash
+curl "https://app.talkturo.com/api/mcp/oauth/authorize" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session=authenticated-session-cookie" \
+  -d '{
+    "provider": "calendly",
+    "accountSlug": "acme",
+    "label": "Calendly Sales"
+  }'
+```
+
+</Request>
+
+<ParamField body="provider" param-type="string" required="true">
+
+Kennung des OAuth-Providers.
+
+</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">
+
+Slug des Workspaces, in dem die OAuth-Verbindung gespeichert wird.
+
+</ParamField>
+
+<ParamField body="label" param-type="string" required="false">
+
+Anzeigename der Verbindung. Der Wert wird von Leerzeichen am Anfang und Ende bereinigt und darf zwischen 1 und 80 Zeichen enthalten.
+
+</ParamField>
+
+<Response>
+
+```json
+{
+  "url": "https://provider.example/authorize?response_type=code&client_id=client-example&redirect_uri=https%3A%2F%2Fapp.talkturo.com%2Fapi%2Fmcp%2Foauth%2Fcallback&state=oauth-state&code_challenge=challenge-value&code_challenge_method=S256"
+}
+```
+
+</Response>
+
+<ResponseField name="url" field-type="string" required="true">
+
+OAuth-Autorisierungs-URL des Providers. Die URL kann unter anderem `response_type`, `client_id`, `redirect_uri`, `state`, `code_challenge` und `code_challenge_method` enthalten.
+
 </ResponseField>
 
-<ResponseField name="capabilities" field-type="object" required="true">
-Zusätzliche Fähigkeiten oder Hinweise zur Verbindung und Tool-Auswahl.
+<Callout kind="info">
+
+Die OAuth-Autorisierungs-URL verwendet PKCE mit `code_challenge_method=S256`. Je nach Provider können zusätzlich `scope` oder `resource` enthalten sein.
+
+</Callout>
+
+### Mögliche Fehlerwerte
+
+| Status | `error` |
+| --- | --- |
+| `401` | `unauthorized` |
+| `400` | `invalid_body` |
+| `404` | `unknown_provider` |
+| `404` | `account_not_found` |
+| `403` | `forbidden` |
+| `500` | `authorize_failed` |
+
+Bei `authorize_failed` kann zusätzlich ein gekürztes `detail`-Feld mit maximal 300 Zeichen enthalten sein.
+
+## OAuth-Callback verarbeiten
+
+### `GET /api/mcp/oauth/callback`
+
+Verarbeitet die Rückleitung des Providers nach einer OAuth-Autorisierung. Der Endpunkt gibt keine JSON-Antwort zurück, sondern eine HTML-Popup-Antwort, die das Ergebnis an das öffnende Fenster übermittelt.
+
+<Request>
+
+```bash
+curl "https://app.talkturo.com/api/mcp/oauth/callback?code=oauth-code&state=oauth-state" \
+  -H "Cookie: session=authenticated-session-cookie"
+```
+
+</Request>
+
+<ParamField query="code" param-type="string" required="false">
+
+OAuth-Code des Providers. Erforderlich, wenn der Provider keinen `error`-Parameter zurückgibt.
+
+</ParamField>
+
+<ParamField query="state" param-type="string" required="false">
+
+OAuth-State zur Validierung der Session. Erforderlich, wenn der Provider keinen `error`-Parameter zurückgibt.
+
+</ParamField>
+
+<ParamField query="error" param-type="string" required="false">
+
+Vom Provider zurückgegebener OAuth-Fehler. Wenn dieser Wert vorhanden ist, sind `code` und `state` nicht erforderlich.
+
+</ParamField>
+
+<Response>
+
+```html
+<!doctype html>
+<html>
+  <body>
+    <script>
+      window.opener.postMessage({
+        type: "mcp_oauth_result",
+        ok: true,
+        provider: "calendly",
+        connectionId: "conn_a1b2c3d4",
+        at: 1710000000000
+      });
+    </script>
+  </body>
+</html>
+```
+
+</Response>
+
+<ResponseField name="Content-Type" field-type="string" required="true">
+
+Die Antwort hat den Content-Type `text/html; charset=utf-8`.
+
 </ResponseField>
 
-## Typischer Ablauf
+<ResponseField name="type" field-type="string" required="true">
 
-Verwenden Sie diese Endpunkte in einer festen Reihenfolge, wenn Sie eine Plugin-Auswahl für einen Assistenten in Ihrer Oberfläche abbilden.
+Typ der veröffentlichten Nutzdaten. Der Wert ist `mcp_oauth_result`.
 
-<Steps>
-<Step title="Anbieter laden" icon="database">
+</ResponseField>
 
-Rufen Sie `GET /api/mcp/providers` auf, um alle verfügbaren MCP-Anbieter anzuzeigen.
+<ResponseField name="ok" field-type="boolean" required="true">
 
-Ein erfolgreicher Aufruf liefert ein `providers`-Array mit `id`, `name`, `description`, `brandColor` und `iconUrl`.
+Gibt an, ob die OAuth-Verbindung erfolgreich erstellt wurde.
 
-</Step>
+</ResponseField>
 
-<Step title="Plugins und Verbindungen des Workspaces laden" icon="plug">
+<ResponseField name="provider" field-type="string" required="false">
 
-Rufen Sie `GET /api/mcp/plugins?accountSlug=...` auf, um die verfügbaren Plugins und vorhandenen Workspace-Verbindungen zu laden.
+Kennung des Providers bei einer erfolgreichen Autorisierung.
 
-Wenn Sie einen vorhandenen Assistenten bearbeiten, geben Sie zusätzlich `assistantId` an. Die Antwort enthält dann auch die aktuell ausgewählte Verbindung und die aktivierten Tools.
+</ResponseField>
 
-</Step>
+<ResponseField name="connectionId" field-type="string" required="false">
 
-<Step title="Verfügbare Tools einer Verbindung abrufen" icon="code">
+Kennung der gespeicherten Verbindung bei einer erfolgreichen Autorisierung.
 
-Rufen Sie `GET /api/mcp/plugins/tools` mit `accountSlug` und `connectionId` auf.
+</ResponseField>
 
-Ein erfolgreicher Aufruf liefert ein `tools`-Array sowie `defaultTools`. Mit diesen Daten können Sie dem Benutzer eine konkrete Tool-Auswahl anzeigen.
+<ResponseField name="error" field-type="string" required="false">
 
-</Step>
+Fehlerwert bei einer fehlgeschlagenen Autorisierung.
 
-<Step title="Auswahl speichern" icon="check-circle">
+</ResponseField>
 
-Senden Sie `POST /api/mcp/plugins/select` mit `assistantId`, `accountSlug`, `provider`, `connectionId` und `tools`.
+<ResponseField name="at" field-type="number" required="true">
 
-Wenn die Antwort `attached: true` enthält, ist das Plugin mit dem Assistenten verbunden. Wenn die Antwort `attached: false` enthält, wurde die Plugin-Auswahl entfernt.
+Zeitstempel, der beim Erstellen der veröffentlichten Nutzdaten mit `Date.now()` erzeugt wird.
 
-</Step>
-</Steps>
+</ResponseField>
+
+### Veröffentlichte Nutzdaten
+
+Das Popup veröffentlicht das Ergebnis über drei Kanäle:
+
+- `window.opener.postMessage(...)`
+- `BroadcastChannel("talkturo:oauth-result")`
+- `localStorage` mit dem Schlüssel `talkturo:oauth-result`
+
+Eine erfolgreiche Autorisierung veröffentlicht Nutzdaten in diesem Format:
+
+```json
+{
+  "type": "mcp_oauth_result",
+  "ok": true,
+  "provider": "calendly",
+  "connectionId": "conn_a1b2c3d4",
+  "at": 1710000000000
+}
+```
+
+Eine fehlgeschlagene Autorisierung veröffentlicht Nutzdaten in diesem Format:
+
+```json
+{
+  "type": "mcp_oauth_result",
+  "ok": false,
+  "error": "token_exchange_failed",
+  "at": 1710000000000
+}
+```
+
+### Mögliche Fehlerwerte
+
+| Bedingung | `error` |
+| --- | --- |
+| Der Provider gibt einen OAuth-Fehler zurück | Vom Provider gelieferter Fehlerwert |
+| `code` oder `state` fehlt | `missing_code_or_state` |
+| Session-Cookies fehlen | `state_missing` |
+| Der State-Hash stimmt nicht überein | `state_mismatch` |
+| Der serialisierte OAuth-Kontext ist ungültig | `bad_context` |
+| Der Provider ist unbekannt | `unknown_provider` |
+| Das konfigurierte Client-Secret fehlt | `client_secret_missing` |
+| Der Token-Austausch schlägt fehl | `token_exchange_failed` |
+| Das Speichern der Verbindung schlägt fehl | `save_failed` |
+| Ein unerwarteter Fehler tritt auf | `callback_failed` |
+
+<Callout kind="info">
+
+Der OAuth-Callback kommuniziert ein JSON-förmiges Ergebnis an das öffnende Fenster, die HTTP-Antwort selbst ist jedoch HTML und nicht `application/json`.
+
+</Callout>
 
 ## Verwandte Ressourcen
 
 <Columns cols={2}>
-  <Card
-    title="Assistenten"
-    href="/de/api-reference/assistants"
-    icon="users"
-    cta="API-Referenz öffnen"
-  />
-  <Card
-    title="KI-Sprachagenten"
-    href="/de/assistants/overview"
-    icon="book-open"
-    cta="Übersicht öffnen"
-  />
+
+<Card title="MCP-Authentifizierung" href="/de/api-reference/authentication" icon="lock" cta="Authentifizierung anzeigen">
+
+Informationen zur Authentifizierung von API-Anfragen und Session-Cookies.
+
+</Card>
+
+<Card title="API-Referenz" href="/de/api-reference" icon="book-open" cta="API-Referenz öffnen">
+
+Übersicht über weitere API-Endpunkte und Ressourcen.
+
+</Card>
+
 </Columns>

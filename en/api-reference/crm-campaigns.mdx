@@ -1,15 +1,15 @@
 ---
 title: CRM Campaigns
-description: Create, manage, and run outbound calling campaigns through the Talkturo CRM API — add contacts, monitor real-time dashboard stats, start and stop campaigns, and retrieve call logs and AI insights.
+description: Create, enroll, run, and monitor outbound calling campaigns with the Talkturo CRM API, including pagination, retries, webhooks, and dry runs.
 ---
 
 ## Manage outbound CRM campaigns
 
-Use the CRM Campaigns endpoints to create outbound calling campaigns, attach contacts, monitor live progress, and start or stop execution. All CRM campaign endpoints require an authenticated **session cookie** and are intended for browser-based or same-origin application requests.
+Use the CRM Campaigns API to create outbound calling campaigns, enroll contacts, control dialing behavior, monitor execution, and retrieve campaign results. The endpoints support both authenticated session cookies and API key authentication.
 
 <Callout kind="info">
 
-Authenticate these endpoints with a valid Talkturo session cookie. These routes do not accept API key authentication.
+For session authentication, provide `teamId` on campaign list and create requests. For API key authentication, send the key using the authentication scheme supported by your Talkturo account.
 
 </Callout>
 
@@ -19,45 +19,201 @@ Authenticate these endpoints with a valid Talkturo session cookie. These routes 
 | --- | --- | --- |
 | `GET` | `/api/crm/campaigns` | List campaigns |
 | `POST` | `/api/crm/campaigns` | Create a campaign |
-| `GET` | `/api/crm/campaigns/[id]` | Retrieve one campaign |
-| `PATCH` | `/api/crm/campaigns/[id]` | Update a campaign |
+| `GET` | `/api/crm/campaigns/[id]` | Retrieve a campaign |
+| `PUT` | `/api/crm/campaigns/[id]` | Update a campaign |
 | `DELETE` | `/api/crm/campaigns/[id]` | Delete a campaign |
 | `GET` | `/api/crm/campaigns/[id]/contacts` | List campaign contacts |
 | `POST` | `/api/crm/campaigns/[id]/contacts` | Add contacts to a campaign |
-| `GET` | `/api/crm/campaigns/[id]/dashboard` | Retrieve real-time campaign stats |
-| `POST` | `/api/crm/campaigns/[id]/run` | Start or stop a campaign |
-| `GET` | `/api/crm/outbound-assistants` | List assistants available for outbound calls |
+| `GET` | `/api/crm/campaigns/[id]/dashboard` | Retrieve campaign execution data |
+| `POST` | `/api/crm/campaigns/[id]/run` | Start a campaign run or perform a dry run |
+| `POST` | `/api/crm/campaigns/preview-enrollment` | Preview audience enrollment |
+| `GET` | `/api/crm/outbound-assistants` | List outbound assistants |
 | `GET` | `/api/crm/calls` | List CRM call logs |
 | `GET` | `/api/crm/intelligence` | Retrieve AI insights |
 
 ## Campaign object
 
-Campaign responses return a `campaign` object or a `campaigns` array. The exact shape can include additional campaign fields beyond the core fields listed here.
+Campaign responses include the following fields.
 
 <ResponseField name="id" field-type="string" required="true">
 Unique campaign identifier.
+</ResponseField>
+
+<ResponseField name="team_id" field-type="string" required="true">
+Team that owns the campaign.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+Outbound assistant assigned to the campaign.
 </ResponseField>
 
 <ResponseField name="name" field-type="string" required="true">
 Campaign name.
 </ResponseField>
 
-<ResponseField name="status" field-type="string" required="true">
-Current campaign status.
+<ResponseField name="description" field-type="string" required="false">
+Campaign description.
 </ResponseField>
 
-<ResponseField name="assistant_id" field-type="string" required="false">
-Identifier of the outbound assistant assigned to the campaign.
+<ResponseField name="from_number" field-type="string" required="false">
+Primary outbound phone number.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Campaign status, such as `draft`, `scheduled`, `running`, `paused`, `completed`, or `cancelled`.
+</ResponseField>
+
+<ResponseField name="scheduled_start_at" field-type="string" required="false">
+Scheduled campaign start time.
+</ResponseField>
+
+<ResponseField name="started_at" field-type="string" required="false">
+Time when campaign execution started.
+</ResponseField>
+
+<ResponseField name="completed_at" field-type="string" required="false">
+Time when campaign execution completed.
+</ResponseField>
+
+<ResponseField name="call_window_start" field-type="string" required="false">
+Start of the permitted calling window.
+</ResponseField>
+
+<ResponseField name="call_window_end" field-type="string" required="false">
+End of the permitted calling window.
+</ResponseField>
+
+<ResponseField name="call_window_timezone" field-type="string" required="false">
+Timezone used to interpret the calling window.
+</ResponseField>
+
+<ResponseField name="max_concurrent_calls" field-type="integer" required="false">
+Maximum number of concurrent calls.
+</ResponseField>
+
+<ResponseField name="max_attempts_per_contact" field-type="integer" required="false">
+Maximum number of attempts for each contact.
+</ResponseField>
+
+<ResponseField name="retry_delay_minutes" field-type="integer" required="false">
+Default delay between retry attempts.
+</ResponseField>
+
+<ResponseField name="total_contacts" field-type="integer" required="false">
+Total contacts enrolled in the campaign.
+</ResponseField>
+
+<ResponseField name="contacts_called" field-type="integer" required="false">
+Contacts for which dialing has started.
+</ResponseField>
+
+<ResponseField name="contacts_completed" field-type="integer" required="false">
+Contacts whose campaign processing is complete.
+</ResponseField>
+
+<ResponseField name="contacts_answered" field-type="integer" required="false">
+Contacts that answered a call.
+</ResponseField>
+
+<ResponseField name="settings" field-type="object" required="false">
+Campaign-specific settings.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+Campaign creation timestamp.
+</ResponseField>
+
+<ResponseField name="updated_at" field-type="string" required="true">
+Time of the most recent campaign update.
+</ResponseField>
+
+<ResponseField name="deleted_at" field-type="string" required="false">
+Soft-deletion timestamp.
+</ResponseField>
+
+<ResponseField name="deleted_by" field-type="string" required="false">
+Identifier of the user or process that deleted the campaign.
+</ResponseField>
+
+<ResponseField name="assistant" field-type="object" required="false">
+Assigned assistant summary containing `id` and `name`.
 </ResponseField>
 
 ## List campaigns
 
-Retrieve a paginated list of CRM campaigns.
+Retrieve campaigns with pagination, status filters, contact filters, and optional contact statistics.
 
-### Request
+<Request>
+```bash
+curl -G "https://app.talkturo.com/api/crm/campaigns" \
+  --data-urlencode "teamId=team_7f3c2a91" \
+  --data-urlencode "status=running" \
+  --data-urlencode "includeContactStats=true" \
+  --data-urlencode "limit=50" \
+  --data-urlencode "offset=0" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p" \
+  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiJ9.example_session_token"
+```
+</Request>
 
-<ParamField query="page" param-type="integer" required="false">
-Page number returned by the list endpoint. The response includes the current `page` value.
+<Response>
+```json
+{
+  "success": true,
+  "campaigns": [
+    {
+      "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
+      "team_id": "team_7f3c2a91",
+      "assistant_id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
+      "name": "Q3 renewal outreach",
+      "status": "running",
+      "total_contacts": 240,
+      "contacts_called": 118,
+      "contacts_completed": 96,
+      "contacts_answered": 72,
+      "created_at": "2026-08-01T14:22:11.000Z",
+      "updated_at": "2026-08-13T16:42:08.000Z"
+    }
+  ],
+  "count": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+</Response>
+
+### Query parameters
+
+<ParamField query="teamId" param-type="string" required="true">
+Team identifier. Required for session-authenticated requests.
+</ParamField>
+
+<ParamField query="status" param-type="string" required="false" enum="draft,scheduled,running,paused,completed,cancelled">
+Return campaigns with the specified status.
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+Return campaigns assigned to the specified assistant.
+</ParamField>
+
+<ParamField query="deleted" param-type="string" required="false" enum="exclude,include,only">
+Control whether deleted campaigns are excluded, included, or returned exclusively.
+</ParamField>
+
+<ParamField query="contactFilter" param-type="string" required="false" enum="voicemail,awaiting_retry,answered,no_answer,busy,error">
+Filter campaigns by contact outcome or retry state.
+</ParamField>
+
+<ParamField query="includeContactStats" param-type="string" required="false" enum="1,true">
+Include contact statistics in campaign results.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of campaigns to return. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of campaigns to skip. Defaults to `0`.
 </ParamField>
 
 ### Response fields
@@ -67,32 +223,47 @@ Returns `true` when the request succeeds.
 </ResponseField>
 
 <ResponseField name="campaigns" field-type="array" required="true">
-List of campaign objects.
+Campaign objects matching the query.
 </ResponseField>
 
-<ResponseField name="total" field-type="integer" required="true">
-Total number of campaigns available for the current query.
+<ResponseField name="count" field-type="integer" required="true">
+Number of campaigns returned by the query.
 </ResponseField>
 
-<ResponseField name="page" field-type="integer" required="true">
-Current page number.
+<ResponseField name="limit" field-type="integer" required="true">
+Effective result limit.
+</ResponseField>
+
+<ResponseField name="offset" field-type="integer" required="true">
+Effective result offset.
 </ResponseField>
 
 ## Create a campaign
 
-Create a new outbound campaign by name, and optionally assign an outbound assistant or schedule metadata.
+Create a campaign with an assistant, one or more outbound numbers, calling rules, and optional audience enrollment.
 
 <Request>
 ```bash
 curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token" \
   -d '{
+    "teamId": "team_7f3c2a91",
+    "assistantId": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
+    "fromNumberIds": ["pn_4e81c2d7"],
     "name": "Q3 renewal outreach",
-    "assistant_id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
-    "schedule": {
-      "timezone": "America/Los_Angeles",
-      "start_at": "2026-08-13T16:00:00Z"
+    "description": "Renewal calls for accounts expiring this quarter",
+    "scheduledStartAt": "2026-08-13T16:00:00.000Z",
+    "callWindowStart": "09:00",
+    "callWindowEnd": "17:00",
+    "callWindowTimezone": "America/Los_Angeles",
+    "maxConcurrentCalls": 8,
+    "maxAttemptsPerContact": 3,
+    "retryDelayMinutes": 30,
+    "enrollment": {
+      "mode": "delta",
+      "leadStatus": "renewal_due",
+      "maxToAdd": 500
     }
   }'
 ```
@@ -104,13 +275,23 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
   "success": true,
   "campaign": {
     "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
-    "name": "Q3 renewal outreach",
-    "status": "draft",
+    "team_id": "team_7f3c2a91",
     "assistant_id": "ast_9c41f8e2-7e93-4f8e-8d6c-2c9bdf8b9a33",
-    "schedule": {
-      "timezone": "America/Los_Angeles",
-      "start_at": "2026-08-13T16:00:00Z"
-    }
+    "name": "Q3 renewal outreach",
+    "status": "scheduled",
+    "total_contacts": 184,
+    "created_at": "2026-08-01T14:22:11.000Z"
+  },
+  "enrollment": {
+    "inserted": 184,
+    "scanned": 212,
+    "excludedNoPhone": 12,
+    "excludedDnc": 8,
+    "excludedAlreadyDialed": 4,
+    "excludedDuplicate": 2,
+    "excludedOverCap": 2,
+    "updated": 0,
+    "groupId": "grp_83d7a1c4"
   }
 }
 ```
@@ -118,16 +299,124 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
 
 ### Body parameters
 
+<ParamField body="teamId" param-type="string" required="true">
+Team that owns the campaign.
+</ParamField>
+
+<ParamField body="assistantId" param-type="string" required="true">
+Outbound assistant that handles campaign calls.
+</ParamField>
+
+<ParamField body="fromNumberIds" param-type="array" required="true">
+One or more outbound phone number identifiers.
+</ParamField>
+
 <ParamField body="name" param-type="string" required="true">
 Campaign name.
 </ParamField>
 
-<ParamField body="assistant_id" param-type="string" required="false">
-Assistant to use for outbound calls.
+<ParamField body="description" param-type="string" required="false">
+Campaign description.
 </ParamField>
 
-<ParamField body="schedule" param-type="object" required="false">
-Campaign scheduling configuration. The endpoint accepts a `schedule` object when you want to attach scheduling metadata during creation.
+<ParamField body="scheduledStartAt" param-type="string" required="false">
+Scheduled start timestamp.
+</ParamField>
+
+<ParamField body="scheduledEndAt" param-type="string" required="false">
+Scheduled end timestamp.
+</ParamField>
+
+<ParamField body="daysOfWeek" param-type="array" required="false">
+Days on which the campaign may place calls.
+</ParamField>
+
+<ParamField body="dayWindows" param-type="array" required="false">
+Calling windows configured for individual days.
+</ParamField>
+
+<ParamField body="callWindowStart" param-type="string" required="false">
+Daily calling window start time.
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false">
+Daily calling window end time.
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false">
+Timezone for the calling window.
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false">
+Maximum concurrent calls.
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false">
+Maximum attempts per contact.
+</ParamField>
+
+<ParamField body="retryDelayMinutes" param-type="integer" required="false">
+Default delay between retry attempts.
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false">
+Additional campaign settings.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false">
+Prevent automatic campaign completion.
+</ParamField>
+
+<ParamField body="webhookEnabled" param-type="boolean" required="false">
+Enable campaign webhooks.
+</ParamField>
+
+<ParamField body="webhookUrl" param-type="string" required="false">
+Destination URL for campaign webhooks.
+</ParamField>
+
+<ParamField body="webhookSecret" param-type="string" required="false">
+Secret used to sign webhook deliveries.
+</ParamField>
+
+<ParamField body="webhookEvents" param-type="array" required="false">
+Events that trigger webhook deliveries.
+</ParamField>
+
+<ParamField body="liveSync" param-type="boolean" required="false">
+Enable live synchronization for the campaign.
+</ParamField>
+
+<ParamField body="enrollment" param-type="object" required="false">
+Audience enrollment rules applied while creating the campaign.
+</ParamField>
+
+<ParamField body="enrollment.mode" param-type="string" required="false" enum="all_eligible,delta,none">
+Enrollment strategy. Use `none` to create the campaign without enrolling contacts.
+</ParamField>
+
+<ParamField body="enrollment.notYetDialed" param-type="boolean" required="false">
+Limit enrollment to contacts that have not yet been dialed.
+</ParamField>
+
+<ParamField body="enrollment.addedAfter" param-type="string" required="false">
+Limit enrollment to contacts added after this timestamp.
+</ParamField>
+
+<ParamField body="enrollment.importBatchIds" param-type="array" required="false">
+Limit enrollment to contacts from the specified import batches.
+</ParamField>
+
+<ParamField body="enrollment.search" param-type="string" required="false">
+Search filter applied to the enrollment audience.
+</ParamField>
+
+<ParamField body="enrollment.leadStatus" param-type="string" required="false">
+Limit enrollment to contacts with the specified lead status.
+</ParamField>
+
+<ParamField body="enrollment.maxToAdd" param-type="integer" required="false">
+Maximum number of contacts to enroll.
 </ParamField>
 
 ### Response fields
@@ -140,14 +429,59 @@ Returns `true` when the campaign is created.
 Created campaign object.
 </ResponseField>
 
+<ResponseField name="enrollment" field-type="object" required="true">
+Enrollment results, including inserted, excluded, updated, and group identifier counts.
+</ResponseField>
+
 ## Get a campaign
 
-Retrieve one campaign by ID.
+Retrieve a campaign and its first 100 campaign contacts.
+
+<Request>
+```bash
+curl "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
+    "name": "Q3 renewal outreach",
+    "status": "scheduled",
+    "from_number_ids": ["pn_4e81c2d7"],
+    "contact_count": 184,
+    "campaign_contacts": [
+      {
+        "id": "cc_2c8a91f4",
+        "status": "pending",
+        "attempts": 0,
+        "outcome": null,
+        "disposition": null,
+        "last_attempt_at": null,
+        "completed_at": null,
+        "contact": {
+          "id": "ct_89d1e6b2",
+          "first_name": "Maya",
+          "last_name": "Patel",
+          "phone": "+14155550184",
+          "email": "maya.patel@northstar.example",
+          "company_name": "Northstar Labs"
+        }
+      }
+    ]
+  }
+}
+```
+</Response>
 
 ### Path parameters
 
 <ParamField path="id" param-type="string" required="true">
-Campaign ID.
+Campaign identifier.
 </ParamField>
 
 ### Response fields
@@ -157,17 +491,67 @@ Returns `true` when the campaign is found.
 </ResponseField>
 
 <ResponseField name="campaign" field-type="object" required="true">
-Requested campaign object.
+Campaign object with `campaign_contacts`, `contact_count`, and `from_number_ids`.
+</ResponseField>
+
+<ResponseField name="campaign_contacts" field-type="array" required="false">
+First 100 contacts enrolled in the campaign.
+</ResponseField>
+
+<ResponseField name="contact_count" field-type="integer" required="false">
+Total number of contacts enrolled in the campaign.
+</ResponseField>
+
+<ResponseField name="from_number_ids" field-type="array" required="false">
+Outbound phone numbers assigned to the campaign.
 </ResponseField>
 
 ## Update a campaign
 
-Update one or more campaign fields.
+Update one or more campaign fields with `PUT`. All update fields are optional.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Q3 renewal outreach",
+    "maxConcurrentCalls": 10,
+    "retryBackoffMode": "exponential",
+    "retryBackoffMultiplier": 2,
+    "retryBackoffMaxMinutes": 120,
+    "voicemailDetectionEnabled": true,
+    "voicemailAction": "leave_message"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
+    "name": "Q3 renewal outreach",
+    "status": "scheduled",
+    "max_concurrent_calls": 10,
+    "updated_at": "2026-08-13T15:48:02.000Z"
+  }
+}
+```
+</Response>
+
+<Callout kind="alert">
+
+The API returns `409` when you try to change campaign configuration while the campaign is running. The response does not return `webhook_secret`.
+
+</Callout>
 
 ### Path parameters
 
 <ParamField path="id" param-type="string" required="true">
-Campaign ID.
+Campaign identifier.
 </ParamField>
 
 ### Body parameters
@@ -176,12 +560,152 @@ Campaign ID.
 Updated campaign name.
 </ParamField>
 
-<ParamField body="assistant_id" param-type="string" required="false">
-Updated outbound assistant ID.
+<ParamField body="description" param-type="string" required="false">
+Updated campaign description.
 </ParamField>
 
-<ParamField body="schedule" param-type="object" required="false">
-Updated scheduling configuration.
+<ParamField body="fromNumber" param-type="string" required="false">
+Primary outbound phone number.
+</ParamField>
+
+<ParamField body="fromNumberIds" param-type="array" required="false">
+Outbound phone numbers assigned to the campaign.
+</ParamField>
+
+<ParamField body="status" param-type="string" required="false" enum="draft,scheduled,running,paused,completed,cancelled">
+Campaign status.
+</ParamField>
+
+<ParamField body="scheduledStartAt" param-type="string" required="false">
+Scheduled start timestamp.
+</ParamField>
+
+<ParamField body="scheduledEndAt" param-type="string" required="false">
+Scheduled end timestamp.
+</ParamField>
+
+<ParamField body="daysOfWeek" param-type="array" required="false">
+Days on which the campaign may place calls.
+</ParamField>
+
+<ParamField body="dayWindows" param-type="array" required="false">
+Calling windows configured for individual days.
+</ParamField>
+
+<ParamField body="callWindowStart" param-type="string" required="false">
+Calling window start time.
+</ParamField>
+
+<ParamField body="callWindowEnd" param-type="string" required="false">
+Calling window end time.
+</ParamField>
+
+<ParamField body="callWindowTimezone" param-type="string" required="false">
+Calling window timezone.
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" param-type="integer" required="false">
+Maximum concurrent calls. The maximum allowed value is `20`.
+</ParamField>
+
+<ParamField body="maxAttemptsPerContact" param-type="integer" required="false">
+Maximum attempts per contact.
+</ParamField>
+
+<ParamField body="retryDelayMinutes" param-type="integer" required="false">
+Default retry delay.
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false">
+Additional campaign settings.
+</ParamField>
+
+<ParamField body="voicemailDropMessage" param-type="string" required="false">
+Message to leave when voicemail handling is enabled.
+</ParamField>
+
+<ParamField body="voicemailDetectionEnabled" param-type="boolean" required="false">
+Enable voicemail detection.
+</ParamField>
+
+<ParamField body="voicemailAction" param-type="string" required="false" enum="leave_message,hangup">
+Action to take when voicemail is detected.
+</ParamField>
+
+<ParamField body="unavailableAction" param-type="string" required="false" enum="retry,fail">
+Action to take when the contact is unavailable.
+</ParamField>
+
+<ParamField body="retryDelayMinutesNoAnswer" param-type="integer" required="false">
+Retry delay for unanswered calls.
+</ParamField>
+
+<ParamField body="maxCallDurationMinutes" param-type="integer" required="false">
+Maximum call duration in minutes.
+</ParamField>
+
+<ParamField body="retryDelayMinutesBusy" param-type="integer" required="false">
+Retry delay for busy calls.
+</ParamField>
+
+<ParamField body="retryDelayMinutesError" param-type="integer" required="false">
+Retry delay for call errors.
+</ParamField>
+
+<ParamField body="retryOnError" param-type="boolean" required="false">
+Retry calls that end with an error.
+</ParamField>
+
+<ParamField body="useContactTimezoneForCallWindow" param-type="boolean" required="false">
+Use each contact's timezone for call-window evaluation.
+</ParamField>
+
+<ParamField body="retryBackoffMode" param-type="string" required="false" enum="fixed,exponential">
+Retry backoff strategy.
+</ParamField>
+
+<ParamField body="retryBackoffMultiplier" param-type="number" required="false">
+Multiplier used by exponential retry backoff.
+</ParamField>
+
+<ParamField body="retryBackoffMaxMinutes" param-type="integer" required="false">
+Maximum exponential backoff delay.
+</ParamField>
+
+<ParamField body="maxAttemptsNoAnswer" param-type="integer" required="false">
+Maximum attempts for unanswered calls.
+</ParamField>
+
+<ParamField body="maxAttemptsBusy" param-type="integer" required="false">
+Maximum attempts for busy calls.
+</ParamField>
+
+<ParamField body="maxAttemptsError" param-type="integer" required="false">
+Maximum attempts for calls that return errors.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false">
+Prevent automatic campaign completion.
+</ParamField>
+
+<ParamField body="liveSync" param-type="boolean" required="false">
+Enable live synchronization.
+</ParamField>
+
+<ParamField body="webhookEnabled" param-type="boolean" required="false">
+Enable webhook deliveries.
+</ParamField>
+
+<ParamField body="webhookUrl" param-type="string" required="false">
+Webhook destination URL.
+</ParamField>
+
+<ParamField body="webhookSecret" param-type="string" required="false">
+Secret used to sign webhook deliveries.
+</ParamField>
+
+<ParamField body="webhookEvents" param-type="array" required="false">
+Events that trigger webhook deliveries.
 </ParamField>
 
 ### Response fields
@@ -196,12 +720,28 @@ Updated campaign object.
 
 ## Delete a campaign
 
-Delete a campaign by ID.
+Delete a campaign by ID. Deletion is available only when the campaign status is `draft` or `cancelled`.
+
+<Request>
+```bash
+curl -X DELETE "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "message": "Campaign deleted"
+}
+```
+</Response>
 
 ### Path parameters
 
 <ParamField path="id" param-type="string" required="true">
-Campaign ID.
+Campaign identifier.
 </ParamField>
 
 ### Response fields
@@ -216,16 +756,76 @@ Deletion result message.
 
 ## Manage campaign contacts
 
-Attach contacts to a campaign and retrieve the current campaign contact list.
+Use the contacts endpoints to inspect enrollment and add existing or new contacts.
 
 ### List campaign contacts
 
-Retrieve contacts already associated with a campaign.
+<Request>
+```bash
+curl -G "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/contacts" \
+  --data-urlencode "status=pending" \
+  --data-urlencode "limit=50" \
+  --data-urlencode "offset=0" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "contacts": [
+    {
+      "id": "cc_2c8a91f4",
+      "status": "pending",
+      "attempts": 0,
+      "outcome": null,
+      "disposition": null,
+      "last_attempt_at": null,
+      "next_attempt_at": null,
+      "completed_at": null,
+      "priority": 50,
+      "contact": {
+        "id": "ct_89d1e6b2",
+        "first_name": "Maya",
+        "last_name": "Patel",
+        "phone": "+14155550184",
+        "email": "maya.patel@northstar.example",
+        "job_title": "VP Sales",
+        "do_not_call": false,
+        "company_name": "Northstar Labs"
+      }
+    }
+  ],
+  "count": 1,
+  "limit": 50,
+  "offset": 0,
+  "statusCounts": {
+    "pending": 1,
+    "completed": 96
+  }
+}
+```
+</Response>
 
 #### Path parameters
 
 <ParamField path="id" param-type="string" required="true">
-Campaign ID.
+Campaign identifier.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="status" param-type="string" required="false">
+Filter campaign contacts by status.
+</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of contacts to return. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">
+Number of contacts to skip. Defaults to `0`.
 </ParamField>
 
 #### Response fields
@@ -235,109 +835,37 @@ Returns `true` when the request succeeds.
 </ResponseField>
 
 <ResponseField name="contacts" field-type="array" required="true">
-Contacts attached to the campaign.
+Campaign contact records.
 </ResponseField>
 
-### Add campaign contacts
-
-Add contacts to an existing campaign.
-
-#### Path parameters
-
-<ParamField path="id" param-type="string" required="true">
-Campaign ID.
-</ParamField>
-
-#### Body parameters
-
-<ParamField body="contacts" param-type="array" required="false">
-List of contacts to add. The endpoint accepts contact payloads for campaign association.
-</ParamField>
-
-#### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when contacts are added.
+<ResponseField name="count" field-type="integer" required="true">
+Number of contacts returned.
 </ResponseField>
 
-<ResponseField name="contacts" field-type="array" required="true">
-Updated contact list or added contact records.
+<ResponseField name="limit" field-type="integer" required="true">
+Effective result limit.
 </ResponseField>
 
-<Callout kind="info">
+<ResponseField name="offset" field-type="integer" required="true">
+Effective result offset.
+</ResponseField>
 
-The repository confirms that `GET` and `POST` are available on `/api/crm/campaigns/[id]/contacts`, but it does not expose the exact contact request schema on this page. Use the response from your CRM contacts endpoints as the source for contact IDs and payload shape.
+<ResponseField name="statusCounts" field-type="object" required="true">
+Counts grouped by campaign contact status.
+</ResponseField>
 
-</Callout>
+### Add contacts to a campaign
 
-## Retrieve real-time dashboard stats
-
-Read live execution metrics for a campaign dashboard.
+Add existing contacts, create one inline contact, or enroll an audience.
 
 <Request>
 ```bash
-curl -X GET "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/dashboard" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token"
-```
-</Request>
-
-<Response>
-```json
-{
-  "success": true,
-  "stats": {
-    "total_calls": 240,
-    "answered": 118,
-    "failed": 21,
-    "in_progress": 7
-  }
-}
-```
-</Response>
-
-### Path parameters
-
-<ParamField path="id" param-type="string" required="true">
-Campaign ID.
-</ParamField>
-
-### Response fields
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when dashboard stats are available.
-</ResponseField>
-
-<ResponseField name="stats" field-type="object" required="true">
-Campaign dashboard metrics object.
-</ResponseField>
-
-<ResponseField name="total_calls" field-type="integer" required="false">
-Total calls recorded for the campaign.
-</ResponseField>
-
-<ResponseField name="answered" field-type="integer" required="false">
-Calls answered by recipients.
-</ResponseField>
-
-<ResponseField name="failed" field-type="integer" required="false">
-Calls that failed.
-</ResponseField>
-
-<ResponseField name="in_progress" field-type="integer" required="false">
-Calls currently in progress.
-</ResponseField>
-
-## Start or stop a campaign
-
-Control campaign execution by sending a run action.
-
-<Request>
-```bash
-curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/run" \
+curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/contacts" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_session_token" \
   -d '{
-    "action": "start"
+    "contactIds": ["ct_89d1e6b2", "ct_4a71c9e0"],
+    "priority": 75
   }'
 ```
 </Request>
@@ -346,7 +874,259 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-
 ```json
 {
   "success": true,
-  "status": "running"
+  "added": 2,
+  "invalid": [],
+  "message": "Contacts added",
+  "enrollment": {
+    "inserted": 2,
+    "scanned": 2,
+    "excludedNoPhone": 0,
+    "excludedDnc": 0,
+    "excludedAlreadyDialed": 0,
+    "excludedDuplicate": 0,
+    "excludedOverCap": 0,
+    "updated": 0,
+    "groupId": null
+  }
+}
+```
+</Response>
+
+#### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Campaign identifier.
+</ParamField>
+
+#### Body parameters
+
+<ParamField body="contactIds" param-type="array" required="false">
+Identifiers of existing contacts to add.
+</ParamField>
+
+<ParamField body="contact" param-type="object" required="false">
+Inline contact to create and enroll.
+</ParamField>
+
+<ParamField body="contact.first_name" param-type="string" required="false">
+Inline contact first name.
+</ParamField>
+
+<ParamField body="contact.last_name" param-type="string" required="false">
+Inline contact last name.
+</ParamField>
+
+<ParamField body="contact.phone" param-type="string" required="false">
+Inline contact phone number.
+</ParamField>
+
+<ParamField body="contact.email" param-type="string" required="false">
+Inline contact email address.
+</ParamField>
+
+<ParamField body="contact.job_title" param-type="string" required="false">
+Inline contact job title.
+</ParamField>
+
+<ParamField body="contact.company_name" param-type="string" required="false">
+Inline contact company name.
+</ParamField>
+
+<ParamField body="audience" param-type="object" required="false">
+Audience enrollment rules.
+</ParamField>
+
+<ParamField body="audience.mode" param-type="string" required="false" enum="all_eligible,delta">
+Audience enrollment mode.
+</ParamField>
+
+<ParamField body="audience.notYetDialed" param-type="boolean" required="false">
+Limit audience enrollment to contacts that have not been dialed.
+</ParamField>
+
+<ParamField body="audience.addedAfter" param-type="string" required="false">
+Limit enrollment to contacts added after this timestamp.
+</ParamField>
+
+<ParamField body="audience.importBatchIds" param-type="array" required="false">
+Limit enrollment to specified import batches.
+</ParamField>
+
+<ParamField body="audience.search" param-type="string" required="false">
+Search filter applied to the audience.
+</ParamField>
+
+<ParamField body="audience.leadStatus" param-type="string" required="false">
+Limit enrollment to the specified lead status.
+</ParamField>
+
+<ParamField body="audience.maxToAdd" param-type="integer" required="false">
+Maximum number of contacts to add.
+</ParamField>
+
+<ParamField body="priority" param-type="integer" required="false">
+Contact priority from `0` to `99`.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="added" field-type="integer" required="true">
+Number of contacts added.
+</ResponseField>
+
+<ResponseField name="invalid" field-type="array" required="false">
+Contacts that could not be added.
+</ResponseField>
+
+<ResponseField name="message" field-type="string" required="true">
+Result message.
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string" required="false">
+Created contact identifier for an inline contact request.
+</ResponseField>
+
+<ResponseField name="campaign_contact_id" field-type="string" required="false">
+Created campaign contact identifier for an inline contact request.
+</ResponseField>
+
+<ResponseField name="enrollment" field-type="object" required="false">
+Enrollment counts and exclusion details.
+</ResponseField>
+
+## Preview audience enrollment
+
+Estimate enrollment results without inserting contacts into a campaign.
+
+<Request>
+```bash
+curl -X POST "https://app.talkturo.com/api/crm/campaigns/preview-enrollment" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "campaignId": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
+    "notYetDialed": true,
+    "leadStatus": "renewal_due",
+    "maxToAdd": 500
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "preview": {
+    "inserted": 184,
+    "scanned": 212,
+    "excludedNoPhone": 12,
+    "excludedDnc": 8,
+    "excludedAlreadyDialed": 4,
+    "excludedDuplicate": 2,
+    "excludedOverCap": 2,
+    "updated": 0,
+    "groupId": "grp_83d7a1c4"
+  },
+  "groupName": "Q3 renewal outreach"
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="campaignId" param-type="string" required="true">
+Campaign to use for the enrollment preview.
+</ParamField>
+
+<ParamField body="notYetDialed" param-type="boolean" required="false">
+Limit the preview to contacts that have not been dialed.
+</ParamField>
+
+<ParamField body="addedAfter" param-type="string" required="false">
+Limit the preview to contacts added after this timestamp.
+</ParamField>
+
+<ParamField body="importBatchIds" param-type="array" required="false">
+Limit the preview to specified import batches.
+</ParamField>
+
+<ParamField body="search" param-type="string" required="false">
+Search filter applied to the audience.
+</ParamField>
+
+<ParamField body="leadStatus" param-type="string" required="false">
+Limit the preview to the specified lead status.
+</ParamField>
+
+<ParamField body="maxToAdd" param-type="integer" required="false">
+Maximum number of contacts that would be added.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the preview succeeds.
+</ResponseField>
+
+<ResponseField name="preview" field-type="object" required="true">
+Enrollment counts and exclusion details. The preview does not insert contacts.
+</ResponseField>
+
+<ResponseField name="groupName" field-type="string" required="false">
+Name of the audience group used for the preview.
+</ResponseField>
+
+## Retrieve campaign dashboard data
+
+Retrieve aggregate counts, pending and calling queues, and recent calls.
+
+<Request>
+```bash
+curl "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/dashboard?limitPending=25&limitCalling=25&limitCalls=25" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "campaign": {
+    "id": "cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1",
+    "name": "Q3 renewal outreach",
+    "status": "running"
+  },
+  "counts": {
+    "byStatus": {
+      "pending": 42,
+      "queued": 8,
+      "calling": 6,
+      "completed": 96,
+      "skipped": 4,
+      "failed": 2
+    },
+    "byOutcome": {
+      "answered": 72,
+      "voicemail": 31,
+      "no_answer": 14,
+      "busy": 5,
+      "invalid_number": 2,
+      "declined": 1,
+      "do_not_call": 1,
+      "error": 2
+    },
+    "answered": 72,
+    "total": 158
+  },
+  "queue": {
+    "pending": [],
+    "calling": []
+  },
+  "recentCalls": []
 }
 ```
 </Response>
@@ -354,110 +1134,186 @@ curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-
 ### Path parameters
 
 <ParamField path="id" param-type="string" required="true">
-Campaign ID.
+Campaign identifier.
 </ParamField>
 
-### Body parameters
+### Query parameters
 
-<ParamField body="action" param-type="string" required="true" enum="start,stop">
-Execution command for the campaign.
+<ParamField query="limitPending" param-type="integer" required="false">
+Maximum pending contacts to return. Defaults to `25`; accepted range is `1` to `100`.
+</ParamField>
+
+<ParamField query="limitCalling" param-type="integer" required="false">
+Maximum calling contacts to return. Defaults to `25`; accepted range is `1` to `100`.
+</ParamField>
+
+<ParamField query="limitCalls" param-type="integer" required="false">
+Maximum recent calls to return. Defaults to `25`; accepted range is `1` to `100`.
 </ParamField>
 
 ### Response fields
 
 <ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the action is accepted.
+Returns `true` when dashboard data is available.
 </ResponseField>
 
-<ResponseField name="status" field-type="string" required="true">
-Resulting campaign status, such as `running` or `stopped`.
+<ResponseField name="campaign" field-type="object" required="true">
+Campaign summary.
 </ResponseField>
 
-## Related CRM endpoints
-
-These endpoints are commonly used alongside campaign operations.
-
-### List outbound assistants
-
-Retrieve assistants that can be assigned to outbound campaigns.
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the request succeeds.
+<ResponseField name="counts" field-type="object" required="true">
+Counts grouped by status and outcome, plus answered and total counts.
 </ResponseField>
 
-<ResponseField name="assistants" field-type="array" required="true">
-Assistants available for outbound calling.
+<ResponseField name="queue" field-type="object" required="true">
+Pending and currently calling campaign contacts.
 </ResponseField>
 
+<ResponseField name="recentCalls" field-type="array" required="true">
+Recent calls associated with the campaign.
+</ResponseField>
+
+## Run a campaign
+
+Start an asynchronous campaign run or inspect the contacts that would be selected with a dry run. The external dialer places calls on its next tick; this endpoint does not place calls directly.
+
+<Request>
 ```bash
-GET /api/crm/outbound-assistants
+curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_6df44cc0-5e10-4b0d-a3f5-ec6116f8c7d1/run" \
+  -H "Authorization: Bearer sk_live_example_7h2k9m4p" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "northstar",
+    "maxCalls": 25,
+    "dryRun": false,
+    "noAutoComplete": true
+  }'
 ```
+</Request>
 
-### List CRM call logs
+<Response>
+```json
+{
+  "success": true,
+  "started": 25,
+  "failed": 0,
+  "calls": [],
+  "errors": [],
+  "message": "Campaign is running; the dialer places calls on its next tick",
+  "dryRun": false,
+  "picks": [],
+  "dialing": "async"
+}
+```
+</Response>
 
-Retrieve CRM call history for campaign analysis and operational debugging.
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+Campaign identifier.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="accountSlug" param-type="string" required="true">
+Account that owns the campaign run.
+</ParamField>
+
+<ParamField body="maxCalls" param-type="integer" required="false">
+Maximum number of calls to select for the run.
+</ParamField>
+
+<ParamField body="max_calls" param-type="integer" required="false">
+Snake-case alias for `maxCalls`.
+</ParamField>
+
+<ParamField body="dryRun" param-type="boolean" required="false">
+Return selected contacts without placing calls.
+</ParamField>
+
+<ParamField body="dry_run" param-type="boolean" required="false">
+Snake-case alias for `dryRun`.
+</ParamField>
+
+<ParamField body="noAutoComplete" param-type="boolean" required="false">
+Prevent automatic campaign completion.
+</ParamField>
+
+<ParamField body="no_auto_complete" param-type="boolean" required="false">
+Snake-case alias for `noAutoComplete`.
+</ParamField>
+
+### Response fields
 
 <ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the request succeeds.
+Returns `true` when the run request succeeds.
+</ResponseField>
+
+<ResponseField name="started" field-type="integer" required="true">
+Number of calls started or selected.
+</ResponseField>
+
+<ResponseField name="failed" field-type="integer" required="true">
+Number of calls that failed to start.
 </ResponseField>
 
 <ResponseField name="calls" field-type="array" required="true">
-CRM call log entries.
+Calls started by the run.
 </ResponseField>
 
-```bash
-GET /api/crm/calls
-```
-
-### Retrieve AI insights
-
-Retrieve AI-generated CRM intelligence and insights.
-
-<ResponseField name="success" field-type="boolean" required="true">
-Returns `true` when the request succeeds.
+<ResponseField name="errors" field-type="array" required="true">
+Errors encountered while selecting or starting calls.
 </ResponseField>
 
-<ResponseField name="insights" field-type="array" required="true">
-Insight records generated from CRM activity.
+<ResponseField name="message" field-type="string" required="true">
+Run result message.
 </ResponseField>
 
-```bash
-GET /api/crm/intelligence
-```
+<ResponseField name="dryRun" field-type="boolean" required="true">
+Indicates whether the request was a dry run.
+</ResponseField>
+
+<ResponseField name="picks" field-type="array" required="true">
+Contacts selected for dialing. Dry-run entries include `campaign_contact_id`, `contact_id`, `toNumber`, and `fromNumber`.
+</ResponseField>
+
+<ResponseField name="dialing" field-type="string" required="true">
+Dialing mode. Normal runs return `async`.
+</ResponseField>
 
 ## Common workflow
 
-Most campaign integrations follow the same path:
+Use the following sequence to create, validate, run, and monitor a campaign.
 
 <Steps>
 
-<Step title="List outbound assistants" icon="users">
-
-Call `GET /api/crm/outbound-assistants` and select the assistant you want to use for outbound calls.
-
-</Step>
-
 <Step title="Create the campaign" icon="plus">
 
-Create a campaign with `POST /api/crm/campaigns`. A successful response returns `success: true` and a new `campaign.id`.
+Send `POST /api/crm/campaigns` with an assistant, at least one outbound number, and a campaign name. Use the `enrollment` object when the campaign should enroll an audience during creation.
 
 </Step>
 
-<Step title="Add contacts" icon="upload">
+<Step title="Preview enrollment" icon="search">
 
-Attach contacts with `POST /api/crm/campaigns/[id]/contacts`. After the request succeeds, the response includes a `contacts` array.
-
-</Step>
-
-<Step title="Start the run" icon="play-circle">
-
-Send `POST /api/crm/campaigns/[id]/run` with `action` set to `start`. The response returns `status: running` when execution begins.
+Send `POST /api/crm/campaigns/preview-enrollment` with the campaign ID and audience filters. Confirm the `preview` counts before inserting contacts.
 
 </Step>
 
-<Step title="Monitor progress" icon="bar-chart">
+<Step title="Enroll contacts" icon="upload">
 
-Poll `GET /api/crm/campaigns/[id]/dashboard` to track `total_calls`, `answered`, `failed`, and `in_progress` while the campaign runs.
+Add existing contacts, create an inline contact, or submit an audience through `POST /api/crm/campaigns/[id]/contacts`. Confirm the `added` and `enrollment` values in the response.
+
+</Step>
+
+<Step title="Run the campaign" icon="play-circle">
+
+Call `POST /api/crm/campaigns/[id]/run` with `accountSlug`. Use `dryRun` first when you need to inspect the selected contacts. A normal run returns `dialing: async`; the external dialer places calls on its next tick.
+
+</Step>
+
+<Step title="Monitor execution" icon="bar-chart">
+
+Poll `GET /api/crm/campaigns/[id]/dashboard` to read status and outcome counts, queue contents, and recent calls.
 
 </Step>
 
@@ -466,7 +1322,11 @@ Poll `GET /api/crm/campaigns/[id]/dashboard` to track `total_calls`, `answered`,
 ## Related resources
 
 <Columns cols={3}>
-  <Card title="CRM Contacts" href="/en/api-reference/crm-contacts" icon="users" cta="View reference" />
-  <Card title="CRM Companies" href="/en/api-reference/crm-companies" icon="database" cta="View reference" />
-  <Card title="CRM Opportunities" href="/en/api-reference/crm-opportunities" icon="bar-chart" cta="View reference" />
+
+<Card title="CRM Contacts" href="/en/api-reference/crm-contacts" icon="users" cta="View reference" />
+
+<Card title="CRM Companies" href="/en/api-reference/crm-companies" icon="database" cta="View reference" />
+
+<Card title="CRM Opportunities" href="/en/api-reference/crm-opportunities" icon="bar-chart" cta="View reference" />
+
 </Columns>
