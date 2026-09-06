@@ -8,6 +8,21 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-05" description="v3.3.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Payment Methods tab** — Manage your saved cards directly in the billing page. Add new cards via secure checkout, set a default card for auto-reload and subscription charges, and remove cards you no longer need. Card changes on the payment provider's side are automatically synced. See [Billing](/en/billing).
+
+  ## Improvements
+
+  - **Warn before unassigning campaign-linked numbers** — Removing a phone number that's used by active or paused outbound campaigns now shows a warning with the affected campaign names, preventing accidental dialer disruptions. See [Telephony](/en/telephony).
+  - **Manage caller IDs for paused campaigns** — While a campaign is paused, you can now edit which phone numbers it uses as caller IDs, with validation against the assistant's currently assigned numbers. See [Campaign Configuration](/en/campaigns/configuration).
+
+  ## Bug Fixes
+
+  - **Stale campaign caller IDs after number changes** — When a phone number is unassigned from an assistant or released, its caller-ID assignments for outbound campaigns are now automatically removed, preventing campaigns from dialing with invalid numbers. See [Campaigns](/en/campaigns/overview).
+</Update>
+
 <Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
@@ -395,4 +410,3 @@ Track upcoming priorities for Talkturo's voice AI features.
 <Callout kind="info" collapsed="false">
   Subscribe to our changelog RSS feed or join the support mailing list at [info@talkturo.ai](mailto:info@talkturo.ai) for instant notifications.
 </Callout>
-

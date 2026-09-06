@@ -8,6 +8,21 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-09-05" description="v3.3.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Zahlungsmethoden-Tab** — Verwalte deine gespeicherten Karten direkt auf der Abrechnungsseite. Füge neue Karten über einen sicheren Checkout hinzu, lege eine Standardkarte für Auto-Reload und Abonnements fest und entferne Karten, die du nicht mehr benötigst. Kartenänderungen aufseiten des Zahlungsanbieters werden automatisch synchronisiert. Siehe [Abrechnung](/de/billing).
+
+  ## Verbesserungen
+
+  - **Warnung vor dem Entfernen kampagnenverknüpfter Nummern** — Das Entfernen einer Telefonnummer, die von aktiven oder pausierten Outbound-Kampagnen verwendet wird, zeigt jetzt eine Warnung mit den betroffenen Kampagnennamen und verhindert versehentliche Störungen des Dialers. Siehe [Telefonie](/de/telephony).
+  - **Anrufer-IDs für pausierte Kampagnen verwalten** — Während eine Kampagne pausiert ist, kannst du jetzt bearbeiten, welche Telefonnummern sie als Anrufer-IDs verwendet, mit Validierung gegen die aktuell zugewiesenen Nummern des Assistenten. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+
+  ## Bugfixes
+
+  - **Veraltete Kampagnen-Anrufer-IDs nach Nummernänderungen** — Wenn eine Telefonnummer von einem Assistenten entfernt oder freigegeben wird, werden ihre Anrufer-ID-Zuweisungen für Outbound-Kampagnen jetzt automatisch gelöscht, was verhindert, dass Kampagnen mit ungültigen Nummern wählen. Siehe [Kampagnen](/de/campaigns/overview).
+</Update>
+
 <Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
