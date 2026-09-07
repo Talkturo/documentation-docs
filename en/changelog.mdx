@@ -8,15 +8,21 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
-<Update label="2026-09-04" description="v3.3.0" tags={["feature","improvement"]}>
+<Update label="2026-09-05" description="v3.3.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
-  - **Payment Methods tab** — Manage saved cards directly from the billing page. Add cards through Stripe, view all saved cards, set a default card, and remove cards when no longer needed. The last card can't be removed while auto-reload or an active Desktop App subscription depends on it. See [Billing](/en/billing).
+  - **Payment Methods tab** — Manage saved cards directly from the billing page. Add cards through Stripe's secure checkout, view all saved cards, set a default card for auto-reload and subscription charges, and remove cards when no longer needed. The last card can't be removed while auto-reload or an active Desktop App subscription depends on it. See [Billing](/en/billing).
 
   ## Improvements
 
   - **Automatic card on file for Desktop App subscriptions** — When a subscription is created through the Desktop App, the card used is automatically saved to your workspace. See [Billing](/en/billing).
   - **Stripe card sync** — If a card is removed directly in Stripe, it's automatically removed from your saved cards list in Talkturo, keeping both sides consistent. See [Billing](/en/billing).
+  - **Warn before unassigning campaign-linked numbers** — The assistant telephony number selector now shows which active or paused outbound campaigns depend on a phone number before you remove it, listing the affected campaign names to prevent accidental dialer disruptions. See [Telephony](/en/telephony).
+  - **Manage caller IDs for paused campaigns** — While a campaign is paused, you can edit which phone numbers it uses as caller IDs directly from the campaign detail dialog, with validation against the assistant's currently assigned numbers. See [Campaign Configuration](/en/campaigns/configuration).
+
+  ## Bug Fixes
+
+  - **Stale campaign caller IDs after number changes** — When phone numbers are unassigned, reassigned, or released, their caller-ID assignments for outbound campaigns are now automatically removed, so paused campaigns don't resume dialing with invalid numbers. See [Campaigns](/en/campaigns/overview).
 </Update>
 
 <Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>

@@ -8,15 +8,21 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
-<Update label="2026-09-04" description="v3.3.0" tags={["feature","improvement"]}>
+<Update label="2026-09-05" description="v3.3.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
-  - **Registerkarte „Zahlungsmethoden\"** — Verwalte gespeicherte Karten direkt über die Abrechnungsseite. Füge Karten über Stripe hinzu, sieh alle gespeicherten Karten, lege eine Standardkarte fest und entferne Karten, die nicht mehr benötigt werden. Die letzte Karte kann nicht entfernt werden, solange Auto-Reload oder ein aktives Desktop-App-Abonnement darauf angewiesen ist. Siehe [Abrechnung](/de/billing).
+  - **Registerkarte „Zahlungsmethoden\"** — Verwalte gespeicherte Karten direkt über die Abrechnungsseite. Füge Karten über den sicheren Stripe-Checkout hinzu, sieh alle gespeicherten Karten, lege eine Standardkarte für Auto-Reload und Abonnements fest und entferne Karten, die nicht mehr benötigt werden. Die letzte Karte kann nicht entfernt werden, solange Auto-Reload oder ein aktives Desktop-App-Abonnement darauf angewiesen ist. Siehe [Abrechnung](/de/billing).
 
   ## Verbesserungen
 
   - **Automatische Kartenhinterlegung bei Desktop-App-Abonnements** — Wenn ein Abonnement über die Desktop-App erstellt wird, wird die verwendete Karte automatisch in deinem Workspace gespeichert. Siehe [Abrechnung](/de/billing).
   - **Stripe-Kartensynchronisation** — Wenn eine Karte direkt in Stripe entfernt wird, wird sie automatisch auch aus deiner Liste der gespeicherten Karten in Talkturo entfernt, sodass beide Seiten konsistent bleiben. Siehe [Abrechnung](/de/billing).
+  - **Warnung vor dem Entfernen kampagnenverknüpfter Nummern** — Die Telefonie-Nummernauswahl im Assistenten zeigt jetzt, welche aktiven oder pausierten Outbound-Kampagnen von einer Telefonnummer abhängen, bevor du sie entfernst, inklusive der betroffenen Kampagnennamen. Das verhindert versehentliche Störungen des Dialers. Siehe [Telefonie](/de/telephony).
+  - **Anrufer-IDs für pausierte Kampagnen verwalten** — Während eine Kampagne pausiert ist, kannst du direkt im Kampagnen-Detaildialog bearbeiten, welche Telefonnummern sie als Anrufer-IDs verwendet, mit Validierung gegen die aktuell zugewiesenen Nummern des Assistenten. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+
+  ## Bugfixes
+
+  - **Veraltete Kampagnen-Anrufer-IDs nach Nummernänderungen** — Wenn Telefonnummern entfernt, neu zugewiesen oder freigegeben werden, werden ihre Anrufer-ID-Zuweisungen für Outbound-Kampagnen jetzt automatisch gelöscht, sodass pausierte Kampagnen nicht mit ungültigen Nummern weiterwählen. Siehe [Kampagnen](/de/campaigns/overview).
 </Update>
 
 <Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>
