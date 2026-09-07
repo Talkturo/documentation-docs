@@ -12,6 +12,8 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
   ## New Features
 
   - **Payment Methods tab** — Manage saved cards directly from the billing page. Add cards through Stripe's secure checkout, view all saved cards, set a default card for auto-reload and subscription charges, and remove cards when no longer needed. The last card can't be removed while auto-reload or an active Desktop App subscription depends on it. See [Billing](/en/billing).
+  - **MCP plugin connections** — Connect external tools like Calendly, Cal.com, HubSpot, and Gmail to assistants via secure OAuth, and choose which tools each assistant can use. See [Integrations](/en/integrations).
+  - **TurboFlow template library** — Install ready-made workflow templates per workspace, including pre-built email tools. See [TurboFlow](/en/turboflow/overview).
 
   ## Improvements
 
@@ -19,10 +21,17 @@ Stay informed about the latest enhancements to Talkturo's enterprise voice AI pl
   - **Stripe card sync** — If a card is removed directly in Stripe, it's automatically removed from your saved cards list in Talkturo, keeping both sides consistent. See [Billing](/en/billing).
   - **Warn before unassigning campaign-linked numbers** — The assistant telephony number selector now shows which active or paused outbound campaigns depend on a phone number before you remove it, listing the affected campaign names to prevent accidental dialer disruptions. See [Telephony](/en/telephony).
   - **Manage caller IDs for paused campaigns** — While a campaign is paused, you can edit which phone numbers it uses as caller IDs directly from the campaign detail dialog, with validation against the assistant's currently assigned numbers. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Deleted campaigns are read-only** — Deleted campaigns can no longer be started, paused, resumed, or deleted again, and appear dimmed with a Deleted badge. See [Campaigns](/en/campaigns/overview).
+  - **Translated call outcomes** — Call outcomes such as answered, busy, and voicemail are now displayed in your language. See [Call Logs](/en/call-logs).
+  - **Cost breakdown in conversations** — Call entries in the conversations view now show a per-call cost breakdown. See [Call Logs](/en/call-logs).
 
   ## Bug Fixes
 
   - **Stale campaign caller IDs after number changes** — When phone numbers are unassigned, reassigned, or released, their caller-ID assignments for outbound campaigns are now automatically removed, so paused campaigns don't resume dialing with invalid numbers. See [Campaigns](/en/campaigns/overview).
+  - **CRM group dispatch routing** — Changing an assistant's CRM group now rebuilds its inbound dispatch rule so new inbound calls are filed into the correct group. See [Campaigns](/en/campaigns/overview).
+  - **TurboFlow connector suggestions** — The TurboFlow assistant no longer suggests connectors that have been removed from the product. See [TurboFlow](/en/turboflow/overview).
+  - **Cancelling a new campaign no longer shows a ghost row** — Clicking Cancel on the new campaign dialog no longer briefly inserts a draft row into the campaign list. See [Campaigns](/en/campaigns/overview).
+  - **Onboarding prompt generation race** — Changing your website or purpose and navigating back no longer lets an older generation job overwrite the newer result. See [Quickstart](/en/quickstart).
 </Update>
 
 <Update label="2026-09-03" description="v3.2.0" tags={["feature","improvement","bugfix"]}>
