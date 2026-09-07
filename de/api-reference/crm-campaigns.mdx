@@ -1,353 +1,462 @@
 ---
 title: CRM-Kampagnen
-description: Ausgehende Anrufkampagnen über die Talkturo-CRM-API erstellen, verwalten und ausführen — Kontakte hinzufügen, Echtzeit-Dashboard-Statistiken überwachen, Kampagnen starten und stoppen sowie Anrufprotokolle und KI-Einblicke abrufen.
+description: Verwalten Sie CRM-Kampagnen, Kontakte, Einschreibungen und Anrufläufe über die Talkturo API mit vollständigen Endpunktreferenzen.
 ---
 
-## CRM-Kampagnen für ausgehende Anrufe verwalten
+## CRM-Kampagnen verwalten
 
-Mit den CRM-Kampagnen-Endpunkten erstellen und steuern Sie ausgehende Anrufkampagnen in Talkturo. Sie können Kampagnen anlegen, Kontakte zuordnen, eine Kampagne starten oder stoppen und den aktuellen Fortschritt über Dashboard-Statistiken verfolgen.
-
-Alle Endpunkte in diesem Bereich verwenden Sitzungsauthentifizierung. Rufen Sie diese API daher aus einer angemeldeten Talkturo-Sitzung heraus auf.
+Mit der CRM Campaigns API erstellen und verwalten Sie Kampagnen, ordnen Kontakte zu, prüfen Einschreibungen und starten Anrufläufe.
 
 <Callout kind="info">
 
-Die Kampagnen-API deckt den Kampagnenablauf selbst ab. Für verfügbare Outbound-Assistenten, Anrufprotokolle und KI-Einblicke stehen separate CRM-Endpunkte bereit, die in der Übersicht unten mit aufgeführt sind.
+Die API verwendet `PUT` zum Aktualisieren einer Kampagne. `PATCH` wird für diesen Endpunkt nicht unterstützt.
 
 </Callout>
 
-## Endpunktübersicht
+## Endpunkte
 
-| Methode | Pfad | Zweck |
+| Methode | Endpunkt | Beschreibung |
 | --- | --- | --- |
 | `GET` | `/api/crm/campaigns` | Kampagnen auflisten |
 | `POST` | `/api/crm/campaigns` | Kampagne erstellen |
 | `GET` | `/api/crm/campaigns/[id]` | Kampagne abrufen |
-| `PATCH` | `/api/crm/campaigns/[id]` | Kampagne aktualisieren |
+| `PUT` | `/api/crm/campaigns/[id]` | Kampagne aktualisieren |
 | `DELETE` | `/api/crm/campaigns/[id]` | Kampagne löschen |
-| `GET` | `/api/crm/campaigns/[id]/contacts` | Kontakte einer Kampagne auflisten |
-| `POST` | `/api/crm/campaigns/[id]/contacts` | Kontakte zu einer Kampagne hinzufügen |
-| `GET` | `/api/crm/campaigns/[id]/dashboard` | Echtzeit-Statistiken einer Kampagne abrufen |
-| `POST` | `/api/crm/campaigns/[id]/run` | Kampagne starten oder stoppen |
-| `GET` | `/api/crm/outbound-assistants` | Für Outbound verfügbare Assistenten auflisten |
-| `GET` | `/api/crm/calls` | Anrufprotokolle auflisten |
-| `GET` | `/api/crm/intelligence` | KI-Einblicke abrufen |
+| `GET` | `/api/crm/campaigns/[id]/contacts` | Kampagnenkontakte auflisten |
+| `POST` | `/api/crm/campaigns/[id]/contacts` | Kontakte zur Kampagne hinzufügen |
+| `GET` | `/api/crm/campaigns/[id]/dashboard` | Kampagnen-Dashboard abrufen |
+| `POST` | `/api/crm/campaigns/[id]/run` | Kampagnenlauf starten |
+| `POST` | `/api/crm/campaigns/preview-enrollment` | Einschreibung vorab prüfen |
+| `GET` | `/api/crm/outbound-assistants` | Outbound-Assistenten auflisten |
+| `GET` | `/api/crm/calls` | CRM-Anrufe abrufen |
+| `GET` | `/api/crm/intelligence` | CRM-Intelligence-Daten abrufen |
+
+## Authentifizierung
+
+Senden Sie Ihren API-Schlüssel im `Authorization`-Header jeder Anfrage.
+
+```bash
+curl https://api.talkturo.com/api/crm/campaigns?accountSlug=acme \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
+```
+
+Der API-Schlüssel muss Zugriff auf den angegebenen Workspace besitzen.
+
+## Kampagnen auflisten
+
+Mit `GET /api/crm/campaigns` rufen Sie die Kampagnen eines Workspaces ab. Die Ergebnisse verwenden eine Limit- und Offset-Paginierung.
+
+### Abfrageparameter
+
+<ParamField query="accountSlug" param-type="string" required="true">Workspace, dessen Kampagnen abgerufen werden sollen.</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">Maximale Anzahl der Kampagnen in der Antwort.</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">Anzahl der Kampagnen, die vor dem ersten zurückgegebenen Ergebnis übersprungen werden.</ParamField>
+
+### Anfrage
+
+<Request tabs="cURL">
+
+```bash
+curl "https://api.talkturo.com/api/crm/campaigns?accountSlug=acme&limit=25&offset=0" \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
+```
+
+</Request>
+
+### Antwort
+
+<Response tabs="200">
+
+```json
+{
+  "campaigns": [
+    {
+      "id": "cmp_7f3a91c2",
+      "teamId": "team_sales",
+      "assistantId": "asst_42b7d9e1",
+      "name": "Q4 renewal outreach",
+      "status": "draft"
+    }
+  ],
+  "limit": 25,
+  "offset": 0
+}
+```
+
+</Response>
 
 ## Kampagne erstellen
 
-Erstellen Sie eine Kampagne mit einem Namen und optional mit einem zugewiesenen Assistenten oder einem Zeitplan.
+Mit `POST /api/crm/campaigns` erstellen Sie eine Kampagne für ein Team und weisen ihr einen Assistant zu.
 
-<Request tabs="cURL,JavaScript" default-tab="1">
+### Body-Parameter
+
+<ParamField body="teamId" param-type="string" required="true">ID des Teams, dem die Kampagne zugeordnet wird.</ParamField>
+
+<ParamField body="assistantId" param-type="string" required="true">ID des Assistants, der die Kontakte der Kampagne anruft.</ParamField>
+
+<ParamField body="fromNumberIds" param-type="string[]" required="true">IDs der Telefonnummern, die für ausgehende Anrufe verwendet werden.</ParamField>
+
+<ParamField body="name" param-type="string" required="true">Name der Kampagne.</ParamField>
+
+<ParamField body="callWindow" param-type="object" required="false">Zeitfenster, in dem die Kampagne ausgehende Anrufe ausführen darf.</ParamField>
+
+<ParamField body="enrollment" param-type="object" required="false">Einstellungen für die Einschreibung von Kontakten in die Kampagne.</ParamField>
+
+### Anfrage
+
+<Request tabs="cURL">
+
 ```bash
-curl -X POST "https://app.talkturo.com/api/crm/campaigns" \
+curl https://api.talkturo.com/api/crm/campaigns \
+  -X POST \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=example_session_token" \
   -d '{
-    "name": "Q3 Renewal Outreach",
-    "assistant_id": "asst_7f3d2c91",
-    "schedule": {
-      "timezone": "Europe/Berlin",
-      "days": ["monday", "tuesday", "wednesday"],
-      "start_time": "09:00",
-      "end_time": "17:00"
+    "accountSlug": "acme",
+    "teamId": "team_sales",
+    "assistantId": "asst_42b7d9e1",
+    "fromNumberIds": ["num_4155550128"],
+    "name": "Q4 renewal outreach",
+    "callWindow": {
+      "timezone": "America/Los_Angeles",
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "enrollment": {
+      "status": "active"
     }
   }'
 ```
 
-```javascript
-const response = await fetch("https://app.talkturo.com/api/crm/campaigns", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  credentials: "include",
-  body: JSON.stringify({
-    name: "Q3 Renewal Outreach",
-    assistant_id: "asst_7f3d2c91",
-    schedule: {
-      timezone: "Europe/Berlin",
-      days: ["monday", "tuesday", "wednesday"],
-      start_time: "09:00",
-      end_time: "17:00"
-    }
-  })
-});
-
-const campaign = await response.json();
-console.log(campaign);
-```
 </Request>
-
-<Response tabs="200">
-```json
-{
-  "id": "cmp_2d9a4c71",
-  "name": "Q3 Renewal Outreach",
-  "assistant_id": "asst_7f3d2c91",
-  "schedule": {
-    "timezone": "Europe/Berlin",
-    "days": ["monday", "tuesday", "wednesday"],
-    "start_time": "09:00",
-    "end_time": "17:00"
-  }
-}
-```
-</Response>
-
-### Request-Body
-
-<ParamField body="name" param-type="string" required="true">
-Name der Kampagne.
-</ParamField>
-
-<ParamField body="assistant_id" param-type="string" required="false">
-ID des Assistenten, der die ausgehenden Anrufe für diese Kampagne ausführen soll.
-</ParamField>
-
-<ParamField body="schedule" param-type="object" required="false">
-Optionaler Zeitplan für die Kampagne. Die genaue Objektstruktur ist implementierungsabhängig; übergeben Sie ein JSON-Objekt mit den gewünschten Planungswerten.
-</ParamField>
 
 ### Antwort
 
-<ResponseField name="id" field-type="string">
-Eindeutige ID der erstellten Kampagne.
-</ResponseField>
+<Response tabs="201">
 
-<ResponseField name="name" field-type="string">
-Name der Kampagne.
-</ResponseField>
+```json
+{
+  "id": "cmp_7f3a91c2",
+  "teamId": "team_sales",
+  "assistantId": "asst_42b7d9e1",
+  "name": "Q4 renewal outreach",
+  "status": "draft",
+  "fromNumberIds": ["num_4155550128"]
+}
+```
 
-<ResponseField name="assistant_id" field-type="string">
-ID des zugewiesenen Outbound-Assistenten, falls gesetzt.
-</ResponseField>
+</Response>
 
-<ResponseField name="schedule" field-type="object">
-Gespeicherte Planungseinstellungen der Kampagne, falls übermittelt.
-</ResponseField>
+### Kampagnenfelder
+
+<ResponseField name="id" field-type="string" required="true">Eindeutige ID der Kampagne.</ResponseField>
+
+<ResponseField name="teamId" field-type="string" required="true">ID des zugeordneten Teams.</ResponseField>
+
+<ResponseField name="assistantId" field-type="string" required="true">ID des Assistants, der für die Kampagne verwendet wird.</ResponseField>
+
+<ResponseField name="fromNumberIds" field-type="string[]" required="true">Telefonnummern, die für ausgehende Anrufe verwendet werden.</ResponseField>
+
+<ResponseField name="name" field-type="string" required="true">Anzeigename der Kampagne.</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">Aktueller Status der Kampagne.</ResponseField>
+
+<ResponseField name="callWindow" field-type="object" required="false">Konfiguration des zulässigen Anruffensters.</ResponseField>
+
+<ResponseField name="enrollment" field-type="object" required="false">Konfiguration für die Einschreibung von Kontakten.</ResponseField>
+
+## Einzelne Kampagne abrufen
+
+Mit `GET /api/crm/campaigns/[id]` rufen Sie eine Kampagne anhand ihrer ID ab.
+
+### Pfad-Parameter
+
+<ParamField path="id" param-type="string" required="true">Eindeutige ID der Kampagne.</ParamField>
+
+### Abfrageparameter
+
+<ParamField query="accountSlug" param-type="string" required="true">Workspace, zu dem die Kampagne gehört.</ParamField>
+
+```bash
+curl "https://api.talkturo.com/api/crm/campaigns/cmp_7f3a91c2?accountSlug=acme" \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
+```
+
+## Kampagne aktualisieren
+
+Mit `PUT /api/crm/campaigns/[id]` aktualisieren Sie die Einstellungen einer bestehenden Kampagne.
+
+<Callout kind="alert">
+
+Kampagnen können nur aktualisiert werden, wenn ihr aktueller Status Änderungen zulässt. Verwenden Sie `PUT` mit den Feldern, die Sie ändern möchten.
+
+</Callout>
+
+### Body-Parameter
+
+<ParamField body="teamId" param-type="string" required="false">Neue Team-ID der Kampagne.</ParamField>
+
+<ParamField body="assistantId" param-type="string" required="false">Neue Assistant-ID der Kampagne.</ParamField>
+
+<ParamField body="fromNumberIds" param-type="string[]" required="false">Neue Liste der Telefonnummern für ausgehende Anrufe.</ParamField>
+
+<ParamField body="name" param-type="string" required="false">Neuer Name der Kampagne.</ParamField>
+
+<ParamField body="callWindow" param-type="object" required="false">Neues Zeitfenster für ausgehende Anrufe.</ParamField>
+
+<ParamField body="enrollment" param-type="object" required="false">Neue Einschreibungseinstellungen.</ParamField>
+
+```bash
+curl https://api.talkturo.com/api/crm/campaigns/cmp_7f3a91c2 \
+  -X PUT \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme",
+    "name": "Q4 renewal outreach - priority",
+    "callWindow": {
+      "timezone": "America/Los_Angeles",
+      "start": "10:00",
+      "end": "16:00"
+    }
+  }'
+```
+
+## Kampagne löschen
+
+Mit `DELETE /api/crm/campaigns/[id]` löschen Sie eine Kampagne.
+
+Kampagnen können nur gelöscht werden, wenn sie den Status `draft` oder `cancelled` haben. Entfernen Sie Kontakte nicht einzeln, um eine aktive Kampagne zu stoppen. Verwenden Sie stattdessen den vorgesehenen Kampagnenstatus oder beenden Sie den laufenden Prozess.
+
+```bash
+curl "https://api.talkturo.com/api/crm/campaigns/cmp_7f3a91c2?accountSlug=acme" \
+  -X DELETE \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
+```
+
+## Kontakte verwalten
+
+Mit den Unterendpunkten `/api/crm/campaigns/[id]/contacts` können Sie die Kontakte einer Kampagne auflisten und neue Kontakte hinzufügen.
+
+### Kontakte auflisten
+
+`GET /api/crm/campaigns/[id]/contacts` gibt die Kontakte der Kampagne zurück.
+
+<ParamField path="id" param-type="string" required="true">Eindeutige ID der Kampagne.</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">Workspace, zu dem die Kampagne gehört.</ParamField>
+
+<ParamField query="limit" param-type="integer" required="false">Maximale Anzahl der Kontakte in der Antwort.</ParamField>
+
+<ParamField query="offset" param-type="integer" required="false">Anzahl der Kontakte, die vor dem ersten Ergebnis übersprungen werden.</ParamField>
+
+```bash
+curl "https://api.talkturo.com/api/crm/campaigns/cmp_7f3a91c2/contacts?accountSlug=acme&limit=50&offset=0" \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
+```
+
+### Kontakte hinzufügen
+
+Mit `POST /api/crm/campaigns/[id]/contacts` fügen Sie Kontakte anhand ihrer IDs, einzelner Kontaktdaten oder einer Audience hinzu.
+
+<ParamField body="contactIds" param-type="string[]" required="false">IDs der Kontakte, die eingeschrieben werden sollen.</ParamField>
+
+<ParamField body="contact" param-type="object" required="false">Ein einzelner Kontakt, der der Kampagne hinzugefügt werden soll.</ParamField>
+
+<ParamField body="audience" param-type="object" required="false">Audience, deren Kontakte der Kampagne hinzugefügt werden sollen.</ParamField>
+
+```bash
+curl https://api.talkturo.com/api/crm/campaigns/cmp_7f3a91c2/contacts \
+  -X POST \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme",
+    "contactIds": ["contact_8c2f6a10", "contact_19d4b7e2"]
+  }'
+```
+
+## Kampagnen-Dashboard abrufen
+
+Mit `GET /api/crm/campaigns/[id]/dashboard` rufen Sie die zusammengefassten Kampagnenkennzahlen ab.
+
+Die Antwort enthält Zählwerte, die aktuelle Anrufwarteschlange und die letzten Anrufe.
+
+<ParamField path="id" param-type="string" required="true">Eindeutige ID der Kampagne.</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">Workspace, zu dem die Kampagne gehört.</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="counts" field-type="object" required="true">Zusammengefasste Zählwerte der Kampagne.</ResponseField>
+
+<ResponseField name="queue" field-type="array" required="true">Kontakte, die für einen Anruf in der Warteschlange stehen.</ResponseField>
+
+<ResponseField name="recentCalls" field-type="array" required="true">Die letzten Anrufe der Kampagne.</ResponseField>
+
+```bash
+curl "https://api.talkturo.com/api/crm/campaigns/cmp_7f3a91c2/dashboard?accountSlug=acme" \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
+```
+
+## Kampagnenlauf starten
+
+Mit `POST /api/crm/campaigns/[id]/run` starten Sie einen Anruflauf für eine Kampagne.
+
+### Body-Parameter
+
+<ParamField body="maxCalls" param-type="integer" required="false">Maximale Anzahl der Anrufe, die in diesem Lauf ausgeführt werden.</ParamField>
+
+<ParamField body="dryRun" param-type="boolean" required="false">Wenn `true`, wird der Lauf simuliert, ohne tatsächliche Anrufe zu starten.</ParamField>
+
+<ParamField body="accountSlug" param-type="string" required="true">Workspace, zu dem die Kampagne gehört.</ParamField>
+
+```bash
+curl https://api.talkturo.com/api/crm/campaigns/cmp_7f3a91c2/run \
+  -X POST \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountSlug": "acme",
+    "maxCalls": 25,
+    "dryRun": true
+  }'
+```
 
 <Callout kind="tip">
 
-Wenn Sie eine Kampagne direkt nach der Erstellung ausführen möchten, weisen Sie zuerst einen passenden Outbound-Assistenten zu und fügen Sie anschließend Kontakte hinzu. Danach kann der Endpunkt zum Starten der Kampagne den Lauf anstoßen.
+Verwenden Sie zuerst `dryRun: true`, um die Auswahl und Anzahl der vorgesehenen Anrufe zu prüfen. Setzen Sie `dryRun` erst danach auf `false`, um den Lauf auszuführen.
 
 </Callout>
 
-## Kampagne starten oder stoppen
+## Einschreibung vorab prüfen
 
-Mit dem Run-Endpunkt steuern Sie den Laufstatus einer vorhandenen Kampagne. Senden Sie `start`, um die Kampagne zu starten, oder `stop`, um sie anzuhalten.
+Mit `POST /api/crm/campaigns/preview-enrollment` prüfen Sie, welche Kontakte für eine Einschreibung ausgewählt würden, bevor Sie sie einer Kampagne hinzufügen.
 
-<Request tabs="cURL,JavaScript" default-tab="1">
+### Body-Parameter
+
+<ParamField body="accountSlug" param-type="string" required="true">Workspace, in dem die Einschreibung geprüft werden soll.</ParamField>
+
+<ParamField body="campaignId" param-type="string" required="false">ID der Kampagne, für die die Einschreibung geprüft wird.</ParamField>
+
+<ParamField body="contactIds" param-type="string[]" required="false">Kontakte, deren Einschreibungsfähigkeit geprüft werden soll.</ParamField>
+
+<ParamField body="audience" param-type="object" required="false">Audience-Kriterien für die Vorschau der Einschreibung.</ParamField>
+
 ```bash
-curl -X POST "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/run" \
+curl https://api.talkturo.com/api/crm/campaigns/preview-enrollment \
+  -X POST \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r" \
   -H "Content-Type: application/json" \
-  -H "Cookie: sb-session=example_session_token" \
   -d '{
-    "action": "start"
+    "accountSlug": "acme",
+    "campaignId": "cmp_7f3a91c2",
+    "contactIds": ["contact_8c2f6a10", "contact_19d4b7e2"]
   }'
 ```
 
-```javascript
-const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/run", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  credentials: "include",
-  body: JSON.stringify({
-    action: "start"
-  })
-});
+## Outbound-Assistenten auflisten
 
-const result = await response.json();
-console.log(result);
-```
-</Request>
+Mit `GET /api/crm/outbound-assistants` rufen Sie die Assistants ab, die für ausgehende Kampagnen verwendet werden können.
 
-<Response tabs="200">
-```json
-{
-  "success": true,
-  "status": "running"
-}
-```
-</Response>
+<ParamField query="accountSlug" param-type="string" required="true">Workspace, dessen Outbound-Assistenten abgerufen werden sollen.</ParamField>
 
-### Pfadparameter
-
-<ParamField path="id" param-type="string" required="true">
-ID der Kampagne, die Sie starten oder stoppen möchten.
-</ParamField>
-
-### Request-Body
-
-<ParamField body="action" param-type="string" required="true" enum="start,stop">
-Legt fest, ob die Kampagne gestartet oder gestoppt wird.
-</ParamField>
-
-### Antwort
-
-<ResponseField name="success" field-type="boolean">
-Gibt an, ob die Aktion erfolgreich ausgeführt wurde.
-</ResponseField>
-
-<ResponseField name="status" field-type="string">
-Aktueller Status der Kampagne nach der Aktion.
-</ResponseField>
-
-## Echtzeit-Dashboard-Statistiken abrufen
-
-Das Kampagnen-Dashboard liefert einen kompakten Überblick über den aktuellen Fortschritt. Sie erhalten Zähler für alle Anrufe sowie für beantwortete, fehlgeschlagene und laufende Anrufe.
-
-<Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/dashboard" \
-  -H "Cookie: sb-session=example_session_token"
+curl "https://api.talkturo.com/api/crm/outbound-assistants?accountSlug=acme" \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
 ```
 
-```javascript
-const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/dashboard", {
-  credentials: "include"
-});
+## CRM-Anrufe abrufen
 
-const dashboard = await response.json();
-console.log(dashboard);
-```
-</Request>
+Mit `GET /api/crm/calls` rufen Sie die Anrufe ab, die mit CRM-Kampagnen verbunden sind.
 
-<Response tabs="200">
-```json
-{
-  "total_calls": 148,
-  "answered": 96,
-  "failed": 27,
-  "in_progress": 5
-}
-```
-</Response>
+<ParamField query="accountSlug" param-type="string" required="true">Workspace, dessen CRM-Anrufe abgerufen werden sollen.</ParamField>
 
-### Pfadparameter
+<ParamField query="campaignId" param-type="string" required="false">Filtert die Ergebnisse nach einer Kampagne.</ParamField>
 
-<ParamField path="id" param-type="string" required="true">
-ID der Kampagne, deren Dashboard-Daten Sie abrufen möchten.
-</ParamField>
+<ParamField query="limit" param-type="integer" required="false">Maximale Anzahl der zurückgegebenen Anrufe.</ParamField>
 
-### Antwort
+<ParamField query="offset" param-type="integer" required="false">Anzahl der Anrufe, die vor dem ersten Ergebnis übersprungen werden.</ParamField>
 
-<ResponseField name="total_calls" field-type="number">
-Gesamtzahl der zur Kampagne erfassten oder ausgeführten Anrufe.
-</ResponseField>
-
-<ResponseField name="answered" field-type="number">
-Anzahl beantworteter Anrufe.
-</ResponseField>
-
-<ResponseField name="failed" field-type="number">
-Anzahl fehlgeschlagener Anrufe.
-</ResponseField>
-
-<ResponseField name="in_progress" field-type="number">
-Anzahl aktuell laufender Anrufe.
-</ResponseField>
-
-## Kampagnenkontakte auflisten
-
-Rufen Sie die einer Kampagne zugeordneten Kontakte über den Kontakt-Endpunkt der Kampagne ab. Dieser Endpunkt unterstützt außerdem `POST`, um zusätzliche Kontakte zu einer vorhandenen Kampagne hinzuzufügen.
-
-<Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl "https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/contacts" \
-  -H "Cookie: sb-session=example_session_token"
+curl "https://api.talkturo.com/api/crm/calls?accountSlug=acme&campaignId=cmp_7f3a91c2&limit=25&offset=0" \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
 ```
 
-```javascript
-const response = await fetch("https://app.talkturo.com/api/crm/campaigns/cmp_2d9a4c71/contacts", {
-  credentials: "include"
-});
+## CRM-Intelligence abrufen
 
-const contacts = await response.json();
-console.log(contacts);
+Mit `GET /api/crm/intelligence` rufen Sie CRM-Intelligence-Daten für einen Workspace oder eine Kampagne ab.
+
+<ParamField query="accountSlug" param-type="string" required="true">Workspace, für den die Intelligence-Daten abgerufen werden sollen.</ParamField>
+
+<ParamField query="campaignId" param-type="string" required="false">Filtert die Intelligence-Daten nach einer Kampagne.</ParamField>
+
+```bash
+curl "https://api.talkturo.com/api/crm/intelligence?accountSlug=acme&campaignId=cmp_7f3a91c2" \
+  -H "Authorization: Bearer sk_live_example_9xmk7q2r"
 ```
-</Request>
 
-<Response tabs="200">
-```json
-[
-  {
-    "id": "cnt_5ce91a20",
-    "first_name": "Maya",
-    "last_name": "Schneider",
-    "phone": "+493012345678",
-    "email": "maya.schneider@northstar-industries.com"
-  },
-  {
-    "id": "cnt_88db41ef",
-    "first_name": "Jonas",
-    "last_name": "Weber",
-    "phone": "+498912345678",
-    "email": "jonas.weber@helios-logistik.de"
-  }
-]
-```
-</Response>
+## Typischer Workflow
 
-### Pfadparameter
+Der folgende Ablauf eignet sich für eine neue Kampagne:
 
-<ParamField path="id" param-type="string" required="true">
-ID der Kampagne, deren Kontakte Sie abrufen möchten.
-</ParamField>
+<Steps>
 
-### Antwortsfelder
+<Step title="Kampagne erstellen" icon="plus">
 
-<ResponseField name="id" field-type="string">
-Eindeutige ID des Kontakts.
-</ResponseField>
+Erstellen Sie eine Kampagne mit einem `teamId`, einem `assistantId`, mindestens einer Telefonnummer und einem Namen.
 
-<ResponseField name="first_name" field-type="string">
-Vorname des Kontakts.
-</ResponseField>
+</Step>
 
-<ResponseField name="last_name" field-type="string">
-Nachname des Kontakts.
-</ResponseField>
+<Step title="Einschreibung prüfen" icon="search">
 
-<ResponseField name="phone" field-type="string">
-Telefonnummer des Kontakts.
-</ResponseField>
+Rufen Sie `preview-enrollment` auf, um die vorgesehenen Kontakte und mögliche Ausschlüsse vor dem Hinzufügen zu prüfen.
 
-<ResponseField name="email" field-type="string">
-E-Mail-Adresse des Kontakts, falls vorhanden.
-</ResponseField>
+</Step>
 
-<Callout kind="info">
+<Step title="Kontakte hinzufügen" icon="users">
 
-Nutzen Sie `POST /api/crm/campaigns/[id]/contacts`, um Kontakte derselben Kampagne hinzuzufügen. Für die Verwaltung einzelner Kontakte selbst stehen die CRM-Kontakt-Endpunkte unter `/api/crm/contacts` bereit.
+Fügen Sie einzelne Kontakte, eine Liste von `contactIds` oder eine Audience hinzu.
 
-</Callout>
+</Step>
 
-## Verwandte Endpunkte
+<Step title="Dashboard prüfen" icon="bar-chart">
+
+Rufen Sie das Dashboard ab, um Zählwerte, Warteschlange und letzte Anrufe zu kontrollieren.
+
+</Step>
+
+<Step title="Lauf simulieren" icon="play-circle">
+
+Starten Sie einen Lauf mit `dryRun: true`, um die Auswahl ohne tatsächliche Anrufe zu validieren.
+
+</Step>
+
+<Step title="Lauf starten" icon="rocket">
+
+Starten Sie den produktiven Lauf mit `dryRun: false` und begrenzen Sie die Anzahl bei Bedarf mit `maxCalls`.
+
+</Step>
+
+</Steps>
+
+## Verwandte Ressourcen
 
 <Columns cols={2}>
-  <Card
-    title="CRM-Kontakte"
-    href="/de/api-reference/crm-contacts"
-    icon="users"
-    cta="Zur Referenz"
-  />
-  <Card
-    title="CRM-Benutzerdefinierte Felder"
-    href="/de/api-reference/crm-custom-fields"
-    icon="settings"
-    cta="Zur Referenz"
-  />
-  <Card
-    title="Outbound-Assistenten"
-    href="/de/api-reference/outbound-assistants"
-    icon="phone"
-    cta="Endpunkt ansehen"
-  />
-  <Card
-    title="Anrufprotokolle und KI-Einblicke"
-    href="/de/api-reference/crm-calls-and-intelligence"
-    icon="bar-chart"
-    cta="Mehr erfahren"
-  />
+
+<Card title="CRM-Gruppen" href="/de/api-reference/crm-groups" icon="users" cta="Referenz anzeigen">
+
+Gruppieren und verwalten Sie CRM-Kontakte für Ihre Workflows.
+
+</Card>
+
+<Card title="API-Authentifizierung" href="/de/api-reference/authentication" icon="lock" cta="Referenz anzeigen">
+
+Konfigurieren Sie die Authentifizierung für API-Anfragen.
+
+</Card>
+
 </Columns>
