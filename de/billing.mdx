@@ -38,7 +38,7 @@ Talkturo verwendet einen Basis-Wechselkurs von **1 USD = 2 Guthaben**. Dieser We
 
 <Callout kind="tip" collapsed="false">
 
-Weil Guthaben anteilige Beträge unterstützen, führen kurze Anrufe und Teilminuten nicht zu Überberechnung in deinem Workspace. Du zahlst für das tatsächliche Nutzungsmuster, nicht für ein aufgerundetes Paket.
+Weil Guthaben anteilige Beträge unterstützen, runden Speech-to-Text, LLM und Text-to-Speech nicht auf ganze Einheiten auf. Für die Telefonie-Minute gelten die Carrier-Regeln weiter unten.
 
 </Callout>
 
@@ -65,7 +65,22 @@ Die Kosten eines Anrufs hängen von den Komponenten ab, die dein Assistant verwe
 | LLM prompt tokens     | Pro 1.000 Tokens      | Wird für Modelleingaben berechnet                |
 | LLM completion tokens | Pro 1.000 Tokens      | Wird für Modellausgaben berechnet                |
 | Text-to-Speech        | Pro 1.000 Zeichen     | Wird für erzeugte Sprachausgabe berechnet        |
-| Telephony             | Pro Minute            | Wird für Telefonverbindung und Anrufdauer berechnet |
+| Telephony             | Pro Minute            | Wird für Telefonverbindung und Anrufdauer berechnet. Die genaue Minute hängt vom Carrier ab. |
+
+### Telefonie-Abrechnung nach Carrier
+
+Die Telefonie-Komponente folgt der Abrechnung des Telefonanbieters. Speech-to-Text, LLM und Text-to-Speech können weiterhin anteilig abgerechnet werden.
+
+| Carrier | Abrechnung | Verfügbarkeit |
+| ------- | ---------- | ------------- |
+| Carrier 1 und Carrier 2 | Jedes Gespräch unter 1 Minute rundet der Telefonanbieter auf 1 volle Minute auf und rechnet diese Dauer ab. | Verfügbar |
+| Carrier 3 | Sekundengenaue Abrechnung ohne Aufrundung auf volle Minuten. | Ab Q4 2026 |
+
+<Callout kind="info" collapsed="false">
+
+Ein Gespräch von 40 Sekunden über Carrier 1 oder Carrier 2 wird als 1 Minute Telefonie berechnet. Dieselbe Dauer über Carrier 3 wird sekundengenau berechnet, sobald der Carrier verfügbar ist.
+
+</Callout>
 
 ### Realtime-Modus
 

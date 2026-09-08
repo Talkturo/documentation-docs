@@ -36,7 +36,7 @@ Talkturo uses a base exchange rate of **$1 USD = 2 credits**. That exchange rate
 | `reset`          | Administrative credit balance reset or correction        |
 
 <Callout kind="tip" collapsed="false">
-  Because credits support fractional amounts, small calls and partial minutes do not overcharge your workspace. You pay for the underlying usage pattern, not a rounded bundle.
+  Because credits support fractional amounts, Speech-to-Text, LLM, and Text-to-Speech are not rounded up to whole units. Telephony minutes follow the carrier rules below.
 </Callout>
 
 ## Add credit top-ups
@@ -62,7 +62,20 @@ Call cost depends on the components your assistant uses. Standard voice pipeline
 | LLM prompt tokens     | Per 1,000 tokens     | Charged for model input                      |
 | LLM completion tokens | Per 1,000 tokens     | Charged for model output                     |
 | Text-to-Speech        | Per 1,000 characters | Charged for generated spoken output          |
-| Telephony             | Per minute           | Charged for phone connectivity and call time |
+| Telephony             | Per minute           | Charged for phone connectivity and call time. The billed minute depends on the carrier. |
+
+### Carrier telephony billing
+
+The telephony component follows the phone provider's billing increment. Speech-to-Text, LLM, and Text-to-Speech can still be charged fractionally.
+
+| Carrier | Billing | Availability |
+| ------- | ------- | ------------ |
+| Carrier 1 and Carrier 2 | The phone provider rounds every call shorter than 1 minute up to 1 full minute and bills that duration. | Available |
+| Carrier 3 | Per-second billing with no rounding to full minutes. | From Q4 2026 |
+
+<Callout kind="info" collapsed="false">
+  A 40-second call on Carrier 1 or Carrier 2 is billed as 1 telephony minute. The same duration on Carrier 3 is billed per second once that carrier is available.
+</Callout>
 
 ### Realtime mode
 
