@@ -1,0 +1,555 @@
+---
+title: Payment Links
+description: Create public payment links and preview-call sessions for Talkturo agents, with endpoint details, request examples, responses, limits, and errors.
+---
+
+## Create public payment and preview experiences
+
+Use the payment-link API to load an agent's public offer, create Stripe Checkout sessions, and start browser or outbound preview calls. These endpoints are unauthenticated and intended for public payment pages and preview-call flows.
+
+<Callout kind="info">
+
+Payment-link endpoints are public. They use CORS origin checking instead of authenticated API credentials. Send requests to `https://app.talkturo.com`.
+
+</Callout>
+
+<Callout kind="alert">
+
+Existing Talkturo users cannot purchase through public payment links. Send those users to the in-app billing system instead.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/pay/agent/{slug}` | Load payment-link details, credit packs, and preview availability | Public |
+| `POST` | `/api/pay/agent/checkout` | Create a Stripe Checkout session for a credit pack | Public |
+| `POST` | `/api/pay/agent/{slug}/preview-token` | Create a browser preview-call token | Public |
+| `POST` | `/api/pay/agent/{slug}/preview-outbound` | Start an outbound preview call | Public |
+
+## Get payment-link details
+
+`GET /api/pay/agent/{slug}` returns the public offer, available credit packs, and preview-call options for an agent payment link.
+
+### Request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://app.talkturo.com/api/pay/agent/northstar-sales"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/pay/agent/northstar-sales"
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "link": {
+    "slug": "northstar-sales",
+    "name": "Northstar Sales Agent",
+    "setup_fee_usd": 49,
+    "bonus_percent": 10,
+    "kind": "standard"
+  },
+  "packs": [
+    {
+      "name": "Starter pack",
+      "variant_id": "pack_8f3c2a1d",
+      "credits": 100,
+      "price_usd": 29,
+      "description": "100 minutes for initial customer calls"
+    },
+    {
+      "name": "Growth pack",
+      "variant_id": "pack_4b7e9c20",
+      "credits": 500,
+      "price_usd": 119,
+      "description": "500 minutes for active sales campaigns"
+    }
+  ],
+  "preview": {
+    "available": true,
+    "assistant_name": "Northstar Sales Agent",
+    "phone": "+14155550184"
+  },
+  "preview_assistants": [
+    {
+      "id": "3f9e6a12-4a54-4c7b-9c31-28ab4d8e1f60",
+      "name": "Northstar Sales Agent",
+      "phone": "+14155550184"
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": "link_not_found"
+}
+```
+
+</Response>
+
+The response uses `Cache-Control: no-store`, so payment pages should request current link and pack data instead of relying on a cached browser response.
+
+### Path parameters
+
+<ParamField path="slug" param-type="string" required="true">
+The public payment-link slug.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="link" field-type="object" required="true">
+The public payment-link configuration.
+</ResponseField>
+
+<ResponseField name="link.slug" field-type="string" required="true">
+The payment-link slug.
+</ResponseField>
+
+<ResponseField name="link.name" field-type="string" required="true">
+Display name for the agent or payment link.
+</ResponseField>
+
+<ResponseField name="link.setup_fee_usd" field-type="number" required="true">
+One-time setup fee in US dollars.
+</ResponseField>
+
+<ResponseField name="link.bonus_percent" field-type="number" required="true">
+Bonus percentage applied to the link's offer.
+</ResponseField>
+
+<ResponseField name="link.kind" field-type="string" required="true">
+Payment-link type. AI employee links require a draft token during checkout.
+</ResponseField>
+
+<ResponseField name="packs" field-type="array" required="true">
+Credit packs available for purchase through the link.
+</ResponseField>
+
+<ResponseField name="packs[].name" field-type="string" required="true">
+Display name for the credit pack.
+</ResponseField>
+
+<ResponseField name="packs[].variant_id" field-type="string" required="true">
+Identifier to send as `variantId` when creating checkout.
+</ResponseField>
+
+<ResponseField name="packs[].credits" field-type="number" required="true">
+Number of credits included in the pack.
+</ResponseField>
+
+<ResponseField name="packs[].price_usd" field-type="number" required="true">
+Pack price in US dollars.
+</ResponseField>
+
+<ResponseField name="packs[].description" field-type="string" required="true">
+Description displayed with the pack.
+</ResponseField>
+
+<ResponseField name="preview" field-type="object" required="true">
+Summary of the default preview-call option.
+</ResponseField>
+
+<ResponseField name="preview.available" field-type="boolean" required="true">
+Whether a preview call is available.
+</ResponseField>
+
+<ResponseField name="preview.assistant_name" field-type="string" required="false">
+Name of the default preview assistant.
+</ResponseField>
+
+<ResponseField name="preview.phone" field-type="string" required="false">
+Phone number associated with the default preview assistant.
+</ResponseField>
+
+<ResponseField name="preview_assistants" field-type="array" required="true">
+Assistants available for preview calls.
+</ResponseField>
+
+<ResponseField name="preview_assistants[].id" field-type="string" required="true">
+UUID of an available preview assistant.
+</ResponseField>
+
+<ResponseField name="preview_assistants[].name" field-type="string" required="true">
+Display name of the preview assistant.
+</ResponseField>
+
+<ResponseField name="preview_assistants[].phone" field-type="string" required="true">
+Phone number associated with the preview assistant.
+</ResponseField>
+
+## Create a checkout session
+
+`POST /api/pay/agent/checkout` creates a Stripe Checkout session for a pack listed by the payment-link details endpoint.
+
+### Request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/pay/agent/checkout" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "slug": "northstar-sales",
+    "variantId": "pack_8f3c2a1d",
+    "email": "maya.chen@northstar.io"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/pay/agent/checkout",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      slug: "northstar-sales",
+      variantId: "pack_8f3c2a1d",
+      email: "maya.chen@northstar.io"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,400,404,409" default-tab="1">
+
+```json
+{
+  "url": "https://checkout.stripe.com/c/pay/cs_live_a1b2c3d4e5f6"
+}
+```
+
+```json
+{
+  "error": "invalid_body"
+}
+```
+
+```json
+{
+  "error": "pack_not_found"
+}
+```
+
+```json
+{
+  "error": "email_exists"
+}
+```
+
+</Response>
+
+Open the returned `url` in the customer's browser. The URL is `null` when the checkout session does not produce a Stripe Checkout URL.
+
+<Callout kind="alert">
+
+Talkturo blocks existing users from buying through public payment links. If the API returns `email_exists`, direct the customer to in-app billing.
+
+</Callout>
+
+### Body parameters
+
+<ParamField body="slug" param-type="string" required="true">
+Public payment-link slug returned by the agent details endpoint.
+</ParamField>
+
+<ParamField body="variantId" param-type="string" required="true">
+Credit-pack variant identifier from `packs[].variant_id`.
+</ParamField>
+
+<ParamField body="email" param-type="string" required="true">
+Customer email address. The value must be a valid email address and must not belong to an existing Talkturo user.
+</ParamField>
+
+<ParamField body="draftToken" param-type="string" required="false">
+Draft token for an AI employee payment link. Required when the link's `kind` is an AI employee link.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="url" field-type="string or null" required="true">
+Stripe Checkout URL. Redirect the customer to this URL to complete payment.
+</ResponseField>
+
+### Checkout errors
+
+- `400 invalid_body`: The request body is missing required fields or contains an invalid email.
+- `400 draft_required`: The payment link requires a draft token.
+- `400 draft_invalid`: The supplied draft token is invalid.
+- `400 invalid_pack_price`: The selected pack has an invalid price.
+- `404 link_not_found`: No payment link matches `slug`.
+- `404 pack_not_found`: No pack matches `variantId` for the payment link.
+- `409 email_exists`: The email belongs to an existing Talkturo user.
+
+## Create a browser preview token
+
+`POST /api/pay/agent/{slug}/preview-token` creates the short-lived connection details required to start a browser preview call.
+
+### Request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/pay/agent/northstar-sales/preview-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "visitor_name": "Maya Chen",
+    "assistant_id": "3f9e6a12-4a54-4c7b-9c31-28ab4d8e1f60"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/pay/agent/northstar-sales/preview-token",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      visitor_name: "Maya Chen",
+      assistant_id: "3f9e6a12-4a54-4c7b-9c31-28ab4d8e1f60"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "token": "rtc_token_example_7f4a91c2",
+  "wsUrl": "wss://realtime.talkturo.com/preview",
+  "roomName": "preview_northstar_sales_8c42",
+  "identity": "visitor_4d91",
+  "agentName": "Northstar Sales Agent",
+  "max_duration_seconds": 300
+}
+```
+
+```json
+{
+  "error": "preview_unavailable"
+}
+```
+
+</Response>
+
+Use the returned token, WebSocket URL, room name, and identity to connect the browser preview client. Standard links allow a maximum duration of 300 seconds. AI employee drafts allow a maximum duration of 180 seconds.
+
+### Path parameters
+
+<ParamField path="slug" param-type="string" required="true">
+Public payment-link slug.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="visitor_name" param-type="string" required="false">
+Name to associate with the preview visitor.
+</ParamField>
+
+<ParamField body="assistant_id" param-type="string" required="false">
+UUID of the preview assistant to use.
+</ParamField>
+
+<ParamField body="draft_token" param-type="string" required="false">
+Draft token for an AI employee preview.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="token" field-type="string" required="true">
+Token used to authenticate the browser preview connection.
+</ResponseField>
+
+<ResponseField name="wsUrl" field-type="string" required="true">
+WebSocket URL for the preview connection.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+Room identifier for the preview call.
+</ResponseField>
+
+<ResponseField name="identity" field-type="string" required="true">
+Visitor identity assigned to the preview connection.
+</ResponseField>
+
+<ResponseField name="agentName" field-type="string" required="true">
+Display name of the agent handling the preview.
+</ResponseField>
+
+<ResponseField name="max_duration_seconds" field-type="number" required="true">
+Maximum preview duration in seconds. Standard links return `300`; AI employee drafts return `180`.
+</ResponseField>
+
+<Callout kind="info">
+
+Preview-token requests are limited to 30 per hour and 100 per day per IP address. A `404` response indicates that no preview is available or that the AI employee draft is exhausted.
+
+</Callout>
+
+## Start an outbound preview call
+
+`POST /api/pay/agent/{slug}/preview-outbound` starts a preview call to a customer's phone number.
+
+### Request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/pay/agent/northstar-sales/preview-outbound" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to_number": "+14155550184",
+    "consent_given": true,
+    "visitor_name": "Maya Chen",
+    "visitor_email": "maya.chen@northstar.io",
+    "assistant_id": "3f9e6a12-4a54-4c7b-9c31-28ab4d8e1f60"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/pay/agent/northstar-sales/preview-outbound",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      to_number: "+14155550184",
+      consent_given: true,
+      visitor_name: "Maya Chen",
+      visitor_email: "maya.chen@northstar.io",
+      assistant_id: "3f9e6a12-4a54-4c7b-9c31-28ab4d8e1f60"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "success": true,
+  "roomName": "outbound_northstar_sales_5a72",
+  "sipCallId": "CA7f4a91c2d8e6b3f0a1c5d9e4b7f2a6c",
+  "max_duration_seconds": 300,
+  "to_number": "+14155550184"
+}
+```
+
+```json
+{
+  "error": "consent_required"
+}
+```
+
+</Response>
+
+The call can last up to 300 seconds. The destination number must use E.164 format, and country restrictions may apply.
+
+### Path parameters
+
+<ParamField path="slug" param-type="string" required="true">
+Public payment-link slug.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="to_number" param-type="string" required="true">
+Destination phone number in E.164 format, such as `+14155550184`.
+</ParamField>
+
+<ParamField body="consent_given" param-type="boolean" required="true">
+Must be `true` before Talkturo starts the outbound preview call.
+</ParamField>
+
+<ParamField body="visitor_name" param-type="string" required="false">
+Name to associate with the preview caller.
+</ParamField>
+
+<ParamField body="visitor_email" param-type="string" required="false">
+Email address to associate with the preview caller.
+</ParamField>
+
+<ParamField body="assistant_id" param-type="string" required="false">
+UUID of the assistant that should handle the outbound preview.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the outbound preview call was started.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+Room identifier for the outbound call.
+</ResponseField>
+
+<ResponseField name="sipCallId" field-type="string" required="true">
+Identifier for the SIP call.
+</ResponseField>
+
+<ResponseField name="max_duration_seconds" field-type="number" required="true">
+Maximum call duration in seconds. The outbound preview limit is `300`.
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string" required="true">
+Normalized destination phone number.
+</ResponseField>
+
+<Callout kind="info">
+
+Outbound preview requests are limited to 10 per hour and 30 per day per IP address, with an additional limit of 3 calls per phone number in a 6-hour period. A country allowlist may also restrict the destination.
+
+</Callout>
+
+### Outbound preview validation
+
+The endpoint rejects requests when:
+
+- `to_number` is missing or is not in E.164 format.
+- `consent_given` is missing or is not `true`.
+- The selected country is not allowed.
+- The caller exceeds an IP or phone-number rate limit.
+- The payment link or selected assistant is unavailable.

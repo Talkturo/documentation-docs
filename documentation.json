@@ -325,6 +325,21 @@
                     "title": "Verifications",
                     "path": "en/api-reference/verifications",
                     "icon": "badge-check"
+                  },
+                  {
+                    "title": "Public API",
+                    "path": "en/api-reference/public",
+                    "icon": "globe"
+                  },
+                  {
+                    "title": "Payment Links",
+                    "path": "en/api-reference/payment-links",
+                    "icon": "link"
+                  },
+                  {
+                    "title": "Close AI",
+                    "path": "en/api-reference/close-ai",
+                    "icon": "brain"
                   }
                 ]
               },
@@ -740,6 +755,21 @@
                     "title": "Verifizierungen",
                     "path": "de/api-reference/verifications",
                     "icon": "badge-check"
+                  },
+                  {
+                    "title": "Öffentliche API",
+                    "path": "de/api-reference/public",
+                    "icon": "globe"
+                  },
+                  {
+                    "title": "Zahlungs-Links",
+                    "path": "de/api-reference/payment-links",
+                    "icon": "link"
+                  },
+                  {
+                    "title": "Close AI",
+                    "path": "de/api-reference/close-ai",
+                    "icon": "brain"
                   }
                 ]
               },

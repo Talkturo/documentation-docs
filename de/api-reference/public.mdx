@@ -1,0 +1,507 @@
+---
+title: Öffentliche API
+description: Erstellen Sie öffentliche Talkturo-Anruf-Erlebnisse mit KI-Mitarbeiter-Demos, ausgehenden Anrufen, eingebetteten Formularen und browser-bereiten Anruftokens.
+---
+
+## Endpunktübersicht
+
+Die öffentliche API ermöglicht öffentliche Anruf-Erlebnisse mit KI-Mitarbeitern, Demo-Assistenten, ausgehenden Anrufen und eingebetteten Formularen.
+
+| Methode | Pfad | Zweck | Authentifizierung |
+| --- | --- | --- | --- |
+| `POST` | `/api/public/ai-employee/create` | KI-Mitarbeiter-Entwurf erstellen | API-Key |
+| `POST` | `/api/public/ai-employee/upload` | Referenzdokument hochladen | API-Key |
+| `POST` | `/api/public/ai-employee/call-token` | KI-Mitarbeiter-Anruftoken erstellen | API-Key |
+| `GET` | `/api/public/ai-employee/use-cases` | KI-Mitarbeiter-Anwendungsfälle auflisten | Öffentlich |
+| `GET` | `/api/public/demo-assistants` | Demo-Assistenten auflisten | Öffentlich |
+| `POST` | `/api/public/test-call/token` | Demo-Anruftoken erstellen | Öffentlich |
+| `POST` | `/api/public/test-call/outbound` | Ausgehenden Demo-Anruf starten | API-Key |
+| `POST` | `/api/public/form-call/outbound` | Ausgehenden Formular-Anruf starten | Öffentlich |
+
+## Authentifizierung
+
+Geschützte Endpunkte erwarten einen API-Key im `Authorization`-Header. Öffentliche Endpunkte benötigen keinen API-Key, können aber zusätzliche Angaben im Request-Body verlangen, um einen Assistenten oder eine Demo zu bestimmen.
+
+```http
+Authorization: Bearer tk_live_example_9xmk7q2r
+```
+
+<Callout kind="info">
+
+Verwenden Sie browser-bereite Anruftokens für clientseitige Anruferlebnisse. Geben Sie Ihren API-Key nicht an Browser-Clients weiter.
+
+</Callout>
+
+## KI-Mitarbeiter-Erstellung
+
+Mit der KI-Mitarbeiter-Erstellung erstellen Sie einen Entwurf, laden ein Referenzdokument hoch und erzeugen anschließend ein Anruftoken für den Browser.
+
+### KI-Mitarbeiter-Entwurf erstellen
+
+```http
+POST /api/public/ai-employee/create
+Authorization: Bearer tk_live_example_9xmk7q2r
+Content-Type: application/json
+
+{
+  "name": "Mia",
+  "instructions": "Qualify inbound leads and schedule qualified appointments.",
+  "language": "en"
+}
+```
+
+#### Body-Parameter
+
+<ParamField body="name" param-type="string" required="true">
+
+Anzeigename des KI-Mitarbeiters.
+
+</ParamField>
+
+<ParamField body="instructions" param-type="string" required="true">
+
+Anweisungen für das Verhalten und die Aufgaben des KI-Mitarbeiters.
+
+</ParamField>
+
+<ParamField body="language" param-type="string" required="false">
+
+Sprache, in der der KI-Mitarbeiter kommuniziert.
+
+</ParamField>
+
+#### Antwort
+
+```json
+{
+  "id": "a1b2c3d4-e5f6-47a8-9012-345678901234",
+  "name": "Mia",
+  "status": "draft"
+}
+```
+
+<ResponseField name="id" field-type="string">
+
+Eindeutige ID des KI-Mitarbeiters.
+
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+
+Anzeigename des KI-Mitarbeiters.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+
+Aktueller Status des KI-Mitarbeiter-Entwurfs.
+
+</ResponseField>
+
+### Referenzdokument hochladen
+
+```http
+POST /api/public/ai-employee/upload
+Authorization: Bearer tk_live_example_9xmk7q2r
+Content-Type: multipart/form-data
+
+{
+  "ai_employee_id": "a1b2c3d4-e5f6-47a8-9012-345678901234",
+  "file": "company-handbook.pdf"
+}
+```
+
+#### Body-Parameter
+
+<ParamField body="ai_employee_id" param-type="string" required="true">
+
+ID des KI-Mitarbeiters, dem das Referenzdokument zugeordnet wird.
+
+</ParamField>
+
+<ParamField body="file" param-type="file" required="true">
+
+Referenzdokument, das der KI-Mitarbeiter für seine Antworten verwenden soll.
+
+</ParamField>
+
+### KI-Mitarbeiter-Anruftoken erstellen
+
+```http
+POST /api/public/ai-employee/call-token
+Authorization: Bearer tk_live_example_9xmk7q2r
+Content-Type: application/json
+
+{
+  "ai_employee_id": "a1b2c3d4-e5f6-47a8-9012-345678901234",
+  "expires_in": 900
+}
+```
+
+#### Body-Parameter
+
+<ParamField body="ai_employee_id" param-type="string" required="true">
+
+ID des KI-Mitarbeiters, für den das Anruftoken erstellt wird.
+
+</ParamField>
+
+<ParamField body="expires_in" param-type="integer" required="false">
+
+Gültigkeitsdauer des Tokens in Sekunden.
+
+</ParamField>
+
+#### Antwort
+
+```json
+{
+  "token": "call_example_7f3k9m2q",
+  "expires_at": "2025-01-15T10:15:00.000Z"
+}
+```
+
+<ResponseField name="token" field-type="string">
+
+Browser-bereites Token für den Anruf.
+
+</ResponseField>
+
+<ResponseField name="expires_at" field-type="string">
+
+Zeitpunkt, an dem das Token abläuft.
+
+</ResponseField>
+
+## Demo-Assistenten
+
+Demo-Assistenten ermöglichen öffentliche Anruf-Erlebnisse, ohne einen eigenen KI-Mitarbeiter einzurichten.
+
+### KI-Mitarbeiter-Anwendungsfälle auflisten
+
+```http
+GET /api/public/ai-employee/use-cases
+```
+
+#### Abfrageparameter
+
+<ParamField query="language" param-type="string" required="false">
+
+Filtert die Anwendungsfälle nach Sprache.
+
+</ParamField>
+
+#### Antwort
+
+```json
+{
+  "use_cases": [
+    {
+      "id": "lead-qualification",
+      "name": "Lead qualification",
+      "description": "Qualify leads and schedule meetings."
+    }
+  ]
+}
+```
+
+<ResponseField name="use_cases" field-type="array">
+
+Liste der verfügbaren KI-Mitarbeiter-Anwendungsfälle.
+
+</ResponseField>
+
+### Demo-Assistenten auflisten
+
+```http
+GET /api/public/demo-assistants
+```
+
+#### Abfrageparameter
+
+<ParamField query="use_case" param-type="string" required="false">
+
+Filtert Demo-Assistenten nach einem Anwendungsfall.
+
+</ParamField>
+
+<ParamField query="language" param-type="string" required="false">
+
+Filtert Demo-Assistenten nach Sprache.
+
+</ParamField>
+
+#### Antwort
+
+```json
+{
+  "assistants": [
+    {
+      "id": "demo_sales_01",
+      "name": "Sales qualification",
+      "description": "Qualify a prospect and identify the next step.",
+      "language": "en"
+    }
+  ]
+}
+```
+
+<ResponseField name="assistants" field-type="array">
+
+Liste der verfügbaren Demo-Assistenten.
+
+</ResponseField>
+
+<ResponseField name="assistants[].id" field-type="string">
+
+Eindeutige ID des Demo-Assistenten.
+
+</ResponseField>
+
+<ResponseField name="assistants[].name" field-type="string">
+
+Anzeigename des Demo-Assistenten.
+
+</ResponseField>
+
+<ResponseField name="assistants[].description" field-type="string">
+
+Beschreibung des Demo-Assistenten.
+
+</ResponseField>
+
+<ResponseField name="assistants[].language" field-type="string">
+
+Sprache des Demo-Assistenten.
+
+</ResponseField>
+
+## Demo-Anrufe
+
+### Demo-Anruftoken erstellen
+
+```http
+POST /api/public/test-call/token
+Content-Type: application/json
+
+{
+  "assistant_id": "demo_sales_01",
+  "expires_in": 900
+}
+```
+
+#### Body-Parameter
+
+<ParamField body="assistant_id" param-type="string" required="true">
+
+ID des Demo-Assistenten, für den das Token erstellt wird.
+
+</ParamField>
+
+<ParamField body="expires_in" param-type="integer" required="false">
+
+Gültigkeitsdauer des Tokens in Sekunden.
+
+</ParamField>
+
+#### Antwort
+
+```json
+{
+  "token": "call_example_7f3k9m2q",
+  "assistant_id": "demo_sales_01",
+  "expires_at": "2025-01-15T10:15:00.000Z"
+}
+```
+
+<ResponseField name="token" field-type="string">
+
+Browser-bereites Token für den Demo-Anruf.
+
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string">
+
+ID des verwendeten Demo-Assistenten.
+
+</ResponseField>
+
+<ResponseField name="expires_at" field-type="string">
+
+Zeitpunkt, an dem das Token abläuft.
+
+</ResponseField>
+
+### Ausgehenden Demo-Anruf starten
+
+```http
+POST /api/public/test-call/outbound
+Authorization: Bearer tk_live_example_9xmk7q2r
+Content-Type: application/json
+
+{
+  "assistant_id": "demo_sales_01",
+  "phone_number": "+493012345678",
+  "recipient_name": "Anna Weber"
+}
+```
+
+#### Body-Parameter
+
+<ParamField body="assistant_id" param-type="string" required="true">
+
+ID des Demo-Assistenten, der den Anruf führt.
+
+</ParamField>
+
+<ParamField body="phone_number" param-type="string" required="true">
+
+Telefonnummer des Empfängers im internationalen Format.
+
+</ParamField>
+
+<ParamField body="recipient_name" param-type="string" required="false">
+
+Name des Anrufempfängers.
+
+</ParamField>
+
+#### Antwort
+
+```json
+{
+  "call_id": "call_a1b2c3d4",
+  "status": "queued"
+}
+```
+
+<ResponseField name="call_id" field-type="string">
+
+Eindeutige ID des ausgehenden Anrufs.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+
+Aktueller Status des Anrufs.
+
+</ResponseField>
+
+## Eingebettete Formular-Anrufe
+
+Mit eingebetteten Formular-Anrufen verbinden Sie ein öffentliches Formular mit einem ausgehenden Anruf.
+
+### Ausgehenden Formular-Anruf starten
+
+```http
+POST /api/public/form-call/outbound
+Content-Type: application/json
+
+{
+  "assistant_id": "demo_sales_01",
+  "phone_number": "+493012345678",
+  "form_data": {
+    "name": "Anna Weber",
+    "company": "Nordstern GmbH",
+    "interest": "Produktdemo"
+  }
+}
+```
+
+#### Body-Parameter
+
+<ParamField body="assistant_id" param-type="string" required="true">
+
+ID des Assistenten, der den Formular-Anruf führt.
+
+</ParamField>
+
+<ParamField body="phone_number" param-type="string" required="true">
+
+Telefonnummer für den ausgehenden Anruf im internationalen Format.
+
+</ParamField>
+
+<ParamField body="form_data" param-type="object" required="true">
+
+Formulardaten, die dem Assistenten als Kontext für den Anruf zur Verfügung stehen.
+
+</ParamField>
+
+<ParamField body="form_data.name" param-type="string" required="false">
+
+Name der Person, die das Formular ausgefüllt hat.
+
+</ParamField>
+
+<ParamField body="form_data.company" param-type="string" required="false">
+
+Unternehmen der Person, die das Formular ausgefüllt hat.
+
+</ParamField>
+
+<ParamField body="form_data.interest" param-type="string" required="false">
+
+Anliegen oder Produktinteresse der Person.
+
+</ParamField>
+
+#### Antwort
+
+```json
+{
+  "call_id": "call_a1b2c3d4",
+  "status": "queued"
+}
+```
+
+<ResponseField name="call_id" field-type="string">
+
+Eindeutige ID des ausgehenden Formular-Anrufs.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+
+Aktueller Status des Anrufs.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+Validieren Sie Telefonnummern und Formulardaten serverseitig, bevor Sie einen ausgehenden Anruf starten. Stellen Sie sicher, dass Sie die erforderliche Einwilligung für den Anruf besitzen.
+
+</Callout>
+
+## Fehlerantworten
+
+Die API verwendet JSON-Fehlerantworten. Der HTTP-Statuscode zeigt die Fehlerklasse an.
+
+```json
+{
+  "error": "invalid_request",
+  "message": "The request body is invalid."
+}
+```
+
+<ResponseField name="error" field-type="string">
+
+Maschinenlesbarer Fehlercode.
+
+</ResponseField>
+
+<ResponseField name="message" field-type="string">
+
+Beschreibung des Fehlers.
+
+</ResponseField>
+
+| Statuscode | Bedeutung |
+| --- | --- |
+| `400` | Der Request enthält ungültige oder fehlende Parameter. |
+| `401` | Die Authentifizierung fehlt oder ist ungültig. |
+| `403` | Der authentifizierte Aufrufer ist für die angeforderte Ressource nicht berechtigt. |
+| `404` | Die angeforderte Ressource wurde nicht gefunden. |
+| `409` | Der Request steht im Konflikt mit dem aktuellen Ressourcenstatus. |
+| `429` | Das Rate Limit wurde überschritten. |
+| `500` | Ein unerwarteter Fehler ist aufgetreten. |

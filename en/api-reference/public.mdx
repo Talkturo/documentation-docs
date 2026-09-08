@@ -1,0 +1,819 @@
+---
+title: Public API
+description: Build public Talkturo calling experiences with AI employee demos, outbound calls, embedded forms, and browser-ready call tokens.
+---
+
+## Build public calling experiences
+
+Use Talkturo's public endpoints to create AI employee drafts, upload business documents, start browser-based demo calls, and place consented outbound calls from websites and embedded forms.
+
+All endpoints use `https://app.talkturo.com` and do not require a session, JWT, or API key. Talkturo validates the request `Origin` header with CORS rules. Some endpoints also require a Turnstile CAPTCHA token.
+
+<Callout kind="alert">
+
+Every public endpoint requires a valid CORS origin. Requests from unapproved origins fail even when the request body and CAPTCHA token are valid. Endpoints that require CAPTCHA must receive a valid `turnstile_token`.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Path | Purpose | Authentication |
+| --- | --- | --- | --- |
+| `POST` | `/api/public/ai-employee/create` | Create an AI employee draft from business details | Turnstile CAPTCHA |
+| `POST` | `/api/public/ai-employee/upload` | Add a reference document to an AI employee draft | `draft_token` |
+| `POST` | `/api/public/ai-employee/call-token` | Create a browser call token for an AI employee draft | `draft_token` |
+| `GET` | `/api/public/ai-employee/use-cases` | List available AI employee use cases | None |
+| `GET` | `/api/public/demo-assistants` | List assistants available for public demos | None |
+| `POST` | `/api/public/test-call/token` | Create a browser call token for a demo assistant | Turnstile CAPTCHA |
+| `POST` | `/api/public/test-call/outbound` | Start a consented outbound demo call | Turnstile CAPTCHA |
+| `POST` | `/api/public/form-call/outbound` | Start an outbound call from an embedded form | None |
+
+<Callout kind="info">
+
+The `draft_token` returned by the AI employee creation endpoint authorizes the upload and call-token endpoints for that draft. Treat it as a short-lived public demo credential and do not expose it in server logs.
+
+</Callout>
+
+## AI employee creation
+
+### Create an AI employee draft
+
+Create a draft AI employee from a website URL, business description, or both. The endpoint generates the draft identity and returns a `draft_token` for subsequent upload and browser-call requests.
+
+The endpoint accepts unauthenticated requests, but requires a valid Turnstile token and applies per-IP and global rate limits:
+
+- 10 requests per hour per IP
+- 30 requests per day per IP
+- 200 requests per day globally
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/public/ai-employee/create" \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://www.acme-demo-site.com" \
+  -d '{
+    "website_url": "https://www.acmeexample.com",
+    "business_description": "Acme Example provides managed IT support for growing professional services firms.",
+    "company_name": "Acme Example",
+    "language": "en",
+    "use_case": "lead_qualification",
+    "first_name": "Jordan",
+    "last_name": "Lee",
+    "turnstile_token": "turnstile_example_token_7f3a91",
+    "fbc": "fb.1.1712345678901.AbCdEfGh",
+    "fbp": "fb.1.1712345678901.123456789",
+    "fbclid": "IwAR_example_click_id"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/public/ai-employee/create", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Origin": "https://www.acme-demo-site.com"
+  },
+  body: JSON.stringify({
+    website_url: "https://www.acmeexample.com",
+    business_description: "Acme Example provides managed IT support for growing professional services firms.",
+    company_name: "Acme Example",
+    language: "en",
+    use_case: "lead_qualification",
+    first_name: "Jordan",
+    last_name: "Lee",
+    turnstile_token: "turnstile_example_token_7f3a91",
+    fbc: "fb.1.1712345678901.AbCdEfGh",
+    fbp: "fb.1.1712345678901.123456789",
+    fbclid: "IwAR_example_click_id"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "draft_token": "draft_example_8f4c2a91b7d6",
+  "assistant_name": "Jordan",
+  "company_name": "Acme Example",
+  "business_summary": "Managed IT support for growing professional services firms.",
+  "first_message": "Hi, I am Jordan from Acme Example. How can I help?",
+  "source": "website",
+  "language": "en",
+  "voice_name": "alloy"
+}
+```
+
+```json
+{
+  "error": "Turnstile verification failed"
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="website_url" param-type="string" required="false">
+Website URL used to derive business context. The field is conditionally required when `business_description` is not provided.
+</ParamField>
+
+<ParamField body="business_description" param-type="string" required="false">
+Description of the business and the information the AI employee should use. The field is conditionally required when `website_url` is not provided.
+</ParamField>
+
+<ParamField body="company_name" param-type="string" required="false">
+Company name shown in the generated draft.
+</ParamField>
+
+<ParamField body="language" param-type="string" enum="de,en" required="false">
+Language for the generated AI employee. Defaults to `de`.
+</ParamField>
+
+<ParamField body="use_case" param-type="string" required="false">
+Use case selected for the AI employee.
+</ParamField>
+
+<ParamField body="first_name" param-type="string" required="false">
+First name used for the generated AI employee.
+</ParamField>
+
+<ParamField body="last_name" param-type="string" required="false">
+Last name associated with the draft request.
+</ParamField>
+
+<ParamField body="turnstile_token" param-type="string" required="true">
+Cloudflare Turnstile token for CAPTCHA verification.
+</ParamField>
+
+<ParamField body="fbc" param-type="string" required="false">
+Optional Facebook click identifier.
+</ParamField>
+
+<ParamField body="fbp" param-type="string" required="false">
+Optional Facebook browser identifier.
+</ParamField>
+
+<ParamField body="fbclid" param-type="string" required="false">
+Optional Facebook click identifier from the landing-page URL.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="draft_token" field-type="string" required="true">
+Token used to authorize uploads and call-token requests for this draft.
+</ResponseField>
+
+<ResponseField name="assistant_name" field-type="string" required="true">
+Name generated for the AI employee.
+</ResponseField>
+
+<ResponseField name="company_name" field-type="string" required="true">
+Company name used by the generated draft.
+</ResponseField>
+
+<ResponseField name="business_summary" field-type="string" required="true">
+Generated summary of the business.
+</ResponseField>
+
+<ResponseField name="first_message" field-type="string" required="true">
+Opening message the AI employee uses when the call starts.
+</ResponseField>
+
+<ResponseField name="source" field-type="string" required="true">
+Source used to create the draft, such as website content or a supplied description.
+</ResponseField>
+
+<ResponseField name="language" field-type="string" required="true">
+Language selected for the draft.
+</ResponseField>
+
+<ResponseField name="voice_name" field-type="string" required="true">
+Voice assigned to the AI employee.
+</ResponseField>
+
+### Upload a reference document
+
+Attach a business document to an existing AI employee draft. Use `multipart/form-data` with the `draft_token` and a supported file.
+
+The endpoint accepts PDF, DOC, DOCX, TXT, and MD files up to 10 MB. It allows 20 requests per hour per IP.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/public/ai-employee/upload" \
+  -H "Origin: https://www.acme-demo-site.com" \
+  -F "draft_token=draft_example_8f4c2a91b7d6" \
+  -F "file=@acme-services.txt"
+```
+
+```javascript
+const documentFile = new File(
+  [
+    "Acme Example provides managed IT support, cloud migration, and security monitoring for professional services firms."
+  ],
+  "acme-services.txt",
+  { type: "text/plain" }
+);
+
+const formData = new FormData();
+formData.append("draft_token", "draft_example_8f4c2a91b7d6");
+formData.append("file", documentFile);
+
+const response = await fetch("https://app.talkturo.com/api/public/ai-employee/upload", {
+  method: "POST",
+  headers: {
+    "Origin": "https://www.acme-demo-site.com"
+  },
+  body: formData
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "success": true,
+  "used_in_demo": true
+}
+```
+
+```json
+{
+  "error": "Unsupported file type"
+}
+```
+</Response>
+
+#### Form fields
+
+<ParamField body="draft_token" param-type="string" required="true">
+Token returned by the create endpoint.
+</ParamField>
+
+<ParamField body="file" param-type="file" required="true">
+Reference document in PDF, DOC, DOCX, TXT, or MD format. The maximum file size is 10 MB.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the upload completed successfully.
+</ResponseField>
+
+<ResponseField name="used_in_demo" field-type="boolean" required="true">
+Indicates whether the uploaded content is available in the demo. The value is `true` for TXT and MD files and `false` for PDF and Word files.
+</ResponseField>
+
+### Create an AI employee call token
+
+Create the browser call credentials for an AI employee draft. Use the returned token and room details with your browser calling client.
+
+The endpoint allows 30 requests per hour and 100 requests per day per IP, with a global limit of 500 requests per day.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/public/ai-employee/call-token" \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://www.acme-demo-site.com" \
+  -d '{
+    "draft_token": "draft_example_8f4c2a91b7d6"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/public/ai-employee/call-token", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Origin": "https://www.acme-demo-site.com"
+  },
+  body: JSON.stringify({
+    draft_token: "draft_example_8f4c2a91b7d6"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "token": "call_token_example_5c91",
+  "wsUrl": "wss://voice.talkturo.com",
+  "roomName": "public-demo-room-73e9",
+  "identity": "visitor-73e9",
+  "agentName": "Jordan",
+  "max_duration_seconds": 180,
+  "calls_remaining": 2
+}
+```
+
+```json
+{
+  "error": "Invalid draft token"
+}
+```
+</Response>
+
+#### Body parameters
+
+<ParamField body="draft_token" param-type="string" required="true">
+Token returned by the create endpoint.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="token" field-type="string" required="true">
+Short-lived token used to join the browser call.
+</ResponseField>
+
+<ResponseField name="wsUrl" field-type="string" required="true">
+WebSocket URL for the calling provider.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+Room assigned to the call.
+</ResponseField>
+
+<ResponseField name="identity" field-type="string" required="true">
+Visitor identity assigned to the call.
+</ResponseField>
+
+<ResponseField name="agentName" field-type="string" required="true">
+Name of the AI employee in the draft.
+</ResponseField>
+
+<ResponseField name="max_duration_seconds" field-type="integer" required="true">
+Maximum call duration. The AI employee demo limit is 180 seconds.
+</ResponseField>
+
+<ResponseField name="calls_remaining" field-type="integer" required="true">
+Number of calls remaining for the draft.
+</ResponseField>
+
+## AI employee metadata
+
+### List AI employee use cases
+
+Return the use cases available when creating an AI employee. This endpoint requires no authentication and is not rate limited.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/public/ai-employee/use-cases" \
+  -H "Origin: https://www.acme-demo-site.com"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/public/ai-employee/use-cases", {
+  headers: {
+    "Origin": "https://www.acme-demo-site.com"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "use_cases": [
+    {
+      "key": "lead_qualification",
+      "label_en": "Lead qualification",
+      "label_de": "Lead-Qualifizierung",
+      "language": "en"
+    }
+  ]
+}
+```
+</Response>
+
+#### Response fields
+
+<ResponseField name="use_cases" field-type="array" required="true">
+Available AI employee use cases.
+</ResponseField>
+
+<ResponseField name="use_cases[].key" field-type="string" required="true">
+Stable identifier to send as the `use_case` value when creating a draft.
+</ResponseField>
+
+<ResponseField name="use_cases[].label_en" field-type="string" required="true">
+English display label.
+</ResponseField>
+
+<ResponseField name="use_cases[].label_de" field-type="string" required="true">
+German display label.
+</ResponseField>
+
+<ResponseField name="use_cases[].language" field-type="string" required="true">
+Language associated with the use case.
+</ResponseField>
+
+## Demo assistants
+
+### List demo assistants
+
+Return the assistants available for public demo calls. This endpoint requires no authentication and allows 60 requests per minute per IP.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl "https://app.talkturo.com/api/public/demo-assistants" \
+  -H "Origin: https://www.acme-demo-site.com"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/public/demo-assistants", {
+  headers: {
+    "Origin": "https://www.acme-demo-site.com"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "assistants": [
+    {
+      "id": "a7d2c8b1-45f6-4e91-9a23-6c7d8b2e1f04",
+      "name": "Maya",
+      "description": "Answers questions about customer onboarding.",
+      "display_order": 1,
+      "icon": "headset",
+      "max_call_duration_seconds": 120,
+      "outbound_enabled": true
+    }
+  ]
+}
+```
+</Response>
+
+#### Response fields
+
+<ResponseField name="assistants" field-type="array" required="true">
+Assistants configured for public demos.
+</ResponseField>
+
+<ResponseField name="assistants[].id" field-type="string" required="true">
+Assistant UUID used in demo call and outbound call requests.
+</ResponseField>
+
+<ResponseField name="assistants[].name" field-type="string" required="true">
+Assistant display name.
+</ResponseField>
+
+<ResponseField name="assistants[].description" field-type="string" required="true">
+Description shown to visitors.
+</ResponseField>
+
+<ResponseField name="assistants[].display_order" field-type="integer" required="true">
+Display order for the assistant list.
+</ResponseField>
+
+<ResponseField name="assistants[].icon" field-type="string" required="true">
+Icon identifier for the assistant.
+</ResponseField>
+
+<ResponseField name="assistants[].max_call_duration_seconds" field-type="integer" required="true">
+Maximum duration configured for the assistant.
+</ResponseField>
+
+<ResponseField name="assistants[].outbound_enabled" field-type="boolean" required="true">
+Whether the assistant can place outbound calls.
+</ResponseField>
+
+### Create a demo call token
+
+Create browser call credentials for a public demo assistant. This endpoint requires a valid Turnstile token and allows 30 requests per hour and 100 requests per day per IP.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/public/test-call/token" \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://www.acme-demo-site.com" \
+  -d '{
+    "assistant_id": "a7d2c8b1-45f6-4e91-9a23-6c7d8b2e1f04",
+    "turnstile_token": "turnstile_example_token_9b21d4",
+    "visitor_name": "Jordan Lee"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/public/test-call/token", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Origin": "https://www.acme-demo-site.com"
+  },
+  body: JSON.stringify({
+    assistant_id: "a7d2c8b1-45f6-4e91-9a23-6c7d8b2e1f04",
+    turnstile_token: "turnstile_example_token_9b21d4",
+    visitor_name: "Jordan Lee"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "token": "call_token_example_7a31",
+  "wsUrl": "wss://voice.talkturo.com",
+  "roomName": "public-test-room-91bd",
+  "identity": "visitor-91bd",
+  "agentName": "Maya",
+  "max_duration_seconds": 120
+}
+```
+
+```json
+{
+  "error": "Turnstile verification failed"
+}
+```
+</Response>
+
+#### Body parameters
+
+<ParamField body="assistant_id" param-type="string" required="true">
+UUID of the demo assistant.
+</ParamField>
+
+<ParamField body="turnstile_token" param-type="string" required="true">
+Cloudflare Turnstile token for CAPTCHA verification.
+</ParamField>
+
+<ParamField body="visitor_name" param-type="string" required="false">
+Name associated with the visitor's demo call.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="token" field-type="string" required="true">
+Short-lived token used to join the browser call.
+</ResponseField>
+
+<ResponseField name="wsUrl" field-type="string" required="true">
+WebSocket URL for the calling provider.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+Room assigned to the call.
+</ResponseField>
+
+<ResponseField name="identity" field-type="string" required="true">
+Visitor identity assigned to the call.
+</ResponseField>
+
+<ResponseField name="agentName" field-type="string" required="true">
+Demo assistant name.
+</ResponseField>
+
+<ResponseField name="max_duration_seconds" field-type="integer" required="true">
+Maximum demo call duration, which is 120 seconds.
+</ResponseField>
+
+### Start a demo outbound call
+
+Start a consented outbound call to a visitor's phone number. The number must use E.164 format. A country allowlist may restrict which destinations are permitted.
+
+This endpoint requires Turnstile CAPTCHA and applies these limits:
+
+- 10 requests per hour per IP
+- 30 requests per day per IP
+- 3 requests per phone number every 6 hours
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/public/test-call/outbound" \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://www.acme-demo-site.com" \
+  -d '{
+    "assistant_id": "a7d2c8b1-45f6-4e91-9a23-6c7d8b2e1f04",
+    "to_number": "+14155550184",
+    "turnstile_token": "turnstile_example_token_2c84f1",
+    "consent_given": true,
+    "visitor_name": "Jordan Lee",
+    "visitor_email": "jordan.lee@acmeexample.com"
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/public/test-call/outbound", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Origin": "https://www.acme-demo-site.com"
+  },
+  body: JSON.stringify({
+    assistant_id: "a7d2c8b1-45f6-4e91-9a23-6c7d8b2e1f04",
+    to_number: "+14155550184",
+    turnstile_token: "turnstile_example_token_2c84f1",
+    consent_given: true,
+    visitor_name: "Jordan Lee",
+    visitor_email: "jordan.lee@acmeexample.com"
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "success": true,
+  "roomName": "outbound-demo-room-4e82",
+  "sipCallId": "CA8f2d9c1e4b7a6f3d0e",
+  "max_duration_seconds": 120,
+  "to_number": "+14155550184"
+}
+```
+
+```json
+{
+  "error": "Destination country is not allowed"
+}
+```
+</Response>
+
+#### Body parameters
+
+<ParamField body="assistant_id" param-type="string" required="true">
+UUID of the demo assistant.
+</ParamField>
+
+<ParamField body="to_number" param-type="string" required="true">
+Destination phone number in E.164 format.
+</ParamField>
+
+<ParamField body="turnstile_token" param-type="string" required="true">
+Cloudflare Turnstile token for CAPTCHA verification.
+</ParamField>
+
+<ParamField body="consent_given" param-type="boolean" required="true">
+Must be `true` before Talkturo places the outbound call.
+</ParamField>
+
+<ParamField body="visitor_name" param-type="string" required="false">
+Name associated with the visitor.
+</ParamField>
+
+<ParamField body="visitor_email" param-type="string" required="false">
+Email address associated with the visitor.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the outbound call was started.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+Room assigned to the outbound call.
+</ResponseField>
+
+<ResponseField name="sipCallId" field-type="string" required="true">
+Telephony provider call identifier.
+</ResponseField>
+
+<ResponseField name="max_duration_seconds" field-type="integer" required="true">
+Maximum outbound demo call duration, which is 120 seconds.
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string" required="true">
+Normalized destination phone number.
+</ResponseField>
+
+## Embedded form calls
+
+### Start an outbound form call
+
+Start an outbound call from an embedded form without CAPTCHA. The form must provide the assistant, workspace context, destination number, and explicit consent.
+
+The endpoint accepts E.164 phone numbers and applies these limits:
+
+- 50 requests per hour per IP
+- 200 requests per day per IP
+- 50 requests per hour per phone number
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl -X POST "https://app.talkturo.com/api/public/form-call/outbound" \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://www.acme-demo-site.com" \
+  -d '{
+    "assistant_id": "a7d2c8b1-45f6-4e91-9a23-6c7d8b2e1f04",
+    "account_id": "b8e3d9c2-56a7-4f02-ab34-7d8e9c3f2a15",
+    "account_slug": "acme-example",
+    "company_id": "c9f4e0d3-67b8-4a13-bc45-8e9f0d4b3a26",
+    "to_number": "+14155550184",
+    "visitor_name": "Jordan Lee",
+    "consent_given": true
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/public/form-call/outbound", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Origin": "https://www.acme-demo-site.com"
+  },
+  body: JSON.stringify({
+    assistant_id: "a7d2c8b1-45f6-4e91-9a23-6c7d8b2e1f04",
+    account_id: "b8e3d9c2-56a7-4f02-ab34-7d8e9c3f2a15",
+    account_slug: "acme-example",
+    company_id: "c9f4e0d3-67b8-4a13-bc45-8e9f0d4b3a26",
+    to_number: "+14155550184",
+    visitor_name: "Jordan Lee",
+    consent_given: true
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+```json
+{
+  "success": true,
+  "roomName": "form-call-room-6f24",
+  "sipCallId": "CA9e3f0a2b5c8d7e4f1a",
+  "to_number": "+14155550184"
+}
+```
+
+```json
+{
+  "error": "consent_given must be true"
+}
+```
+</Response>
+
+#### Body parameters
+
+<ParamField body="assistant_id" param-type="string" required="true">
+UUID of the assistant that handles the call.
+</ParamField>
+
+<ParamField body="account_id" param-type="string" required="true">
+Workspace UUID associated with the assistant.
+</ParamField>
+
+<ParamField body="account_slug" param-type="string" required="false">
+Workspace slug used to identify the account.
+</ParamField>
+
+<ParamField body="company_id" param-type="string" required="false">
+Company UUID included for compatibility. The endpoint ignores this field.
+</ParamField>
+
+<ParamField body="to_number" param-type="string" required="true">
+Destination phone number in E.164 format.
+</ParamField>
+
+<ParamField body="visitor_name" param-type="string" required="false">
+Name provided by the visitor.
+</ParamField>
+
+<ParamField body="consent_given" param-type="boolean" required="true">
+Must be `true` before Talkturo places the outbound call.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the outbound call was started.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+Room assigned to the outbound call.
+</ResponseField>
+
+<ResponseField name="sipCallId" field-type="string" required="true">
+Telephony provider call identifier.
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string" required="true">
+Normalized destination phone number.
+</ResponseField>
