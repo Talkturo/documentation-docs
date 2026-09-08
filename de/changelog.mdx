@@ -8,6 +8,31 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-09-08" description="v3.4.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Tool-Aufrufe und Workflow-Runs in der Actions-Registerkarte der Anrufprotokolle** — Sieh jeden Tool-Aufruf und Workflow-Run eines Anrufs in einer chronologischen Timeline, mit lesbaren Argumenten und Ausgaben, ausklappbaren Zeilen, Fehlerhervorhebung, Dauerformatierung und Kopierbuttons. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Inbound- oder Outbound-Begrüßung im Browser testen** — Ein Inbound-/Outbound-Schalter im Testanruf-Panel lässt dich die richtige Begrüßungsrichtung vor dem Live-Gehen testen. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Sprache und Stimme pro Anwendungsfall** — Admins können eine Sprache und TTS-Stimme pro AI-Employee-Anwendungsfall festlegen, sodass Entwurfs-Agents immer die richtige Stimme verwenden. Demo-Vorschau-Anrufe sind jetzt auf 3 Minuten verlängert. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Kontaktnamen-Variablen in AI-Employee-Begrüßungen** — Begrüßungsvorlagen können den Vor- und Nachnamen des Besuchers aus dem Website-Formular einfügen, sodass Demo-Anrufe persönlicher wirken. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Erste Nachricht pro Anwendungsfall** — Admins können eine benutzerdefinierte Eröffnungsbegrüßung für jeden AI-Employee-Anwendungsfall festlegen, die die bisherige Einheits-Begrüßung ersetzt. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Kontaktvariablen-Auswahl in Prompts** — Füge Kontaktfelder wie Vorname, E-Mail, Telefon, Position und Unternehmen per Tastenkürzel in AI-Employee-Anwendungsfall-Prompts ein. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Prompt-Zusammensetzungsmodi** — Wähle zwischen generierter oder verketteter Prompt-Zusammensetzung für AI-Employee-Anwendungsfälle. Der generierte Assistentenname bevorzugt jetzt den vom LLM extrahierten Unternehmensnamen der Website. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Assistenten-Prompt-Historie** — Verfolge Änderungen an Assistenten-Prompts über die Zeit, sodass du nachvollziehen kannst, was sich wann geändert hat. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+
+  ## Verbesserungen
+
+  - **Rabattierte Abrechnung für zwischengespeicherte LLM-Prompt-Tokens** — Zwischengespeicherte Prompt-Tokens werden jetzt zu einem günstigeren Tarif abgerechnet, was Kosten für wiederholte oder ähnliche Prompts senkt. Siehe [Abrechnung](/de/billing).
+  - **Besseres Website-Verständnis bei JavaScript-rendered Seiten** — Wenn der Body-Inhalt einer Website leer ist, werden stattdessen Seitentitel und Meta-Beschreibung verwendet, sodass Entwurfs-Agents auch bei JS-lastigen Seiten sinnvollen Kontext erhalten. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Höhere Zeichenbegrenzung für Kern-Prompts** — Das Zeichenlimit für Admin-Kern-Prompts wurde von 8.000 auf 50.000 Zeichen erhöht, was mehr Platz für detaillierte Anweisungen bietet. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Kampagnen-Anrufer-ID-Auswahl bleibt erhalten** — Kampagnen-Detaildialoge zeigen jetzt beim erneuten Öffnen korrekt die gespeicherte Anrufernummern-Auswahl an, statt leer zu erscheinen. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+
+  ## Bugfixes
+
+  - **Begrüßungs-Platzhalter wird nicht mehr entfernt** — Die Variable `{{contact.first_name}}` in der Standardbegrüßung wird nicht mehr durch die Übersetzungs-Engine entfernt, sodass personalisierte Begrüßungen wie vorgesehen funktionieren. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Telefonie-Zuweisung wird bei fehlgeschlagenem Speichern zurückgesetzt** — Wenn das Speichern der Telefonie-Einstellungen eines Assistenten fehlschlägt, werden teilweise Telefonnummern-Zuweisungen jetzt zurückgesetzt, was inkonsistente Zustände verhindert. Siehe [Telefonie](/de/telephony).
+</Update>
+
 <Update label="2026-09-05" description="v3.3.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

@@ -8,6 +8,31 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-08" description="v3.4.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Tool calls and workflow runs in the call log Actions tab** — See every tool call and workflow run from a call in one chronological timeline, with readable arguments and outputs, expandable rows, error highlighting, duration formatting, and copy buttons. See [Call Logs](/en/call-logs).
+  - **Test inbound or outbound greetings from the browser** — An Inbound/Outbound switch in the test call panel lets you preview the correct greeting direction before going live. See [Assistant Configuration](/en/assistants/configuration).
+  - **Per-use-case language and voice** — Admins can pin a language and TTS voice for each AI Employee use case, so draft agents always use the right voice. Draft preview calls are now extended to 3 minutes. See [AI Voice Agents](/en/assistants/overview).
+  - **Contact name variables in AI Employee greetings** — Greeting templates can insert the visitor's first and last name from the website form, making demo calls feel personal. See [AI Voice Agents](/en/assistants/overview).
+  - **Per-use-case first message** — Admins can set a custom opening greeting for each AI Employee use case, replacing the previous one-size-fits-all greeting. See [AI Voice Agents](/en/assistants/overview).
+  - **Contact variable picker in prompts** — Insert contact fields like first name, email, phone, job title, and company into AI Employee use-case prompts with a keyboard shortcut. See [AI Voice Agents](/en/assistants/overview).
+  - **Prompt composition modes** — Choose between generated or concatenated prompt assembly for AI Employee use cases. The generated assistant name now prefers the company name extracted from the website. See [AI Voice Agents](/en/assistants/overview).
+  - **Assistant prompt history** — Track changes to assistant prompts over time, so you can review what changed and when. See [Assistant Configuration](/en/assistants/configuration).
+
+  ## Improvements
+
+  - **Discounted billing for cached LLM prompt tokens** — Cached prompt tokens are now billed at a lower rate, reducing costs for repeated or similar prompts. See [Billing](/en/billing).
+  - **Better website grounding for JavaScript-rendered pages** — When a website's body content is empty, the page title and meta description are used instead, so draft agents get meaningful context even on JS-heavy sites. See [AI Voice Agents](/en/assistants/overview).
+  - **Higher core-prompt character limit** — The admin core-prompt limit is raised from 8,000 to 50,000 characters, giving you room for detailed instructions. See [AI Voice Agents](/en/assistants/overview).
+  - **Campaign caller-ID selections persist** — Campaign detail dialogs now correctly show saved caller-number selections when reopened, instead of appearing empty. See [Campaign Configuration](/en/campaigns/configuration).
+
+  ## Bug Fixes
+
+  - **Greeting placeholder no longer stripped** — The `{{contact.first_name}}` variable in the default greeting is no longer removed by the translation engine, so personalized greetings work as intended. See [Assistant Configuration](/en/assistants/configuration).
+  - **Telephony assignment rollback on failed save** — When an assistant's telephony save fails, partial phone-number assignments are now rolled back, preventing inconsistent state. See [Telephony](/en/telephony).
+</Update>
+
 <Update label="2026-09-05" description="v3.3.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
