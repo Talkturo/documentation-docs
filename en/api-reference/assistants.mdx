@@ -1072,6 +1072,161 @@ UUID of the queued webhook delivery.
 Confirmation message. Value is `Test event queued`.
 </ResponseField>
 
+## Prompt version history
+
+Track and restore previous versions of an assistant's system prompt. Each time the prompt changes, Talkturo saves a versioned snapshot. Use these endpoints to browse the history, save a new version, restore an old prompt, or delete a version you no longer need.
+
+All prompt-version endpoints use `withApiAuth` and support both API key and session cookie authentication. API-key requests use the account bound to the key. Session-token requests require `accountSlug` in the query string. Cookie-session requests require `teamId` or `accountSlug` in the query string or request body.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/assistants/{assistantId}/prompt-versions` | List prompt versions |
+| `POST` | `/api/assistants/{assistantId}/prompt-versions` | Save the current prompt as a new version |
+| `DELETE` | `/api/assistants/{assistantId}/prompt-versions/{versionId}` | Delete a prompt version |
+| `POST` | `/api/assistants/{assistantId}/prompt-versions/{versionId}/restore` | Restore a previous prompt version |
+
+### List prompt versions
+
+Retrieve a paginated list of prompt versions, newest first.
+
+#### Endpoint
+
+`GET /api/assistants/{assistantId}/prompt-versions`
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+#### Query parameters
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximum number of versions to return. Clamped to the range 1 through 50. Defaults to 10.
+</ParamField>
+
+<ParamField query="before" param-type="integer" required="false">
+Return versions with a version number less than this value. Use this for cursor-based pagination.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="false">
+Account slug. Required for bearer session-token authentication.
+</ParamField>
+
+<ParamField query="teamId" param-type="string" required="false">
+Team ID. Required for cookie-session authentication when `accountSlug` is not provided.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="versions" field-type="array" required="true">
+Prompt versions, newest first. Each version includes `id`, `assistant_id`, `version`, `system_prompt`, `created_by`, `created_at`, `last_used_at`, and `author_name`.
+</ResponseField>
+
+<ResponseField name="current_version_id" field-type="string" required="true">
+UUID of the currently active prompt version, or `null` when no version is active.
+</ResponseField>
+
+<ResponseField name="has_more" field-type="boolean" required="true">
+Indicates whether more versions are available beyond the current page.
+</ResponseField>
+
+### Save a prompt version
+
+Save the assistant's current system prompt as a new version. If the prompt has not changed since the last version, the endpoint returns `unchanged: true` and does not create a new version.
+
+#### Endpoint
+
+`POST /api/assistants/{assistantId}/prompt-versions`
+
+#### Body parameters
+
+<ParamField body="system_prompt" param-type="string" required="false">
+The prompt to save. If omitted, the assistant's current `system_prompt` is snapshotted.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the version is saved.
+</ResponseField>
+
+<ResponseField name="unchanged" field-type="boolean" required="false">
+Returns `true` when the prompt matches the current version and no new version was created.
+</ResponseField>
+
+<ResponseField name="version" field-type="object" required="true">
+The saved or current prompt version, including `id`, `assistant_id`, `version`, and `system_prompt`.
+</ResponseField>
+
+<Callout kind="alert">
+An empty prompt cannot be saved as a version. The endpoint returns `400` with the error `Cannot save an empty AI Script as a version`.
+</Callout>
+
+### Delete a prompt version
+
+Delete a prompt version by ID. The currently active version cannot be deleted.
+
+#### Endpoint
+
+`DELETE /api/assistants/{assistantId}/prompt-versions/{versionId}`
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+<ParamField path="versionId" param-type="string" required="true">
+The prompt version UUID to delete.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the version is deleted.
+</ResponseField>
+
+<Callout kind="alert">
+Deleting the currently active version returns `409` with the error `Cannot delete the version the assistant is using`.
+</Callout>
+
+### Restore a prompt version
+
+Restore a previous prompt version by copying its `system_prompt` onto the assistant. This updates the assistant's current prompt and version pointer but does not create a new version.
+
+#### Endpoint
+
+`POST /api/assistants/{assistantId}/prompt-versions/{versionId}/restore`
+
+#### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+<ParamField path="versionId" param-type="string" required="true">
+The prompt version UUID to restore.
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the prompt is restored.
+</ResponseField>
+
+<ResponseField name="system_prompt" field-type="string" required="true">
+The restored system prompt text.
+</ResponseField>
+
+<ResponseField name="current_version_id" field-type="string" required="true">
+UUID of the restored version, now the active version.
+</ResponseField>
+
+<ResponseField name="current_version" field-type="integer" required="true">
+Version number of the restored version.
+</ResponseField>
+
 ## Workflow tool attachment
 
 Attach a published TurboFlow workflow to an assistant as a callable tool. The assistant can invoke the workflow during calls. The workflow's name, description, and parameters are resolved from the published flow version at call time.
@@ -1168,5 +1323,9 @@ Returned by the delete endpoint.
 | `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Assign phone numbers with carrier validation |
 | `POST` | `/api/assistants/{assistantId}/crm-group` | Assign a CRM group |
 | `POST` | `/api/assistants/{assistantId}/webhooks/test` | Queue a test webhook event |
+| `GET` | `/api/assistants/{assistantId}/prompt-versions` | List prompt versions |
+| `POST` | `/api/assistants/{assistantId}/prompt-versions` | Save a prompt version |
+| `DELETE` | `/api/assistants/{assistantId}/prompt-versions/{versionId}` | Delete a prompt version |
+| `POST` | `/api/assistants/{assistantId}/prompt-versions/{versionId}/restore` | Restore a prompt version |
 | `POST` | `/api/assistants/{assistantId}/tools/workflow` | Attach a workflow tool |
 | `DELETE` | `/api/assistants/{assistantId}/tools/workflow` | Detach a workflow tool |

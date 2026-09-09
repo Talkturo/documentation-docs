@@ -1,0 +1,347 @@
+---
+title: Zahlungs-Links
+description: Erstellen Sie öffentliche Zahlungs-Links und Vorschau-Anruf-Sitzungen für Talkturo-Agenten mit Endpunkt-Details, Anfrage-Beispielen, Antworten, Limits und Fehlern.
+---
+
+## Öffentliche Zahlungs- und Vorschau-Erlebnisse erstellen
+
+Die Payment-Link-API stellt öffentliche Endpunkte für Zahlungs- und Vorschau-Erlebnisse von Talkturo-Agenten bereit. Für diese Endpunkte ist keine Authentifizierung erforderlich.
+
+**Base URL:**
+
+```text
+https://app.talkturo.com
+```
+
+<Callout kind="info">
+
+Alle Endpunkte auf dieser Seite sind öffentlich und unauthenticated. Verwenden Sie diese Endpunkte nur mit den Daten, die für ein öffentliches Payment-Link- oder Vorschau-Erlebnis bestimmt sind.
+
+</Callout>
+
+## Endpunktübersicht
+
+| Methode | Endpunkt | Beschreibung |
+|---|---|---|
+| `GET` | `/api/pay/agent/{slug}` | Zahlungs-Link-Details abrufen |
+| `POST` | `/api/pay/agent/checkout` | Stripe Checkout-Sitzung erstellen |
+| `POST` | `/api/pay/agent/{slug}/preview-token` | Browser-Vorschau-Token erstellen |
+| `POST` | `/api/pay/agent/{slug}/preview-outbound` | Ausgehenden Vorschau-Anruf starten |
+
+## Zahlungs-Link-Details abrufen
+
+Rufen Sie die öffentlichen Informationen eines Agenten über seinen `slug` ab.
+
+### Anfrage
+
+<Request tabs="cURL,JavaScript" show-lines="false">
+
+```bash
+curl https://app.talkturo.com/api/pay/agent/closer-demo
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/pay/agent/closer-demo"
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Pfadparameter
+
+<ParamField path="slug" param-type="string" required="true">
+
+Der öffentliche Slug des Agenten.
+
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" show-lines="false">
+
+```json
+{
+  "agent": {
+    "slug": "closer-demo",
+    "name": "Demo Closer",
+    "description": "Sales qualification assistant"
+  }
+}
+```
+
+</Response>
+
+<ResponseField name="agent" field-type="object" required="true">
+
+Öffentliche Informationen zum Agenten.
+
+</ResponseField>
+
+<ResponseField name="agent.slug" field-type="string" required="true">
+
+Der öffentliche Slug des Agenten.
+
+</ResponseField>
+
+<ResponseField name="agent.name" field-type="string" required="true">
+
+Der Anzeigename des Agenten.
+
+</ResponseField>
+
+<ResponseField name="agent.description" field-type="string" required="false">
+
+Die öffentliche Beschreibung des Agenten.
+
+</ResponseField>
+
+## Stripe Checkout-Sitzung erstellen
+
+Erstellen Sie eine Stripe Checkout-Sitzung für einen öffentlichen Zahlungs-Link.
+
+### Anfrage
+
+<Request tabs="cURL,JavaScript" show-lines="false">
+
+```bash
+curl -X POST https://app.talkturo.com/api/pay/agent/checkout \
+  -H "Content-Type: application/json" \
+  -d '{
+    "slug": "closer-demo"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/pay/agent/checkout",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      slug: "closer-demo"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Body-Parameter
+
+<ParamField body="slug" param-type="string" required="true">
+
+Der öffentliche Slug des Agenten, für den die Checkout-Sitzung erstellt wird.
+
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" show-lines="false">
+
+```json
+{
+  "checkoutUrl": "https://checkout.stripe.com/c/pay/cs_test_example",
+  "sessionId": "cs_test_a1b2c3d4"
+}
+```
+
+</Response>
+
+<ResponseField name="checkoutUrl" field-type="string" required="true">
+
+Die URL, zu der der Kunde für den Stripe Checkout weitergeleitet wird.
+
+</ResponseField>
+
+<ResponseField name="sessionId" field-type="string" required="true">
+
+Die Kennung der erstellten Stripe Checkout-Sitzung.
+
+</ResponseField>
+
+### Checkout-Fehler
+
+Die API lehnt ungültige oder unvollständige Checkout-Anfragen mit einem Client-Fehler ab. Prüfen Sie vor dem erneuten Versuch, ob der Request einen gültigen `slug` und einen gültigen JSON-Body enthält.
+
+<Callout kind="alert">
+
+Verwenden Sie die `checkoutUrl` aus der Antwort für die Weiterleitung. Erstellen Sie keine eigene Stripe Checkout-URL aus der `sessionId`.
+
+</Callout>
+
+## Browser-Vorschau-Token erstellen
+
+Erstellen Sie ein kurzlebiges Token für die Browser-Vorschau eines öffentlichen Agenten.
+
+### Anfrage
+
+<Request tabs="cURL,JavaScript" show-lines="false">
+
+```bash
+curl -X POST \
+  https://app.talkturo.com/api/pay/agent/closer-demo/preview-token
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/pay/agent/closer-demo/preview-token",
+  {
+    method: "POST"
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Pfadparameter
+
+<ParamField path="slug" param-type="string" required="true">
+
+Der öffentliche Slug des Agenten, für den das Vorschau-Token erstellt wird.
+
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" show-lines="false">
+
+```json
+{
+  "token": "preview_test_7f3a9c2d",
+  "expiresAt": "2025-01-15T12:00:00.000Z"
+}
+```
+
+</Response>
+
+<ResponseField name="token" field-type="string" required="true">
+
+Das Token für die Browser-Vorschau.
+
+</ResponseField>
+
+<ResponseField name="expiresAt" field-type="string" required="true">
+
+Der Zeitpunkt, zu dem das Token abläuft.
+
+</ResponseField>
+
+<Callout kind="info">
+
+Behandeln Sie das Vorschau-Token als kurzlebige Berechtigung. Speichern Sie es nicht dauerhaft und geben Sie es nicht an andere Nutzer weiter.
+
+</Callout>
+
+## Ausgehenden Vorschau-Anruf starten
+
+Starten Sie einen ausgehenden Vorschau-Anruf für einen öffentlichen Agenten.
+
+### Anfrage
+
+<Request tabs="cURL,JavaScript" show-lines="false">
+
+```bash
+curl -X POST \
+  https://app.talkturo.com/api/pay/agent/closer-demo/preview-outbound \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phoneNumber": "+14155550142"
+  }'
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/pay/agent/closer-demo/preview-outbound",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      phoneNumber: "+14155550142"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</Request>
+
+### Pfadparameter
+
+<ParamField path="slug" param-type="string" required="true">
+
+Der öffentliche Slug des Agenten, der den Vorschau-Anruf ausführt.
+
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="phoneNumber" param-type="string" required="true">
+
+Die Telefonnummer, die angerufen werden soll. Verwenden Sie das internationale E.164-Format, zum Beispiel `+14155550142`.
+
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" show-lines="false">
+
+```json
+{
+  "callId": "call_a1b2c3d4",
+  "status": "queued"
+}
+```
+
+</Response>
+
+<ResponseField name="callId" field-type="string" required="true">
+
+Die Kennung des gestarteten Vorschau-Anrufs.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+
+Der aktuelle Status des Anrufs. Ein neuer Anruf wird normalerweise mit `queued` zurückgegeben.
+
+</ResponseField>
+
+### Validierung des ausgehenden Vorschau-Anrufs
+
+Der Endpunkt validiert den Agenten-Slug, den Request-Body und die Zieltelefonnummer, bevor er den Anruf startet. Eine ungültige Telefonnummer oder ein fehlender erforderlicher Body-Parameter führt zu einem Client-Fehler.
+
+<Callout kind="alert">
+
+Starten Sie einen Vorschau-Anruf nur mit einer Telefonnummer, deren Inhaber dem Anruf zugestimmt hat. Die öffentliche Erreichbarkeit dieses Endpunkts ersetzt keine Einwilligungs- oder Compliance-Prüfungen.
+
+</Callout>
+
+## Limits und Fehlerbehandlung
+
+Öffentliche Endpunkte können Anfragen aufgrund ungültiger Eingaben, nicht verfügbarer Agenten oder überschrittener Nutzungslimits ablehnen. Behandeln Sie alle Antworten außerhalb des Erfolgsbereichs als fehlgeschlagen und zeigen Sie die vom API-Response gelieferte Fehlermeldung nicht ungeprüft als HTML an.
+
+Typische Fehlerklassen:
+
+- `400`: Der Request enthält ungültige oder fehlende Parameter.
+- `404`: Der angeforderte öffentliche Agent oder die Ressource wurde nicht gefunden.
+- `409`: Die angeforderte Aktion steht im aktuellen Zustand der Ressource nicht zur Verfügung.
+- `429`: Das Nutzungs- oder Rate-Limit wurde überschritten.
+- `500`: Ein interner Fehler ist beim Verarbeiten der Anfrage aufgetreten.
+
+Lesen Sie bei einem Fehler den JSON-Response aus und prüfen Sie den HTTP-Statuscode, bevor Sie einen erneuten Versuch starten. Wiederholen Sie nur Fehler, die vorübergehend sein können, und verwenden Sie bei wiederholbaren Requests eine Begrenzung der Versuche.

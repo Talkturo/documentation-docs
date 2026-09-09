@@ -37,6 +37,10 @@ Basispfad: `/api/assistants`
 | `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Telefonnummern mit Carrier-Validierung zuweisen |
 | `POST` | `/api/assistants/{assistantId}/crm-group` | CRM-Gruppe zuweisen |
 | `POST` | `/api/assistants/{assistantId}/webhooks/test` | Test-Webhook-Event einreihen |
+| `GET` | `/api/assistants/{assistantId}/prompt-versions` | Prompt-Versionen auflisten |
+| `POST` | `/api/assistants/{assistantId}/prompt-versions` | Prompt-Version speichern |
+| `DELETE` | `/api/assistants/{assistantId}/prompt-versions/{versionId}` | Prompt-Version löschen |
+| `POST` | `/api/assistants/{assistantId}/prompt-versions/{versionId}/restore` | Prompt-Version wiederherstellen |
 | `POST` | `/api/assistants/{assistantId}/tools/workflow` | Workflow-Werkzeug anhängen |
 | `DELETE` | `/api/assistants/{assistantId}/tools/workflow` | Workflow-Werkzeug trennen |
 
@@ -1016,6 +1020,161 @@ UUID der eingereihten Webhook-Zustellung.
 
 <ResponseField name="message" field-type="string" required="true">
 Bestätigungsmeldung. Wert ist `Test event queued`.
+</ResponseField>
+
+## Prompt-Versionsverlauf
+
+Verfolgen und stellen Sie frühere Versionen des System-Prompts eines Assistenten wieder her. Jedes Mal, wenn sich der Prompt ändert, speichert Talkturo einen versionierten Snapshot. Verwenden Sie diese Endpunkte, um den Verlauf zu durchsuchen, eine neue Version zu speichern, einen alten Prompt wiederherzustellen oder eine nicht mehr benötigte Version zu löschen.
+
+Alle Prompt-Versions-Endpunkte verwenden `withApiAuth` und unterstützen sowohl API-Schlüssel- als auch Session-Cookie-Authentifizierung. API-Schlüssel-Anfragen verwenden das dem Schlüssel zugeordnete Konto. Session-Token-Anfragen erfordern `accountSlug` im Query-String. Cookie-Session-Anfragen erfordern `teamId` oder `accountSlug` im Query-String oder Request-Body.
+
+| Methode | Pfad | Beschreibung |
+| --- | --- | --- |
+| `GET` | `/api/assistants/{assistantId}/prompt-versions` | Prompt-Versionen auflisten |
+| `POST` | `/api/assistants/{assistantId}/prompt-versions` | Aktuellen Prompt als neue Version speichern |
+| `DELETE` | `/api/assistants/{assistantId}/prompt-versions/{versionId}` | Prompt-Version löschen |
+| `POST` | `/api/assistants/{assistantId}/prompt-versions/{versionId}/restore` | Frühere Prompt-Version wiederherstellen |
+
+### Prompt-Versionen auflisten
+
+Ruft eine paginierte Liste von Prompt-Versionen ab, neueste zuerst.
+
+#### Endpunkt
+
+`GET /api/assistants/{assistantId}/prompt-versions`
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+#### Abfrageparameter
+
+<ParamField query="limit" param-type="integer" required="false">
+Maximale Anzahl der zurückgegebenen Versionen. Wird auf den Bereich 1 bis 50 begrenzt. Standardwert ist 10.
+</ParamField>
+
+<ParamField query="before" param-type="integer" required="false">
+Gibt Versionen mit einer Versionsnummer kleiner als dieser Wert zurück. Verwenden Sie dies für cursor-basierte Pagination.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="false">
+Kontoslug. Erforderlich für Bearer-Session-Token-Authentifizierung.
+</ParamField>
+
+<ParamField query="teamId" param-type="string" required="false">
+Team-ID. Erforderlich für Cookie-Session-Authentifizierung, wenn `accountSlug` nicht angegeben wird.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="versions" field-type="array" required="true">
+Prompt-Versionen, neueste zuerst. Jede Version enthält `id`, `assistant_id`, `version`, `system_prompt`, `created_by`, `created_at`, `last_used_at` und `author_name`.
+</ResponseField>
+
+<ResponseField name="current_version_id" field-type="string" required="true">
+UUID der aktuell aktiven Prompt-Version oder `null`, wenn keine Version aktiv ist.
+</ResponseField>
+
+<ResponseField name="has_more" field-type="boolean" required="true">
+Gibt an, ob weitere Versionen über die aktuelle Seite hinaus verfügbar sind.
+</ResponseField>
+
+### Prompt-Version speichern
+
+Speichert den aktuellen System-Prompt des Assistenten als neue Version. Wenn sich der Prompt seit der letzten Version nicht geändert hat, gibt der Endpunkt `unchanged: true` zurück und erstellt keine neue Version.
+
+#### Endpunkt
+
+`POST /api/assistants/{assistantId}/prompt-versions`
+
+#### Body-Parameter
+
+<ParamField body="system_prompt" param-type="string" required="false">
+Der zu speichernde Prompt. Wenn weggelassen, wird der aktuelle `system_prompt` des Assistenten als Snapshot gespeichert.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Version gespeichert wurde.
+</ResponseField>
+
+<ResponseField name="unchanged" field-type="boolean" required="false">
+Gibt `true` zurück, wenn der Prompt mit der aktuellen Version übereinstimmt und keine neue Version erstellt wurde.
+</ResponseField>
+
+<ResponseField name="version" field-type="object" required="true">
+Die gespeicherte oder aktuelle Prompt-Version, einschließlich `id`, `assistant_id`, `version` und `system_prompt`.
+</ResponseField>
+
+<Callout kind="alert">
+Ein leerer Prompt kann nicht als Version gespeichert werden. Der Endpunkt gibt `400` mit dem Fehler `Cannot save an empty AI Script as a version` zurück.
+</Callout>
+
+### Prompt-Version löschen
+
+Löschen Sie eine Prompt-Version anhand ihrer ID. Die aktuell aktive Version kann nicht gelöscht werden.
+
+#### Endpunkt
+
+`DELETE /api/assistants/{assistantId}/prompt-versions/{versionId}`
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+<ParamField path="versionId" param-type="string" required="true">
+Die zu löschende Prompt-Versions-UUID.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Version gelöscht wurde.
+</ResponseField>
+
+<Callout kind="alert">
+Das Löschen der aktuell aktiven Version gibt `409` mit dem Fehler `Cannot delete the version the assistant is using` zurück.
+</Callout>
+
+### Prompt-Version wiederherstellen
+
+Stellen Sie eine frühere Prompt-Version wieder her, indem Sie deren `system_prompt` auf den Assistenten kopieren. Dies aktualisiert den aktuellen Prompt und den Versionszeiger des Assistenten, erstellt aber keine neue Version.
+
+#### Endpunkt
+
+`POST /api/assistants/{assistantId}/prompt-versions/{versionId}/restore`
+
+#### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+<ParamField path="versionId" param-type="string" required="true">
+Die wiederherzustellende Prompt-Versions-UUID.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Prompt wiederhergestellt wurde.
+</ResponseField>
+
+<ResponseField name="system_prompt" field-type="string" required="true">
+Der wiederhergestellte System-Prompt-Text.
+</ResponseField>
+
+<ResponseField name="current_version_id" field-type="string" required="true">
+UUID der wiederhergestellten Version, nun die aktive Version.
+</ResponseField>
+
+<ResponseField name="current_version" field-type="integer" required="true">
+Versionsnummer der wiederhergestellten Version.
 </ResponseField>
 
 ## Workflow-Werkzeug-Anhang
