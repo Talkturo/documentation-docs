@@ -1,0 +1,490 @@
+---
+title: CRM Intelligence
+description: Retrieve conversation intelligence summaries, initiate outbound calls programmatically, and list outbound-enabled assistants with assigned phone numbers through the Talkturo API.
+---
+
+## CRM endpoints
+
+Use these endpoints to retrieve conversation intelligence, start outbound calls, and discover assistants configured for outbound calling.
+
+<Callout kind="info">
+
+CRM intelligence and outbound assistant endpoints use a Supabase web session. The outbound calls endpoint also accepts Talkturo API keys.
+
+</Callout>
+
+### Authentication
+
+<Tabs>
+<Tab title="Session authentication" icon="lock">
+
+Send a Supabase session token in the `Authorization` header:
+
+```bash
+curl https://api.talkturo.com/api/crm/intelligence \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs... "
+```
+
+The intelligence and outbound assistant endpoints require the authenticated user to have access to the requested account or team. Cookie-based sessions are also supported where noted.
+
+</Tab>
+<Tab title="API key authentication" icon="shield">
+
+The outbound calls endpoint accepts a Talkturo API key. Send the key as a bearer token:
+
+```bash
+curl https://api.talkturo.com/api/crm/calls \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+API keys must include the `calls:create` scope. Wildcard access and the `calls:*` scope also satisfy this requirement.
+
+</Tab>
+</Tabs>
+
+## Get conversation intelligence
+
+```http
+GET /api/crm/intelligence
+```
+
+Retrieve a conversation intelligence summary for an account and date range. The response also includes campaign and assistant lists that you can use to populate filters.
+
+### Query parameters
+
+<ParamField query="from" param-type="string" required="true">
+
+Start date in `YYYY-MM-DD` format. The route passes this value to the conversation intelligence summary query unchanged.
+
+</ParamField>
+
+<ParamField query="to" param-type="string" required="true">
+
+End date in `YYYY-MM-DD` format. The route passes this value to the conversation intelligence summary query unchanged.
+
+</ParamField>
+
+<ParamField query="account" param-type="string" required="true">
+
+Account slug used to resolve the account and verify the authenticated user's membership.
+
+</ParamField>
+
+<ParamField query="campaign_id" param-type="string" required="false">
+
+Filter the summary by campaign. If omitted, the endpoint passes `null` to the summary query.
+
+</ParamField>
+
+<ParamField query="assistant_id" param-type="string" required="false">
+
+Filter the summary by assistant. If omitted, the endpoint passes `null` to the summary query.
+
+</ParamField>
+
+### Request
+
+<Request tabs="cURL" show-lines="false">
+
+```bash
+curl "https://api.talkturo.com/api/crm/intelligence?from=2026-01-01&to=2026-01-31&account=acme-support&campaign_id=cmp_8f31a2&assistant_id=ast_4d92c1" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200" show-lines="false">
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_conversations": 248,
+    "average_sentiment": 0.74,
+    "resolution_rate": 0.81
+  },
+  "filters": {
+    "campaigns": [
+      {
+        "id": "cmp_8f31a2",
+        "name": "Renewal outreach"
+      }
+    ],
+    "assistants": [
+      {
+        "id": "ast_4d92c1",
+        "name": "Maya"
+      }
+    ]
+  }
+}
+```
+
+</Response>
+
+The `data` object contains the raw fields returned by the `conversation_intelligence_summary` database RPC. The route defaults `data` to an empty object when the RPC returns no value.
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request succeeded.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Conversation intelligence summary returned by the `conversation_intelligence_summary` RPC. The exact fields depend on the RPC result.
+
+</ResponseField>
+
+<ResponseField name="filters" field-type="object" required="true">
+
+Filter data for campaigns and assistants associated with the account.
+
+</ResponseField>
+
+<ResponseField name="filters.campaigns" field-type="array" required="true">
+
+Up to 100 non-deleted campaigns. Each item contains an `id` and `name`.
+
+</ResponseField>
+
+<ResponseField name="filters.assistants" field-type="array" required="true">
+
+Up to 100 assistants. Each item contains an `id` and `name`.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+The authenticated user must have an `accounts_memberships` row for the account resolved from the `account` slug. Account ownership alone does not satisfy this route's membership check unless it is represented by a membership row.
+
+</Callout>
+
+## Initiate an outbound call
+
+```http
+POST /api/crm/calls
+```
+
+Start an outbound call with an assistant. The endpoint accepts a Talkturo API key or Supabase session authentication and requires an account in the authentication context.
+
+### Request body
+
+<ParamField body="assistant_id" param-type="string" required="true">
+
+UUID of the assistant that will place the call.
+
+</ParamField>
+
+<ParamField body="to_number" param-type="string" required="true">
+
+Destination phone number. The value must contain at least four characters and is normalized as an E.164 number by the call service.
+
+</ParamField>
+
+<ParamField body="from_number" param-type="string" required="false">
+
+Optional active phone number assigned to the assistant. If provided, the number must be assigned to the selected assistant.
+
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+
+Optional nested metadata passed to the outbound call service.
+
+</ParamField>
+
+### Request
+
+<Request tabs="cURL" show-lines="false">
+
+```bash
+curl https://api.talkturo.com/api/crm/calls \
+  -X POST \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assistant_id": "4d92c1a8-7b63-4e5f-9a21-6c84d0b2f731",
+    "to_number": "+14155550184",
+    "from_number": "+14155550100",
+    "metadata": {
+      "contact_id": "cnt_7b42e9",
+      "campaign": "renewal-outreach"
+    }
+  }'
+```
+
+</Request>
+
+Use the following equivalent JavaScript request when integrating the endpoint into an application:
+
+<CodeGroup tabs="JavaScript,cURL">
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/calls", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    assistant_id: "4d92c1a8-7b63-4e5f-9a21-6c84d0b2f731",
+    to_number: "+14155550184",
+    from_number: "+14155550100",
+    metadata: {
+      contact_id: "cnt_7b42e9",
+      campaign: "renewal-outreach"
+    }
+  })
+});
+
+const result = await response.json();
+console.log(result.call.room_name);
+```
+
+```bash
+curl https://api.talkturo.com/api/crm/calls \
+  -X POST \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assistant_id": "4d92c1a8-7b63-4e5f-9a21-6c84d0b2f731",
+    "to_number": "+14155550184",
+    "from_number": "+14155550100",
+    "metadata": {
+      "contact_id": "cnt_7b42e9",
+      "campaign": "renewal-outreach"
+    }
+  }'
+```
+
+</CodeGroup>
+
+### Response
+
+<Response tabs="200" show-lines="false">
+
+```json
+{
+  "success": true,
+  "call": {
+    "room_name": "call_4d92c1a8_20260115_143012",
+    "sip_call_id": "sip_01JH7K2M9R4Q",
+    "from_number": "+14155550100",
+    "to_number": "+14155550184"
+  }
+}
+```
+
+</Response>
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the call was created.
+
+</ResponseField>
+
+<ResponseField name="call" field-type="object" required="true">
+
+Identifiers and phone numbers for the newly initiated call.
+
+</ResponseField>
+
+<ResponseField name="call.room_name" field-type="string" required="true">
+
+LiveKit room name created for the call.
+
+</ResponseField>
+
+<ResponseField name="call.sip_call_id" field-type="string or null" required="false">
+
+SIP call identifier returned by the telephony provider.
+
+</ResponseField>
+
+<ResponseField name="call.from_number" field-type="string" required="true">
+
+Phone number used to place the call.
+
+</ResponseField>
+
+<ResponseField name="call.to_number" field-type="string" required="true">
+
+Normalized destination phone number.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+API-key requests must include the `calls:create` scope. The endpoint returns `401` when authentication or account context is missing, `403` when the scope is missing, and `402` when the account has insufficient credits.
+
+</Callout>
+
+## List outbound assistants
+
+```http
+GET /api/crm/outbound-assistants
+```
+
+List assistants enabled for outbound calling and their assigned active phone numbers.
+
+### Query parameters
+
+<ParamField query="teamId" param-type="string" required="true">
+
+Account or team identifier used to find outbound assistants and assigned phone numbers.
+
+</ParamField>
+
+### Request
+
+<Request tabs="cURL" show-lines="false">
+
+```bash
+curl "https://api.talkturo.com/api/crm/outbound-assistants?teamId=7b42e9d1-2f63-4a80-b5c1-9e27d4f86103" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200" show-lines="false">
+
+```json
+{
+  "success": true,
+  "assistants": [
+    {
+      "id": "4d92c1a8-7b63-4e5f-9a21-6c84d0b2f731",
+      "name": "Maya",
+      "outbound_enabled": true,
+      "group_id": "grp_2c81f4",
+      "group_name": "Renewals",
+      "assigned_numbers": [
+        {
+          "id": "num_91a6d2",
+          "phone_number": "+14155550100",
+          "assistant_id": "4d92c1a8-7b63-4e5f-9a21-6c84d0b2f731",
+          "status": "active"
+        }
+      ]
+    }
+  ]
+}
+```
+
+</Response>
+
+The endpoint returns only assistants with `outbound_enabled` set to `true`. Assigned numbers must belong to the team, have an `active` status, and not be deleted. Assistants and phone numbers are sorted by name and phone number respectively.
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request succeeded.
+
+</ResponseField>
+
+<ResponseField name="assistants" field-type="array" required="true">
+
+Outbound-enabled assistants associated with the requested team.
+
+</ResponseField>
+
+<ResponseField name="assistants.id" field-type="string" required="true">
+
+Assistant identifier.
+
+</ResponseField>
+
+<ResponseField name="assistants.name" field-type="string" required="true">
+
+Assistant display name.
+
+</ResponseField>
+
+<ResponseField name="assistants.outbound_enabled" field-type="boolean" required="true">
+
+Always `true` for assistants returned by this endpoint.
+
+</ResponseField>
+
+<ResponseField name="assistants.group_id" field-type="string or null" required="false">
+
+Assistant group identifier.
+
+</ResponseField>
+
+<ResponseField name="assistants.group_name" field-type="string or null" required="false">
+
+Assistant group name.
+
+</ResponseField>
+
+<ResponseField name="assistants.assigned_numbers" field-type="array" required="true">
+
+Active, non-deleted phone numbers assigned to the assistant.
+
+</ResponseField>
+
+<ResponseField name="assistants.assigned_numbers.id" field-type="string" required="true">
+
+Assigned phone number identifier.
+
+</ResponseField>
+
+<ResponseField name="assistants.assigned_numbers.phone_number" field-type="string" required="true">
+
+Assigned phone number.
+
+</ResponseField>
+
+<ResponseField name="assistants.assigned_numbers.assistant_id" field-type="string or null" required="false">
+
+Identifier of the assistant assigned to the number.
+
+</ResponseField>
+
+<ResponseField name="assistants.assigned_numbers.status" field-type="string or null" required="false">
+
+Phone number status. Returned numbers have an `active` status.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+This route requires a valid Supabase web session. The handler verifies that a user is authenticated, but it does not perform a separate membership check before querying with the service-role client. Validate that your integration supplies a team identifier appropriate for the authenticated user.
+
+</Callout>
+
+## Error responses
+
+The endpoints use the following status codes for common failures:
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing or invalid query parameters, JSON, or request fields. |
+| `401` | Authentication is missing or invalid. |
+| `402` | The account has insufficient credits for an outbound call. |
+| `403` | The user lacks account access or an API key lacks the required scope. |
+| `404` | The account, assistant, or related resource was not found. |
+| `500` | An unexpected database, telephony, or server error occurred. |
+
+## Related CRM resources
+
+<Columns cols={2}>
+
+<Card title="CRM contacts" href="/api-reference/crm-contacts" icon="users" cta="View contacts">
+
+Manage contact records used by CRM workflows.
+
+</Card>
+
+<Card title="CRM campaigns" href="/api-reference/crm-campaigns" icon="bar-chart" cta="View campaigns">
+
+Work with campaigns that can be used to filter intelligence data and organize outbound calls.
+
+</Card>
+
+</Columns>

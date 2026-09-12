@@ -1,0 +1,286 @@
+---
+title: Files
+description: Upload, retrieve, and delete workspace files through the Talkturo API, managing file storage with signed URLs and account-scoped access control.
+---
+
+## Files
+
+Upload, retrieve, and delete files associated with a Talkturo workspace through the `/api/files` endpoint.
+
+All operations require an authenticated Talkturo web session. The authenticated user must own the account or belong to it through an account membership.
+
+<Callout kind="info">
+
+File uploads use `multipart/form-data` and support files up to 25 MB. Download requests return signed URLs that expire after 10 minutes.
+
+</Callout>
+
+## Upload a file
+
+`POST /api/files` uploads a file to a workspace and returns its stored metadata.
+
+### Request
+
+Send the request as `multipart/form-data`.
+
+<Request tabs="cURL,JavaScript" show-lines="false">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/files" \
+  -H "Cookie: sb-access-token=sb_session_example_7xk2m9p4" \
+  -F "file=@/Users/jane/Documents/quarterly-report.pdf" \
+  -F "accountId=acct_7b3d9f21" \
+  -F "displayName=Quarterly report"
+```
+
+```javascript
+const formData = new FormData();
+formData.append("file", selectedFile);
+formData.append("accountId", "acct_7b3d9f21");
+formData.append("displayName", "Quarterly report");
+
+const response = await fetch("https://app.talkturo.com/api/files", {
+  method: "POST",
+  credentials: "include",
+  body: formData,
+});
+
+const result = await response.json();
+
+if (!response.ok) {
+  throw new Error(result.error ?? "File upload failed");
+}
+
+console.log(result.data);
+```
+
+</Request>
+
+`credentials: "include"` sends the authenticated browser session. Do not set the `Content-Type` header manually. The browser adds the multipart boundary required by the server.
+
+### Request fields
+
+<ParamField body="file" param-type="File" required="true" show-location="false">
+The file to upload. The maximum file size is 25 MB.
+</ParamField>
+
+<ParamField body="accountId" param-type="string" required="true" show-location="false">
+The ID of the workspace that owns the file.
+</ParamField>
+
+<ParamField body="displayName" param-type="string" required="false" show-location="false">
+The name displayed for the file. If omitted, the API uses the original file name.
+</ParamField>
+
+### Response
+
+<Response>
+
+```json
+{
+  "data": {
+    "id": "file_4f8a2c91",
+    "name": "Quarterly report",
+    "size": 248193,
+    "file_type": "application/pdf",
+    "created_at": "2026-03-12T14:22:08.431Z",
+    "account_id": "acct_7b3d9f21"
+  }
+}
+```
+
+</Response>
+
+<ResponseField name="id" field-type="string">
+The unique identifier for the stored file.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+The display name assigned to the file.
+</ResponseField>
+
+<ResponseField name="size" field-type="number">
+The file size in bytes.
+</ResponseField>
+
+<ResponseField name="file_type" field-type="string">
+The file MIME type.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string">
+The file creation timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string">
+The ID of the workspace that owns the file.
+</ResponseField>
+
+## Retrieve a file URL
+
+`GET /api/files` generates a signed Supabase Storage URL for a file. The URL remains valid for 10 minutes.
+
+### Request
+
+<Request tabs="cURL,JavaScript" show-lines="false">
+
+```bash
+curl "https://app.talkturo.com/api/files?fileId=file_4f8a2c91&accountId=acct_7b3d9f21" \
+  -H "Cookie: sb-access-token=sb_session_example_7xk2m9p4"
+```
+
+```javascript
+const params = new URLSearchParams({
+  fileId: "file_4f8a2c91",
+  accountId: "acct_7b3d9f21",
+});
+
+const response = await fetch(
+  `https://app.talkturo.com/api/files?${params.toString()}`,
+  {
+    method: "GET",
+    credentials: "include",
+  },
+);
+
+const result = await response.json();
+
+if (!response.ok) {
+  throw new Error(result.error ?? "Could not retrieve file URL");
+}
+
+window.open(result.url, "_blank");
+```
+
+</Request>
+
+### Query parameters
+
+<ParamField query="fileId" param-type="string" required="true">
+The ID of the file to retrieve.
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="true">
+The ID of the workspace that owns the file.
+</ParamField>
+
+### Response
+
+<Response>
+
+```json
+{
+  "url": "https://storage.example.supabase.co/object/sign/files/acct_7b3d9f21/file_4f8a2c91?token=eyJhbGciOiJIUzI1NiJ9"
+}
+```
+
+</Response>
+
+<ResponseField name="url" field-type="string">
+A signed storage URL that can be used to download or display the file. The URL expires after 10 minutes.
+</ResponseField>
+
+<Callout kind="alert">
+
+Treat signed URLs as temporary credentials. Do not store them as permanent file references. Request a new URL when the current URL expires.
+
+</Callout>
+
+## Delete a file
+
+`DELETE /api/files` removes a file from both storage and the workspace file records.
+
+### Request
+
+<Request tabs="cURL,JavaScript" show-lines="false">
+
+```bash
+curl -X DELETE "https://app.talkturo.com/api/files?fileId=file_4f8a2c91&accountId=acct_7b3d9f21" \
+  -H "Cookie: sb-access-token=sb_session_example_7xk2m9p4"
+```
+
+```javascript
+const params = new URLSearchParams({
+  fileId: "file_4f8a2c91",
+  accountId: "acct_7b3d9f21",
+});
+
+const response = await fetch(
+  `https://app.talkturo.com/api/files?${params.toString()}`,
+  {
+    method: "DELETE",
+    credentials: "include",
+  },
+);
+
+const result = await response.json();
+
+if (!response.ok) {
+  throw new Error(result.error ?? "File deletion failed");
+}
+
+console.log("Deleted:", result.success);
+```
+
+</Request>
+
+### Query parameters
+
+<ParamField query="fileId" param-type="string" required="true">
+The ID of the file to delete.
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="true">
+The ID of the workspace that owns the file.
+</ParamField>
+
+### Response
+
+<Response>
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+<ResponseField name="success" field-type="boolean">
+Indicates that the storage object and database row were deleted.
+</ResponseField>
+
+<Callout kind="danger">
+
+Deletion is permanent. The API removes both the stored file and its database record, and you cannot use a previously generated signed URL afterward.
+
+</Callout>
+
+## Errors
+
+The file endpoints return these errors when a request cannot be completed:
+
+| Status | Condition | Typical response |
+| --- | --- | --- |
+| `400` | Required fields or query parameters are missing | `file and accountId are required` or `fileId and accountId are required` |
+| `400` | The uploaded file exceeds 25 MB | `File is too large (max 25 MB).` |
+| `403` | The authenticated user cannot access the workspace | `Unauthorized` |
+| `404` | The file does not exist or belongs to another workspace | `File not found` |
+| `500` | Storage, signing, or database operation failed | Endpoint-specific error message |
+
+## Related API references
+
+<Columns cols={2}>
+
+<Card title="Knowledge base" href="/api-reference/knowledge-base" icon="database">
+
+Manage workspace knowledge resources used by Talkturo assistants.
+
+</Card>
+
+<Card title="Credits" href="/api-reference/credits" icon="bar-chart">
+
+Review account credit usage and limits for API integrations.
+
+</Card>
+
+</Columns>

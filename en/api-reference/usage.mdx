@@ -1,0 +1,797 @@
+---
+title: Usage
+description: Retrieve account usage metrics, workspace usage series with credit breakdowns, and track desktop voice usage through the Talkturo API.
+---
+
+## Usage endpoints
+
+Use the usage endpoints to retrieve current account limits, analyze workspace usage over time, record desktop voice usage, and enforce desktop call limits.
+
+### Authentication methods
+
+<Tabs>
+<Tab title="API key or web session">
+
+`GET /api/usage/current` accepts a Talkturo API key, a Supabase bearer session token, or a cookie-based Supabase session.
+
+Send a Talkturo API key in the `Authorization` header:
+
+```http
+Authorization: Bearer tk_live_example_9xmk7q2r
+```
+
+</Tab>
+<Tab title="Desktop JWT">
+
+The desktop endpoints accept a Supabase access token issued for the authenticated desktop user:
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktop
+```
+
+Invalid, expired, or missing tokens return `401`.
+
+</Tab>
+<Tab title="Web session">
+
+`GET /api/accounts/{accountId}/usage` requires a valid Supabase web session. The authenticated user must own the account or have an account membership.
+
+</Tab>
+</Tabs>
+
+<Callout kind="info">
+
+Usage values are returned as numbers. Credit breakdowns distinguish speech-to-text, language model, text-to-speech, Talkturo, telephony, and realtime costs where the endpoint provides that detail.
+
+</Callout>
+
+## Get current account usage
+
+Retrieve the current limits, monthly usage, remaining capacity, usage percentages, and credit configuration for an account.
+
+```http
+GET /api/usage/current?accountId=7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25
+```
+
+### Authentication
+
+Authenticate with a Talkturo API key, Supabase bearer session token, or cookie-based Supabase session.
+
+### Query parameters
+
+<ParamField query="accountId" param-type="string" required="true">
+
+Account or workspace identifier.
+
+</ParamField>
+
+### Request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://api.talkturo.com/api/usage/current?accountId=7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/usage/current?accountId=7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25",
+  {
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r"
+    }
+  }
+);
+
+const usage = await response.json();
+console.log(usage.credit_info.credits_remaining);
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,400,404,500" default-tab="1">
+
+```json
+{
+  "limits": {
+    "monthly_credits": 10000,
+    "daily_credits": 500,
+    "max_daily_credits": 750,
+    "minutes_per_month": 1200,
+    "parallel_calls": 10,
+    "max_ai_agents": 25
+  },
+  "usage": {
+    "minutes_used": 184.5,
+    "calls_made": 428,
+    "credits_used": 3160,
+    "credits_remaining": 6840,
+    "peak_parallel_calls": 4,
+    "ai_agents_created": 8,
+    "daily_credits_used": 126,
+    "credits_rolled_over": 320
+  },
+  "remaining": {
+    "credits": 6840,
+    "daily_credits": 374,
+    "minutes": 1015.5,
+    "parallel_calls": 6,
+    "ai_agents": 17
+  },
+  "percentages": {
+    "credits": 31.6,
+    "daily_credits": 25.2,
+    "minutes": 15.4,
+    "parallel_calls": 40,
+    "ai_agents": 32
+  },
+  "credit_info": {
+    "monthly_credits": 10000,
+    "daily_credits": 500,
+    "max_daily_credits": 750,
+    "credits_used": 3160,
+    "credits_remaining": 6840,
+    "credits_rolled_over": 320,
+    "daily_credits_used": 126,
+    "credit_rollover_enabled": true,
+    "usage_based_ai_enabled": false
+  }
+}
+```
+
+```json
+{
+  "error": "accountId is required"
+}
+```
+
+```json
+{
+  "error": "Account limits not found"
+}
+```
+
+```json
+{
+  "error": "Failed to fetch usage data"
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="limits" field-type="object">
+
+Account limits returned by the account limits service. The object includes configured monthly, daily, minutes, parallel call, and AI agent limits.
+
+</ResponseField>
+
+<ResponseField name="usage" field-type="object">
+
+Current account usage, including minutes, calls, credits, peak parallel calls, AI agents, and rollover values.
+
+</ResponseField>
+
+<ResponseField name="remaining" field-type="object">
+
+Remaining `credits`, `daily_credits`, `minutes`, `parallel_calls`, and `ai_agents`.
+
+</ResponseField>
+
+<ResponseField name="percentages" field-type="object">
+
+Percentage usage for credits, daily credits, minutes, parallel calls, and AI agents.
+
+</ResponseField>
+
+<ResponseField name="credit_info" field-type="object">
+
+Credit totals, usage, rollover values, and feature flags for credit rollover and usage-based AI.
+
+</ResponseField>
+
+## Log desktop voice usage
+
+Record a desktop voice usage event with the provider, model, duration, and optional connection metadata.
+
+```http
+POST /api/usage/voice
+```
+
+### Authentication
+
+Authenticate with a desktop Supabase JWT.
+
+### Request body
+
+All request fields are optional. The handler applies these defaults:
+
+- `connectionId`: `null`
+- `durationSeconds`: `0`
+- `provider`: `deepgram`
+- `model`: `nova-3`
+- `userEmail`: `null`
+
+<ParamField body="connectionId" param-type="string" required="false">
+
+Connection identifier stored in the event metadata. The value may be `null`.
+
+</ParamField>
+
+<ParamField body="durationSeconds" param-type="number" required="false">
+
+Voice duration in seconds. The value is rounded to a non-negative number before logging.
+
+</ParamField>
+
+<ParamField body="provider" param-type="string" required="false">
+
+Speech provider name. Defaults to `deepgram`.
+
+</ParamField>
+
+<ParamField body="model" param-type="string" required="false">
+
+Speech model name. Defaults to `nova-3`.
+
+</ParamField>
+
+<ParamField body="userEmail" param-type="string" required="false">
+
+Optional user email stored in the event metadata. The value may be `null`.
+
+</ParamField>
+
+### Request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://api.talkturo.com/api/usage/voice" \
+  -X POST \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktop" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "connectionId": "conn_8f31c2d7",
+    "durationSeconds": 94.6,
+    "provider": "deepgram",
+    "model": "nova-3",
+    "userEmail": "jane.chen@acme.test"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/usage/voice", {
+  method: "POST",
+  headers: {
+    Authorization:
+      "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktop",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    connectionId: "conn_8f31c2d7",
+    durationSeconds: 94.6,
+    provider: "deepgram",
+    model: "nova-3",
+    userEmail: "jane.chen@acme.test"
+  })
+});
+
+const result = await response.json();
+console.log(result.success);
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,400,500" default-tab="1">
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid JSON body"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Usage logging failed"
+}
+```
+
+</Response>
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Indicates whether the request was processed successfully.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Empty object returned after the usage event is processed.
+
+</ResponseField>
+
+<Callout kind="info">
+
+The endpoint logs the event with `kind` set to `voice`. Database insert errors are logged by the server and do not make an otherwise valid request fail.
+
+</Callout>
+
+## Get workspace usage
+
+Retrieve usage series, daily metrics, credit totals, assistant filters, and paginated call-level cost rows for an account.
+
+```http
+GET /api/accounts/7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25/usage
+```
+
+### Authentication and authorization
+
+Authenticate with a Supabase web session. The authenticated user must be the account owner or a member of the account.
+
+### Path parameters
+
+<ParamField path="accountId" param-type="string" required="true">
+
+Account or workspace identifier.
+
+</ParamField>
+
+### Query parameters
+
+<ParamField query="from" param-type="string" required="true">
+
+Start of the usage range in ISO 8601 date-time format.
+
+</ParamField>
+
+<ParamField query="to" param-type="string" required="true">
+
+End of the usage range in ISO 8601 date-time format. The date range cannot exceed 366 days.
+
+</ParamField>
+
+<ParamField query="assistantId" param-type="string" required="false">
+
+UUID of an assistant. Filters the usage series and call rows to that assistant.
+
+</ParamField>
+
+<ParamField query="page" param-type="integer" required="false">
+
+Page number. Defaults to `1`. Values below `1` are set to `1`.
+
+</ParamField>
+
+<ParamField query="pageSize" param-type="integer" required="false">
+
+Number of call rows per page. Defaults to `25` and is limited to `100`.
+
+</ParamField>
+
+<ParamField query="granularity" param-type="string" required="false" enum="day,week">
+
+Series grouping. Defaults to `day`. When set to `week`, the `series` values are grouped by UTC Monday. The `daily` values remain daily.
+
+</ParamField>
+
+### Request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://api.talkturo.com/api/accounts/7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25/usage?from=2026-09-01T00%3A00%3A00Z&to=2026-09-12T23%3A59%3A59Z&granularity=day&page=1&pageSize=25" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.session"
+```
+
+```javascript
+const params = new URLSearchParams({
+  from: "2026-09-01T00:00:00Z",
+  to: "2026-09-12T23:59:59Z",
+  granularity: "day",
+  page: "1",
+  pageSize: "25"
+});
+
+const response = await fetch(
+  `https://api.talkturo.com/api/accounts/7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25/usage?${params}`,
+  {
+    headers: {
+      Authorization:
+        "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.session"
+    }
+  }
+);
+
+const usage = await response.json();
+console.log(usage.totals.total_credits);
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,400,403,500" default-tab="1">
+
+```json
+{
+  "granularity": "day",
+  "series": [
+    {
+      "day": "2026-09-01",
+      "period": "2026-09-01",
+      "call_count": 42,
+      "total_credits": 318.4,
+      "stt_credits": 46.2,
+      "llm_credits": 121.7,
+      "tts_credits": 58.5,
+      "talkturo_credits": 32,
+      "telephony_credits": 44,
+      "realtime_credits": 16
+    }
+  ],
+  "daily": [
+    {
+      "day": "2026-09-01",
+      "call_count": 42,
+      "total_credits": 318.4,
+      "stt_credits": 46.2,
+      "llm_credits": 121.7,
+      "tts_credits": 58.5,
+      "talkturo_credits": 32,
+      "telephony_credits": 44,
+      "realtime_credits": 16
+    }
+  ],
+  "totals": {
+    "call_count": 42,
+    "total_credits": 318.4,
+    "stt_credits": 46.2,
+    "llm_credits": 121.7,
+    "tts_credits": 58.5,
+    "talkturo_credits": 32,
+    "telephony_credits": 44,
+    "realtime_credits": 16
+  },
+  "assistants": [
+    {
+      "id": "2e8f7a1b-6c43-4d90-b821-5a7c9f0e3d16",
+      "name": "Scheduling assistant"
+    }
+  ],
+  "rows": [
+    {
+      "id": "usage_01j8m3f7k2",
+      "call_id": "call_01j8m3d9q4",
+      "started_at": "2026-09-01T14:22:08Z",
+      "ended_at": "2026-09-01T14:27:41Z",
+      "assistant_id": "2e8f7a1b-6c43-4d90-b821-5a7c9f0e3d16",
+      "assistant_name": "Scheduling assistant",
+      "total_cost": 7.58,
+      "stt_cost": 1.1,
+      "llm_cost": 2.91,
+      "tts_cost": 1.34,
+      "talkturo_cost": 0.76,
+      "telephony_cost": 1.05,
+      "realtime_cost": 0.42
+    }
+  ],
+  "page": 1,
+  "pageSize": 25,
+  "rowCount": 42
+}
+```
+
+```json
+{
+  "error": "Date range cannot exceed 366 days"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="granularity" field-type="string" required="true">
+
+Grouping used for the `series` response. The value is `day` or `week`.
+
+</ResponseField>
+
+<ResponseField name="series" field-type="array" required="true">
+
+Usage metrics grouped by the requested granularity. Weekly periods start on Monday in UTC.
+
+</ResponseField>
+
+<ResponseField name="daily" field-type="array" required="true">
+
+Daily usage metrics for the requested date range, regardless of the `granularity` value.
+
+</ResponseField>
+
+<ResponseField name="totals" field-type="object" required="true">
+
+Aggregated call count and credit costs for the requested range.
+
+</ResponseField>
+
+<ResponseField name="assistants" field-type="array" required="true">
+
+Assistants available for filtering, with each assistant's `id` and `name`.
+
+</ResponseField>
+
+<ResponseField name="rows" field-type="array" required="true">
+
+Paginated call-level usage records with timestamps, assistant information, and cost breakdowns.
+
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true">
+
+Current page number.
+
+</ResponseField>
+
+<ResponseField name="pageSize" field-type="integer" required="true">
+
+Number of rows requested for each page after server-side clamping.
+
+</ResponseField>
+
+<ResponseField name="rowCount" field-type="integer" required="true">
+
+Total number of matching call-level usage rows.
+
+</ResponseField>
+
+### Usage series fields
+
+Each object in `series` and `daily` includes the following fields:
+
+<Columns cols={2}>
+
+<Card title="Time and volume" href="/api-reference/usage" icon="bar-chart">
+
+`day`, `period`, and `call_count` identify the reporting period and number of calls.
+
+</Card>
+
+<Card title="Credit breakdown" href="/api-reference/usage" icon="database">
+
+`total_credits`, `stt_credits`, `llm_credits`, `tts_credits`, `talkturo_credits`, `telephony_credits`, and `realtime_credits` report credit usage by category.
+
+</Card>
+
+</Columns>
+
+## Check desktop call usage
+
+Check whether a desktop session can make another call and retrieve the current monthly count.
+
+```http
+POST /api/desktop/usage
+```
+
+### Authentication
+
+Authenticate with a desktop Supabase JWT.
+
+### Request headers
+
+<ParamField header="x-talkturo-account" param-type="string" required="false">
+
+Optional account or workspace identifier. When provided, the authenticated user must own or belong to the account.
+
+</ParamField>
+
+### Request body
+
+<ParamField body="session_id" param-type="string" required="true">
+
+Desktop session identifier.
+
+</ParamField>
+
+<ParamField body="duration_seconds" param-type="number" required="false">
+
+Optional session duration. The handler parses this value but does not use it to calculate the response.
+
+</ParamField>
+
+<ParamField body="kind" param-type="string" required="false" enum="listen,ask">
+
+Optional usage kind. The handler accepts `listen` or `ask` but does not use the value to calculate the response.
+
+</ParamField>
+
+### Request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://api.talkturo.com/api/desktop/usage" \
+  -X POST \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktop" \
+  -H "x-talkturo-account: 7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "desktop_session_6f2a91c8",
+    "duration_seconds": 180,
+    "kind": "ask"
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/desktop/usage", {
+  method: "POST",
+  headers: {
+    Authorization:
+      "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktop",
+    "x-talkturo-account": "7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    session_id: "desktop_session_6f2a91c8",
+    duration_seconds: 180,
+    kind: "ask"
+  })
+});
+
+const result = await response.json();
+if (result.ok) {
+  console.log(result.calls_remaining);
+}
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,400,402,403,404,500" default-tab="1">
+
+```json
+{
+  "ok": true,
+  "calls_this_month": 128,
+  "calls_remaining": 872
+}
+```
+
+```json
+{
+  "ok": false,
+  "reason": "missing_session_id"
+}
+```
+
+```json
+{
+  "ok": false,
+  "reason": "over_cap",
+  "upgrade_url": "/home",
+  "calls_this_month": 1000,
+  "calls_limit": 1000
+}
+```
+
+```json
+{
+  "ok": false,
+  "reason": "session_not_found"
+}
+```
+
+```json
+{
+  "ok": false,
+  "reason": "workspace_access_denied"
+}
+```
+
+```json
+{
+  "ok": false,
+  "reason": "count_failed",
+  "error": "Unable to count usage"
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+
+Indicates whether the desktop session passed usage checks.
+
+</ResponseField>
+
+<ResponseField name="calls_this_month" field-type="integer" required="false">
+
+Number of calls made during the current month. Returned on successful checks and over-cap responses.
+
+</ResponseField>
+
+<ResponseField name="calls_remaining" field-type="integer" required="false">
+
+Number of calls remaining under the monthly limit. Unlimited plans return `-1`.
+
+</ResponseField>
+
+<ResponseField name="reason" field-type="string" required="false">
+
+Machine-readable failure reason. Possible values include `invalid_body`, `missing_session_id`, `session_not_found`, `workspace_access_denied`, `no_access`, `over_cap`, `lookup_failed`, `limits_failed`, and `count_failed`.
+
+</ResponseField>
+
+<ResponseField name="calls_limit" field-type="integer" required="false">
+
+Monthly call limit. Returned when the session is over its cap.
+
+</ResponseField>
+
+<ResponseField name="upgrade_url" field-type="string" required="false">
+
+Path to the upgrade page for `no_access` and `over_cap` responses.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+Treat `reason: "over_cap"` as a usage limit response, not an authentication failure. The endpoint returns HTTP `402` and includes the current count and monthly limit.
+
+</Callout>
+
+## Error handling
+
+Handle the HTTP status before reading endpoint-specific fields. The usage endpoints use these status categories:
+
+- `400`: Missing or invalid request parameters or JSON.
+- `401`: Missing or invalid desktop authentication.
+- `402`: Desktop monthly call cap exceeded.
+- `403`: Authenticated user lacks workspace access.
+- `404`: Account limits or desktop session not found.
+- `500`: Server, database, or usage counting failure.
+
+<Columns cols={2}>
+
+<Card title="Credits" href="/api-reference/credits" icon="database" cta="View credits reference">
+
+Review credit concepts and credit-related API behavior.
+
+</Card>
+
+<Card title="Authentication" href="/api-reference/authentication" icon="lock" cta="View authentication reference">
+
+Configure API keys, session tokens, and desktop JWT authentication.
+
+</Card>
+
+</Columns>
