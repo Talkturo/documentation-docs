@@ -26,10 +26,11 @@ Die Datenzugriffsrechte werden abhängig vom Endpunkt über Supabase RLS oder ei
 | Bereich | Endpunkte |
 | --- | --- |
 | [Sitzungen](#sitzungen) | Sitzungen auflisten, Sitzung abrufen, umbenennen, löschen und analysieren |
-| [Prompts](#prompts) | Prompt-Vorlagen auflisten und erstellen |
+| [Prompts](#prompts) | Prompt-Vorlagen auflisten, erstellen, aktualisieren und löschen |
 | [Einstellungen](#einstellungen) | Analytics-Einstellungen abrufen und aktualisieren |
-| [Dashboard](#dashboard) | Aggregierte Coaching- und Sitzungsdaten abrufen |
-| [Skripte](#skripte) | Skripte auflisten, erstellen, aktualisieren und löschen |
+| [Dashboard](#dashboard) | Aggregierte Coaching-Daten abrufen und Dashboard-Narrative generieren |
+| [Desktop-Status](#desktop-status) | Desktop-Zugriffsstatus abrufen |
+| [Skripte](#skripte) | Skripte auflisten, erstellen, aktualisieren, löschen und aus Text importieren |
 
 ## Sitzungen
 
@@ -859,6 +860,144 @@ console.log(data);
 
 </Response>
 
+### Prompt-Vorlage aktualisieren
+
+```http
+PATCH /api/close-ai/prompts/{promptId}
+```
+
+Aktualisiert den Titel, den Prompt-Text oder den Standardstatus einer bestehenden Prompt-Vorlage. Mindestens ein Feld ist im Request-Body erforderlich.
+
+#### Pfadparameter
+
+<ParamField path="promptId" param-type="string" required="true">
+
+UUID der Vorlage.
+
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="title" param-type="string" required="false">
+
+Aktualisierter Titel der Vorlage.
+
+</ParamField>
+
+<ParamField body="prompt" param-type="string" required="false">
+
+Aktualisierter Prompt-Text.
+
+</ParamField>
+
+<ParamField body="is_default" param-type="boolean" required="false">
+
+Legt fest, ob diese Vorlage als Standardvorlage festgelegt wird. Das Setzen einer neuen Standardvorlage entfernt den Standardstatus der vorherigen.
+
+</ParamField>
+
+#### Anfrage
+
+<CodeGroup tabs="cURL,JavaScript">
+
+```bash
+curl -X PATCH "https://app.talkturo.com/api/close-ai/prompts/b4c3d2e1-9876-4a5b-8123-abcdef456789" \
+  -H "Content-Type: application/json" \
+  --data '{"title":"Aktualisierte Discovery-Vorlage","is_default":true}' \
+  --cookie /tmp/talkturo-session-cookies.txt
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/close-ai/prompts/b4c3d2e1-9876-4a5b-8123-abcdef456789",
+  {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      title: "Aktualisierte Discovery-Vorlage",
+      is_default: true
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</CodeGroup>
+
+<Response>
+
+```json
+{
+  "preset": {
+    "id": "b4c3d2e1-9876-4a5b-8123-abcdef456789",
+    "user_id": "9d0a7b6c-5e4f-3210-9876-abcdef123456",
+    "title": "Aktualisierte Discovery-Vorlage",
+    "prompt": "Evaluate discovery depth, question quality, and next-step clarity.",
+    "is_default": true,
+    "is_template": false,
+    "created_at": "2025-02-14T10:10:00.000Z",
+    "updated_at": "2025-02-14T11:00:00.000Z"
+  }
+}
+```
+
+</Response>
+
+### Prompt-Vorlage löschen
+
+```http
+DELETE /api/close-ai/prompts/{promptId}
+```
+
+Löscht eine Prompt-Vorlage anhand ihrer ID.
+
+#### Pfadparameter
+
+<ParamField path="promptId" param-type="string" required="true">
+
+UUID der Vorlage.
+
+</ParamField>
+
+#### Anfrage
+
+<CodeGroup tabs="cURL,JavaScript">
+
+```bash
+curl -X DELETE "https://app.talkturo.com/api/close-ai/prompts/b4c3d2e1-9876-4a5b-8123-abcdef456789" \
+  --cookie /tmp/talkturo-session-cookies.txt
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/close-ai/prompts/b4c3d2e1-9876-4a5b-8123-abcdef456789",
+  {
+    method: "DELETE",
+    credentials: "include"
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+</CodeGroup>
+
+<Response>
+
+```json
+{
+  "ok": true
+}
+```
+
+</Response>
+
 ## Einstellungen
 
 ### Analytics-Einstellungen abrufen
@@ -1253,6 +1392,244 @@ Kennzahlen pro Workspace-Mitglied.
 
 </Callout>
 
+### Dashboard-Narrative generieren
+
+```http
+POST /api/close-ai/dashboard/narrative
+```
+
+Generiert eine KI-basierte narrative Zusammenfassung der Dashboard-Metriken. Senden Sie das Dashboard-Datenobjekt und optional den Workspace und die Sprache.
+
+#### Body-Parameter
+
+<ParamField body="account" param-type="string" required="true">
+
+Workspace-Slug.
+
+</ParamField>
+
+<ParamField body="data" param-type="object" required="true">
+
+Dashboard-Metrikobjekt. Üblicherweise die Antwort von `GET /api/close-ai/dashboard`.
+
+</ParamField>
+
+<ParamField body="days" param-type="integer" required="false">
+
+Anzahl der Tage, die die Dashboard-Daten abdecken. Positive Ganzzahl bis `365`.
+
+</ParamField>
+
+<ParamField body="lang" param-type="string" required="false">
+
+Sprachcode für die Narrative (2–8 Zeichen). Standardwert ist die Workspace-Sprache.
+
+</ParamField>
+
+#### Anfrage
+
+<CodeGroup tabs="cURL,JavaScript">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/close-ai/dashboard/narrative" \
+  -H "Content-Type: application/json" \
+  --data '{"account":"acme-sales","days":30,"lang":"de","data":{"kpis":{},"scores":{},"durationDistribution":{},"coaching":{},"objections":{},"questions":{},"personality":{},"language":{},"script":{},"members":[],"trends":[]}}' \
+  --cookie /tmp/talkturo-session-cookies.txt
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/close-ai/dashboard/narrative",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      account: "acme-sales",
+      days: 30,
+      lang: "de",
+      data: {
+        kpis: {},
+        scores: {},
+        durationDistribution: {},
+        coaching: {},
+        objections: {},
+        questions: {},
+        personality: {},
+        language: {},
+        script: {},
+        members: [],
+        trends: []
+      }
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data.narrative);
+```
+
+</CodeGroup>
+
+<Response>
+
+```json
+{
+  "narrative": {
+    "overview": {
+      "insights": [
+        { "title": "Starke Discovery-Leistung", "body": "Discovery-Scores stiegen wöchentlich um 12%." }
+      ],
+      "recommendations": ["Fokus auf Einwandbehandlung in kommenden Coaching-Sitzungen."]
+    },
+    "closescore": {},
+    "objections": {},
+    "questions": {},
+    "personality": {},
+    "language": {},
+    "coaching": {},
+    "script": {}
+  }
+}
+```
+
+</Response>
+
+#### Antwortfelder
+
+<ResponseField name="narrative" field-type="object">
+
+KI-generierte narrative Zusammenfassung über acht Bereiche: overview, closescore, objections, questions, personality, language, coaching und script.
+
+</ResponseField>
+
+<ResponseField name="narrative.overview" field-type="object">
+
+Übergeordnete Erkenntnisse und Empfehlungen.
+
+</ResponseField>
+
+<ResponseField name="narrative.overview.insights" field-type="array">
+
+Liste von Insight-Objekten, jeweils mit `title` und `body`.
+
+</ResponseField>
+
+<ResponseField name="narrative.overview.recommendations" field-type="array">
+
+Handlungsempfehlungen für das Team.
+
+</ResponseField>
+
+## Desktop-Status
+
+### Desktop-Zugriffsstatus abrufen
+
+```http
+GET /api/close-ai/desktop-status
+```
+
+Prüft, ob der aktuelle Benutzer über Close AI Desktop-Zugriff verfügt. Gibt die Abonnement-Quelle, den Plan, die Nutzung und die Anruflimits zurück.
+
+#### Anfrage
+
+<CodeGroup tabs="cURL,JavaScript">
+
+```bash
+curl "https://app.talkturo.com/api/close-ai/desktop-status" \
+  --cookie /tmp/talkturo-session-cookies.txt
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/close-ai/desktop-status",
+  {
+    credentials: "include"
+  }
+);
+
+const data = await response.json();
+console.log(data.status);
+```
+
+</CodeGroup>
+
+<Response>
+
+```json
+{
+  "ok": true,
+  "status": {
+    "source": "subscription",
+    "plan": "desktop_pro",
+    "has_access": true,
+    "calls_this_month": 3,
+    "calls_per_month": 10,
+    "account_slug": "acme-sales"
+  }
+}
+```
+
+</Response>
+
+#### Antwortfelder
+
+<ResponseField name="ok" field-type="boolean">
+
+Gibt an, ob der Benutzer authentifiziert ist und die Statusprüfung abgeschlossen wurde.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="object">
+
+Desktop-Zugriffsstatus. Vorhanden, wenn `ok` gleich `true` ist.
+
+</ResponseField>
+
+<ResponseField name="status.source" field-type="string">
+
+Abonnement-Quelle. Werte umfassen `subscription`, `standard`, `override`, `custom` oder `none`.
+
+</ResponseField>
+
+<ResponseField name="status.plan" field-type="string">
+
+Aktueller Desktop-Plan-Bezeichner.
+
+</ResponseField>
+
+<ResponseField name="status.has_access" field-type="boolean">
+
+Gibt an, ob der Benutzer Desktop-Zugriff hat.
+
+</ResponseField>
+
+<ResponseField name="status.calls_this_month" field-type="integer">
+
+Anzahl der in diesem Monat verwendeten Anrufe.
+
+</ResponseField>
+
+<ResponseField name="status.calls_per_month" field-type="integer">
+
+Monatliches Anruflimit des aktuellen Plans.
+
+</ResponseField>
+
+<ResponseField name="status.account_slug" field-type="string">
+
+Workspace-Slug, der mit dem Desktop-Zugriff verknüpft ist.
+
+</ResponseField>
+
+<Callout kind="info">
+
+Wenn der Benutzer nicht authentifiziert ist, gibt der Endpunkt `{ "ok": false, "reason": "unauthenticated" }` mit HTTP `200` zurück.
+
+</Callout>
+
 ## Skripte
 
 ### Skripte auflisten
@@ -1607,6 +1984,103 @@ console.log(data);
 Für `GET`, `POST` und `DELETE` ist der Workspace-Kontext über `account` erforderlich. Ohne den Parameter antwortet die API mit `{"error":"account_required"}`.
 
 </Callout>
+
+### Skript aus Text importieren
+
+```http
+POST /api/close-ai/scripts/import
+```
+
+Konvertiert Klartext-Vertriebsskript-Inhalte in ein strukturiertes Skriptobjekt mit Abschnitten und Prompts. Die Antwort wird nicht gespeichert. Verwenden Sie `POST /api/close-ai/scripts`, um das importierte Skript zu speichern.
+
+#### Body-Parameter
+
+<ParamField body="text" param-type="string" required="true">
+
+Klartext-Vertriebsskript zum Importieren. Muss mindestens 20 Zeichen enthalten. Wird auf 12.000 Zeichen gekürzt.
+
+</ParamField>
+
+<ParamField body="lang" param-type="string" required="false">
+
+Sprach-Hinweis für den Import. Wird akzeptiert, aber vom Parser nicht verwendet.
+
+</ParamField>
+
+#### Anfrage
+
+<CodeGroup tabs="cURL,JavaScript">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/close-ai/scripts/import" \
+  -H "Content-Type: application/json" \
+  --data '{"text":"Hallo, danke für die Zeit heute. Was treibt diese Initiative? Haben Sie ähnliche Lösungen bereits evaluiert? Lassen Sie mich zeigen, wie wir helfen können.","lang":"de"}' \
+  --cookie /tmp/talkturo-session-cookies.txt
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/close-ai/scripts/import",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      text: "Hallo, danke für die Zeit heute. Was treibt diese Initiative? Haben Sie ähnliche Lösungen bereits evaluiert? Lassen Sie mich zeigen, wie wir helfen können.",
+      lang: "de"
+    })
+  }
+);
+
+const data = await response.json();
+console.log(data.content);
+```
+
+</CodeGroup>
+
+<Response>
+
+```json
+{
+  "content": {
+    "sections": [
+      {
+        "id": "section_1",
+        "name": "Opening",
+        "type": "script",
+        "content": "Hallo, danke für die Zeit heute.",
+        "next": [],
+        "position": { "x": 160, "y": 0 }
+      }
+    ],
+    "prompts": []
+  }
+}
+```
+
+</Response>
+
+#### Antwortfelder
+
+<ResponseField name="content" field-type="object">
+
+Strukturierter Skriptinhalt mit `sections`- und `prompts`-Arrays, bereit für `POST /api/close-ai/scripts`.
+
+</ResponseField>
+
+<ResponseField name="content.sections" field-type="array">
+
+Geparste Skriptabschnitte. Jeder Abschnitt enthält `id`, `name`, `type`, `content`, `next` und `position`.
+
+</ResponseField>
+
+<ResponseField name="content.prompts" field-type="array">
+
+Aus dem Text extrahierte Prompts. Kann leer sein.
+
+</ResponseField>
 
 ## Fehlerbehandlung
 

@@ -23,6 +23,17 @@ Alle Desktop-Auth-Routen unterstützen `OPTIONS`-Preflight-Anfragen und geben pe
 | `POST` | `/api/auth/refresh` | Keine | Refresh-Token gegen ein neues Token-Paar eintauschen |
 | `GET` | `/api/auth/callback` | Browser-Flow | OAuth-Callback-Handler |
 | `GET` | `/api/auth/confirm` | Browser-Flow | E-Mail-Bestätigungs-Handler |
+| `GET` | `/api/desktop/download` | Keine | Weiterleitung zum neuesten Desktop-Installer für das angeforderte Betriebssystem |
+| `POST` | `/api/desktop/usage` | Bearer JWT | Desktop-Sitzung melden und verbleibendes Anrufkontingent prüfen |
+| `GET` | `/api/desktop/prompts` | Session-Cookie | Workspace-Prompt-Overrides auflisten |
+| `PUT` | `/api/desktop/prompts` | Session-Cookie | Workspace-Prompt-Override speichern oder löschen |
+| `POST` | `/api/desktop/prompts/improve` | Session-Cookie | KI-verbesserte Version eines Prompts generieren |
+| `GET` | `/api/desktop/prompts/resolved` | Bearer JWT | Effektive Prompt-Konfiguration für den aktuellen Benutzer abrufen |
+| `GET` | `/api/desktop/sales-script` | Bearer JWT | Aktives Vertriebsskript für den aktuellen Workspace abrufen |
+| `GET` | `/api/desktop/script-templates` | Bearer JWT | Veröffentlichte Skriptvorlagen auflisten |
+| `POST` | `/api/desktop/script-templates` | Bearer JWT | Skript aus einer Vorlage erstellen |
+| `GET` | `/api/desktop/scripts` | Bearer JWT | Skripte für den aktuellen Workspace auflisten |
+| `PUT` | `/api/desktop/scripts` | Bearer JWT | Aktives Skript aktivieren oder löschen |
 
 ## Authentifizierungsmodell
 
@@ -333,6 +344,527 @@ Von Supabase zurückgegebener Token-Typ.
 
 <ResponseField name="data.user" field-type="object" required="true">
 Authentifizierter Benutzer, der der aktualisierten Sitzung zugeordnet ist.
+</ResponseField>
+
+## Desktop-API-Endpunkte
+
+Die Desktop-Endpunkte liefern Installer, Nutzungsinformationen, Prompts und Vertriebsskripte für die Desktop-App. Verwenden Sie je nach Endpunkt entweder ein Bearer-Token oder die bestehende Browser-Session.
+
+## GET /api/desktop/download
+
+Leitet auf den neuesten Desktop-Installer für das angeforderte Betriebssystem weiter.
+
+### Query-Parameter
+
+<ParamField query="os" param-type="string" required="true" enum="mac,win">
+Betriebssystem des Installers: `mac` für macOS oder `win` für Windows.
+</ParamField>
+
+### Antwort
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -i "https://api.talkturo.com/api/desktop/download?os=mac"
+```
+</Request>
+
+<Response tabs="302,400" default-tab="1">
+```http
+HTTP/1.1 302 Found
+Location: https://downloads.talkturo.com/desktop/latest-macos.dmg
+```
+
+```json
+{
+  "error": "Invalid operating system"
+}
+```
+</Response>
+
+<ResponseField name="Location" field-type="string">
+Zieladresse des neuesten Installers bei einer erfolgreichen Weiterleitung.
+</ResponseField>
+
+<ResponseField name="error" field-type="string">
+Fehlermeldung bei einem unbekannten Wert für `os`. Die API gibt HTTP `400` zurück.
+</ResponseField>
+
+## POST /api/desktop/usage
+
+Meldet eine Desktop-Sitzung und prüft das verbleibende Anrufkontingent des Benutzers.
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer-Access-Token in der Form `Bearer eyJ...`.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="session_id" param-type="string" required="true">
+Eindeutige Kennung der Desktop-Sitzung.
+</ParamField>
+
+<ParamField body="duration_seconds" param-type="integer">
+Dauer der Sitzung in Sekunden.
+</ParamField>
+
+<ParamField body="kind" param-type="string">
+Optionale Art der Sitzung.
+</ParamField>
+
+### Antwort
+
+<Request tabs="cURL" default-tab="1">
+```bash
+curl -X POST "https://api.talkturo.com/api/desktop/usage" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example_access" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "session_7f3a91c2",
+    "duration_seconds": 1840,
+    "kind": "coaching"
+  }'
+```
+</Request>
+
+<Response tabs="200,402" default-tab="1">
+```json
+{
+  "ok": true,
+  "calls_this_month": 3,
+  "calls_remaining": 7
+}
+```
+
+```json
+{
+  "ok": false,
+  "reason": "over_cap",
+  "upgrade_url": "/home",
+  "calls_this_month": 11,
+  "calls_limit": 10
+}
+```
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Gibt an, ob die Sitzung erfolgreich gemeldet wurde.
+</ResponseField>
+
+<ResponseField name="calls_this_month" field-type="integer" required="true">
+Anzahl der Anrufe im aktuellen Abrechnungsmonat.
+</ResponseField>
+
+<ResponseField name="calls_remaining" field-type="integer">
+Verbleibendes Kontingent. Unbegrenzte Pläne geben `-1` zurück.
+</ResponseField>
+
+<ResponseField name="reason" field-type="string">
+Bei HTTP `402` der Grund für die Ablehnung, beispielsweise `over_cap`.
+</ResponseField>
+
+<ResponseField name="upgrade_url" field-type="string">
+Relative URL zur Seite, auf der der Benutzer seinen Plan upgraden kann.
+</ResponseField>
+
+<ResponseField name="calls_limit" field-type="integer">
+Maximale Anzahl der Anrufe im aktuellen Abrechnungsmonat.
+</ResponseField>
+
+## GET /api/desktop/prompts
+
+Listet die Prompt-Overrides des angegebenen Workspaces und die globalen Prompt-Werte auf.
+
+### Authentifizierung und Query-Parameter
+
+<ParamField header="Cookie" param-type="string" required="true">
+Session-Cookie der angemeldeten Browser-Session.
+</ParamField>
+
+<ParamField query="account" param-type="string" required="true">
+Slug des Workspaces, für den die Overrides abgerufen werden.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "account_id": "acct_8c42f1",
+  "workspace": {
+    "live_coaching": "Konzentriere dich auf nächste Schritte.",
+    "call_summary": null
+  },
+  "global": {
+    "live_coaching": "Gib während des Gesprächs kurze Hinweise.",
+    "call_summary": "Fasse die wichtigsten Entscheidungen zusammen."
+  }
+}
+```
+</Response>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Interne Kennung des angeforderten Workspaces.
+</ResponseField>
+
+<ResponseField name="workspace" field-type="object" required="true">
+Workspace-spezifische Prompt-Overrides. Ein Wert kann `null` sein.
+</ResponseField>
+
+<ResponseField name="global" field-type="object" required="true">
+Globale Prompts als Fallback für den Workspace.
+</ResponseField>
+
+## PUT /api/desktop/prompts
+
+Speichert ein Workspace-Prompt-Override oder löscht es, wenn der Inhalt leer oder `null` ist.
+
+### Authentifizierung, Query- und Body-Parameter
+
+<ParamField header="Cookie" param-type="string" required="true">
+Session-Cookie der angemeldeten Browser-Session.
+</ParamField>
+
+<ParamField query="account" param-type="string" required="true">
+Slug des Workspaces, für den das Override gespeichert oder gelöscht wird.
+</ParamField>
+
+<ParamField body="prompt_key" param-type="string" required="true">
+Schlüssel des Prompts, beispielsweise `live_coaching` oder `call_summary`.
+</ParamField>
+
+<ParamField body="content" param-type="string | null" required="true">
+Neuer Prompt-Inhalt. Ein leerer Wert oder `null` löscht das Override.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "ok": true
+}
+```
+
+```json
+{
+  "ok": true,
+  "cleared": true
+}
+```
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Gibt an, ob die Änderung erfolgreich gespeichert oder gelöscht wurde.
+</ResponseField>
+
+<ResponseField name="cleared" field-type="boolean">
+Wird als `true` zurückgegeben, wenn das Override gelöscht wurde.
+</ResponseField>
+
+## POST /api/desktop/prompts/improve
+
+Generiert eine KI-verbesserte Version eines Prompts, ohne das Ergebnis zu speichern.
+
+### Authentifizierung und Body-Parameter
+
+<ParamField header="Cookie" param-type="string" required="true">
+Session-Cookie der angemeldeten Browser-Session.
+</ParamField>
+
+<ParamField body="prompt" param-type="string" required="true">
+Der zu verbessernde Prompt.
+</ParamField>
+
+<ParamField body="instruction" param-type="string" required="true">
+Anweisung, wie die KI den Prompt überarbeiten soll.
+</ParamField>
+
+<ParamField body="promptName" param-type="string">
+Optionale Bezeichnung des Prompts für die Verbesserung.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "text": "Führe den Benutzer mit kurzen, konkreten Hinweisen zum nächsten sinnvollen Schritt."
+}
+```
+</Response>
+
+<ResponseField name="text" field-type="string" required="true">
+KI-generierte verbesserte Version des Prompts. Der Text wird nicht gespeichert.
+</ResponseField>
+
+## GET /api/desktop/prompts/resolved
+
+Gibt die effektive Prompt-Konfiguration für den aktuellen Benutzer und Workspace zurück.
+
+### Authentifizierung und Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer-Access-Token in der Form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optionaler Workspace-Slug, für den die Prompts aufgelöst werden.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "account_id": "acct_8c42f1",
+  "prompts": {
+    "live_coaching": "Führe den Benutzer mit kurzen Hinweisen.",
+    "call_summary": null
+  }
+}
+```
+</Response>
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die effektive Konfiguration ermittelt wurde.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Interne Kennung des verwendeten Workspaces.
+</ResponseField>
+
+<ResponseField name="prompts" field-type="object" required="true">
+Effektive Prompts. Die Auflösung erfolgt in der Reihenfolge Workspace-Override, globaler Prompt, `null`.
+</ResponseField>
+
+## GET /api/desktop/sales-script
+
+Ruft das aktive Vertriebsskript des aktuellen Workspaces ab.
+
+### Authentifizierung und Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer-Access-Token in der Form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optionaler Workspace-Slug.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "script": {
+    "id": "script_4d91a7",
+    "name": "Enterprise Discovery",
+    "content": {
+      "opening": "Welche Ziele möchten Sie in diesem Quartal erreichen?"
+    }
+  }
+}
+```
+
+```json
+{
+  "script": null
+}
+```
+</Response>
+
+<ResponseField name="script" field-type="object | null" required="true">
+Aktives Vertriebsskript oder `null`, wenn für den Workspace kein Skript aktiviert ist.
+</ResponseField>
+
+<ResponseField name="script.id" field-type="string">
+Eindeutige Kennung des Skripts.
+</ResponseField>
+
+<ResponseField name="script.name" field-type="string">
+Name des Skripts.
+</ResponseField>
+
+<ResponseField name="script.content" field-type="object">
+Inhalt und Struktur des Vertriebsskripts.
+</ResponseField>
+
+## GET /api/desktop/script-templates
+
+Listet die veröffentlichten Skriptvorlagen auf.
+
+### Authentifizierung
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer-Access-Token in der Form `Bearer eyJ...`.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "templates": [
+    {
+      "id": "template_2b7c19",
+      "name": "Discovery Call"
+    }
+  ]
+}
+```
+</Response>
+
+<ResponseField name="templates" field-type="array" required="true">
+Liste der veröffentlichten Skriptvorlagen.
+</ResponseField>
+
+<ResponseField name="templates[].id" field-type="string" required="true">
+Eindeutige Kennung der Vorlage.
+</ResponseField>
+
+<ResponseField name="templates[].name" field-type="string" required="true">
+Anzeigename der Vorlage.
+</ResponseField>
+
+## POST /api/desktop/script-templates
+
+Erstellt ein neues Skript aus einer veröffentlichten Vorlage.
+
+### Authentifizierung, Header und Body-Parameter
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer-Access-Token in der Form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optionaler Workspace-Slug, in dem das Skript erstellt wird.
+</ParamField>
+
+<ParamField body="templateId" param-type="string" required="true">
+Kennung der veröffentlichten Vorlage.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "script": {
+    "id": "script_4d91a7",
+    "name": "Discovery Call",
+    "is_active": true
+  }
+}
+```
+</Response>
+
+<ResponseField name="script" field-type="object" required="true">
+Das aus der Vorlage erstellte Skript.
+</ResponseField>
+
+<ResponseField name="script.id" field-type="string" required="true">
+Eindeutige Kennung des neuen Skripts.
+</ResponseField>
+
+<ResponseField name="script.name" field-type="string" required="true">
+Name des erstellten Skripts.
+</ResponseField>
+
+<ResponseField name="script.is_active" field-type="boolean" required="true">
+Gibt an, ob das neue Skript aktiv ist.
+</ResponseField>
+
+## GET /api/desktop/scripts
+
+Listet die Skripte des aktuellen Workspaces einschließlich ihres Aktivierungsstatus auf.
+
+### Authentifizierung und Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer-Access-Token in der Form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optionaler Workspace-Slug.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "scripts": [
+    {
+      "id": "script_4d91a7",
+      "name": "Discovery Call",
+      "is_active": true
+    }
+  ]
+}
+```
+</Response>
+
+<ResponseField name="scripts" field-type="array" required="true">
+Liste der Skripte im aktuellen Workspace.
+</ResponseField>
+
+<ResponseField name="scripts[].id" field-type="string" required="true">
+Eindeutige Kennung des Skripts.
+</ResponseField>
+
+<ResponseField name="scripts[].name" field-type="string" required="true">
+Name des Skripts.
+</ResponseField>
+
+<ResponseField name="scripts[].is_active" field-type="boolean" required="true">
+Gibt an, ob das Skript derzeit aktiv ist.
+</ResponseField>
+
+## PUT /api/desktop/scripts
+
+Aktiviert ein Skript oder löscht die aktuelle Aktivierung, wenn keine Skript-ID angegeben wird.
+
+### Authentifizierung, Header und Body-Parameter
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer-Access-Token in der Form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optionaler Workspace-Slug.
+</ParamField>
+
+<ParamField body="id" param-type="string">
+ID des zu aktivierenden Skripts. Lassen Sie das Feld weg, um die aktuelle Aktivierung zu löschen.
+</ParamField>
+
+### Antwort
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "ok": true,
+  "activeId": "script_4d91a7"
+}
+```
+
+```json
+{
+  "ok": true,
+  "activeId": null
+}
+```
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Gibt an, ob die Aktivierung erfolgreich geändert wurde.
+</ResponseField>
+
+<ResponseField name="activeId" field-type="string | null" required="true">
+ID des aktivierten Skripts oder `null`, wenn keine Aktivierung besteht.
 </ResponseField>
 
 ## Browser-Handler

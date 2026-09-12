@@ -12,11 +12,14 @@ description: List TTS voices, clone custom voices, and retrieve voice provider m
 | `GET` | `/api/voice-providers/models` | List supported models for a voice provider | Public |
 | `GET` | `/api/voice-providers/voices` | List provider voices from legacy providers | Public, deprecated |
 | `GET` | `/api/voice-cloning` | List cloned voices for an account | Session cookie |
+| `GET` | `/api/voice-cloning/{voiceId}` | Get a specific cloned voice | Session cookie |
+| `PATCH` | `/api/voice-cloning/{voiceId}` | Update a cloned voice | Session cookie |
 | `DELETE` | `/api/voice-cloning/{voiceId}` | Delete a cloned voice | Session cookie |
 | `POST` | `/api/tts-voices/cartesia-preview` | Generate a Cartesia voice preview | Session cookie |
 | `POST` | `/api/tts-voices/dashscope-preview` | Generate a DashScope voice preview | Session cookie |
 | `POST` | `/api/tts-voices/inworld-preview` | Generate an Inworld voice preview | Session cookie |
 | `POST` | `/api/tts-voices/kugel-preview` | Generate a Kugel voice preview | Session cookie |
+| `POST` | `/api/tts-voices/gpt-live-preview` | Generate a GPT Live voice preview | Session cookie |
 
 <Callout kind="info">
 
@@ -515,6 +518,92 @@ The ID of the cloned voice to delete.
 Returns `true` when the cloned voice is deleted.
 </ResponseField>
 
+## Get a cloned voice
+
+Retrieve a specific cloned voice by its ID. Requires an authenticated session and account membership.
+
+### Endpoint
+
+`GET /api/voice-cloning/{voiceId}`
+
+### Path parameters
+
+<ParamField path="voiceId" param-type="string" required="true">
+The ID of the cloned voice to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" field-type="string">
+Unique voice record ID in Talkturo.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string">
+Voice provider name.
+</ResponseField>
+
+<ResponseField name="voice_id" field-type="string">
+Provider-specific voice identifier.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+Display name of the voice.
+</ResponseField>
+
+<ResponseField name="description" field-type="string">
+Short description of the voice.
+</ResponseField>
+
+<ResponseField name="language" field-type="string">
+Language code for the voice.
+</ResponseField>
+
+<ResponseField name="preview_url" field-type="string">
+Preview audio URL when available. May be `null`.
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object">
+Provider-specific metadata stored with the voice record.
+</ResponseField>
+
+<ResponseField name="voice_model" field-type="string">
+Provider model associated with the voice.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string">
+Owning account UUID for the cloned voice.
+</ResponseField>
+
+<ResponseField name="voice_type" field-type="string">
+Always `cloned` for this endpoint.
+</ResponseField>
+
+## Update a cloned voice
+
+Update the name or metadata of a cloned voice by its ID. Requires an authenticated session and account membership.
+
+### Endpoint
+
+`PATCH /api/voice-cloning/{voiceId}`
+
+### Path parameters
+
+<ParamField path="voiceId" param-type="string" required="true">
+The ID of the cloned voice to update.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="name" param-type="string" required="false">
+Updated display name for the cloned voice.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the voice is updated successfully.
+</ResponseField>
+
 ## Voice previews
 
 Generate preview audio for specific TTS providers. All preview endpoints require session authentication and return an audio response or a URL to the generated preview audio.
@@ -525,6 +614,7 @@ Generate preview audio for specific TTS providers. All preview endpoints require
 | `POST` | `/api/tts-voices/dashscope-preview` | DashScope |
 | `POST` | `/api/tts-voices/inworld-preview` | Inworld |
 | `POST` | `/api/tts-voices/kugel-preview` | Kugel/Fish |
+| `POST` | `/api/tts-voices/gpt-live-preview` | GPT Live |
 
 Each preview endpoint accepts a voice ID and preview text in the request body, generates a short audio sample, and returns the preview audio. Use these endpoints to let users audition voices before assigning them to an assistant.
 

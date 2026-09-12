@@ -25,10 +25,13 @@ Die Endpunkte auf dieser Seite verwenden unterschiedliche Authentifizierungsmode
 | `GET` | `/api/voice-providers/voices` | Legacy-Stimmenkatalog abrufen | Öffentlich, veraltet |
 | `GET` | `/api/voice-cloning` | Geklonte Stimmen für ein Konto auflisten | Session-Cookie |
 | `DELETE` | `/api/voice-cloning/{voiceId}` | Geklonte Stimme löschen | Session-Cookie |
+| `GET` | `/api/voice-cloning/{voiceId}` | Spezifische geklonte Stimme abrufen | Session-Cookie |
+| `PATCH` | `/api/voice-cloning/{voiceId}` | Geklonte Stimme aktualisieren | Session-Cookie |
 | `POST` | `/api/tts-voices/cartesia-preview` | Cartesia-Stimmvorschau generieren | Session-Cookie |
 | `POST` | `/api/tts-voices/dashscope-preview` | DashScope-Stimmvorschau generieren | Session-Cookie |
 | `POST` | `/api/tts-voices/inworld-preview` | Inworld-Stimmvorschau generieren | Session-Cookie |
 | `POST` | `/api/tts-voices/kugel-preview` | Kugel-Stimmvorschau generieren | Session-Cookie |
+| `POST` | `/api/tts-voices/gpt-live-preview` | GPT Live-Stimmvorschau generieren | Session-Cookie |
 
 ## GET /api/tts-voices
 
@@ -404,6 +407,100 @@ Gibt `true` zurück, wenn die geklonte Stimme gelöscht wurde.
 
 </ResponseField>
 
+## Geklonte Stimme abrufen
+
+Rufen Sie eine bestimmte geklonte Stimme anhand ihrer ID ab. Erfordert eine authentifizierte Sitzung und Kontomitgliedschaft.
+
+### Endpunkt
+
+`GET /api/voice-cloning/{voiceId}`
+
+### Pfadparameter
+
+<ParamField path="voiceId" param-type="string" required="true">
+
+Die ID der abzurufenden geklonten Stimme.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string">
+Eindeutige interne Kennung des Stimmeintrags.
+</ResponseField>
+
+<ResponseField name="provider" field-type="string">
+Name des TTS-Anbieters.
+</ResponseField>
+
+<ResponseField name="voice_id" field-type="string">
+Anbieterspezifische Stimmen-ID.
+</ResponseField>
+
+<ResponseField name="name" field-type="string">
+Anzeigename der Stimme.
+</ResponseField>
+
+<ResponseField name="description" field-type="string">
+Kurzbeschreibung der Stimme.
+</ResponseField>
+
+<ResponseField name="language" field-type="string">
+Sprachcode der Stimme.
+</ResponseField>
+
+<ResponseField name="preview_url" field-type="string">
+URL zu einer Hörprobe, falls verfügbar. Kann `null` sein.
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object">
+Anbieterspezifische Metadaten des Stimmeintrags.
+</ResponseField>
+
+<ResponseField name="voice_model" field-type="string">
+Zugehöriges Anbietermodell.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string">
+Konto-UUID der geklonten Stimme.
+</ResponseField>
+
+<ResponseField name="voice_type" field-type="string">
+Immer `cloned` für diesen Endpunkt.
+</ResponseField>
+
+## Geklonte Stimme aktualisieren
+
+Aktualisieren Sie den Namen oder die Metadaten einer geklonten Stimme anhand ihrer ID. Erfordert eine authentifizierte Sitzung und Kontomitgliedschaft.
+
+### Endpunkt
+
+`PATCH /api/voice-cloning/{voiceId}`
+
+### Pfadparameter
+
+<ParamField path="voiceId" param-type="string" required="true">
+
+Die ID der zu aktualisierenden geklonten Stimme.
+
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="name" param-type="string" required="false">
+
+Aktualisierter Anzeigename für die geklonte Stimme.
+
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt `true` zurück, wenn die Stimme erfolgreich aktualisiert wurde.
+
+</ResponseField>
+
 ## Stimmvorschauen
 
 Generieren Sie Vorschau-Audio für bestimmte TTS-Anbieter. Alle Vorschau-Endpunkte erfordern Session-Authentifizierung und geben eine Audio-Antwort oder eine URL zum generierten Vorschau-Audio zurück.
@@ -414,6 +511,7 @@ Generieren Sie Vorschau-Audio für bestimmte TTS-Anbieter. Alle Vorschau-Endpunk
 | `POST` | `/api/tts-voices/dashscope-preview` | DashScope |
 | `POST` | `/api/tts-voices/inworld-preview` | Inworld |
 | `POST` | `/api/tts-voices/kugel-preview` | Kugel/Fish |
+| `POST` | `/api/tts-voices/gpt-live-preview` | GPT Live |
 
 Jeder Vorschau-Endpunkt akzeptiert eine Stimmen-ID und Vorschautext im Request-Body, generiert eine kurze Audioprobe und gibt das Vorschau-Audio zurück. Verwenden Sie diese Endpunkte, um Benutzern das Anhören von Stimmen zu ermöglichen, bevor sie einem Assistenten zugewiesen werden.
 

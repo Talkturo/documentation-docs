@@ -23,6 +23,17 @@ All desktop auth routes support `OPTIONS` preflight requests and return permissi
 | `POST` | `/api/auth/refresh` | None | Exchange a refresh token for a new token pair |
 | `GET` | `/api/auth/callback` | Browser flow | OAuth callback handler |
 | `GET` | `/api/auth/confirm` | Browser flow | Email confirmation handler |
+| `GET` | `/api/desktop/download` | None | Redirect to the latest desktop installer for the requested OS |
+| `POST` | `/api/desktop/usage` | Bearer JWT | Report a desktop session and check remaining call quota |
+| `GET` | `/api/desktop/prompts` | Session cookie | List workspace prompt overrides |
+| `PUT` | `/api/desktop/prompts` | Session cookie | Save or clear a workspace prompt override |
+| `POST` | `/api/desktop/prompts/improve` | Session cookie | Generate an AI-improved version of a prompt |
+| `GET` | `/api/desktop/prompts/resolved` | Bearer JWT | Get the effective prompt configuration for the current user |
+| `GET` | `/api/desktop/sales-script` | Bearer JWT | Get the active sales script for the current workspace |
+| `GET` | `/api/desktop/script-templates` | Bearer JWT | List published script templates |
+| `POST` | `/api/desktop/script-templates` | Bearer JWT | Create a script from a template |
+| `GET` | `/api/desktop/scripts` | Bearer JWT | List scripts for the current workspace |
+| `PUT` | `/api/desktop/scripts` | Bearer JWT | Activate or clear the active script |
 
 ## Authentication model
 
@@ -333,6 +344,543 @@ Token type returned by Supabase.
 
 <ResponseField name="data.user" field-type="object" required="true">
 Authenticated user associated with the refreshed session.
+</ResponseField>
+
+## Desktop API endpoints
+
+These endpoints provide the desktop app with installer distribution, usage tracking, prompt configuration, and workspace sales-script management. Use the authentication method shown for each endpoint and send the optional workspace header when the request needs account-specific data.
+
+### GET /api/desktop/download
+
+Redirects to the latest desktop installer for the requested operating system.
+
+<ParamField query="os" param-type="string" required="true" enum="mac,win">
+Operating system for the installer download.
+</ParamField>
+
+<Request>
+```bash
+curl -i "https://api.talkturo.com/api/desktop/download?os=mac"
+```
+</Request>
+
+<Response tabs="302,400" default-tab="1">
+```http
+HTTP/1.1 302 Found
+Location: https://downloads.talkturo.com/desktop/latest-mac.dmg
+```
+
+```json
+{
+  "error": "Invalid operating system"
+}
+```
+</Response>
+
+<ResponseField name="Location" field-type="string">
+Installer URL returned with the `302` redirect.
+</ResponseField>
+
+### POST /api/desktop/usage
+
+Reports a desktop session and returns the number of calls remaining in the current monthly quota.
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer access token in the form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField body="session_id" param-type="string" required="true">
+Identifier for the desktop session.
+</ParamField>
+
+<ParamField body="duration_seconds" param-type="integer">
+Session duration in seconds.
+</ParamField>
+
+<ParamField body="kind" param-type="string">
+Session category reported by the desktop client.
+</ParamField>
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/desktop/usage" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example_access" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "sess_7f3a91c2",
+    "duration_seconds": 1840,
+    "kind": "live_coaching"
+  }'
+```
+</Request>
+
+<Response tabs="200,402" default-tab="1">
+```json
+{
+  "ok": true,
+  "calls_this_month": 3,
+  "calls_remaining": 7
+}
+```
+
+```json
+{
+  "ok": false,
+  "reason": "over_cap",
+  "upgrade_url": "/home",
+  "calls_this_month": 11,
+  "calls_limit": 10
+}
+```
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates whether the usage report was accepted.
+</ResponseField>
+
+<ResponseField name="calls_this_month" field-type="integer" required="true">
+Number of calls used during the current month.
+</ResponseField>
+
+<ResponseField name="calls_remaining" field-type="integer">
+Calls remaining in the current quota. Uncapped plans return `-1`.
+</ResponseField>
+
+<ResponseField name="reason" field-type="string">
+Returns `over_cap` with HTTP `402` when the plan quota is exceeded.
+</ResponseField>
+
+### GET /api/desktop/prompts
+
+Lists workspace prompt overrides alongside the global prompt values.
+
+<ParamField header="Cookie" param-type="string" required="true">
+Authenticated session cookie.
+</ParamField>
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug.
+</ParamField>
+
+<Request>
+```bash
+curl "https://api.talkturo.com/api/desktop/prompts?account=acme-sales" \
+  -H "Cookie: session=desktop_session_example"
+```
+</Request>
+
+<Response>
+```json
+{
+  "account_id": "acct_8c42f1",
+  "workspace": {
+    "live_coaching": "Focus on discovery questions.",
+    "call_summary": null
+  },
+  "global": {
+    "live_coaching": "Ask open-ended questions.",
+    "call_summary": "Summarize next steps and objections."
+  }
+}
+```
+</Response>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Workspace account identifier.
+</ResponseField>
+
+<ResponseField name="workspace" field-type="object" required="true">
+Prompt overrides saved for the workspace.
+</ResponseField>
+
+<ResponseField name="global" field-type="object" required="true">
+Global prompt values used as fallback values.
+</ResponseField>
+
+### PUT /api/desktop/prompts
+
+Saves a workspace prompt override or clears the override when the content is null or empty.
+
+<ParamField header="Cookie" param-type="string" required="true">
+Authenticated session cookie.
+</ParamField>
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug.
+</ParamField>
+
+<ParamField body="prompt_key" param-type="string" required="true">
+Prompt key to update, such as `live_coaching` or `call_summary`.
+</ParamField>
+
+<ParamField body="content" param-type="string or null" required="true">
+Replacement prompt content. Send null or an empty string to clear the workspace override.
+</ParamField>
+
+<Request>
+```bash
+curl -X PUT "https://api.talkturo.com/api/desktop/prompts?account=acme-sales" \
+  -H "Cookie: session=desktop_session_example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt_key": "live_coaching",
+    "content": "Focus on discovery questions."
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "ok": true
+}
+```
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the prompt override was saved or cleared.
+</ResponseField>
+
+<ResponseField name="cleared" field-type="boolean">
+Returns `true` when the supplied content cleared an existing override.
+</ResponseField>
+
+### POST /api/desktop/prompts/improve
+
+Generates an AI-improved prompt from the supplied prompt and instruction without persisting the result.
+
+<ParamField header="Cookie" param-type="string" required="true">
+Authenticated session cookie.
+</ParamField>
+
+<ParamField body="prompt" param-type="string" required="true">
+Prompt text to improve.
+</ParamField>
+
+<ParamField body="instruction" param-type="string" required="true">
+Instruction describing the requested improvement.
+</ParamField>
+
+<ParamField body="promptName" param-type="string">
+Optional name that provides context for the prompt.
+</ParamField>
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/desktop/prompts/improve" \
+  -H "Cookie: session=desktop_session_example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Help the rep guide the conversation.",
+    "instruction": "Make the guidance specific and concise.",
+    "promptName": "Live coaching"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "text": "Guide the representative with specific, concise coaching during the conversation."
+}
+```
+</Response>
+
+<ResponseField name="text" field-type="string" required="true">
+AI-generated prompt text. The endpoint does not save this value.
+</ResponseField>
+
+### GET /api/desktop/prompts/resolved
+
+Returns the effective prompts after applying workspace overrides, global values, and null fallbacks.
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer access token in the form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optional workspace account slug used to resolve account-specific prompts.
+</ParamField>
+
+<Request>
+```bash
+curl "https://api.talkturo.com/api/desktop/prompts/resolved" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example_access" \
+  -H "X-Talkturo-Account: acme-sales"
+```
+</Request>
+
+<Response>
+```json
+{
+  "success": true,
+  "account_id": "acct_8c42f1",
+  "prompts": {
+    "live_coaching": "Focus on discovery questions.",
+    "call_summary": null
+  }
+}
+```
+</Response>
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates that prompt resolution succeeded.
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+Resolved workspace account identifier.
+</ResponseField>
+
+<ResponseField name="prompts" field-type="object" required="true">
+Effective prompts after applying workspace, global, and null fallback values.
+</ResponseField>
+
+### GET /api/desktop/sales-script
+
+Returns the active sales script for the current workspace, or null when no script is active.
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer access token in the form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optional workspace account slug.
+</ParamField>
+
+<Request>
+```bash
+curl "https://api.talkturo.com/api/desktop/sales-script" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example_access" \
+  -H "X-Talkturo-Account: acme-sales"
+```
+</Request>
+
+<Response>
+```json
+{
+  "script": {
+    "id": "script_4b71c9",
+    "name": "Enterprise discovery",
+    "content": {
+      "opening": "Tell me about your current workflow."
+    }
+  }
+}
+```
+</Response>
+
+<ResponseField name="script" field-type="object or null" required="true">
+Active sales script, or null when the workspace has no active script.
+</ResponseField>
+
+<ResponseField name="script.id" field-type="string">
+Script identifier.
+</ResponseField>
+
+<ResponseField name="script.name" field-type="string">
+Script name.
+</ResponseField>
+
+<ResponseField name="script.content" field-type="object">
+Structured sales-script content.
+</ResponseField>
+
+### GET /api/desktop/script-templates
+
+Lists published script templates available to the authenticated user.
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer access token in the form `Bearer eyJ...`.
+</ParamField>
+
+<Request>
+```bash
+curl "https://api.talkturo.com/api/desktop/script-templates" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example_access"
+```
+</Request>
+
+<Response>
+```json
+{
+  "templates": [
+    {
+      "id": "template_92ac18",
+      "name": "SaaS qualification"
+    }
+  ]
+}
+```
+</Response>
+
+<ResponseField name="templates" field-type="array" required="true">
+Published script templates.
+</ResponseField>
+
+<ResponseField name="templates[].id" field-type="string" required="true">
+Template identifier.
+</ResponseField>
+
+<ResponseField name="templates[].name" field-type="string" required="true">
+Template name.
+</ResponseField>
+
+### POST /api/desktop/script-templates
+
+Creates a workspace script from a published template.
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer access token in the form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optional workspace account slug.
+</ParamField>
+
+<ParamField body="templateId" param-type="string" required="true">
+Identifier of the published template to use.
+</ParamField>
+
+<Request>
+```bash
+curl -X POST "https://api.talkturo.com/api/desktop/script-templates" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example_access" \
+  -H "X-Talkturo-Account: acme-sales" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "templateId": "template_92ac18"
+  }'
+```
+</Request>
+
+<Response>
+```json
+{
+  "script": {
+    "id": "script_4b71c9",
+    "name": "SaaS qualification",
+    "is_active": true
+  }
+}
+```
+</Response>
+
+<ResponseField name="script" field-type="object" required="true">
+Newly created workspace script.
+</ResponseField>
+
+<ResponseField name="script.id" field-type="string" required="true">
+Script identifier.
+</ResponseField>
+
+<ResponseField name="script.name" field-type="string" required="true">
+Script name copied from the template.
+</ResponseField>
+
+<ResponseField name="script.is_active" field-type="boolean" required="true">
+Indicates whether the new script is active.
+</ResponseField>
+
+### GET /api/desktop/scripts
+
+Lists scripts available in the current workspace.
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer access token in the form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optional workspace account slug.
+</ParamField>
+
+<Request>
+```bash
+curl "https://api.talkturo.com/api/desktop/scripts" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example_access" \
+  -H "X-Talkturo-Account: acme-sales"
+```
+</Request>
+
+<Response>
+```json
+{
+  "scripts": [
+    {
+      "id": "script_4b71c9",
+      "name": "Enterprise discovery",
+      "is_active": true
+    }
+  ]
+}
+```
+</Response>
+
+<ResponseField name="scripts" field-type="array" required="true">
+Scripts available in the workspace.
+</ResponseField>
+
+<ResponseField name="scripts[].id" field-type="string" required="true">
+Script identifier.
+</ResponseField>
+
+<ResponseField name="scripts[].name" field-type="string" required="true">
+Script name.
+</ResponseField>
+
+<ResponseField name="scripts[].is_active" field-type="boolean" required="true">
+Indicates whether the script is active for the workspace.
+</ResponseField>
+
+### PUT /api/desktop/scripts
+
+Activates a workspace script by ID or clears the active script when the ID is omitted.
+
+<ParamField header="Authorization" param-type="string" required="true">
+Bearer access token in the form `Bearer eyJ...`.
+</ParamField>
+
+<ParamField header="X-Talkturo-Account" param-type="string">
+Optional workspace account slug.
+</ParamField>
+
+<ParamField body="id" param-type="string">
+Script identifier to activate. Omit this field to clear the active script.
+</ParamField>
+
+<Request>
+```bash
+curl -X PUT "https://api.talkturo.com/api/desktop/scripts" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.desktop_example_access" \
+  -H "X-Talkturo-Account: acme-sales" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "script_4b71c9"
+  }'
+```
+</Request>
+
+<Response tabs="200 active,200 cleared" default-tab="1">
+```json
+{
+  "ok": true,
+  "activeId": "script_4b71c9"
+}
+```
+
+```json
+{
+  "ok": true,
+  "activeId": null
+}
+```
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the active script setting was updated.
+</ResponseField>
+
+<ResponseField name="activeId" field-type="string or null" required="true">
+Active script identifier, or null when the workspace has no active script.
 </ResponseField>
 
 ## Browser handlers

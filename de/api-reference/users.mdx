@@ -27,6 +27,8 @@ Diese Endpunkte decken das aktuelle Benutzerprofil, Abonnementdaten, Workspace-Z
   Diese Authentifizierung gilt für:
 
   - `GET /api/users/me`
+  - `GET /api/users/me/auto-update`
+  - `PUT /api/users/me/auto-update`
   - `PUT /api/users/me`
   - `GET /api/users/me/subscription`
   - `GET /api/users/me/workspaces`
@@ -124,6 +126,56 @@ curl -X PUT "https://app.talkturo.com/api/users/me" \
 <ParamField body="display_name" param-type="string" required="true">
 Neuer Anzeigename des aktuellen Benutzers.
 </ParamField>
+
+## Auto-Update-Präferenz abrufen
+
+Gibt zurück, ob automatische Desktop-App-Updates für den aktuellen Benutzer aktiviert sind.
+
+<Request>
+```bash
+curl -X GET "https://app.talkturo.com/api/users/me/auto-update" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.signature_example_7xk29"
+```
+</Request>
+
+<Response>
+```json
+{
+  "enabled": true
+}
+```
+</Response>
+
+### Antwortfelder von GET /api/users/me/auto-update
+
+<ResponseField name="enabled" field-type="boolean" required="true">
+Gibt an, ob automatische Desktop-Updates für den aktuellen Benutzer aktiviert sind.
+</ResponseField>
+
+## Auto-Update-Präferenz umschalten
+
+Schaltet die Auto-Update-Präferenz für den aktuellen Benutzer um.
+
+<Request>
+```bash
+curl -X PUT "https://app.talkturo.com/api/users/me/auto-update" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.signature_example_7xk29"
+```
+</Request>
+
+<Response>
+```json
+{
+  "enabled": true
+}
+```
+</Response>
+
+### Antwortfelder von PUT /api/users/me/auto-update
+
+<ResponseField name="enabled" field-type="boolean" required="true">
+Gibt an, ob automatische Desktop-Updates nach dem Umschalten aktiviert sind.
+</ResponseField>
 
 ## Abonnement abrufen
 

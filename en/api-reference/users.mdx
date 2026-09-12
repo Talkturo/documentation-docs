@@ -9,6 +9,8 @@ description: Manage user profiles, subscriptions, workspaces, and business setti
 | --- | --- | --- | --- |
 | `GET` | `/api/users/me` | Get the current desktop user profile | Desktop JWT |
 | `PUT` | `/api/users/me` | Update the current desktop user profile | Desktop JWT |
+| `GET` | `/api/users/me/auto-update` | Get the desktop auto-update preference | Desktop JWT |
+| `PUT` | `/api/users/me/auto-update` | Toggle the desktop auto-update preference | Desktop JWT |
 | `GET` | `/api/users/me/subscription` | Get subscription status, limits, and usage | Desktop JWT |
 | `GET` | `/api/users/me/workspaces` | List workspaces available to the current user | Desktop JWT |
 | `GET` | `/api/account/business` | Get a workspace business profile | Session cookie |
@@ -169,6 +171,102 @@ New display name for the current user.
 
 <ResponseField name="uid" field-type="string" required="true">
 Unique identifier for the updated user.
+</ResponseField>
+
+## Get auto-update preference
+
+Returns whether automatic desktop app updates are enabled for the current user.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request GET \
+  --url https://app.talkturo.com/api/users/me/auto-update \
+  --header "Authorization: Bearer dt_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/users/me/auto-update", {
+  method: "GET",
+  headers: {
+    Authorization: "Bearer dt_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,401" default-tab="1">
+```json
+{
+  "enabled": true
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+</Response>
+
+### Endpoint
+
+`GET https://app.talkturo.com/api/users/me/auto-update`
+
+### Response fields
+
+<ResponseField name="enabled" field-type="boolean" required="true">
+Whether desktop auto-updates are enabled for the current user.
+</ResponseField>
+
+## Toggle auto-update preference
+
+Toggles the desktop auto-update preference for the current user.
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+```bash
+curl --request PUT \
+  --url https://app.talkturo.com/api/users/me/auto-update \
+  --header "Authorization: Bearer dt_example_9xmk7q2r"
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/users/me/auto-update", {
+  method: "PUT",
+  headers: {
+    Authorization: "Bearer dt_example_9xmk7q2r"
+  }
+});
+
+const data = await response.json();
+console.log(data);
+```
+</Request>
+
+<Response tabs="200,401" default-tab="1">
+```json
+{
+  "enabled": true
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+</Response>
+
+### Endpoint
+
+`PUT https://app.talkturo.com/api/users/me/auto-update`
+
+### Response fields
+
+<ResponseField name="enabled" field-type="boolean" required="true">
+Whether desktop auto-updates are enabled after the toggle.
 </ResponseField>
 
 ## Get subscription
