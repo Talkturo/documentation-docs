@@ -1,0 +1,353 @@
+---
+title: Dateien
+description: Workspace-Dateien über die Talkturo API hochladen, abrufen und löschen — Dateispeicherung mit signierten URLs und kontobasierter Zugriffskontrolle verwalten.
+---
+
+## Dateien verwalten
+
+Laden Sie Dateien für einen Workspace hoch, erzeugen Sie kurzlebige signierte URLs zum Abrufen und löschen Sie Dateien über die Talkturo API.
+
+Alle Endpunkte erfordern eine authentifizierte Supabase-Websitzung. Der authentifizierte Benutzer muss entweder der primäre Eigentümer des Kontos sein oder über einen Eintrag in `accounts_memberships` Zugriff auf das Konto haben.
+
+<Callout kind="info">
+
+Dateien dürfen maximal 25 MB groß sein. Die API gibt weder den internen `storage_path` noch eine öffentliche URL zurück.
+
+</Callout>
+
+<Columns cols={1}>
+
+<Card title="API-Übersicht" href="/de/api-reference/overview" icon="book-open">
+
+Grundlagen zu Basis-URL, Authentifizierung und Antwortformaten der Talkturo API.
+
+</Card>
+
+</Columns>
+
+## Datei hochladen
+
+`POST /api/files` lädt eine Datei in den angegebenen Workspace hoch. Senden Sie die Daten als `multipart/form-data`.
+
+### Anforderung
+
+<ParamField body="file" param-type="File" required="true">
+
+Die hochzuladende Datei. Die maximale Dateigröße beträgt 25 MB.
+
+</ParamField>
+
+<ParamField body="accountId" param-type="string" required="true">
+
+Die ID des Zielkontos oder Workspace.
+
+</ParamField>
+
+<ParamField body="displayName" param-type="string" required="false">
+
+Optionaler Anzeigename der Datei. Wenn Sie keinen Wert angeben, verwendet die API den ursprünglichen Dateinamen.
+
+</ParamField>
+
+<Request tabs="JavaScript">
+
+```javascript
+const formData = new FormData();
+formData.append("file", selectedFile);
+formData.append("accountId", "acc_7f3a91c2");
+formData.append("displayName", "Produktleitfaden.pdf");
+
+const response = await fetch("/api/files", {
+  method: "POST",
+  credentials: "include",
+  body: formData
+});
+
+const result = await response.json();
+console.log(result);
+```
+
+</Request>
+
+### Antwort
+
+Bei erfolgreicher Erstellung gibt die API die Metadaten der Datei zurück.
+
+<Response tabs="200">
+
+```json
+{
+  "data": {
+    "id": "file_8c4d2e91",
+    "name": "Produktleitfaden.pdf",
+    "size": 184320,
+    "file_type": "application/pdf",
+    "created_at": "2026-09-12T14:32:18.000Z",
+    "account_id": "acc_7f3a91c2"
+  }
+}
+```
+
+</Response>
+
+<ResponseField name="data.id" field-type="string" required="true">
+
+Eindeutige ID der Datei.
+
+</ResponseField>
+
+<ResponseField name="data.name" field-type="string" required="true">
+
+Anzeigename der Datei. Das Feld enthält `displayName` oder, falls nicht angegeben, den ursprünglichen Dateinamen.
+
+</ResponseField>
+
+<ResponseField name="data.size" field-type="number" required="true">
+
+Dateigröße in Bytes.
+
+</ResponseField>
+
+<ResponseField name="data.file_type" field-type="string" required="true">
+
+MIME-Typ der Datei, zum Beispiel `application/pdf`.
+
+</ResponseField>
+
+<ResponseField name="data.created_at" field-type="string" required="true">
+
+Zeitpunkt der Erstellung als ISO-8601-Zeitstempel.
+
+</ResponseField>
+
+<ResponseField name="data.account_id" field-type="string" required="true">
+
+ID des Kontos, dem die Datei zugeordnet ist.
+
+</ResponseField>
+
+### Fehler
+
+<Response tabs="400,403,500">
+
+```json
+{
+  "error": "file and accountId are required"
+}
+```
+
+```json
+{
+  "error": "File is too large (max 25 MB)."
+}
+```
+
+```json
+{
+  "error": "Unauthorized — no access to this workspace"
+}
+```
+
+```json
+{
+  "error": "Storage or database operation failed"
+}
+```
+
+</Response>
+
+| Status | Ursache |
+|---|---|
+| `400` | `file` oder `accountId` fehlt, oder die Datei überschreitet 25 MB. |
+| `403` | Die Sitzung hat keinen Zugriff auf den angegebenen Workspace. |
+| `500` | Beim Speichern der Datei oder der Metadaten ist ein Fehler aufgetreten. |
+
+## Signierte Datei-URL abrufen
+
+`GET /api/files` erzeugt eine signierte Supabase-Storage-URL für eine Datei. Die URL ist 10 Minuten gültig.
+
+### Abfrageparameter
+
+<ParamField query="fileId" param-type="string" required="true">
+
+ID der abzurufenden Datei.
+
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="true">
+
+ID des Kontos oder Workspace, dem die Datei zugeordnet ist.
+
+</ParamField>
+
+<Request tabs="JavaScript">
+
+```javascript
+const params = new URLSearchParams({
+  fileId: "file_8c4d2e91",
+  accountId: "acc_7f3a91c2"
+});
+
+const response = await fetch(`/api/files?${params}`, {
+  method: "GET",
+  credentials: "include"
+});
+
+const result = await response.json();
+window.open(result.url, "_blank");
+```
+
+</Request>
+
+### Antwort
+
+<Response tabs="200">
+
+```json
+{
+  "url": "https://storage.example.invalid/object/sign/files/account/file_8c4d2e91?token=temporary-signature"
+}
+```
+
+</Response>
+
+<ResponseField name="url" field-type="string" required="true">
+
+Signierte URL zum Abrufen der Datei. Die URL ist 10 Minuten gültig und darf danach nicht weiterverwendet werden.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+Speichern Sie die signierte URL nicht dauerhaft. Fordern Sie eine neue URL an, sobald die bestehende URL abgelaufen ist.
+
+</Callout>
+
+### Fehler
+
+<Response tabs="400,403,404,500">
+
+```json
+{
+  "error": "fileId and accountId are required"
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "File not found"
+}
+```
+
+```json
+{
+  "error": "Could not sign URL"
+}
+```
+
+</Response>
+
+| Status | Ursache |
+|---|---|
+| `400` | `fileId` oder `accountId` fehlt. |
+| `403` | Die Sitzung hat keinen Zugriff auf den Workspace. |
+| `404` | Die Datei existiert nicht oder gehört nicht zum angegebenen Konto. |
+| `500` | Die API konnte keine signierte URL erzeugen. |
+
+## Datei löschen
+
+`DELETE /api/files` löscht eine Datei aus dem Storage und entfernt den zugehörigen Datenbankeintrag.
+
+### Abfrageparameter
+
+<ParamField query="fileId" param-type="string" required="true">
+
+ID der zu löschenden Datei.
+
+</ParamField>
+
+<ParamField query="accountId" param-type="string" required="true">
+
+ID des Kontos oder Workspace, dem die Datei zugeordnet ist.
+
+</ParamField>
+
+<Request tabs="JavaScript">
+
+```javascript
+const params = new URLSearchParams({
+  fileId: "file_8c4d2e91",
+  accountId: "acc_7f3a91c2"
+});
+
+const response = await fetch(`/api/files?${params}`, {
+  method: "DELETE",
+  credentials: "include"
+});
+
+const result = await response.json();
+console.log(result);
+```
+
+</Request>
+
+### Antwort
+
+<Response tabs="200">
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+`true`, wenn das Storage-Objekt und der Datenbankeintrag gelöscht wurden.
+
+</ResponseField>
+
+### Fehler
+
+<Response tabs="400,403,404,500">
+
+```json
+{
+  "error": "fileId and accountId are required"
+}
+```
+
+```json
+{
+  "error": "Unauthorized — no access to this workspace"
+}
+```
+
+```json
+{
+  "error": "File not found"
+}
+```
+
+```json
+{
+  "error": "Database deletion failed"
+}
+```
+
+</Response>
+
+| Status | Ursache |
+|---|---|
+| `400` | `fileId` oder `accountId` fehlt. |
+| `403` | Die Sitzung hat keinen Zugriff auf den Workspace. |
+| `404` | Die Datei existiert nicht oder gehört nicht zum angegebenen Konto. |
+| `500` | Beim Löschen des Datenbankeintrags ist ein Fehler aufgetreten. |

@@ -1,0 +1,523 @@
+---
+title: CRM-Intelligence
+description: Konversations-Intelligence-Zusammenfassungen abrufen, ausgehende Anrufe programmatisch starten und ausgehende Assistenten mit zugewiesenen Telefonnummern über die Talkturo API auflisten.
+---
+
+## CRM-Daten und ausgehende Anrufe verwalten
+
+Verwenden Sie diese Endpunkte, um Konversations-Intelligence-Daten abzurufen, ausgehende Anrufe zu starten und verfügbare ausgehende Assistenten mit ihren Telefonnummern zu ermitteln.
+
+<Callout kind="info">
+
+Die Endpunkte verwenden je nach Route eine Supabase-Websitzung oder einen Talkturo API-Key. Senden Sie Authentifizierungsdaten im `Authorization`-Header, sofern der jeweilige Endpunkt dies voraussetzt.
+
+</Callout>
+
+## Konversations-Intelligence abrufen
+
+Rufen Sie eine Zusammenfassung der Konversations-Intelligence für einen Account und einen Datumsbereich ab.
+
+```http
+GET /api/crm/intelligence
+```
+
+### Authentifizierung
+
+Der Endpunkt erfordert eine gültige Supabase-Websitzung. Die Sitzung wird über das Supabase-Cookie des angemeldeten Benutzers geprüft.
+
+Der Benutzer muss außerdem Mitglied des Accounts sein, der über den Query-Parameter `account` angegeben wird. Der Wert von `account` ist ein Account-Slug, keine Account-ID.
+
+### Anfrageparameter
+
+<ParamField query="from" param-type="string" required="true">
+
+Startdatum des Zeitraums im Format `YYYY-MM-DD`. Der Wert wird unverändert an die Datenbankabfrage übergeben.
+
+</ParamField>
+
+<ParamField query="to" param-type="string" required="true">
+
+Enddatum des Zeitraums im Format `YYYY-MM-DD`. Der Wert wird unverändert an die Datenbankabfrage übergeben.
+
+</ParamField>
+
+<ParamField query="account" param-type="string" required="true">
+
+Account-Slug, über den der Account aufgelöst und die Mitgliedschaft des Benutzers geprüft wird.
+
+</ParamField>
+
+<ParamField query="campaign_id" param-type="string" required="false">
+
+Optionale Kampagnen-ID. Wenn der Parameter fehlt, wird der Wert als `null` an die Abfrage übergeben.
+
+</ParamField>
+
+<ParamField query="assistant_id" param-type="string" required="false">
+
+Optionale Assistant-ID. Wenn der Parameter fehlt, wird der Wert als `null` an die Abfrage übergeben.
+
+</ParamField>
+
+### Anfrage
+
+<Request tabs="cURL,JavaScript">
+
+```bash
+curl "https://api.talkturo.com/api/crm/intelligence?from=2026-09-01&to=2026-09-12&account=acme-sales&campaign_id=cmp_8f31a2&assistant_id=ast_4c92e1" \
+  -H "Cookie: sb-access-token=authenticated-session-token"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/crm/intelligence?from=2026-09-01&to=2026-09-12&account=acme-sales&campaign_id=cmp_8f31a2&assistant_id=ast_4c92e1",
+  {
+    headers: {
+      Cookie: "sb-access-token=authenticated-session-token"
+    }
+  }
+);
+
+const result = await response.json();
+console.log(result);
+```
+
+</Request>
+
+### Antwort
+
+Die Route gibt das Ergebnis der Datenbankfunktion `conversation_intelligence_summary` unverändert im Feld `data` zurück. Die konkreten Felder innerhalb von `data` hängen vom Ergebnis dieser Funktion ab.
+
+<Response tabs="200,400,401,403,404,500">
+
+```json
+{
+  "success": true,
+  "data": {},
+  "filters": {
+    "campaigns": [
+      {
+        "id": "cmp_8f31a2",
+        "name": "Produktdemo Q3"
+      }
+    ],
+    "assistants": [
+      {
+        "id": "ast_4c92e1",
+        "name": "Sales Assistant"
+      }
+    ]
+  }
+}
+```
+
+```json
+{
+  "error": "Missing required query params: from, to (YYYY-MM-DD)"
+}
+```
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+```json
+{
+  "error": "Account not found"
+}
+```
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+</Response>
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Anfrage erfolgreich verarbeitet wurde.
+
+</ResponseField>
+
+<ResponseField name="data" field-type="object" required="true">
+
+Rohes Ergebnis der Datenbankfunktion `conversation_intelligence_summary`. Die Route setzt das Feld auf ein leeres Objekt, wenn die Funktion kein Ergebnis zurückgibt.
+
+</ResponseField>
+
+<ResponseField name="filters" field-type="object" required="true">
+
+Enthält die für die Filterung verfügbaren Kampagnen und Assistenten.
+
+</ResponseField>
+
+<ResponseField name="filters.campaigns" field-type="array" required="true">
+
+Bis zu 100 nicht gelöschte Kampagnen des Accounts. Jedes Element enthält `id` und `name`.
+
+</ResponseField>
+
+<ResponseField name="filters.assistants" field-type="array" required="true">
+
+Bis zu 100 Assistenten des Accounts. Jedes Element enthält `id` und `name`.
+
+</ResponseField>
+
+<Callout kind="alert">
+
+Ein fehlender oder ungültiger Datumsbereich führt zu `400`. Ein nicht vorhandener Account führt zu `404`. Ohne Account-Mitgliedschaft gibt die Route `403` zurück.
+
+</Callout>
+
+## Ausgehenden Anruf starten
+
+Starten Sie einen ausgehenden Anruf mit einem bestimmten Assistant und einer Zielrufnummer.
+
+```http
+POST /api/crm/calls
+```
+
+### Authentifizierung
+
+Der Endpunkt akzeptiert:
+
+<Tabs>
+<Tab title="API-Key">
+
+Verwenden Sie einen Talkturo API-Key im `Authorization`-Header. Der API-Key muss an einen Account gebunden sein und den Scope `calls:create` besitzen. Wildcard-Berechtigungen sowie der Scope `calls:*` erfüllen diese Anforderung ebenfalls.
+
+```http
+Authorization: Bearer tk_live_example_7mQ2x9Kp4s
+```
+
+</Tab>
+<Tab title="Supabase-Sitzung">
+
+Verwenden Sie ein Supabase-Session-Token als Bearer-Token. Die Authentifizierung muss außerdem einen Account-Kontext bereitstellen, damit die Route den zu verwendenden Account ermitteln kann.
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.session.token
+```
+
+</Tab>
+</Tabs>
+
+### Anfragefelder
+
+<ParamField body="assistant_id" param-type="string" required="true">
+
+UUID des Assistants, der den ausgehenden Anruf ausführt. Der Assistant muss zum authentifizierten Account gehören und für ausgehende Anrufe aktiviert sein.
+
+</ParamField>
+
+<ParamField body="to_number" param-type="string" required="true">
+
+Zielrufnummer. Der Wert muss mindestens vier Zeichen enthalten und wird vom Dienst als E.164-Rufnummer normalisiert.
+
+</ParamField>
+
+<ParamField body="from_number" param-type="string" required="false">
+
+Optionale Absendernummer. Wenn Sie den Wert angeben, muss die Nummer aktiv und dem Assistant zugewiesen sein.
+
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+
+Optionale benutzerdefinierte Metadaten. Das Objekt wird als verschachtelte Benutzermetadaten an den Anrufdienst weitergegeben.
+
+</ParamField>
+
+### Anfrage
+
+<Request tabs="cURL,JavaScript">
+
+```bash
+curl -X POST "https://api.talkturo.com/api/crm/calls" \
+  -H "Authorization: Bearer tk_live_example_7mQ2x9Kp4s" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assistant_id": "8b7f2e35-4c8d-4c2a-9f15-2f3a6b7d9012",
+    "to_number": "+493012345678",
+    "from_number": "+493098765432",
+    "metadata": {
+      "lead_id": "lead_5d82c1",
+      "source": "crm"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/crm/calls", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_live_example_7mQ2x9Kp4s",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    assistant_id: "8b7f2e35-4c8d-4c2a-9f15-2f3a6b7d9012",
+    to_number: "+493012345678",
+    from_number: "+493098765432",
+    metadata: {
+      lead_id: "lead_5d82c1",
+      source: "crm"
+    }
+  })
+});
+
+const result = await response.json();
+console.log(result);
+```
+
+</Request>
+
+### Erfolgsantwort
+
+<Response tabs="200">
+
+```json
+{
+  "success": true,
+  "call": {
+    "room_name": "call_01J8K2M4N6P8Q0R2S4T6",
+    "sip_call_id": "sip_9f31c2",
+    "from_number": "+493098765432",
+    "to_number": "+493012345678"
+  }
+}
+```
+
+</Response>
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob der Anruf erfolgreich eingerichtet wurde.
+
+</ResponseField>
+
+<ResponseField name="call" field-type="object" required="true">
+
+Enthält die technischen Daten des eingerichteten Anrufs.
+
+</ResponseField>
+
+<ResponseField name="call.room_name" field-type="string" required="true">
+
+Name des LiveKit-Raums für den Anruf.
+
+</ResponseField>
+
+<ResponseField name="call.sip_call_id" field-type="string or null" required="true">
+
+SIP-ID des Anrufs. Das Feld kann `null` sein, wenn noch keine SIP-ID verfügbar ist.
+
+</ResponseField>
+
+<ResponseField name="call.from_number" field-type="string" required="true">
+
+Für den Anruf verwendete Absendernummer.
+
+</ResponseField>
+
+<ResponseField name="call.to_number" field-type="string" required="true">
+
+Normalisierte Zielrufnummer.
+
+</ResponseField>
+
+### Fehler
+
+Die Route gibt unter anderem folgende Fehler zurück:
+
+- `401`, wenn keine gültige Authentifizierung vorliegt oder kein Account-Kontext verfügbar ist.
+- `403`, wenn der API-Key den Scope `calls:create` nicht besitzt.
+- `400`, wenn der Request-Body ungültig ist, die Zielrufnummer nicht akzeptiert wird oder der Assistant nicht für ausgehende Anrufe konfiguriert ist.
+- `402`, wenn das Account-Guthaben für den Anruf nicht ausreicht.
+- `404`, wenn der Assistant nicht zum Account gehört.
+- `500`, wenn die LiveKit-Konfiguration fehlt oder die Einrichtung des Anrufs fehlschlägt.
+
+<Callout kind="alert">
+
+Eine angegebene `from_number` muss aktiv und dem Assistant zugewiesen sein. Wenn keine gültige aktive Assistant-Nummer existiert, kann der Anruf nicht gestartet werden.
+
+</Callout>
+
+## Ausgehende Assistenten auflisten
+
+Rufen Sie die für einen Account aktivierten ausgehenden Assistenten und ihre zugewiesenen Telefonnummern ab.
+
+```http
+GET /api/crm/outbound-assistants?teamId=account-id
+```
+
+### Authentifizierung
+
+Der Endpunkt erfordert eine gültige Supabase-Websitzung. Der Benutzer wird über `sessionClient.auth.getUser()` authentifiziert.
+
+### Anfrageparameter
+
+<ParamField query="teamId" param-type="string" required="true">
+
+ID des Accounts oder Teams, für das die ausgehenden Assistenten abgerufen werden.
+
+</ParamField>
+
+### Anfrage
+
+<Request tabs="cURL,JavaScript">
+
+```bash
+curl "https://api.talkturo.com/api/crm/outbound-assistants?teamId=7b1f2e35-4c8d-4c2a-9f15-2f3a6b7d9012" \
+  -H "Cookie: sb-access-token=authenticated-session-token"
+```
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/crm/outbound-assistants?teamId=7b1f2e35-4c8d-4c2a-9f15-2f3a6b7d9012",
+  {
+    headers: {
+      Cookie: "sb-access-token=authenticated-session-token"
+    }
+  }
+);
+
+const result = await response.json();
+console.log(result);
+```
+
+</Request>
+
+### Antwort
+
+<Response tabs="200">
+
+```json
+{
+  "success": true,
+  "assistants": [
+    {
+      "id": "8b7f2e35-4c8d-4c2a-9f15-2f3a6b7d9012",
+      "name": "Sales Assistant",
+      "outbound_enabled": true,
+      "group_id": "grp_31a8f2",
+      "group_name": "Vertrieb",
+      "assigned_numbers": [
+        {
+          "id": "num_9c42e1",
+          "phone_number": "+493098765432",
+          "assistant_id": "8b7f2e35-4c8d-4c2a-9f15-2f3a6b7d9012",
+          "status": "active"
+        }
+      ]
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Gibt an, ob die Abfrage erfolgreich war.
+
+</ResponseField>
+
+<ResponseField name="assistants" field-type="array" required="true">
+
+Liste der Assistenten des angegebenen Accounts, für die ausgehende Anrufe aktiviert sind. Die Liste ist nach dem Namen des Assistants aufsteigend sortiert.
+
+</ResponseField>
+
+<ResponseField name="assistants[].id" field-type="string" required="true">
+
+ID des Assistants.
+
+</ResponseField>
+
+<ResponseField name="assistants[].name" field-type="string" required="true">
+
+Name des Assistants.
+
+</ResponseField>
+
+<ResponseField name="assistants[].outbound_enabled" field-type="boolean" required="true">
+
+Gibt an, ob ausgehende Anrufe für den Assistant aktiviert sind. In dieser Antwort ist der Wert immer `true`.
+
+</ResponseField>
+
+<ResponseField name="assistants[].group_id" field-type="string or null" required="true">
+
+ID der zugehörigen Assistant-Gruppe, sofern vorhanden.
+
+</ResponseField>
+
+<ResponseField name="assistants[].group_name" field-type="string or null" required="true">
+
+Name der zugehörigen Assistant-Gruppe, sofern vorhanden.
+
+</ResponseField>
+
+<ResponseField name="assistants[].assigned_numbers" field-type="array" required="true">
+
+Aktive, nicht gelöschte Telefonnummern, die dem Assistant und dem angegebenen Team zugewiesen sind. Die Liste ist nach der Telefonnummer aufsteigend sortiert.
+
+</ResponseField>
+
+<ResponseField name="assistants[].assigned_numbers[].id" field-type="string" required="true">
+
+ID der zugewiesenen Telefonnummer.
+
+</ResponseField>
+
+<ResponseField name="assistants[].assigned_numbers[].phone_number" field-type="string" required="true">
+
+Zugewiesene Telefonnummer.
+
+</ResponseField>
+
+<ResponseField name="assistants[].assigned_numbers[].assistant_id" field-type="string or null" required="true">
+
+ID des Assistants, dem die Telefonnummer zugewiesen ist.
+
+</ResponseField>
+
+<ResponseField name="assistants[].assigned_numbers[].status" field-type="string or null" required="true">
+
+Status der Telefonnummer. Für die zurückgegebenen Nummern ist der Status `active`.
+
+</ResponseField>
+
+<Callout kind="info">
+
+Die Route berücksichtigt nur Assistenten mit `outbound_enabled=true`. Zugewiesene Telefonnummern müssen aktiv und nicht gelöscht sein.
+
+</Callout>
+
+### Fehler
+
+- `400`, wenn `teamId` fehlt.
+- `401`, wenn keine authentifizierte Sitzung vorhanden ist.
+- `500`, wenn das Laden der Assistenten oder Telefonnummern fehlschlägt.
+
+## Nächste Schritte
+
+<Columns cols={1}>
+
+<Card title="API-Übersicht" href="/de/api-reference/overview" icon="book-open">
+
+Lesen Sie mehr über Basis-URL, Authentifizierung, Antwortformate, Ratenlimits und weitere API-Endpunktgruppen.
+
+</Card>
+
+</Columns>

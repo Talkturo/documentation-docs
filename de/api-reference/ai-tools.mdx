@@ -1,0 +1,909 @@
+---
+title: KI-Werkzeuge
+description: Prompts verbessern und übersetzen, Opportunitäts- und Erfolgskriterien generieren, LLM-Chat-Completions ausführen und persönliche Prompt-Vorlagen über die Talkturo API verwalten.
+---
+
+## KI-Werkzeuge über die API nutzen
+
+Verwenden Sie die Talkturo API, um Prompts zu verbessern und zu übersetzen, strukturierte Prompts zu generieren, LLM-Chat-Completions auszuführen und persönliche Prompt-Vorlagen zu verwalten.
+
+<Callout kind="info">
+
+Die API verwendet zwei Authentifizierungsmethoden. Die Prompt-Endpunkte akzeptieren Talkturo API-Keys oder Supabase-Session-Token. Die Desktop-Endpunkte für LLMs und Prompt-Vorlagen erfordern ein Supabase-JWT im `Authorization`-Header.
+
+</Callout>
+
+### Authentifizierung
+
+<Tabs>
+<Tab title="API-Key oder Session-Token" icon="lock">
+
+Verwenden Sie diese Methode für `/api/improve-prompt`, `/api/translate-prompt`, `/api/generate-opportunity-prompt` und `/api/generate-success-prompt`.
+
+```http
+Authorization: Bearer tk_live_example_7xmk2q9p
+```
+
+Akzeptiert werden:
+
+- ein Talkturo API-Key mit dem Präfix `tk_live_` oder `tk_test_`
+- ein Supabase-Session-Token als Bearer-Token
+- eine authentifizierte Supabase-Cookie-Session
+
+</Tab>
+
+<Tab title="Desktop-JWT" icon="shield">
+
+Verwenden Sie ein gültiges Supabase-Access-Token für `/api/llm/chat` und die Prompt-Presets-Endpunkte.
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+```
+
+Das Token muss gültig und darf nicht abgelaufen sein.
+
+</Tab>
+</Tabs>
+
+## Prompt verbessern
+
+Verbessern Sie einen bestehenden Prompt, ohne dessen erkannte Eingabesprache zu ändern.
+
+### `POST /api/improve-prompt`
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/improve-prompt", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_live_example_7xmk2q9p",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    prompt: "Fasse die wichtigsten Kundeneinwände zusammen."
+  })
+});
+
+const result = await response.json();
+console.log(result.text);
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/improve-prompt" \
+  -H "Authorization: Bearer tk_live_example_7xmk2q9p" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Fasse die wichtigsten Kundeneinwände zusammen."
+  }'
+```
+
+</Request>
+
+<Response tabs="200,400,500" default-tab="1">
+
+```json
+{
+  "text": "Analysieren Sie die Kundengespräche und fassen Sie die drei häufigsten Einwände mit jeweils einem repräsentativen Zitat zusammen."
+}
+```
+
+```json
+{
+  "error": "No prompt provided"
+}
+```
+
+```json
+{
+  "error": "Failed to improve prompt"
+}
+```
+
+</Response>
+
+#### Body-Parameter
+
+<ParamField body="prompt" param-type="string" required="true">
+
+Der zu verbessernde Prompt. Der Endpoint prüft, ob ein wahrer Wert übergeben wurde.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="text" field-type="string" required="true">
+
+Der verbesserte Prompt. Die Antwort bleibt in der erkannten Eingabesprache.
+
+</ResponseField>
+
+## Prompt übersetzen
+
+Übersetzen Sie einen Prompt in eine angegebene Zielsprache.
+
+### `POST /api/translate-prompt`
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/translate-prompt", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_live_example_7xmk2q9p",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    prompt: "Summarize the key objections from each customer call.",
+    targetLanguage: "German"
+  })
+});
+
+const result = await response.json();
+console.log(result.text);
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/translate-prompt" \
+  -H "Authorization: Bearer tk_live_example_7xmk2q9p" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Summarize the key objections from each customer call.",
+    "targetLanguage": "German"
+  }'
+```
+
+</Request>
+
+<Response tabs="200,400,500" default-tab="1">
+
+```json
+{
+  "text": "Fassen Sie die wichtigsten Einwände aus jedem Kundengespräch zusammen."
+}
+```
+
+```json
+{
+  "error": "No target language provided"
+}
+```
+
+```json
+{
+  "error": "Failed to translate prompt"
+}
+```
+
+</Response>
+
+#### Body-Parameter
+
+<ParamField body="prompt" param-type="string" required="true">
+
+Der zu übersetzende Prompt. Der Endpoint prüft, ob ein wahrer Wert übergeben wurde.
+
+</ParamField>
+
+<ParamField body="targetLanguage" param-type="string" required="true">
+
+Die Zielsprache. Sie können beispielsweise `German` oder `de` übergeben.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="text" field-type="string" required="true">
+
+Der übersetzte Prompt.
+
+</ResponseField>
+
+## Opportunitäts-Prompt generieren
+
+Generieren Sie aus einem System-Prompt einen Prompt für die Bewertung von Vertriebsopportunitäten.
+
+### `POST /api/generate-opportunity-prompt`
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/generate-opportunity-prompt", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer tk_live_example_7xmk2q9p",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    systemPrompt: "Sie qualifizieren eingehende B2B-Leads für ein Vertriebsteam."
+  })
+});
+
+const result = await response.json();
+console.log(result.text);
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/generate-opportunity-prompt" \
+  -H "Authorization: Bearer tk_live_example_7xmk2q9p" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "systemPrompt": "Sie qualifizieren eingehende B2B-Leads für ein Vertriebsteam."
+  }'
+```
+
+</Request>
+
+<Response tabs="200,400,500" default-tab="1">
+
+```json
+{
+  "text": "Bewerten Sie, ob das Gespräch eine qualifizierte Vertriebsopportunität enthält. Berücksichtigen Sie Bedarf, Budget, Entscheidungsbefugnis und den geplanten Zeitrahmen."
+}
+```
+
+```json
+{
+  "error": "No system prompt provided"
+}
+```
+
+```json
+{
+  "error": "Failed to generate prompt"
+}
+```
+
+</Response>
+
+#### Body-Parameter
+
+<ParamField body="systemPrompt" param-type="string" required="true">
+
+Der System-Prompt, aus dem der Opportunitäts-Prompt generiert wird.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="text" field-type="string" required="true">
+
+Der generierte Opportunitäts-Prompt.
+
+</ResponseField>
+
+## Erfolgskriterien-Prompt generieren
+
+Generieren Sie aus einem System-Prompt einen Prompt zur Definition von Erfolgskriterien.
+
+### `POST /api/generate-success-prompt`
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/generate-success-prompt?accountSlug=acme-sales",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer tk_live_example_7xmk2q9p",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      "systemPrompt": "Sie analysieren Gespräche eines Customer-Success-Teams."
+    })
+  }
+);
+
+const result = await response.json();
+console.log(result.text);
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/generate-success-prompt?accountSlug=acme-sales" \
+  -H "Authorization: Bearer tk_live_example_7xmk2q9p" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "systemPrompt": "Sie analysieren Gespräche eines Customer-Success-Teams."
+  }'
+```
+
+</Request>
+
+<Response tabs="200,400,500" default-tab="1">
+
+```json
+{
+  "text": "Bestimmen Sie, ob der Kunde sein Ziel erreicht hat. Prüfen Sie, ob das Anliegen gelöst wurde, nächste Schritte vereinbart wurden und ein konkreter Mehrwert erkennbar ist."
+}
+```
+
+```json
+{
+  "error": "No system prompt provided"
+}
+```
+
+```json
+{
+  "error": "Failed to generate the success definition"
+}
+```
+
+</Response>
+
+#### Body-Parameter
+
+<ParamField body="systemPrompt" param-type="string" required="true">
+
+Der System-Prompt, aus dem der Prompt für Erfolgskriterien generiert wird.
+
+</ParamField>
+
+#### Authentifizierungskontext
+
+Bei API-Key-Aufrufen wird der Account über den API-Key bestimmt. Bei Session-Token-Aufrufen müssen Sie `accountSlug` als Query-Parameter übergeben. Bei Cookie-Sessions benötigt die Authentifizierung entweder `accountSlug` oder `teamId` als Query-Parameter oder Body-Feld.
+
+<ParamField query="accountSlug" param-type="string">
+
+Der Account-Slug. Er kann für Session-Token-Aufrufe erforderlich sein.
+
+</ParamField>
+
+<ParamField query="teamId" param-type="string">
+
+Die Account- oder Team-ID. Sie kann für Cookie-Session-Aufrufe anstelle von `accountSlug` erforderlich sein.
+
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="text" field-type="string" required="true">
+
+Der generierte Prompt für die Erfolgskriterien.
+
+</ResponseField>
+
+## LLM-Chat-Completions
+
+Führen Sie OpenAI-kompatible Chat-Completions mit einer zugelassenen Modell-ID aus. Sie können die Antwort als vollständiges JSON-Dokument oder als Server-Sent Events streamen.
+
+### `POST /api/llm/chat`
+
+Der Endpoint erfordert ein Desktop-Supabase-JWT. Die URL lautet `/api/llm/chat`; verwenden Sie nicht `/api/desktop/llm/chat`.
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/llm/chat", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: "Sie sind ein Assistent für Gesprächsanalysen."
+      },
+      {
+        role: "user",
+        content: "Fassen Sie die wichtigsten nächsten Schritte zusammen."
+      }
+    ]
+  })
+});
+
+const result = await response.json();
+console.log(result.choices[0].message.content);
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/llm/chat" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Sie sind ein Assistent für Gesprächsanalysen."
+      },
+      {
+        "role": "user",
+        "content": "Fassen Sie die wichtigsten nächsten Schritte zusammen."
+      }
+    ]
+  }'
+```
+
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "id": "chatcmpl_example_8f3k",
+  "object": "chat.completion",
+  "created": 1735689600,
+  "model": "gpt-4o-mini",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Die nächsten Schritte sind die Terminbestätigung und die Zusendung des Angebots."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 42,
+    "completion_tokens": 18,
+    "total_tokens": 60
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "messages required"
+}
+```
+
+</Response>
+
+#### Body-Parameter
+
+<ParamField body="model" param-type="string" required="true" enum="gpt-4.1,gpt-4.1-proxied,gpt-4o,gpt-4o-proxied,gpt-4o-mini,gpt-4o-mini-proxied,gpt-4.1-nano,gpt-4.1-nano-proxied,gpt-5-nano,gpt-5-nano-proxied,gpt-4o-mini-transcribe">
+
+Die Modell-ID. Der Wert muss in der Zulassungsliste enthalten sein. Bei Modellnamen mit dem Suffix `-proxied` entfernt Talkturo das Suffix vor dem Aufruf von OpenAI.
+
+</ParamField>
+
+<ParamField body="messages" param-type="array" required="true">
+
+Ein nicht leeres Array mit OpenAI-kompatiblen Chat-Nachrichten.
+
+</ParamField>
+
+<ParamField body="stream" param-type="boolean">
+
+Steuert, ob die Antwort gestreamt wird. Der Standardwert ist `false`.
+
+</ParamField>
+
+<ParamField body="additional options" param-type="object">
+
+Weitere OpenAI-Chat-Completion-Optionen werden unverändert an OpenAI weitergeleitet.
+
+</ParamField>
+
+#### Streaming
+
+Setzen Sie `stream` auf `true`, um eine SSE-Antwort zu erhalten.
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/llm/chat", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "user",
+        content: "Nennen Sie drei nächste Schritte."
+      }
+    ],
+    stream: true
+  })
+});
+
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  console.log(decoder.decode(value, { stream: true }));
+}
+```
+
+```bash
+curl -N -X POST "https://api.talkturo.com/api/llm/chat" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Nennen Sie drei nächste Schritte."
+      }
+    ],
+    "stream": true
+  }'
+```
+
+</Request>
+
+<Response>
+
+```text
+data: {"id":"chatcmpl_example_8f3k","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Die"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl_example_8f3k","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":" nächsten Schritte"},"finish_reason":null}]}
+
+data: [DONE]
+```
+
+</Response>
+
+Die Antwort verwendet `Content-Type: text/event-stream; charset=utf-8`. Weitere gesetzte Header sind `Cache-Control: no-cache, no-transform`, `Connection: keep-alive` und `X-Accel-Buffering: no`.
+
+<Callout kind="alert">
+
+Der Server benötigt den Schlüssel `OPENAI_API_KEY`. Fehlt dieser Schlüssel, antwortet der Endpoint mit HTTP-Status `500`.
+
+</Callout>
+
+## Prompt-Presets
+
+Verwalten Sie persönliche Prompt-Presets mit den Desktop-Endpunkten. Alle Methoden in diesem Abschnitt erfordern ein Desktop-Supabase-JWT.
+
+### `GET /api/prompt-presets`
+
+Rufen Sie die Presets des authentifizierten Benutzers ab. Die Antwort ist nach `is_default` absteigend und anschließend nach `title` aufsteigend sortiert.
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/prompt-presets", {
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+  }
+});
+
+const result = await response.json();
+console.log(result.data.presets);
+```
+
+```bash
+curl "https://api.talkturo.com/api/prompt-presets" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "data": {
+    "presets": [
+      {
+        "id": "preset_4f8a2c",
+        "user_id": "user_91d2e7",
+        "uid": "user_91d2e7",
+        "title": "Gesprächszusammenfassung",
+        "prompt": "Fassen Sie das Gespräch mit den wichtigsten Aktionen zusammen.",
+        "is_default": 0,
+        "is_template": 0,
+        "created_at": "2025-01-15T10:30:00.000Z",
+        "updated_at": "2025-01-15T10:30:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+</Response>
+
+### `POST /api/prompt-presets`
+
+Erstellen Sie ein persönliches Prompt-Preset.
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch("https://api.talkturo.com/api/prompt-presets", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    title: "Gesprächszusammenfassung",
+    prompt: "Fassen Sie das Gespräch mit den wichtigsten Aktionen zusammen."
+  })
+});
+
+const result = await response.json();
+console.log(result.data.preset.id);
+```
+
+```bash
+curl -X POST "https://api.talkturo.com/api/prompt-presets" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Gesprächszusammenfassung",
+    "prompt": "Fassen Sie das Gespräch mit den wichtigsten Aktionen zusammen."
+  }'
+```
+
+</Request>
+
+<Response tabs="200,400" default-tab="1">
+
+```json
+{
+  "success": true,
+  "data": {
+    "preset": {
+      "id": "preset_4f8a2c",
+      "user_id": "user_91d2e7",
+      "uid": "user_91d2e7",
+      "title": "Gesprächszusammenfassung",
+      "prompt": "Fassen Sie das Gespräch mit den wichtigsten Aktionen zusammen.",
+      "is_default": 0,
+      "is_template": 0,
+      "created_at": "2025-01-15T10:30:00.000Z",
+      "updated_at": "2025-01-15T10:30:00.000Z"
+    }
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "title and prompt required"
+}
+```
+
+</Response>
+
+#### Body-Parameter
+
+<ParamField body="title" param-type="string" required="true">
+
+Der Titel des Presets.
+
+</ParamField>
+
+<ParamField body="prompt" param-type="string" required="true">
+
+Der Prompt-Inhalt des Presets.
+
+</ParamField>
+
+### `PUT /api/prompt-presets/{id}`
+
+Aktualisieren Sie den Titel oder den Prompt eines persönlichen Presets. Übergeben Sie mindestens eines der beiden Felder. Leere Strings werden ignoriert.
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/prompt-presets/preset_4f8a2c",
+  {
+    method: "PUT",
+    headers: {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      title: "Zusammenfassung und nächste Schritte"
+    })
+  }
+);
+
+const result = await response.json();
+console.log(result.data.preset);
+```
+
+```bash
+curl -X PUT "https://api.talkturo.com/api/prompt-presets/preset_4f8a2c" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Zusammenfassung und nächste Schritte"
+  }'
+```
+
+</Request>
+
+<Response tabs="200,400,404" default-tab="1">
+
+```json
+{
+  "success": true,
+  "data": {
+    "preset": {
+      "id": "preset_4f8a2c",
+      "user_id": "user_91d2e7",
+      "uid": "user_91d2e7",
+      "title": "Zusammenfassung und nächste Schritte",
+      "prompt": "Fassen Sie das Gespräch mit den wichtigsten Aktionen zusammen.",
+      "is_default": 0,
+      "is_template": 0,
+      "created_at": "2025-01-15T10:30:00.000Z",
+      "updated_at": "2025-01-15T11:45:00.000Z"
+    }
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Nothing to update"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Preset not found or permission denied"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+Die ID des zu aktualisierenden Presets.
+
+</ParamField>
+
+#### Body-Parameter
+
+<ParamField body="title" param-type="string">
+
+Der neue Titel des Presets.
+
+</ParamField>
+
+<ParamField body="prompt" param-type="string">
+
+Der neue Prompt-Inhalt.
+
+</ParamField>
+
+Standard-Presets und Presets, die nicht dem authentifizierten Benutzer gehören, können nicht aktualisiert werden.
+
+### `DELETE /api/prompt-presets/{id}`
+
+Löschen Sie ein persönliches Prompt-Preset.
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/prompt-presets/preset_4f8a2c",
+  {
+    method: "DELETE",
+    headers: {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+    }
+  }
+);
+
+const result = await response.json();
+console.log(result.data.changes);
+```
+
+```bash
+curl -X DELETE "https://api.talkturo.com/api/prompt-presets/preset_4f8a2c" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "success": true,
+  "data": {
+    "changes": 1
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Preset not found or permission denied"
+}
+```
+
+</Response>
+
+#### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+
+Die ID des zu löschenden Presets.
+
+</ParamField>
+
+Standard-Presets und Presets, die nicht dem authentifizierten Benutzer gehören, können nicht gelöscht werden.
+
+### `GET /api/prompt-presets/templates`
+
+Rufen Sie verfügbare Prompt-Vorlagen ab. Dieser Endpoint liefert derzeit immer ein leeres Array.
+
+<Request tabs="JavaScript,cURL" default-tab="1">
+
+```javascript
+const response = await fetch(
+  "https://api.talkturo.com/api/prompt-presets/templates",
+  {
+    headers: {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+    }
+  }
+);
+
+const result = await response.json();
+console.log(result.data.templates);
+```
+
+```bash
+curl "https://api.talkturo.com/api/prompt-presets/templates" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "success": true,
+  "data": {
+    "templates": []
+  }
+}
+```
+
+</Response>
+
+## Fehlerbehandlung
+
+Die Endpoints verwenden je nach Route unterschiedliche Antwortformate. Prüfen Sie neben dem HTTP-Status immer die Antwortfelder `error`, `success` oder `reason`.
+
+<Columns cols={3}>
+
+<Card title="API-Übersicht" href="/de/api-reference/overview" icon="book-open" cta="API-Übersicht öffnen">
+
+Basis-URL, Authentifizierung und allgemeine API-Konventionen.
+
+</Card>
+
+<Card title="Authentifizierung" href="/de/api-reference/authentication" icon="lock" cta="Authentifizierung öffnen">
+
+API-Keys und Session-Token für Ihre Integration konfigurieren.
+
+</Card>
+
+<Card title="Telefonie-API" href="/de/api-reference/calls" icon="code" cta="Telefonie-API öffnen">
+
+Telefonate und sprachbasierte Assistenten über die API steuern.
+
+</Card>
+
+</Columns>

@@ -340,6 +340,21 @@
                     "title": "Close AI",
                     "path": "en/api-reference/close-ai",
                     "icon": "brain"
+                  },
+                  {
+                    "title": "Usage",
+                    "path": "en/api-reference/usage",
+                    "icon": "activity"
+                  },
+                  {
+                    "title": "AI Tools",
+                    "path": "en/api-reference/ai-tools",
+                    "icon": "sparkles"
+                  },
+                  {
+                    "title": "Files",
+                    "path": "en/api-reference/files",
+                    "icon": "file"
                   }
                 ]
               },
@@ -376,6 +391,11 @@
                     "title": "CRM Groups",
                     "path": "en/api-reference/crm-groups",
                     "icon": "users"
+                  },
+                  {
+                    "title": "CRM Intelligence",
+                    "path": "en/api-reference/crm-intelligence",
+                    "icon": "lightbulb"
                   }
                 ]
               },
@@ -770,6 +790,21 @@
                     "title": "Close AI",
                     "path": "de/api-reference/close-ai",
                     "icon": "brain"
+                  },
+                  {
+                    "title": "Nutzung",
+                    "path": "de/api-reference/usage",
+                    "icon": "activity"
+                  },
+                  {
+                    "title": "KI-Werkzeuge",
+                    "path": "de/api-reference/ai-tools",
+                    "icon": "sparkles"
+                  },
+                  {
+                    "title": "Dateien",
+                    "path": "de/api-reference/files",
+                    "icon": "file"
                   }
                 ]
               },
@@ -806,6 +841,11 @@
                     "title": "CRM-Gruppen",
                     "path": "de/api-reference/crm-groups",
                     "icon": "users"
+                  },
+                  {
+                    "title": "CRM-Intelligence",
+                    "path": "de/api-reference/crm-intelligence",
+                    "icon": "lightbulb"
                   }
                 ]
               },
