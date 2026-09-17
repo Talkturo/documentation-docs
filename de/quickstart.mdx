@@ -10,7 +10,7 @@ description: Erstellen Sie einen Assistenten, kaufen Sie eine Telefonnummer und 
 Bevor Sie starten, stellen Sie sicher, dass Sie Folgendes haben:
 
 - Ein Talkturo-Konto
-- Zugriff auf das Talkturo-Dashboard unter `https://app.talkturo.ai`
+- Zugriff auf das Talkturo-Dashboard unter `https://app.talkturo.com`
 - Einen API-Schlüssel, wenn Sie die API nutzen möchten
 - Eine Kreditkarte, wenn Sie eine Telefonnummer über Ihre enthaltenen Credits hinaus kaufen möchten
 
@@ -27,7 +27,7 @@ Erstellen Sie zuerst Ihren Workspace und generieren Sie anschließend einen API-
 <Steps>
   <Step title="Bei Talkturo registrieren">
 
-    Öffnen Sie `https://app.talkturo.ai/signup` und erstellen Sie Ihr Konto.
+    Öffnen Sie `https://app.talkturo.com/signup` und erstellen Sie Ihr Konto.
 
     Nach erfolgreicher Registrierung erstellt Talkturo Ihren Workspace und schreibt automatisch 10 kostenlose Credits gut.
 
@@ -65,7 +65,7 @@ Erstellen Sie Ihren ersten Assistenten über den geführten Wizard oder mit eine
     6. **Campaign** — konfigurieren Sie bei Bedarf eine ausgehende Kampagne.
     7. **Complete** — prüfen Sie das Setup und schließen Sie es ab.
 
-    Starten Sie unter `https://app.talkturo.ai/assistants` und klicken Sie auf **New Assistant**.
+    Starten Sie unter `https://app.talkturo.com/assistants` und klicken Sie auf **New Assistant**.
 
     Wählen Sie eine dieser Vorlagen:
 
@@ -83,7 +83,7 @@ Erstellen Sie Ihren ersten Assistenten über den geführten Wizard oder mit eine
 
     <CodeGroup tabs="cURL,JavaScript">
       ```bash
-      curl -X POST https://app.talkturo.ai/api/assistants \
+      curl -X POST https://app.talkturo.com/api/assistants \
         -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
         -H "Content-Type: application/json" \
         -d '{
@@ -94,7 +94,7 @@ Erstellen Sie Ihren ersten Assistenten über den geführten Wizard oder mit eine
       ```
 
       ```javascript
-      const response = await fetch("https://app.talkturo.ai/api/assistants", {
+      const response = await fetch("https://app.talkturo.com/api/assistants", {
         method: "POST",
         headers: {
           "Authorization": "Bearer tk_test_example_9xmk7q2r",
@@ -135,7 +135,7 @@ Suchen Sie zuerst nach einer Nummer, kaufen Sie sie anschließend und verbinden 
 
     <CodeGroup tabs="cURL,JavaScript">
       ```bash
-      curl -X POST https://app.talkturo.ai/api/phone-numbers/search \
+      curl -X POST https://app.talkturo.com/api/phone-numbers/search \
         -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
         -H "Content-Type: application/json" \
         -d '{
@@ -147,7 +147,7 @@ Suchen Sie zuerst nach einer Nummer, kaufen Sie sie anschließend und verbinden 
       ```
 
       ```javascript
-      const response = await fetch("https://app.talkturo.ai/api/phone-numbers/search", {
+      const response = await fetch("https://app.talkturo.com/api/phone-numbers/search", {
         method: "POST",
         headers: {
           "Authorization": "Bearer tk_test_example_9xmk7q2r",
@@ -176,7 +176,7 @@ Suchen Sie zuerst nach einer Nummer, kaufen Sie sie anschließend und verbinden 
 
     <CodeGroup tabs="cURL,JavaScript">
       ```bash
-      curl -X POST https://app.talkturo.ai/api/phone-numbers/purchase \
+      curl -X POST https://app.talkturo.com/api/phone-numbers/purchase \
         -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
         -H "Content-Type: application/json" \
         -d '{
@@ -186,7 +186,7 @@ Suchen Sie zuerst nach einer Nummer, kaufen Sie sie anschließend und verbinden 
       ```
 
       ```javascript
-      const response = await fetch("https://app.talkturo.ai/api/phone-numbers/purchase", {
+      const response = await fetch("https://app.talkturo.com/api/phone-numbers/purchase", {
         method: "POST",
         headers: {
           "Authorization": "Bearer tk_test_example_9xmk7q2r",
@@ -213,7 +213,7 @@ Suchen Sie zuerst nach einer Nummer, kaufen Sie sie anschließend und verbinden 
 
     <CodeGroup tabs="cURL,JavaScript">
       ```bash
-      curl -X POST https://app.talkturo.ai/api/assistants/asst_7f3k29d/telephony/settings \
+      curl -X POST https://app.talkturo.com/api/assistants/asst_7f3k29d/telephony/settings \
         -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
         -H "Content-Type: application/json" \
         -d '{
@@ -225,7 +225,7 @@ Suchen Sie zuerst nach einer Nummer, kaufen Sie sie anschließend und verbinden 
       ```
 
       ```javascript
-      const response = await fetch("https://app.talkturo.ai/api/assistants/asst_7f3k29d/telephony/settings", {
+      const response = await fetch("https://app.talkturo.com/api/assistants/asst_7f3k29d/telephony/settings", {
         method: "POST",
         headers: {
           "Authorization": "Bearer tk_test_example_9xmk7q2r",
