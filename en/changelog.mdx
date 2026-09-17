@@ -8,6 +8,30 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-17" description="v3.6.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Email summary routing** — Route post-call summaries to specific people based on conditions or call transfers. Each route has its own prompt, supports multiple email addresses, and you can choose to send to the single best match or every matching route. Default recipients can optionally receive a copy of every summary. See [Assistant Configuration](/en/assistants/configuration).
+  - **Test-call links** — Share signed one-day test links for direct calls, embeds, and widgets. Test calls are fully logged and CRM-visible but billed at provider cost with no margin. Test calls show a badge and can be filtered in the call log, with a weekly count on the dashboard. See [Assistant Configuration](/en/assistants/configuration).
+  - **Per-target Call Transfer connection message** — Set a custom spoken message for each warm transfer target, played once the person is on the line. See [Assistant Configuration](/en/assistants/configuration).
+  - **More OpenAI models** — GPT-5 nano, GPT-4.1 nano and mini, GPT-4o mini, GPT-5.4 nano and mini, and GPT-5.6 Luna are now selectable. These models also report cached prompt tokens, reducing costs for long prompts. See [Features](/en/features).
+  - **Plugin prompt guidance** — Each plugin dialog now has a button that opens provider-specific guidance for what the prompt must include, with a copyable block. See [Integrations](/en/integrations).
+  - **CRM contact creation timestamps** — The contacts list and contact details now show when each contact was created, in the workspace timezone. See [Contacts](/en/crm/contacts).
+
+  ## Improvements
+
+  - **Transfer outcome in summaries** — When a call is forwarded, the summary now reflects whether the transfer connected, went to voicemail, or failed, instead of always claiming the hand-off succeeded. See [Call Logs](/en/call-logs).
+  - **Summary emails in Actions tab** — Sent summary emails now appear as timeline rows in the call's Actions tab, showing route name, recipients, and prompt type. See [Call Logs](/en/call-logs).
+  - **Confirm before deleting Call Transfer targets** — Deleting a Call Transfer target now asks first and warns how many linked summary routes will stop receiving summaries. See [Assistant Configuration](/en/assistants/configuration).
+  - **Confirm before deleting summary routes** — Deleting an email summary route now asks for confirmation instead of removing it on one click. See [Assistant Configuration](/en/assistants/configuration).
+
+  ## Bug Fixes
+
+  - **Summary routes no longer invent contact details** — Route-specific summaries no longer claim the caller "can be reached at the phone number provided during the call" when no number was said. Phone and email are included only when actually mentioned. See [Call Logs](/en/call-logs).
+  - **Strict email validation for summary routes** — Email addresses with stray characters are now rejected in the dialog and on save, instead of failing only when the email is sent after the call. See [Assistant Configuration](/en/assistants/configuration).
+  - **OAuth redirect after sign-in** — Google and Facebook sign-ins behind a reverse proxy now redirect to the correct public host instead of an internal URL. See [Authentication](/en/authentication).
+</Update>
+
 <Update label="2026-09-12" description="v3.5.0" tags={["feature","improvement"]}>
   ## New Features
 
