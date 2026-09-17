@@ -23,8 +23,10 @@ Verwenden Sie für serverseitige Integrationen bevorzugt einen API-Schlüssel. S
 | `POST` | `/api/credits` | API-Schlüssel oder Sitzung | Guthaben für Nutzungsvorgänge abziehen |
 | `POST` | `/api/credits/checkout` | API-Schlüssel oder Sitzung | Stripe-Checkout für den Guthabenkauf erstellen |
 | `GET` | `/api/credits/auto-reload` | Nur Sitzung | Auto-Reload-Konfiguration abrufen |
-| `POST` | `/api/credits/auto-reload` | Nur Sitzung | Auto-Reload-Konfiguration speichern |
+| `POST` | `/api/credits/auto-reload` | API-Schlüssel oder Sitzung | Auto-Reload-Konfiguration speichern |
 | `POST` | `/api/credits/claim-grants` | Nur Sitzung | Verfügbare Grants beanspruchen |
+| `POST` | `/api/credits/claim-grants/new-workspace` | Nur Sitzung | Grant für neuen Workspace beanspruchen |
+| `POST` | `/api/credits/welcome-bonus` | Nur Sitzung | Willkommensbonus-Guthaben beanspruchen |
 | `GET` | `/api/credits/plans` | Nur Sitzung | Verfügbare Guthabenpläne abrufen |
 | `GET` | `/api/credits/statement` | Nur Sitzung | Guthabenauszug abrufen |
 | `GET` | `/api/credits/transactions` | Nur Sitzung | Transaktionsverlauf abrufen |
@@ -342,8 +344,10 @@ Die folgenden Guthaben-Endpunkte unterstützen keinen API-Schlüssel. Rufen Sie 
 | Methode | Pfad | Zweck |
 | --- | --- | --- |
 | `GET` | `/api/credits/auto-reload` | Aktuelle Auto-Reload-Einstellungen abrufen |
-| `POST` | `/api/credits/auto-reload` | Auto-Reload-Einstellungen aktualisieren |
+| `POST` | `/api/credits/auto-reload` | Auto-Reload-Einstellungen aktualisieren (unterstützt auch API-Schlüssel) |
 | `POST` | `/api/credits/claim-grants` | Verfügbare Guthaben-Grants beanspruchen |
+| `POST` | `/api/credits/claim-grants/new-workspace` | Grant für neuen Workspace beanspruchen |
+| `POST` | `/api/credits/welcome-bonus` | Willkommensbonus-Guthaben beanspruchen |
 | `GET` | `/api/credits/plans` | Verfügbare Guthabenpläne abrufen |
 | `GET` | `/api/credits/statement` | Guthabenauszug oder Verlauf abrufen |
 | `GET` | `/api/credits/transactions` | Einzelne Guthabentransaktionen abrufen |

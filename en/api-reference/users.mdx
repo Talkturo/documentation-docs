@@ -13,7 +13,11 @@ description: Manage user profiles, subscriptions, workspaces, and business setti
 | `GET` | `/api/users/me/workspaces` | List workspaces available to the current user | Desktop JWT |
 | `GET` | `/api/account/business` | Get a workspace business profile | Session cookie |
 | `PUT` | `/api/account/business` | Update a workspace business profile | Session cookie |
+| `GET` | `/api/account/language` | Get a workspace language | Session cookie |
 | `PUT` | `/api/account/language` | Update a workspace language | Session cookie, owner only |
+| `POST` | `/api/users/me/auto-update` | Toggle desktop auto-update preference | Desktop JWT |
+| `GET` | `/api/account/verifications` | Get account verification status | Session cookie |
+| `POST` | `/api/account/verifications` | Submit account verification data | Session cookie |
 
 <Callout kind="info">
 
@@ -787,6 +791,62 @@ Updated workspace language.
 This endpoint rejects non-owner requests with `403`. Check the current user's workspace role before showing language controls in your application.
 
 </Callout>
+
+## Get language
+
+Returns the current language for a workspace identified by slug.
+
+### Endpoint
+
+`GET https://app.talkturo.com/api/account/language`
+
+### Query parameters
+
+<ParamField query="account" param-type="string" required="true">
+Workspace slug whose language you want to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="language" field-type="string" required="true">
+Current workspace language code (`en` or `de`).
+</ResponseField>
+
+## Toggle auto-update preference
+
+Toggle the desktop auto-update preference for the authenticated desktop user.
+
+### Endpoint
+
+`POST https://app.talkturo.com/api/users/me/auto-update`
+
+### Body parameters
+
+<ParamField body="auto_update_enabled" param-type="boolean" required="true">
+Whether desktop auto-updates should be enabled for the current user.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="auto_update_enabled" field-type="boolean" required="true">
+The updated auto-update preference for the current user.
+</ResponseField>
+
+## Account verifications
+
+Manage account verification status and submit verification data for compliance purposes.
+
+### Get verification status
+
+`GET https://app.talkturo.com/api/account/verifications`
+
+Returns the current verification status for the authenticated account context.
+
+### Submit verification data
+
+`POST https://app.talkturo.com/api/account/verifications`
+
+Submit verification information for the authenticated account context. The request body and response depend on the type of verification being submitted.
 
 ## Error codes
 

@@ -579,3 +579,152 @@ Talkturo also exposes an account-level session-auth endpoint outside the assista
 - `GET /api/assistant-phone-numbers` — lists phone numbers attached to an assistant across the account.
 
 Use the assistant-scoped telephony routes on this page for configuration changes tied to one assistant. Use the account-level listing route when you need a broader lookup across the account.
+
+## Account-level telephony endpoints
+
+Manage telephony provider configuration, regional availability, and regulatory compliance at the account level. These routes are separate from assistant-scoped telephony endpoints and require session cookie authentication unless noted otherwise.
+
+### Endpoint summary
+
+| Method | Path | Purpose | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/telephony/account` | Get telephony provider account configuration | Session cookie |
+| `POST` | `/api/telephony/account` | Create telephony provider account configuration | Session cookie |
+| `PATCH` | `/api/telephony/account` | Update telephony provider account configuration | Session cookie |
+| `GET` | `/api/telephony/regions` | List available regions and providers | Public |
+| `GET` | `/api/telephony/regulatory` | Get regulatory requirements for a country and number type | Session cookie |
+| `POST` | `/api/telephony/regulatory` | Submit regulatory compliance data | Session cookie |
+
+### Telephony account
+
+Use `GET`, `POST`, and `PATCH` on `/api/telephony/account` to manage the account's telephony provider configuration, including connection IDs, credentials, and provider-specific settings.
+
+#### Request fields
+
+<ParamField body="provider" param-type="string" required="true">
+
+Telephony provider used by the account.
+
+</ParamField>
+
+<ParamField body="connectionId" param-type="string" required="false">
+
+Provider connection or account identifier.
+
+</ParamField>
+
+<ParamField body="credentials" param-type="object" required="false">
+
+Provider credentials required to establish the telephony connection. Send only the credential fields required by the selected provider.
+
+</ParamField>
+
+<ParamField body="settings" param-type="object" required="false">
+
+Provider-specific configuration values for the account.
+
+</ParamField>
+
+<Callout kind="info">
+
+Send account configuration requests from an authenticated Talkturo session. Treat credential values as sensitive and do not expose them in client-side logs.
+
+</Callout>
+
+#### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the account configuration request completed successfully.
+
+</ResponseField>
+
+<ResponseField name="account" field-type="object" required="true">
+
+Telephony provider account configuration associated with the authenticated account.
+
+</ResponseField>
+
+### Telephony regions
+
+Use `GET /api/telephony/regions` to retrieve regions and providers available for phone number provisioning. This endpoint is public and accepts country and provider query parameters to narrow the results.
+
+#### Query parameters
+
+<ParamField query="country" param-type="string" required="false">
+
+Country code used to filter available provisioning regions.
+
+</ParamField>
+
+<ParamField query="provider" param-type="string" required="false">
+
+Provider name used to filter the available results.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="regions" field-type="array" required="true">
+
+Regions available for phone number provisioning.
+
+</ResponseField>
+
+<ResponseField name="providers" field-type="array" required="true">
+
+Providers available for the requested country or region.
+
+</ResponseField>
+
+### Telephony regulatory
+
+Use `GET` and `POST` on `/api/telephony/regulatory` to manage regulatory requirements for phone number provisioning. The `GET` method retrieves requirements for a country and number type, while `POST` submits the compliance data needed to satisfy those requirements.
+
+#### GET query parameters
+
+<ParamField query="country" param-type="string" required="true">
+
+Country code for the phone number being provisioned.
+
+</ParamField>
+
+<ParamField query="numberType" param-type="string" required="true">
+
+Phone number type used to determine the applicable regulatory requirements.
+
+</ParamField>
+
+#### POST body parameters
+
+<ParamField body="country" param-type="string" required="true">
+
+Country code for the phone number being provisioned.
+
+</ParamField>
+
+<ParamField body="numberType" param-type="string" required="true">
+
+Phone number type associated with the compliance submission.
+
+</ParamField>
+
+<ParamField body="complianceData" param-type="object" required="true">
+
+Regulatory information required for the selected country and number type.
+
+</ParamField>
+
+#### Response fields
+
+<ResponseField name="requirements" field-type="object" required="true">
+
+Regulatory requirements for the requested country and number type.
+
+</ResponseField>
+
+<ResponseField name="success" field-type="boolean" required="true">
+
+Whether the compliance submission was accepted.
+
+</ResponseField>

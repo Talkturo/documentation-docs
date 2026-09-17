@@ -17,6 +17,9 @@ description: List TTS voices, clone custom voices, and retrieve voice provider m
 | `POST` | `/api/tts-voices/dashscope-preview` | Generate a DashScope voice preview | Session cookie |
 | `POST` | `/api/tts-voices/inworld-preview` | Generate an Inworld voice preview | Session cookie |
 | `POST` | `/api/tts-voices/kugel-preview` | Generate a Kugel voice preview | Session cookie |
+| `POST` | `/api/tts-voices/gpt-live-preview` | Generate a GPT Live voice preview | Session cookie |
+| `GET` | `/api/voice-cloning/{voiceId}` | Retrieve a single cloned voice | Session cookie |
+| `PATCH` | `/api/voice-cloning/{voiceId}` | Update a cloned voice | Session cookie |
 
 <Callout kind="info">
 
@@ -515,6 +518,64 @@ The ID of the cloned voice to delete.
 Returns `true` when the cloned voice is deleted.
 </ResponseField>
 
+## Get a cloned voice
+
+Retrieve a single cloned voice by its ID.
+
+### Endpoint
+
+`GET /api/voice-cloning/{voiceId}`
+
+### Path parameters
+
+<ParamField path="voiceId" param-type="string" required="true">
+The ID of the cloned voice to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the cloned voice is found.
+</ResponseField>
+
+<ResponseField name="voice" field-type="object" required="true">
+The cloned voice record, including `id`, `provider`, `voice_id`, `name`, `description`, `language`, `preview_url`, `metadata`, `voice_model`, `account_id`, and `voice_type`.
+</ResponseField>
+
+## Update a cloned voice
+
+Update one or more fields on an existing cloned voice.
+
+### Endpoint
+
+`PATCH /api/voice-cloning/{voiceId}`
+
+### Path parameters
+
+<ParamField path="voiceId" param-type="string" required="true">
+The ID of the cloned voice to update.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="name" param-type="string" required="false">
+Updated display name for the cloned voice.
+</ParamField>
+
+<ParamField body="description" param-type="string" required="false">
+Updated description for the cloned voice.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the cloned voice is updated.
+</ResponseField>
+
+<ResponseField name="voice" field-type="object" required="true">
+The updated cloned voice record.
+</ResponseField>
+
 ## Voice previews
 
 Generate preview audio for specific TTS providers. All preview endpoints require session authentication and return an audio response or a URL to the generated preview audio.
@@ -525,6 +586,7 @@ Generate preview audio for specific TTS providers. All preview endpoints require
 | `POST` | `/api/tts-voices/dashscope-preview` | DashScope |
 | `POST` | `/api/tts-voices/inworld-preview` | Inworld |
 | `POST` | `/api/tts-voices/kugel-preview` | Kugel/Fish |
+| `POST` | `/api/tts-voices/gpt-live-preview` | GPT Live |
 
 Each preview endpoint accepts a voice ID and preview text in the request body, generates a short audio sample, and returns the preview audio. Use these endpoints to let users audition voices before assigning them to an assistant.
 

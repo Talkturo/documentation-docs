@@ -17,8 +17,11 @@ Use the credits API to read an account balance, record usage deductions, and sta
 These endpoints use dual authentication. Authenticate with either an API key or a signed-in session cookie.
 
 The following endpoints require a session-authenticated browser request:
-- `GET` and `POST` `/api/credits/auto-reload`
+- `GET /api/credits/auto-reload`
+- `POST` `/api/credits/auto-reload` supports both session and API key authentication
 - `POST` `/api/credits/claim-grants`
+- `POST` `/api/credits/claim-grants/new-workspace`
+- `POST` `/api/credits/welcome-bonus`
 - `GET` `/api/credits/plans`
 - `GET` `/api/credits/statement`
 - `GET` `/api/credits/transactions`
@@ -33,8 +36,10 @@ The following endpoints require a session-authenticated browser request:
 | `POST` | `/api/credits` | API key or session | Deduct credits for usage tracking |
 | `POST` | `/api/credits/checkout` | API key or session | Create an embedded Stripe checkout session for a credit purchase |
 | `GET` | `/api/credits/auto-reload` | Session | Get auto-reload settings |
-| `POST` | `/api/credits/auto-reload` | Session | Update auto-reload settings |
+| `POST` | `/api/credits/auto-reload` | API key or session | Update auto-reload settings |
 | `POST` | `/api/credits/claim-grants` | Session | Claim pending credit grants |
+| `POST` | `/api/credits/claim-grants/new-workspace` | Session | Claim new-workspace credit grant |
+| `POST` | `/api/credits/welcome-bonus` | Session | Claim welcome bonus credits |
 | `GET` | `/api/credits/plans` | Session | List available credit purchase plans |
 | `GET` | `/api/credits/statement` | Session | Get credit statement history |
 | `GET` | `/api/credits/transactions` | Session | Get credit transaction history |
@@ -442,6 +447,14 @@ Dollar amount to charge when auto-reload runs.
 ### Claim pending grants
 
 `POST /api/credits/claim-grants` applies any pending credit grants to the signed-in account. Use this endpoint after account actions that provision promotional or manual credits.
+
+### Claim new-workspace grant
+
+`POST /api/credits/claim-grants/new-workspace` claims a one-time credit grant awarded when a new workspace is created. The grant is applied to the signed-in account.
+
+### Claim welcome bonus
+
+`POST /api/credits/welcome-bonus` claims a welcome bonus credit grant for the signed-in account. This endpoint is typically called once during initial onboarding.
 
 ### List available plans
 

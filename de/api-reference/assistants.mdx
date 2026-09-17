@@ -34,7 +34,9 @@ Basispfad: `/api/assistants`
 | `POST` | `/api/assistants/{assistantId}/telephony/outbound` | Ausgehende Anrufe aktivieren/deaktivieren |
 | `POST` | `/api/assistants/{assistantId}/telephony/settings` | Telefonieeinstellungen aktualisieren |
 | `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Testanruf starten |
-| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Telefonnummern mit Carrier-Validierung zuweisen |
+| `GET` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Zuweisbare Telefonnummern auflisten |
+| `GET` | `/api/assistants/{assistantId}/telephony/compliance-templates` | Compliance-Vorlagen auflisten |
+| `POST` | `/api/assistants/{assistantId}/test-link` | Test-Link erstellen oder aktualisieren |
 | `POST` | `/api/assistants/{assistantId}/crm-group` | CRM-Gruppe zuweisen |
 | `POST` | `/api/assistants/{assistantId}/webhooks/test` | Test-Webhook-Event einreihen |
 | `GET` | `/api/assistants/{assistantId}/prompt-versions` | Prompt-Versionen auflisten |
@@ -738,7 +740,8 @@ Die meisten Telefonieverwaltungs-Endpunkte erfordern Session-Authentifizierung u
 | `POST` | `/api/assistants/{assistantId}/telephony/outbound` | Ausgehende Anrufe aktivieren oder deaktivieren | Nur Session |
 | `POST` | `/api/assistants/{assistantId}/telephony/settings` | Telefonieeinstellungen aktualisieren (Telefonnummern, Anrufbeantworter, Compliance) | Nur Session |
 | `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Testanruf starten | Nur Session |
-| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Telefonnummern mit Carrier-Validierung zuweisen | Nur Session |
+| `GET` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Zuweisbare Telefonnummern auflisten | Nur Session |
+| `GET` | `/api/assistants/{assistantId}/telephony/compliance-templates` | Compliance-Vorlagen auflisten | Nur Session |
 
 ### Zugewiesene Telefonnummern auflisten
 
@@ -953,6 +956,88 @@ Bestätigungsmeldung mit der Zielnummer.
 </ResponseField>
 
 Testanrufe erfordern ausreichende Kontoguthaben. Wenn das Guthaben zu niedrig ist, gibt die API HTTP 402 mit dem aktuellen Guthaben und dem mindestens erforderlichen Guthaben zurück.
+
+### Zuweisbare Telefonnummern auflisten
+
+Ruft Telefonnummern ab, die dem Assistenten zugewiesen werden können, einschließlich nicht zugewiesener Nummern und bereits zugewiesener Nummern.
+
+### Endpunkt
+
+`GET /api/assistants/{assistantId}/telephony/assign-phone-numbers`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Abfrageparameter
+
+<ParamField query="accountSlug" param-type="string" required="false">
+Kontoslug zur Workspace-Auflösung.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Anfrage erfolgreich ist.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Telefonnummern, die für die Zuweisung verfügbar sind, einschließlich nicht zugewiesener Nummern und bereits zugewiesener Nummern.
+</ResponseField>
+
+### Compliance-Vorlagen auflisten
+
+Ruft Compliance-Vorlagen ab, die für die Telefoniekonfiguration des Assistenten verfügbar sind.
+
+### Endpunkt
+
+`GET /api/assistants/{assistantId}/telephony/compliance-templates`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Anfrage erfolgreich ist.
+</ResponseField>
+
+<ResponseField name="templates" field-type="array" required="true">
+Compliance-Vorlagen, die für das Konto des Assistenten verfügbar sind.
+</ResponseField>
+
+## Test-Link erstellen oder aktualisieren
+
+Generieren oder aktualisieren Sie einen Test-Link für einen Assistenten. Der Test-Link bietet eine URL, die einen browserbasierten Testanruf mit dem Assistenten öffnet.
+
+### Endpunkt
+
+`POST /api/assistants/{assistantId}/test-link`
+
+### Pfadparameter
+
+<ParamField path="assistantId" param-type="string" required="true">
+Die UUID des Assistenten.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn der Test-Link erstellt oder aktualisiert wurde.
+</ResponseField>
+
+<ResponseField name="token" field-type="string" required="true">
+Der Test-Link-Token.
+</ResponseField>
+
+<ResponseField name="link" field-type="string" required="true">
+Die vollständige Test-Link-URL.
+</ResponseField>
 
 ## CRM-Gruppenzuweisung
 

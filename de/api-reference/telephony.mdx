@@ -440,6 +440,115 @@ Alle Telefonie-Endpunkte in diesem Abschnitt sind einem einzelnen Assistenten un
   </Expandable>
 </ExpandableGroup>
 
+## Kontoebene Telefonie-Endpunkte
+
+Diese Endpunkte verwalten die Telefonie-Anbieterkonfiguration auf Kontoebene. Im Gegensatz zu den übrigen Routen auf dieser Seite sind sie nicht auf einen einzelnen Assistenten beschränkt.
+
+### Endpunktübersicht
+
+| Methode | Pfad | Beschreibung | Auth |
+| --- | --- | --- | --- |
+| `GET` | `/api/telephony/account` | Telefonie-Anbieterkontokonfiguration abrufen | Session-Cookie |
+| `POST` | `/api/telephony/account` | Telefonie-Anbieterkontokonfiguration erstellen | Session-Cookie |
+| `PATCH` | `/api/telephony/account` | Telefonie-Anbieterkontokonfiguration aktualisieren | Session-Cookie |
+| `GET` | `/api/telephony/regions` | Verfügbare Regionen und Anbieter auflisten | Öffentlich |
+| `GET` | `/api/telephony/regulatory` | Regulatorische Anforderungen abrufen | Session-Cookie |
+| `POST` | `/api/telephony/regulatory` | Regulatorische Compliance-Daten einreichen | Session-Cookie |
+
+### Telefonie-Konto
+
+`GET`, `POST` und `PATCH /api/telephony/account` lesen, erstellen oder aktualisieren die Telefonie-Anbieterkonfiguration eines Kontos. Alle drei Methoden erfordern eine authentifizierte Session-Cookie-Anfrage.
+
+#### Body-Parameter
+
+<ParamField body="provider" param-type="string" required="true">
+Der Telefonieanbieter, der für das Konto verwendet wird.
+</ParamField>
+
+<ParamField body="connectionId" param-type="string" required="true">
+Die Verbindungs-ID des Telefonieanbieters.
+</ParamField>
+
+<ParamField body="credentials" param-type="object" required="true">
+Anmeldedaten und anbieterspezifische Zugangsinformationen.
+</ParamField>
+
+<ParamField body="settings" param-type="object">
+Optionale anbieterspezifische Einstellungen.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Anfrage erfolgreich verarbeitet wurde.
+</ResponseField>
+
+<ResponseField name="account" field-type="object" required="true">
+Die Telefonie-Anbieterkontokonfiguration des Kontos.
+</ResponseField>
+
+### Telefonie-Regionen
+
+`GET /api/telephony/regions` listet verfügbare Telefonie-Regionen und Anbieter auf. Dieser Endpunkt ist öffentlich und erfordert keine Authentifizierung.
+
+#### Abfrageparameter
+
+<ParamField query="country" param-type="string">
+Optionaler ISO-Ländercode, nach dem die verfügbaren Regionen und Anbieter gefiltert werden.
+</ParamField>
+
+<ParamField query="provider" param-type="string">
+Optionaler Anbietername, nach dem die Ergebnisse gefiltert werden.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="regions" field-type="array" required="true">
+Verfügbare Telefonie-Regionen.
+</ResponseField>
+
+<ResponseField name="providers" field-type="array" required="true">
+Telefonieanbieter, die für die verfügbaren Regionen unterstützt werden.
+</ResponseField>
+
+### Telefonie-Regulatorik
+
+`GET` und `POST /api/telephony/regulatory` rufen regulatorische Anforderungen ab oder übermitteln die erforderlichen Compliance-Daten für eine Telefoniekonfiguration. Beide Methoden erfordern eine Session-Cookie-Authentifizierung.
+
+#### GET-Abfrageparameter
+
+<ParamField query="country" param-type="string" required="true">
+ISO-Ländercode, für den die regulatorischen Anforderungen abgerufen werden.
+</ParamField>
+
+<ParamField query="numberType" param-type="string" required="true">
+Der Typ der Telefonnummer, für den die Anforderungen gelten.
+</ParamField>
+
+#### POST-Body-Parameter
+
+<ParamField body="country" param-type="string" required="true">
+ISO-Ländercode, für den Compliance-Daten eingereicht werden.
+</ParamField>
+
+<ParamField body="numberType" param-type="string" required="true">
+Der Typ der Telefonnummer, für den Compliance-Daten eingereicht werden.
+</ParamField>
+
+<ParamField body="complianceData" param-type="object" required="true">
+Die regulatorischen Compliance-Daten, die für das angegebene Land und den Telefonnummerntyp erforderlich sind.
+</ParamField>
+
+#### Antwortfelder
+
+<ResponseField name="requirements" field-type="object" required="true">
+Regulatorische Anforderungen für das angegebene Land und den Telefonnummerntyp.
+</ResponseField>
+
+<ResponseField name="success" field-type="boolean" required="true">
+Gibt `true` zurück, wenn die Compliance-Daten erfolgreich eingereicht wurden.
+</ResponseField>
+
 ## Verwandter Telefonie-Kontext
 
 Die Endpunkte auf dieser Seite decken die assistentenspezifische Telefoniekonfiguration ab. Verwandte Funktionen liegen in benachbarten API-Bereichen, insbesondere bei Telefonnummern und kontoweiten Zuordnungen.
