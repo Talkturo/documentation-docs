@@ -30,6 +30,7 @@ Diese Endpunkte decken das aktuelle Benutzerprofil, Abonnementdaten, Workspace-Z
   - `PUT /api/users/me`
   - `GET /api/users/me/subscription`
   - `GET /api/users/me/workspaces`
+  - `POST /api/users/me/auto-update`
 
   </Tab>
   <Tab title="Session-Cookie" icon="shield">
@@ -40,7 +41,10 @@ Diese Endpunkte decken das aktuelle Benutzerprofil, Abonnementdaten, Workspace-Z
 
   - `GET /api/account/business`
   - `PUT /api/account/business`
+  - `GET /api/account/language`
   - `PUT /api/account/language`
+  - `GET /api/account/verifications`
+  - `POST /api/account/verifications`
 
   Der Endpunkt `PUT /api/account/language` ist nur für Workspace-Owner verfügbar.
 
@@ -533,6 +537,62 @@ Workspace-Slug, dessen Sprache aktualisiert werden soll.
 <ParamField body="language" param-type="string" required="true" enum="en,de">
 Neue Workspace-Sprache. Zulässige Werte sind `en` und `de`.
 </ParamField>
+
+## Sprache abrufen
+
+Gibt die aktuelle Sprache eines Workspace anhand dessen Slug zurück.
+
+### Endpunkt
+
+`GET https://app.talkturo.com/api/account/language`
+
+### Query-Parameter
+
+<ParamField query="account" param-type="string" required="true">
+Workspace-Slug, dessen Sprache abgerufen werden soll.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="language" field-type="string" required="true">
+Aktueller Workspace-Sprachcode (`en` oder `de`).
+</ResponseField>
+
+## Auto-Update-Einstellung umschalten
+
+Schalten Sie die Auto-Update-Einstellung für den authentifizierten Desktop-Benutzer um.
+
+### Endpunkt
+
+`POST https://app.talkturo.com/api/users/me/auto-update`
+
+### Body-Parameter
+
+<ParamField body="auto_update_enabled" param-type="boolean" required="true">
+Gibt an, ob automatische Desktop-Updates für den aktuellen Benutzer aktiviert werden sollen.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="auto_update_enabled" field-type="boolean" required="true">
+Die aktualisierte Auto-Update-Einstellung des aktuellen Benutzers.
+</ResponseField>
+
+## Kontoverifizierungen
+
+Verwalten Sie den Verifizierungsstatus des Kontos und reichen Sie Verifizierungsdaten für Compliance-Zwecke ein.
+
+### Verifizierungsstatus abrufen
+
+`GET https://app.talkturo.com/api/account/verifications`
+
+Gibt den aktuellen Verifizierungsstatus für den authentifizierten Kontext zurück.
+
+### Verifizierungsdaten einreichen
+
+`POST https://app.talkturo.com/api/account/verifications`
+
+Reichen Sie Verifizierungsinformationen für den authentifizierten Kontext ein. Der Request-Body und die Antwort hängen von der Art der eingereichten Verifizierung ab.
 
 ## Verwandte Ressourcen
 

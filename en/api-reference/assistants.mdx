@@ -776,7 +776,8 @@ Most telephony management endpoints require session authentication and do not su
 | `POST` | `/api/assistants/{assistantId}/telephony/outbound` | Enable or disable outbound calling | Session only |
 | `POST` | `/api/assistants/{assistantId}/telephony/settings` | Update telephony settings (phone numbers, voicemail, compliance) | Session only |
 | `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Start a test call | Session only |
-| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Assign phone numbers with carrier validation | Session only |
+| `GET` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | List phone numbers available for assignment | Session only |
+| `GET` | `/api/assistants/{assistantId}/telephony/compliance-templates` | List compliance templates | Session only |
 
 ### List assigned phone numbers
 
@@ -999,6 +1000,88 @@ Confirmation message with the destination number.
 Test calls require sufficient account credits. If the balance is too low, the API returns HTTP 402 with the current balance and minimum required credits.
 
 </Callout>
+
+### List phone numbers available for assignment
+
+Retrieve phone numbers that are available for assignment to the assistant, including unassigned numbers and numbers already assigned to this assistant.
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/telephony/assign-phone-numbers`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="accountSlug" param-type="string" required="false">
+Account slug for workspace resolution.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Phone numbers available for assignment, including unassigned numbers and those already assigned to this assistant.
+</ResponseField>
+
+### List compliance templates
+
+Retrieve compliance templates available for the assistant's telephony configuration.
+
+### Endpoint
+
+`GET /api/assistants/{assistantId}/telephony/compliance-templates`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the request succeeds.
+</ResponseField>
+
+<ResponseField name="templates" field-type="array" required="true">
+Compliance templates available for the assistant's account.
+</ResponseField>
+
+## Create or refresh a test link
+
+Generate or refresh a test link for an assistant. The test link provides a URL that opens a browser-based test call with the assistant.
+
+### Endpoint
+
+`POST /api/assistants/{assistantId}/test-link`
+
+### Path parameters
+
+<ParamField path="assistantId" param-type="string" required="true">
+The assistant UUID.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Returns `true` when the test link is created or refreshed.
+</ResponseField>
+
+<ResponseField name="token" field-type="string" required="true">
+The test link token.
+</ResponseField>
+
+<ResponseField name="link" field-type="string" required="true">
+The full test link URL.
+</ResponseField>
 
 ## CRM group assignment
 
@@ -1320,7 +1403,9 @@ Returned by the delete endpoint.
 | `POST` | `/api/assistants/{assistantId}/telephony/outbound` | Enable or disable outbound calling |
 | `POST` | `/api/assistants/{assistantId}/telephony/settings` | Update telephony settings |
 | `POST` | `/api/assistants/{assistantId}/telephony/test-call` | Start a test call |
-| `POST` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | Assign phone numbers with carrier validation |
+| `GET` | `/api/assistants/{assistantId}/telephony/assign-phone-numbers` | List phone numbers available for assignment |
+| `GET` | `/api/assistants/{assistantId}/telephony/compliance-templates` | List compliance templates |
+| `POST` | `/api/assistants/{assistantId}/test-link` | Create or refresh a test link |
 | `POST` | `/api/assistants/{assistantId}/crm-group` | Assign a CRM group |
 | `POST` | `/api/assistants/{assistantId}/webhooks/test` | Queue a test webhook event |
 | `GET` | `/api/assistants/{assistantId}/prompt-versions` | List prompt versions |

@@ -10,11 +10,12 @@ description: Retrieve call recording URLs and flow execution runs associated wit
 | `GET` | `/api/calls/{id}/recording-url` | Get a pre-signed recording URL for a call | Session cookie |
 | `GET` | `/api/calls/{id}/flow-runs` | List TurboFlow runs associated with a call | Session cookie |
 | `GET` | `/api/transcripts` | Retrieve call transcripts | Session cookie |
+| `POST` | `/api/crm/calls` | Start an outbound CRM call | API key or session |
 | `GET` | `/api/summaries` | Retrieve call summaries | Session cookie |
 
 <Callout kind="info">
 
-Both endpoints require an authenticated Talkturo session cookie. The API checks that your user belongs to the workspace that owns the call before returning data.
+Both endpoints require an authenticated Talkturo session cookie. The API checks that your user belongs to the workspace that owns the call before returning data. The CRM calls endpoint also supports API key authentication with the `calls:create` scope.
 
 </Callout>
 
@@ -308,6 +309,90 @@ Array of summary objects. Each summary includes the call ID, summary text, key o
 
 <ResponseField name="count" field-type="integer" required="true">
 Total number of summaries matching the query.
+</ResponseField>
+
+## Start an outbound CRM call
+
+Start an outbound call for a CRM contact using an assistant and destination phone number. Authenticate with an API key that has the `calls:create` scope or with an authenticated Talkturo session cookie.
+
+<Request tabs="API key,Session cookie" default-tab="1">
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/crm/calls" \
+  --header "Authorization: Bearer dkai_example_9xmk7q2r" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "assistant_id": "asst_4e8f7c21-6d3a-4b92-9a1e-2f6c8d7b5a40",
+    "to_number": "+14155550128",
+    "from_number": "+14155550100",
+    "metadata": {
+      "contact_id": "contact_8f3a21c9",
+      "source": "crm"
+    }
+  }'
+```
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/crm/calls" \
+  --cookie "sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example; sb-refresh-token=v1.example.refresh" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "assistant_id": "asst_4e8f7c21-6d3a-4b92-9a1e-2f6c8d7b5a40",
+    "to_number": "+14155550128",
+    "metadata": {
+      "contact_id": "contact_8f3a21c9",
+      "source": "crm"
+    }
+  }'
+```
+</Request>
+
+<Response tabs="200" default-tab="1">
+```json
+{
+  "success": true,
+  "roomName": "crm-call-8f3a21c9-1726842138",
+  "sipCallId": "sip_5c7e9a12-3b64-4d8f-a201-6e9c2b7d4f50",
+  "to_number": "+14155550128"
+}
+```
+</Response>
+
+### Body parameters
+
+<ParamField body="assistant_id" param-type="string | UUID" required="true">
+The assistant to use for the call.
+</ParamField>
+
+<ParamField body="to_number" param-type="string" required="true">
+The destination phone number. The value must contain at least four characters.
+</ParamField>
+
+<ParamField body="from_number" param-type="string" required="false">
+The phone number to use as the caller ID. If omitted, the API uses the first active number assigned to the assistant.
+</ParamField>
+
+<ParamField body="metadata" param-type="object" required="false">
+Additional metadata passed into the room metadata.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" field-type="boolean" required="true">
+Indicates whether the outbound CRM call started successfully.
+</ResponseField>
+
+<ResponseField name="roomName" field-type="string" required="true">
+The room name created for the call.
+</ResponseField>
+
+<ResponseField name="sipCallId" field-type="string" required="true">
+The SIP call identifier for the outbound call.
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string" required="true">
+The destination phone number used for the call.
 </ResponseField>
 
 ## Notes on access control
