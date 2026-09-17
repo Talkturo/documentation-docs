@@ -8,6 +8,30 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-09-17" description="v3.6.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **E-Mail-Zusammenfassungs-Routing** — Leite Anruf-Zusammenfassungen an bestimmte Personen weiter, basierend auf Bedingungen oder Anruf-Transfers. Jede Route hat einen eigenen Prompt, unterstützt mehrere E-Mail-Adressen und du kannst wählen, ob die beste Übereinstimmung oder alle übereinstimmenden Routen bedient werden. Standardempfänger können optional eine Kopie jeder Zusammenfassung erhalten. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Test-Anruf-Links** — Teile signierte eintägige Test-Links für Direktanrufe, Embeds und Widgets. Test-Anrufe werden vollständig protokolliert und im CRM angezeigt, aber zu Provider-Kosten ohne Marge abgerechnet. Test-Anrufe zeigen ein Badge und können im Anrufprotokoll gefiltert werden, mit einer wöchentlichen Zählung im Dashboard. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Verbindungsansage pro Transfer-Ziel** — Lege eine benutzerdefinierte gesprochene Nachricht für jedes Warm-Transfer-Ziel fest, die einmal abgespielt wird, sobald die Person am Apparat ist. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Weitere OpenAI-Modelle** — GPT-5 nano, GPT-4.1 nano und mini, GPT-4o mini, GPT-5.4 nano und mini sowie GPT-5.6 Luna sind jetzt auswählbar. Diese Modelle melden zudem zwischengespeicherte Prompt-Tokens, was Kosten bei langen Prompts senkt. Siehe [Features](/de/features).
+  - **Plugin-Prompt-Anleitungen** — Jeder Plugin-Dialog hat jetzt eine Schaltfläche, die anbieterspezifische Anleitungen öffnet, was der Prompt enthalten muss, mit einem kopierbaren Block. Siehe [Integrationen](/de/integrations).
+  - **Erstellungszeitstempel bei CRM-Kontakten** — Die Kontaktliste und die Kontaktdetails zeigen jetzt, wann jeder Kontakt erstellt wurde, in der Workspace-Zeitzone. Siehe [Kontakte](/de/crm/contacts).
+
+  ## Verbesserungen
+
+  - **Transfer-Ergebnis in Zusammenfassungen** — Wenn ein Anruf weitergeleitet wird, gibt die Zusammenfassung jetzt wieder, ob der Transfer verbunden war, an einen Anrufbeantworter ging oder fehlgeschlagen ist, statt immer eine erfolgreiche Übergabe zu behaupten. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Zusammenfassungs-E-Mails in der Actions-Registerkarte** — Gesendete Zusammenfassungs-E-Mails erscheinen jetzt als Timeline-Einträge in der Actions-Registerkarte des Anrufs, mit Routenname, Empfängern und Prompt-Typ. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Bestätigung vor dem Löschen von Call-Transfer-Zielen** — Das Löschen eines Call-Transfer-Ziels fragt jetzt zuerst nach und warnt, wie viele verknüpfte Zusammenfassungs-Routen keine Zusammenfassungen mehr erhalten. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Bestätigung vor dem Löschen von Zusammenfassungs-Routen** — Das Löschen einer E-Mail-Zusammenfassungs-Route fordert jetzt eine Bestätigung, statt sie mit einem Klick zu entfernen. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+
+  ## Bugfixes
+
+  - **Zusammenfassungs-Routen erfinden keine Kontaktdetails mehr** — Routenspezifische Zusammenfassungen behaupten nicht mehr, der Anrufer sei „unter der während des Anrufs angegebenen Telefonnummer erreichbar", wenn keine Nummer genannt wurde. Telefon und E-Mail werden nur eingefügt, wenn sie tatsächlich erwähnt wurden. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Strenge E-Mail-Validierung für Zusammenfassungs-Routen** — E-Mail-Adressen mit fehlerhaften Zeichen werden jetzt im Dialog und beim Speichern abgelehnt, statt erst beim Senden nach dem Anruf zu scheitern. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **OAuth-Weiterleitung nach Anmeldung** — Google- und Facebook-Anmeldungen hinter einem Reverse-Proxy leiten jetzt zur korrekten öffentlichen Adresse weiter statt zu einer internen URL. Siehe [Authentifizierung](/de/authentication).
+</Update>
+
 <Update label="2026-09-12" description="v3.5.0" tags={["feature","improvement"]}>
   ## Neue Features
 
