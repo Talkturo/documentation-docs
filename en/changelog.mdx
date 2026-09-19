@@ -8,6 +8,31 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-19" description="v3.7.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Workspace timezone auto-detection** — New workspaces automatically capture your browser's timezone during creation, so call schedules, dates, and times use your local zone from the start. Existing workspaces without a timezone prompt the owner to set one. See [Quickstart](/en/quickstart).
+  - **Free AI Employee account claiming** — Visitors who build and test a draft voice agent on the public AI Employee page can now create a free Talkturo account and have their draft agent — including uploaded documents — copied directly into their new workspace, along with welcome credits. See [AI Voice Agents](/en/assistants/overview).
+  - **First and last name during onboarding** — New users now provide a first name (and optional last name) during onboarding instead of remaining nameless. Google and Facebook sign-ups have their provider-supplied name auto-filled. See [Quickstart](/en/quickstart).
+  - **Onboarding cross-workspace number funding** — When creating a second workspace, the initial phone number purchase can be paid from the first workspace's welcome credits during onboarding, so you're not blocked by an empty balance. See [Quickstart](/en/quickstart).
+  - **Call history survives assistant deletion** — Deleting an assistant no longer erases its call history. Past calls remain visible in the call log with the assistant's name and a "(deleted)" indicator. See [Call Logs](/en/call-logs).
+  - **Calls linked to CRM contacts** — Calls are now automatically associated with CRM contacts by phone number or campaign relationship, making it easier to find a contact's full call history. See [Contacts](/en/crm/contacts).
+  - **Workspace-independent redirect links** — Marketing and billing emails can now link to a user's last workspace without knowing their workspace slug, preserving query parameters like auto-opening a top-up modal. See [Billing](/en/billing).
+
+  ## Improvements
+
+  - **API keys are now workspace-scoped** — Credits, phone number search, listing, and purchase APIs now resolve the workspace from the authenticated caller, preventing cross-workspace access via request parameters. Use an API key belonging to the target workspace. See [API Keys](/en/api-reference/api-keys).
+  - **More accurate voice cost estimates** — Billing estimates for minute-metered voices now calculate the assistant's actual speaking share from recent call history instead of a fixed assumption, and display "credits per minute the voice speaks" for clarity. See [Billing](/en/billing).
+  - **Consistent phone number normalization** — CRM contact phone numbers are now normalized to a standard format, reducing duplicate contacts caused by different spacing, punctuation, or international-prefix styles. See [Contacts](/en/crm/contacts).
+  - **Account settings show first and last name** — The single display-name field in personal account settings is replaced by separate first name and last name fields. Existing names from Google or Facebook sign-in are backfilled automatically. See [Authentication](/en/authentication).
+  - **Workspace names generated from business info** — New workspaces created through AI Employee claiming are now named after the business Talkturo learned from the website, instead of a generic or assistant-based name. See [AI Voice Agents](/en/assistants/overview).
+
+  ## Bug Fixes
+
+  - **Usage chart includes today's calls** — The billing usage chart now shows calls completed during the current day instead of appearing artificially low until midnight. See [Billing](/en/billing).
+  - **Meta ad attribution preserved** — Click IDs from Meta ads are no longer lost or truncated between the marketing site and the app, and server-side events use the correct millisecond timestamp, improving ad attribution accuracy.
+</Update>
+
 <Update label="2026-09-17" description="v3.6.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 

@@ -8,6 +8,31 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-09-19" description="v3.7.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Workspace-Zeitzone automatisch erkannt** — Neue Workspaces erfassen beim Erstellen automatisch die Zeitzone deines Browsers, sodass Anrufpläne, Daten und Uhrzeiten von Anfang an deine lokale Zone verwenden. Bestehende Workspaces ohne Zeitzone fordern den Eigentümer auf, eine festzulegen. Siehe [Schnellstart](/de/quickstart).
+  - **Kostenloses AI-Employee-Konto beanspruchen** — Besucher, die einen Entwurf eines Voice-Agents auf der öffentlichen AI-Employee-Seite erstellen und testen, können jetzt ein kostenloses Talkturo-Konto erstellen und ihren Entwurfs-Agenten — inklusive hochgeladener Dokumente — direkt in ihren neuen Workspace übernehmen lassen, zusammen mit Willkommensguthaben. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Vor- und Nachname beim Onboarding** — Neue Nutzer geben beim Onboarding jetzt einen Vornamen (und optional einen Nachnamen) an, statt namenlos zu bleiben. Google- und Facebook-Anmeldungen haben den vom Anbieter gelieferten Namen automatisch ausgefüllt. Siehe [Schnellstart](/de/quickstart).
+  - **Workspace-übergreifende Nummernfinanzierung beim Onboarding** — Beim Erstellen eines zweiten Workspaces kann der erste Telefonnummernkauf während des Onboardings vom Willkommensguthaben des ersten Workspaces bezahlt werden, sodass du nicht durch ein leeres Guthaben blockiert wirst. Siehe [Schnellstart](/de/quickstart).
+  - **Anrufhistorie bleibt nach Assistenten-Löschung erhalten** — Das Löschen eines Assistenten löscht nicht mehr dessen Anrufhistorie. Vergangene Anrufe bleiben im Anrufprotokoll sichtbar, mit dem Namen des Assistenten und einer „(gelöscht)"-Markierung. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Anrufe mit CRM-Kontakten verknüpft** — Anrufe werden jetzt automatisch über Telefonnummer oder Kampagnenbeziehung mit CRM-Kontakten verknüpft, was es einfacher macht, die vollständige Anrufhistorie eines Kontakts zu finden. Siehe [Kontakte](/de/crm/contacts).
+  - **Workspace-unabhängige Weiterleitungs-Links** — Marketing- und Abrechnungs-E-Mails können jetzt auf den letzten Workspace eines Nutzers verlinken, ohne dessen Workspace-Slug zu kennen, wobei Query-Parameter wie das automatische Öffnen eines Auflade-Modals erhalten bleiben. Siehe [Abrechnung](/de/billing).
+
+  ## Verbesserungen
+
+  - **API-Keys sind jetzt Workspace-bezogen** — Guthaben-, Telefonnummern-Such-, Listen- und Kauf-APIs lösen den Workspace jetzt aus dem authentifizierten Aufrufer, was Cross-Workspace-Zugriff über Anfrageparameter verhindert. Verwende einen API-Key, der zum Ziel-Workspace gehört. Siehe [API-Keys](/de/api-reference/api-keys).
+  - **Genauere Sprachkostenschätzungen** — Abrechnungsschätzungen für minutenbasierte Abrechnungstimmen berechnen jetzt den tatsächlichen Sprechanteil des Assistenten aus der letzten Anrufhistorie statt einer festen Annahme und zeigen „Credits pro gesprochene Minute" zur Klarstellung. Siehe [Abrechnung](/de/billing).
+  - **Konsistente Telefonnummern-Normalisierung** — CRM-Kontakt-Telefonnummern werden jetzt in ein Standardformat normalisiert, was Duplikat-Kontakte durch unterschiedliche Leerzeichen, Zeichensetzung oder internationale Präfixe reduziert. Siehe [Kontakte](/de/crm/contacts).
+  - **Kontoeinstellungen zeigen Vor- und Nachname** — Das einzelne Anzeigename-Feld in den persönlichen Kontoeinstellungen wird durch separate Vorname- und Nachname-Felder ersetzt. Bestehende Namen von Google- oder Facebook-Anmeldungen werden automatisch befüllt. Siehe [Authentifizierung](/de/authentication).
+  - **Workspace-Namen aus Geschäftsinformationen generiert** — Neue Workspaces, die über AI-Employee-Beanspruchung erstellt werden, werden jetzt nach dem Unternehmen benannt, das Talkturo von der Website gelernt hat, statt eines generischen oder assistentenbasierten Namens. Siehe [KI-Sprachagenten](/de/assistants/overview).
+
+  ## Bugfixes
+
+  - **Nutzungsdiagramm enthält heutige Anrufe** — Das Abrechnungs-Nutzungsdiagramm zeigt jetzt Anrufe, die am aktuellen Tag beendet wurden, statt bis Mitternacht künstlich niedrig zu erscheinen. Siehe [Abrechnung](/de/billing).
+  - **Meta-Werbe-Attribution erhalten** — Click-IDs von Meta-Anzeigen gehen nicht mehr zwischen Marketing-Website und App verloren oder werden abgeschnitten, und serverseitige Events verwenden den korrekten Millisekunden-Zeitstempel, was die Werbe-Attributionsgenauigkeit verbessert.
+</Update>
+
 <Update label="2026-09-17" description="v3.6.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
