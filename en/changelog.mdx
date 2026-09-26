@@ -8,6 +8,21 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-24" description="v3.7.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Website Knowledge-Base Import** — Add a website URL and automatically crawl its pages into your Knowledge Base as clean markdown documents. Imported pages are stripped of navigation menus, social links, and images. Assign pages to specific assistants, schedule automatic recrawls, and track crawl progress with credit-based billing. Knowledge-base search results now show the originating page URL. See [Knowledge Base](/en/knowledge-base).
+
+  ## Improvements
+
+  - **Workspace-scoped API security** — Credits and phone-number APIs now require authenticated workspace membership. API keys can only access their own workspace, preventing any cross-workspace balance, transaction, or phone-number access. See [API Authentication](/en/api-reference/authentication).
+  - **Onboarding phone-number funding across workspaces** — When creating an additional workspace, the initial phone number can be funded by the owner's first workspace if the new workspace has no credits. Monthly charges remain on the new workspace. See [Quickstart](/en/quickstart).
+
+  ## Bug Fixes
+
+  - **Social sign-up names no longer missing** — Google and Facebook sign-ups now use the first and last names already provided by the provider, avoiding unnecessary name prompts after sign-up. See [Authentication](/en/authentication).
+</Update>
+
 <Update label="2026-09-17" description="v3.6.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
