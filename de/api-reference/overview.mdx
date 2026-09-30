@@ -1,16 +1,15 @@
 ---
 title: API-Übersicht
-description: Starten Sie mit der Talkturo REST-API — Basis-URL, Authentifizierung, Antwortformat, Ratenlimits und verfügbare Endpunktgruppen.
+description: >-
+  Starten Sie mit der Talkturo REST-API — Basis-URL, Authentifizierung,
+  Antwortformat, Ratenlimits und verfügbare Endpunktgruppen.
 ---
-
 ## Entwickeln Sie auf der Talkturo API
 
 Erstellen Sie Integrationen und Automatisierungen auf Basis der Voice-AI-Plattform von Talkturo mit einer REST-API für Assistenten, Telefonie, Telefonnummern, Guthaben, CRM-Daten, Workflows und Kontoverwaltung. Auf dieser Seite lernen Sie die grundlegenden API-Konventionen kennen und finden die Endpunktgruppe, die Sie benötigen.
 
-<Callout kind="info">
-
-Senden Sie alle API-Anfragen an `https://api.talkturo.com/api`.
-
+<Callout kind="info" collapsed="false">
+  Senden Sie alle API-Anfragen an `https://app.talkturo.com/api`.
 </Callout>
 
 ## Authentifizieren Sie Anfragen
@@ -19,25 +18,21 @@ Talkturo unterstützt drei Authentifizierungsmethoden. Die meisten externen Inte
 
 <Tabs>
   <Tab title="API-Schlüssel" icon="key">
+    Verwenden Sie ein Bearer-Token, das mit `tk_live_` oder `tk_test_` beginnt, um Server-zu-Server-Anfragen zu authentifizieren. API-Schlüssel unterstützen Scopes und haben standardmäßig ein Ratenlimit von 1000 Anfragen pro Stunde.
 
-Verwenden Sie ein Bearer-Token, das mit `tk_live_` oder `tk_test_` beginnt, um Server-zu-Server-Anfragen zu authentifizieren. API-Schlüssel unterstützen Scopes und haben standardmäßig ein Ratenlimit von 1000 Anfragen pro Stunde.
-
-Unter [Authentifizierung](/de/api-reference/authentication) finden Sie das Header-Format, das Verhalten von Scopes und Sicherheitshinweise.
-
+    Unter [Authentifizierung](/de/api-reference/authentication) finden Sie das Header-Format, das Verhalten von Scopes und Sicherheitshinweise.
   </Tab>
+
   <Tab title="Sitzungs-Cookies" icon="lock">
+    Die Talkturo-Web-App verwendet authentifizierte Sitzungs-Cookies für browserbasierte Anfragen. Diese Methode ist für Web-Sitzungen der eigenen Anwendung vorgesehen, nicht für externe Backend-Integrationen.
 
-Die Talkturo-Web-App verwendet authentifizierte Sitzungs-Cookies für browserbasierte Anfragen. Diese Methode ist für Web-Sitzungen der eigenen Anwendung vorgesehen, nicht für externe Backend-Integrationen.
-
-Unter [Authentifizierung](/de/api-reference/authentication) erfahren Sie, wann sitzungsbasierte Authentifizierung zum Einsatz kommt.
-
+    Unter [Authentifizierung](/de/api-reference/authentication) erfahren Sie, wann sitzungsbasierte Authentifizierung zum Einsatz kommt.
   </Tab>
+
   <Tab title="JWT-Bearer-Token" icon="monitor">
+    Die Desktop-App verwendet Bearer-JWT-Token für authentifizierten API-Zugriff. Dieser Ablauf ist speziell für Desktop-Clients gedacht, die sich über Talkturo-Benutzersitzungen authentifizieren.
 
-Die Desktop-App verwendet Bearer-JWT-Token für authentifizierten API-Zugriff. Dieser Ablauf ist speziell für Desktop-Clients gedacht, die sich über Talkturo-Benutzersitzungen authentifizieren.
-
-Weitere Informationen finden Sie unter [Authentifizierung](/de/api-reference/authentication) und [Desktop-Authentifizierung](/de/api-reference/desktop).
-
+    Weitere Informationen finden Sie unter [Authentifizierung](/de/api-reference/authentication) und [Desktop-Authentifizierung](/de/api-reference/desktop).
   </Tab>
 </Tabs>
 
@@ -47,16 +42,16 @@ Die meisten Endpunkte geben JSON in einem einheitlichen Format zurück, sodass S
 
 ### HTTP-Statuscodes
 
-| Status | Bedeutung |
-| --- | --- |
-| `200` | Anfrage erfolgreich |
-| `201` | Ressource erstellt |
-| `400` | Ungültige Anfrage |
-| `401` | Nicht autorisiert |
-| `402` | Ungenügendes Guthaben |
-| `403` | Verboten |
-| `404` | Nicht gefunden |
-| `500` | Serverfehler |
+| Status | Bedeutung             |
+| ------ | --------------------- |
+| `200`  | Anfrage erfolgreich   |
+| `201`  | Ressource erstellt    |
+| `400`  | Ungültige Anfrage     |
+| `401`  | Nicht autorisiert     |
+| `402`  | Ungenügendes Guthaben |
+| `403`  | Verboten              |
+| `404`  | Nicht gefunden        |
+| `500`  | Serverfehler          |
 
 ## Ratenlimits
 
@@ -65,39 +60,6 @@ API-Schlüssel sind standardmäßig auf 1000 Anfragen pro Stunde begrenzt. Wenn 
 ## Endpunktgruppen durchsuchen
 
 Beginnen Sie mit der Gruppe, die zur Ressource oder zum Workflow passt, den Sie integrieren möchten. Jede Referenzseite dokumentiert Endpunkte, Authentifizierungsanforderungen und Anfrage-/Antwortdetails.
-
-<Columns cols={2}>
-  <Card title="Authentifizierung" href="/de/api-reference/authentication" icon="lock" cta="Referenz öffnen">Authentifizieren Sie Anfragen mit API-Schlüsseln, Sitzungs-Cookies und JWT-Bearer-Token.</Card>
-  <Card title="API-Schlüssel" href="/de/api-reference/api-keys" icon="shield" cta="Referenz öffnen">Erstellen, auflisten, aktualisieren und widerrufen Sie API-Schlüssel.</Card>
-  <Card title="Assistenten" href="/de/api-reference/assistants" icon="users" cta="Referenz öffnen">Erstellen, aktualisieren, klonen und löschen Sie Sprachassistenten.</Card>
-  <Card title="Telefonie" href="/de/api-reference/telephony" icon="phone" cta="Referenz öffnen">Konfigurieren Sie ein- und ausgehende Anrufe und Telefonieeinstellungen.</Card>
-  <Card title="Telefonnummern" href="/de/api-reference/phone-numbers" icon="hash" cta="Referenz öffnen">Suchen, kaufen, abrufen und freigeben von Telefonnummern.</Card>
-  <Card title="Guthaben" href="/de/api-reference/credits" icon="bar-chart" cta="Referenz öffnen">Guthaben prüfen, Auto-Reload verwalten und Checkout starten.</Card>
-  <Card title="Abrechnung" href="/de/api-reference/billing" icon="database" cta="Referenz öffnen">Rechnungen und abrechnungsbezogene Endpunkte.</Card>
-  <Card title="CRM-Kontakte" href="/de/api-reference/crm-contacts" icon="users" cta="Referenz öffnen">Kontaktdatensätze auflisten, erstellen, aktualisieren und importieren.</Card>
-  <Card title="CRM-Unternehmen" href="/de/api-reference/crm-companies" icon="folder" cta="Referenz öffnen">Unternehmensdatensätze verwalten (veraltet).</Card>
-  <Card title="CRM-Opportunities" href="/de/api-reference/crm-opportunities" icon="rocket" cta="Referenz öffnen">Opportunities für Pipeline- und Revenue-Workflows verwalten.</Card>
-  <Card title="CRM-Benutzerdefinierte Felder" href="/de/api-reference/crm-custom-fields" icon="settings" cta="Referenz öffnen">Benutzerdefinierte CRM-Felder definieren und verwalten.</Card>
-  <Card title="CRM-Kampagnen" href="/de/api-reference/crm-campaigns" icon="play-circle" cta="Referenz öffnen">Ausgehende Kampagnen, Kontakte und Dashboards verwalten.</Card>
-  <Card title="CRM-Gruppen" href="/de/api-reference/crm-groups" icon="users" cta="Referenz öffnen">Kontakte in Gruppen organisieren für Kampagnen und Routing.</Card>
-  <Card title="TurboFlow" href="/de/api-reference/turboflow" icon="zap" cta="Referenz öffnen">Workflow-Automatisierungen, Trigger, Integrationen und Tools.</Card>
-  <Card title="Webhooks" href="/de/api-reference/webhooks" icon="upload" cta="Referenz öffnen">Event-Callbacks und Webhook-Endpunkte empfangen.</Card>
-  <Card title="Desktop-Authentifizierung" href="/de/api-reference/desktop" icon="monitor" cta="Referenz öffnen">Desktop-Clients mit JWT-Bearer-Token authentifizieren.</Card>
-  <Card title="Wissensdatenbank" href="/de/api-reference/knowledge-base" icon="book-open" cta="Referenz öffnen">Wissensdatenbank-Dateien hochladen, auflisten und entfernen.</Card>
-  <Card title="Sitzungen" href="/de/api-reference/sessions" icon="headphones" cta="Referenz öffnen">Sprach- und Browsersitzungen erstellen, auflisten und beenden.</Card>
-  <Card title="Anrufe" href="/de/api-reference/calls" icon="phone-call" cta="Referenz öffnen">Anrufaufzeichnungen, Transkripte und Zusammenfassungen abrufen.</Card>
-  <Card title="Benutzer und Konto" href="/de/api-reference/users" icon="user" cta="Referenz öffnen">Benutzerprofile, Kontoeinstellungen und Workspaces verwalten.</Card>
-  <Card title="Stimme und TTS" href="/de/api-reference/voice" icon="mic" cta="Referenz öffnen">TTS-Stimmen, Sprachanbieter-Modelle und Voice-Cloning.</Card>
-  <Card title="MCP-Plugins" href="/de/api-reference/mcp" icon="plug" cta="Referenz öffnen">MCP-Plugin-Integrationen und -Tools verbinden und verwalten.</Card>
-  <Card title="Zahlungsmethoden" href="/de/api-reference/payment-methods" icon="credit-card" cta="Referenz öffnen">Gespeicherte Zahlungsmethoden auflisten und verwalten.</Card>
-  <Card title="Onboarding" href="/de/api-reference/onboarding" icon="rocket" cta="Referenz öffnen">Workspace-Onboarding-Flows starten, verfolgen und abschließen.</Card>
-  <Card title="Verifizierungen" href="/de/api-reference/verifications" icon="badge-check" cta="Referenz öffnen">Regulatorische Verifizierungen, Adressen und Anträge verwalten.</Card>
-  <Card title="Nutzung" href="/de/api-reference/usage" icon="activity" cta="Referenz öffnen">Kontolimits, Nutzungszeitreihen und Desktop-Sprachnutzung abrufen.</Card>
-  <Card title="KI-Werkzeuge" href="/de/api-reference/ai-tools" icon="sparkles" cta="Referenz öffnen">Prompts verbessern und übersetzen, LLM-Chat ausführen und Prompt-Vorlagen verwalten.</Card>
-  <Card title="Dateien" href="/de/api-reference/files" icon="file" cta="Referenz öffnen">Workspace-Dateien hochladen, abrufen und löschen mit signierten URLs.</Card>
-  <Card title="CRM-Intelligence" href="/de/api-reference/crm-intelligence" icon="lightbulb" cta="Referenz öffnen">Konversations-Intelligence abrufen, ausgehende Anrufe starten und Assistenten auflisten.</Card>
-  <Card title="Inbox" href="/de/api-reference/inbox" icon="inbox" cta="Referenz öffnen">Kontakte, Anruf- und E-Mail-Zeitleisten, Postfächer und Threads verwalten.</Card>
-</Columns>
 
 ## Mit dem häufigsten Integrationspfad beginnen
 
