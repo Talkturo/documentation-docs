@@ -1,0 +1,1569 @@
+---
+title: Inbox
+description: Manage unified inbox contacts, call and email timelines, assistant mailboxes, threads, attachments, and Nylas events through the Talkturo API.
+---
+
+## Overview
+
+Manage inbox contacts, review call and email timelines, send emails, configure assistant mailboxes, organize threads, download attachments, and process Nylas events through the Inbox API.
+
+<Callout kind="info">
+
+All Inbox endpoints except the Nylas webhook require session authentication. Use an authenticated Supabase browser session or a bearer session token. API key authentication is rejected with HTTP `403` and the error `Not available with an API key`.
+
+Include `accountSlug` with bearer-session requests. Cookie-based browser requests can use `accountSlug` or `teamId` to select the workspace.
+
+</Callout>
+
+## Endpoint summary
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/inbox/list` | List and filter inbox contacts |
+| `GET` | `/api/inbox/contacts` | Search contacts |
+| `GET` | `/api/inbox/contacts/{contactId}/timeline` | Retrieve a contact's call and email timeline |
+| `POST` | `/api/inbox/contact-state` | Assign, unassign, complete, or reopen contacts |
+| `GET` | `/api/inbox/access` | Read inbox access settings |
+| `PUT` | `/api/inbox/access` | Update assistant access restrictions |
+| `GET` | `/api/inbox/members` | List workspace members |
+| `GET` | `/api/inbox/availability` | Check an assistant mailbox address |
+| `GET` | `/api/inbox/assistants/{assistantId}/calls` | List calls for an assistant |
+| `GET` | `/api/inbox/assistants/{assistantId}/calls/{callId}` | Retrieve call details and transcript |
+| `GET` | `/api/inbox/assistants/{assistantId}/calls/summary` | Summarize assistant call activity |
+| `GET` | `/api/inbox/assistants/{assistantId}/mailbox` | Retrieve mailbox details |
+| `POST` | `/api/inbox/assistants/{assistantId}/mailbox` | Create a mailbox |
+| `PATCH` | `/api/inbox/assistants/{assistantId}/mailbox` | Update mailbox sender settings |
+| `DELETE` | `/api/inbox/assistants/{assistantId}/mailbox` | Remove a mailbox |
+| `POST` | `/api/inbox/assistants/{assistantId}/send` | Send an email |
+| `GET` | `/api/inbox/assistants/{assistantId}/threads` | List assistant email threads |
+| `POST` | `/api/inbox/assistants/{assistantId}/threads/{threadId}/block` | Block a sender or domain |
+| `DELETE` | `/api/inbox/assistants/{assistantId}/threads/{threadId}/block` | Remove a sender or domain block |
+| `POST` | `/api/inbox/assistants/{assistantId}/threads/{threadId}/folder` | Move a thread between inbox and spam |
+| `GET` | `/api/inbox/threads/{threadId}` | Retrieve thread messages |
+| `POST` | `/api/inbox/threads/{threadId}` | Mark a thread as read |
+| `GET` | `/api/inbox/attachments/{attachmentId}` | Retrieve a signed attachment URL |
+| `GET` | `/api/inbox/nylas/webhook` | Complete the Nylas webhook challenge |
+| `POST` | `/api/inbox/nylas/webhook` | Receive Nylas events |
+
+## Inbox list
+
+### `GET /api/inbox/list`
+
+Retrieve a paginated list of inbox contacts. The default status filter is `open`, and each page contains up to 50 contacts.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/list?accountSlug=acme&status=open&page=0" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField query="assistants" param-type="string" required="false">
+Comma-separated assistant UUIDs.
+</ParamField>
+
+<ParamField query="channel" param-type="string" enum="phone,web,email" required="false">
+Limit results to a communication channel.
+</ParamField>
+
+<ParamField query="q" param-type="string" required="false">
+Search text, trimmed and limited to 100 characters.
+</ParamField>
+
+<ParamField query="unread" param-type="string" enum="1" required="false">
+Set to `1` to return only contacts with unread activity.
+</ParamField>
+
+<ParamField query="status" param-type="string" enum="open,done,all" required="false">
+Contact status. Omitted or unrecognized values use `open`.
+</ParamField>
+
+<ParamField query="assigned" param-type="string" required="false">
+Use `me`, `unassigned`, or a member UUID. Invalid values do not apply an assignment filter.
+</ParamField>
+
+<ParamField query="needs" param-type="string" enum="1" required="false">
+Set to `1` to return contacts needing the current user.
+</ParamField>
+
+<ParamField query="page" param-type="integer" required="false">
+Zero-based page number, clamped to the range `0` through `1000`.
+</ParamField>
+
+<Response tabs="200,500">
+
+```json
+{
+  "total": 1,
+  "page": 0,
+  "pageSize": 50,
+  "contacts": [
+    {
+      "id": "cnt_7f3c9a21",
+      "name": "Maya Patel",
+      "email": "maya.patel@northstar.example",
+      "phone": "+14155550182",
+      "company": "Northstar Labs",
+      "lastAt": "2025-02-14T16:20:00.000Z",
+      "last": {
+        "kind": "email",
+        "channel": "email",
+        "direction": "inbound",
+        "ref": "msg_9a41",
+        "preview": "Could we review the proposal?",
+        "seconds": null,
+        "assistant": "asst_2b7d"
+      },
+      "channels": ["email", "phone"],
+      "assistants": [
+        {
+          "id": "asst_2b7d",
+          "name": "Avery"
+        }
+      ],
+      "unread": 2,
+      "needsYou": true,
+      "done": false,
+      "assignee": null
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="total" field-type="integer" required="true">
+Total contacts matching the filters.
+</ResponseField>
+
+<ResponseField name="page" field-type="integer" required="true">
+The returned zero-based page number.
+</ResponseField>
+
+<ResponseField name="pageSize" field-type="integer" required="true">
+Maximum number of contacts in a page. This value is `50`.
+</ResponseField>
+
+<ResponseField name="contacts" field-type="array" required="true">
+Contacts with their latest interaction, channels, assistants, unread count, completion state, and assignee.
+</ResponseField>
+
+<Callout kind="alert">
+
+A failed inbox query returns HTTP `500` with `Could not load the Inbox`.
+
+</Callout>
+
+## Contact search
+
+### `GET /api/inbox/contacts`
+
+Search contacts by name, email, or company. Results require a non-empty email address and are limited to eight contacts.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/contacts?q=maya%20patel&accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField query="q" param-type="string" required="true">
+Search text. Special characters are removed, the value is trimmed, and the result is limited to 60 characters. Queries shorter than two characters return an empty result.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200,500">
+
+```json
+{
+  "contacts": [
+    {
+      "id": "cnt_7f3c9a21",
+      "name": "Maya Patel",
+      "email": "maya.patel@northstar.example",
+      "company": "Northstar Labs"
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="contacts" field-type="array" required="true">
+Up to eight contacts with non-null email addresses.
+</ResponseField>
+
+<Callout kind="info">
+
+A search query shorter than two characters returns `contacts: []` without querying the database.
+
+</Callout>
+
+## Contact timeline
+
+### `GET /api/inbox/contacts/{contactId}/timeline`
+
+Retrieve a contact's profile, calls, emails, and available assistant mailboxes. Timeline items are sorted oldest first.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/contacts/cnt_7f3c9a21/timeline?accountSlug=acme&channel=email" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="contactId" param-type="string" required="true">
+Contact UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField query="assistants" param-type="string" required="false">
+Comma-separated assistant UUIDs. Invalid IDs are ignored.
+</ParamField>
+
+<ParamField query="channel" param-type="string" enum="phone,web,email" required="false">
+Use `phone` for non-web calls, `web` for web calls, or `email` for email messages. Omit the parameter to include calls and emails.
+</ParamField>
+
+<Response tabs="200,404">
+
+```json
+{
+  "contact": {
+    "id": "cnt_7f3c9a21",
+    "name": "Maya Patel",
+    "firstName": "Maya",
+    "lastName": "Patel",
+    "email": "maya.patel@northstar.example",
+    "phone": "+14155550182",
+    "phoneSecondary": null,
+    "company": "Northstar Labs",
+    "jobTitle": "Operations Director",
+    "leadStatus": "qualified",
+    "source": "website",
+    "createdAt": "2025-01-08T09:30:00.000Z",
+    "lastAt": "2025-02-14T16:20:00.000Z",
+    "lastChannel": "email",
+    "lastAssistant": "Avery",
+    "channelsUsed": ["email", "phone"],
+    "done": false,
+    "assignee": null,
+    "groups": []
+  },
+  "items": [
+    {
+      "kind": "email",
+      "id": "msg_9a41",
+      "at": "2025-02-14T16:20:00.000Z",
+      "channel": "email",
+      "direction": "inbound",
+      "assistantId": "asst_2b7d",
+      "assistantName": "Avery",
+      "threadId": "thr_41c8",
+      "threadUnread": true,
+      "sentBy": null,
+      "fromName": "Maya Patel",
+      "fromAddress": "maya.patel@northstar.example",
+      "to": [{ "email": "avery@acme.example", "name": "Avery" }],
+      "subject": "Proposal review",
+      "text": "Could we review the proposal?",
+      "deliveryStatus": "delivered",
+      "deliveryDetail": null,
+      "attachments": []
+    }
+  ],
+  "mailboxes": [
+    {
+      "assistantId": "asst_2b7d",
+      "assistantName": "Avery",
+      "address": "avery@acme.example"
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="contact" field-type="object" required="true">
+Contact profile, status, channel history, groups, and assignee.
+</ResponseField>
+
+<ResponseField name="items" field-type="array" required="true">
+Call and email timeline items. The API loads at most 100 calls and 100 email messages per category.
+</ResponseField>
+
+<ResponseField name="mailboxes" field-type="array" required="true">
+Assistant mailboxes associated with the contact's accessible activity.
+</ResponseField>
+
+<Callout kind="info">
+
+Restricted members automatically receive only activity associated with assistants they are permitted to see. A contact with no accessible activity returns HTTP `404`.
+
+</Callout>
+
+## Contact state
+
+### `POST /api/inbox/contact-state`
+
+Assign, unassign, complete, or reopen up to 200 contacts in one request.
+
+<Request tabs="cURL">
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/inbox/contact-state?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contactIds": ["cnt_7f3c9a21"],
+    "action": "assign",
+    "assigneeId": "usr_84a1c2d9"
+  }'
+```
+
+</Request>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField body="contactIds" param-type="array" required="true">
+One to 200 contact UUIDs.
+</ParamField>
+
+<ParamField body="action" param-type="string" enum="assign,unassign,done,reopen" required="true">
+State operation to apply.
+</ParamField>
+
+<ParamField body="assigneeId" param-type="string" required="false">
+Workspace member UUID. Required when `action` is `assign`.
+</ParamField>
+
+<Response tabs="200,400,404">
+
+```json
+{
+  "updated": 1
+}
+```
+
+</Response>
+
+<ResponseField name="updated" field-type="integer" required="true">
+Number of in-scope contacts changed.
+</ResponseField>
+
+<Callout kind="alert">
+
+Contacts belonging to another workspace are silently excluded. If no valid, in-scope contacts remain, the API returns HTTP `404`.
+
+</Callout>
+
+## Inbox access
+
+### `GET /api/inbox/access`
+
+Read the current user's inbox access scope and, when permitted, workspace member restrictions.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/access?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200">
+
+```json
+{
+  "canManage": true,
+  "me": "usr_84a1c2d9",
+  "assistants": [
+    { "id": "asst_2b7d", "name": "Avery" }
+  ],
+  "members": [
+    {
+      "id": "usr_84a1c2d9",
+      "name": "Jordan Lee",
+      "email": "jordan.lee@acme.example",
+      "pictureUrl": null,
+      "role": "manager",
+      "manager": true,
+      "assistantIds": null
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="canManage" field-type="boolean" required="true">
+Whether the current member can manage inbox access.
+</ResponseField>
+
+<ResponseField name="me" field-type="string" required="true">
+Current user UUID.
+</ResponseField>
+
+<ResponseField name="assistants" field-type="array" required="true">
+Assistants available in the workspace.
+</ResponseField>
+
+<ResponseField name="members" field-type="array" required="true">
+Members and their assistant restrictions. Non-managers receive only their own member entry.
+</ResponseField>
+
+### `PUT /api/inbox/access`
+
+Set or remove a member's assistant access restriction.
+
+<Request tabs="cURL">
+
+```bash
+curl --request PUT \
+  --url "https://app.talkturo.com/api/inbox/access?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "userId": "usr_84a1c2d9",
+    "assistantIds": ["asst_2b7d"]
+  }'
+```
+
+</Request>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField body="userId" param-type="string" required="true">
+Workspace member UUID.
+</ParamField>
+
+<ParamField body="assistantIds" param-type="array" required="true">
+Assistant UUIDs, up to 500 values. Use `null` to remove the restriction and `[]` to save an explicit empty restriction.
+</ParamField>
+
+<Response tabs="200,400,403">
+
+```json
+{
+  "ok": true,
+  "assistantIds": ["asst_2b7d"]
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the restriction was saved.
+</ResponseField>
+
+<ResponseField name="assistantIds" field-type="array" required="false">
+Valid assistant UUIDs retained by the workspace.
+</ResponseField>
+
+<Callout kind="alert">
+
+Only authorized managers can update restrictions. You cannot assign restrictions to a manager, and assistant IDs outside the workspace are silently discarded.
+
+</Callout>
+
+## Workspace members
+
+### `GET /api/inbox/members`
+
+List workspace members available for inbox assignment.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/members?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200">
+
+```json
+{
+  "me": "usr_84a1c2d9",
+  "members": [
+    {
+      "id": "usr_84a1c2d9",
+      "name": "Jordan Lee",
+      "email": "jordan.lee@acme.example",
+      "pictureUrl": null,
+      "role": "manager"
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="me" field-type="string" required="true">
+Current user UUID.
+</ResponseField>
+
+<ResponseField name="members" field-type="array" required="true">
+Workspace members with their profile and role information.
+</ResponseField>
+
+## Address availability
+
+### `GET /api/inbox/availability`
+
+Check whether a mailbox local part is available in the workspace domain.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/availability?localPart=avery&accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField query="localPart" param-type="string" required="false">
+Mailbox local part to check. Defaults to an empty string.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200">
+
+```json
+{
+  "ok": true,
+  "address": "avery@acme.example"
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+`true` when the address can be used.
+</ResponseField>
+
+<ResponseField name="address" field-type="string" required="false">
+Available address, or the checked address when unavailable.
+</ResponseField>
+
+<ResponseField name="reason" field-type="string" required="false">
+Reason for unavailability, such as `taken`.
+</ResponseField>
+
+## Assistant calls
+
+### `GET /api/inbox/assistants/{assistantId}/calls`
+
+List an assistant's calls with optional direction and number filters. Pages contain 30 calls.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/calls?accountSlug=acme&page=1&dir=inbound&via=web" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField query="page" param-type="integer" required="false">
+One-based page number. Defaults to `1`.
+</ParamField>
+
+<ParamField query="dir" param-type="string" enum="inbound,outbound" required="false">
+Filter by call direction.
+</ParamField>
+
+<ParamField query="via" param-type="string" required="false">
+Use `web` for web calls. Otherwise provide one of the assistant's phone numbers.
+</ParamField>
+
+<Response tabs="200,403,404">
+
+```json
+{
+  "calls": [
+    {
+      "id": "call_91d2",
+      "direction": "inbound",
+      "isWeb": true,
+      "isTest": false,
+      "status": "completed",
+      "startedAt": "2025-02-14T15:00:00.000Z",
+      "endedAt": "2025-02-14T15:08:12.000Z",
+      "createdAt": "2025-02-14T15:08:14.000Z",
+      "durationSeconds": 492,
+      "counterpartNumber": "+14155550182",
+      "ourNumber": null,
+      "assistantName": "Avery",
+      "contact": {
+        "id": "cnt_7f3c9a21",
+        "name": "Maya Patel",
+        "company": "Northstar Labs"
+      },
+      "summary": "Reviewed implementation timeline."
+    }
+  ],
+  "hasMore": false
+}
+```
+
+</Response>
+
+<ResponseField name="calls" field-type="array" required="true">
+Calls matching the filters.
+</ResponseField>
+
+<ResponseField name="hasMore" field-type="boolean" required="true">
+Whether another page is available.
+</ResponseField>
+
+## Assistant call detail
+
+### `GET /api/inbox/assistants/{assistantId}/calls/{callId}`
+
+Retrieve call metadata and non-empty transcript messages from the assistant or user.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/calls/call_91d2?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField path="callId" param-type="string" required="true">
+Call UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200,403,404">
+
+```json
+{
+  "call": {
+    "id": "call_91d2",
+    "direction": "inbound",
+    "isWeb": true,
+    "isTest": false,
+    "status": "completed",
+    "startedAt": "2025-02-14T15:00:00.000Z",
+    "endedAt": "2025-02-14T15:08:12.000Z",
+    "createdAt": "2025-02-14T15:08:14.000Z",
+    "durationSeconds": 492,
+    "counterpartNumber": "+14155550182",
+    "ourNumber": null,
+    "assistantName": "Avery",
+    "contact": null,
+    "summary": "Reviewed implementation timeline.",
+    "hasRecording": true,
+    "messages": [
+      {
+        "role": "assistant",
+        "message": "What would you like to review?",
+        "time": 4
+      }
+    ]
+  }
+}
+```
+
+</Response>
+
+<ResponseField name="call" field-type="object" required="true">
+Call metadata, contact, recording availability, summary, and transcript messages.
+</ResponseField>
+
+## Assistant call summary
+
+### `GET /api/inbox/assistants/{assistantId}/calls/summary`
+
+Retrieve aggregate call counts and per-number activity for an assistant.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/calls/summary?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200,403,404">
+
+```json
+{
+  "totals": {
+    "calls": 42,
+    "inbound": 27,
+    "outbound": 15,
+    "avgSeconds": 318
+  },
+  "numbers": [
+    {
+      "number": "+14155550182",
+      "kind": "phone",
+      "calls": 42,
+      "inbound": 27,
+      "outbound": 15,
+      "avgSeconds": 318,
+      "lastCallAt": "2025-02-14T15:08:14.000Z",
+      "assigned": true
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="totals" field-type="object" required="true">
+Aggregate call counts and average duration.
+</ResponseField>
+
+<ResponseField name="numbers" field-type="array" required="true">
+Call statistics for assigned phone numbers and web calls.
+</ResponseField>
+
+<Callout kind="info">
+
+Web calls have an empty `number`. Assigned phone numbers with no calls are included with zero counts and a null average duration.
+
+</Callout>
+
+## Mailbox management
+
+### `GET /api/inbox/assistants/{assistantId}/mailbox`
+
+Retrieve mailbox configuration, pricing, sender defaults, and unread count.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/mailbox?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200,403,404">
+
+```json
+{
+  "emailEnabled": true,
+  "pricing": {
+    "perMailboxMonth": 12,
+    "perThousandEmails": 4
+  },
+  "domain": "acme.example",
+  "suggestion": "avery",
+  "mailbox": {
+    "id": "mbx_51c9",
+    "address": "avery@acme.example",
+    "senderName": "Avery",
+    "createdAt": "2025-02-01T10:00:00.000Z",
+    "unread": 3,
+    "signaturePreview": "Regards, Avery",
+    "defaultSenderName": "Talkturo",
+    "defaultSignature": "Sent with Talkturo",
+    "ownSenderName": null,
+    "ownSignature": null
+  }
+}
+```
+
+</Response>
+
+<ResponseField name="emailEnabled" field-type="boolean" required="true">
+Whether assistant email is enabled.
+</ResponseField>
+
+<ResponseField name="pricing" field-type="object" required="false">
+Mailbox and email pricing, or `null` when unavailable.
+</ResponseField>
+
+<ResponseField name="domain" field-type="string" required="true">
+Workspace mailbox domain.
+</ResponseField>
+
+<ResponseField name="suggestion" field-type="string" required="true">
+Suggested mailbox local part.
+</ResponseField>
+
+<ResponseField name="mailbox" field-type="object" required="false">
+Mailbox details, or `null` when no mailbox exists.
+</ResponseField>
+
+### `POST /api/inbox/assistants/{assistantId}/mailbox`
+
+Create an assistant mailbox.
+
+<Request tabs="cURL">
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/mailbox?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --header "Content-Type: application/json" \
+  --data '{ "localPart": "avery" }'
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField body="localPart" param-type="string" required="true">
+Mailbox local part, from 1 to 64 characters. The created address uses the workspace domain.
+</ParamField>
+
+<Response tabs="201,400,409">
+
+```json
+{
+  "mailbox": {
+    "id": "mbx_51c9",
+    "address": "avery@acme.example"
+  }
+}
+```
+
+</Response>
+
+<ResponseField name="mailbox" field-type="object" required="true">
+The newly created mailbox identifier and address.
+</ResponseField>
+
+### `PATCH /api/inbox/assistants/{assistantId}/mailbox`
+
+Update the mailbox sender name or signature.
+
+<Request tabs="cURL">
+
+```bash
+curl --request PATCH \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/mailbox?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "senderName": "Avery from Acme",
+    "signature": "Regards,\nAvery"
+  }'
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField body="senderName" param-type="string" required="false">
+Custom sender name, trimmed and limited to 120 characters. An empty string restores the workspace default.
+</ParamField>
+
+<ParamField body="signature" param-type="string" required="false">
+Custom signature, limited to 2,000 characters. An empty string restores the workspace default.
+</ParamField>
+
+<Response tabs="200,400,403,404">
+
+```json
+{
+  "ok": true
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the mailbox settings were updated.
+</ResponseField>
+
+### `DELETE /api/inbox/assistants/{assistantId}/mailbox`
+
+Remove an assistant mailbox. Only workspace owners can perform this operation.
+
+<Request tabs="cURL">
+
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/mailbox?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200,403,404">
+
+```json
+{
+  "ok": true
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the mailbox was removed.
+</ResponseField>
+
+<Callout kind="alert">
+
+Mailbox removal is irreversible from the API. Confirm the assistant and workspace before sending this request.
+
+</Callout>
+
+## Send email
+
+### `POST /api/inbox/assistants/{assistantId}/send`
+
+Send a new email, reply, reply-all message, or forward using multipart form data.
+
+<Request tabs="cURL">
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/send?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --form 'payload={"mode":"new","to":[{"email":"maya.patel@northstar.example","name":"Maya Patel"}],"cc":[],"bcc":[],"subject":"Proposal review","text":"Could we schedule a review this week?","locale":"en"}' \
+  --form "files=@proposal.pdf"
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField body="payload" param-type="object" required="true">
+JSON string containing `mode`, recipients, subject, message text, and locale.
+</ParamField>
+
+<ParamField body="files" param-type="file" required="false">
+Zero or more attachments. Combined upload size must remain within the message size limit.
+</ParamField>
+
+<Response tabs="201,400,409,413,502">
+
+```json
+{
+  "ok": true,
+  "id": "msg_9a41",
+  "threadId": "thr_41c8"
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the email was accepted for sending.
+</ResponseField>
+
+<ResponseField name="id" field-type="string" required="false">
+Identifier returned by the send service when available.
+</ResponseField>
+
+<ResponseField name="threadId" field-type="string" required="false">
+Thread identifier returned by the send service when available.
+</ResponseField>
+
+<Callout kind="alert">
+
+The API returns `409 no_mailbox` when the assistant has no mailbox and `413 too_large` when uploaded files exceed the combined message size limit.
+
+</Callout>
+
+## Assistant threads
+
+### `GET /api/inbox/assistants/{assistantId}/threads`
+
+List up to 50 email threads for an assistant.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/threads?accountSlug=acme&folder=inbox" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField query="folder" param-type="string" enum="inbox,sent,spam" required="false">
+Mailbox folder. Defaults to `inbox`; unrecognized values also use `inbox`.
+</ParamField>
+
+<Response tabs="200,403,404">
+
+```json
+{
+  "threads": [
+    {
+      "id": "thr_41c8",
+      "subject": "Proposal review",
+      "with": "Maya Patel",
+      "withEmail": "maya.patel@northstar.example",
+      "unread": true,
+      "messageCount": 4,
+      "hasAttachments": true,
+      "deliveryProblem": false,
+      "lastMessageAt": "2025-02-14T16:20:00.000Z",
+      "lastDirection": "inbound",
+      "preview": "Could we review the proposal?"
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="threads" field-type="array" required="true">
+Thread summaries. Returns an empty array when the assistant has no mailbox.
+</ResponseField>
+
+## Block or unblock a thread sender
+
+### `POST /api/inbox/assistants/{assistantId}/threads/{threadId}/block`
+
+Block the sender of a thread and move the thread to spam. Set `domain` to `true` to block the sender's entire domain.
+
+<Request tabs="cURL">
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/threads/thr_41c8/block?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --header "Content-Type: application/json" \
+  --data '{ "domain": true }'
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField path="threadId" param-type="string" required="true">
+Thread identifier.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField body="domain" param-type="boolean" required="false">
+When `true`, block the sender's domain. Otherwise block only the exact sender address.
+</ParamField>
+
+<Response tabs="200,403,404">
+
+```json
+{
+  "ok": true,
+  "pattern": "@northstar.example"
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the block was created.
+</ResponseField>
+
+<ResponseField name="pattern" field-type="string" required="true">
+Blocked email address or domain pattern beginning with `@`.
+</ResponseField>
+
+### `DELETE /api/inbox/assistants/{assistantId}/threads/{threadId}/block`
+
+Remove an exact sender block or a domain block.
+
+<Request tabs="cURL">
+
+```bash
+curl --request DELETE \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/threads/thr_41c8/block?accountSlug=acme&domain=1" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField path="threadId" param-type="string" required="true">
+Thread identifier.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField query="domain" param-type="string" enum="1" required="false">
+Set to `1` to remove the domain block. Omit it to remove the exact address block.
+</ParamField>
+
+<Response tabs="200,403,404">
+
+```json
+{
+  "ok": true
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the block was removed.
+</ResponseField>
+
+<Callout kind="alert">
+
+Blocking changes future sender handling and moves the current thread to spam. Verify whether you need an address block or a domain block before creating it.
+
+</Callout>
+
+## Move a thread
+
+### `POST /api/inbox/assistants/{assistantId}/threads/{threadId}/folder`
+
+Move a thread between the inbox and spam folders.
+
+<Request tabs="cURL">
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/inbox/assistants/asst_2b7d/threads/thr_41c8/folder?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --header "Content-Type: application/json" \
+  --data '{ "folder": "inbox" }'
+```
+
+</Request>
+
+<ParamField path="assistantId" param-type="string" required="true">
+Assistant UUID.
+</ParamField>
+
+<ParamField path="threadId" param-type="string" required="true">
+Thread identifier.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField body="folder" param-type="string" enum="spam,inbox" required="true">
+Destination folder.
+</ParamField>
+
+<Response tabs="200,400,403,404">
+
+```json
+{
+  "ok": true,
+  "folder": "inbox",
+  "contactId": "cnt_7f3c9a21"
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the thread moved successfully.
+</ResponseField>
+
+<ResponseField name="folder" field-type="string" required="true">
+Destination folder.
+</ResponseField>
+
+<ResponseField name="contactId" field-type="string" required="false">
+Existing or newly resolved CRM contact UUID, or `null`.
+</ResponseField>
+
+<Callout kind="info">
+
+Moving a spam thread back to the inbox may resolve or create a CRM contact from the first inbound sender.
+
+</Callout>
+
+## Thread messages
+
+### `GET /api/inbox/threads/{threadId}`
+
+Retrieve a thread and its non-draft messages in oldest-first order.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/threads/thr_41c8?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="threadId" param-type="string" required="true">
+Thread UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200,404">
+
+```json
+{
+  "thread": {
+    "id": "thr_41c8",
+    "subject": "Proposal review",
+    "mailboxAddress": "avery@acme.example",
+    "deliveryProblem": false
+  },
+  "messages": [
+    {
+      "id": "msg_9a41",
+      "direction": "inbound",
+      "sentBy": null,
+      "fromName": "Maya Patel",
+      "fromAddress": "maya.patel@northstar.example",
+      "to": [{ "email": "avery@acme.example", "name": "Avery" }],
+      "cc": [],
+      "replyTo": [],
+      "subject": "Proposal review",
+      "text": "Could we review the proposal?",
+      "quotedText": "",
+      "html": null,
+      "inline": [],
+      "deliveryStatus": "delivered",
+      "deliveryDetail": null,
+      "sentAt": "2025-02-14T16:20:00.000Z",
+      "attachments": []
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="thread" field-type="object" required="true">
+Thread identifier, subject, mailbox address, and delivery status.
+</ResponseField>
+
+<ResponseField name="messages" field-type="array" required="true">
+Messages ordered oldest first. Drafts are excluded, and quoted text is separated from the main text.
+</ResponseField>
+
+### `POST /api/inbox/threads/{threadId}`
+
+Mark inbound messages in a thread as read and set the conversation unread count to zero.
+
+<Request tabs="cURL">
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/inbox/threads/thr_41c8?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
+  --header "Content-Type: application/json" \
+  --data '{ "action": "read" }'
+```
+
+</Request>
+
+<ParamField path="threadId" param-type="string" required="true">
+Thread UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<ParamField body="action" param-type="string" enum="read" required="true">
+Set to `read`.
+</ParamField>
+
+<Response tabs="200,400,404">
+
+```json
+{
+  "ok": true
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the thread was marked as read.
+</ResponseField>
+
+## Attachment download
+
+### `GET /api/inbox/attachments/{attachmentId}`
+
+Retrieve a signed storage URL for a downloadable attachment. The signed URL remains valid for 60 seconds.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/attachments/att_6d21?accountSlug=acme" \
+  --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+```
+
+</Request>
+
+<ParamField path="attachmentId" param-type="string" required="true">
+Attachment UUID.
+</ParamField>
+
+<ParamField query="accountSlug" param-type="string" required="true">
+Workspace slug used to select the account.
+</ParamField>
+
+<Response tabs="200,404,500">
+
+```json
+{
+  "url": "https://storage.example/signed/att_6d21?expires=1739550060"
+}
+```
+
+</Response>
+
+<ResponseField name="url" field-type="string" required="true">
+Signed storage URL configured to download the attachment using its stored filename.
+</ResponseField>
+
+<Callout kind="info">
+
+The API returns `404 Not found` when the attachment is blocked, unavailable, outside the workspace, or outside the member's assistant scope.
+
+</Callout>
+
+## Nylas webhook
+
+The Nylas webhook is the only Inbox route that does not use session authentication. Verify webhook requests with HMAC-SHA256 using the raw request body and `NYLAS_INBOX_WEBHOOK_SECRET`.
+
+### `GET /api/inbox/nylas/webhook`
+
+Complete the Nylas webhook verification challenge.
+
+<Request tabs="cURL">
+
+```bash
+curl --request GET \
+  --url "https://app.talkturo.com/api/inbox/nylas/webhook?challenge=challenge_8f4c"
+```
+
+</Request>
+
+<ParamField query="challenge" param-type="string" required="true">
+Challenge value supplied by Nylas.
+</ParamField>
+
+<Response tabs="200,400">
+
+```text
+challenge_8f4c
+```
+
+</Response>
+
+<ResponseField name="body" field-type="string" required="true">
+The exact challenge value as plain text.
+</ResponseField>
+
+<Callout kind="info">
+
+The response uses `Content-Type: text/plain` and does not require an authorization header.
+
+</Callout>
+
+### `POST /api/inbox/nylas/webhook`
+
+Receive and process a signed Nylas event.
+
+<Request tabs="cURL">
+
+```bash
+curl --request POST \
+  --url "https://app.talkturo.com/api/inbox/nylas/webhook" \
+  --header "Content-Type: application/json" \
+  --header "X-Nylas-Signature: 7f4b9c8d2a6e1f0c4b8d7a9e3c2f1a6b5d4e8f9c0a1b2c3d4e5f60718293a4b5c" \
+  --data '{
+    "event": "message.created",
+    "data": {
+      "id": "msg_9a41"
+    }
+  }'
+```
+
+</Request>
+
+<ParamField header="X-Nylas-Signature" param-type="string" required="true">
+Hexadecimal HMAC-SHA256 signature of the raw request body using `NYLAS_INBOX_WEBHOOK_SECRET`.
+</ParamField>
+
+<ParamField body="event" param-type="object" required="true">
+Raw JSON Nylas event payload.
+</ParamField>
+
+<Response tabs="200,400,401,500">
+
+```json
+{
+  "ok": true
+}
+```
+
+</Response>
+
+<ResponseField name="ok" field-type="boolean" required="true">
+Indicates that the event was accepted and processed.
+</ResponseField>
+
+<Callout kind="alert">
+
+Return HTTP `500` for processing failures so Nylas retries the event. Invalid signatures return `401`, and invalid JSON returns `400`.
+
+</Callout>
+
+## Common authentication errors
+
+| Status | Response |
+| --- | --- |
+| `401` | `{"error":"Unauthorized"}` |
+| `401` | `{"error":"Invalid session token"}` |
+| `401` | `{"error":"Authentication required"}` |
+| `400` | `{"error":"Account slug required"}` |
+| `400` | `{"error":"teamId or accountSlug query parameter or body field required"}` |
+| `404` | `{"error":"Account not found"}` |
+| `403` | `{"error":"Access denied"}` |
+| `403` | `{"error":"Not available with an API key"}` |
+
+<Columns cols={3}>
+
+<Card title="Assistants" href="/en/api-reference/assistants" icon="users">
+
+Configure and manage the assistants that handle inbox calls and email.
+
+</Card>
+
+<Card title="CRM Contacts" href="/en/api-reference/crm-contacts" icon="database">
+
+Work with contact records that appear in inbox timelines and assignments.
+
+</Card>
+
+<Card title="Webhooks" href="/en/api-reference/webhooks" icon="zap">
+
+Review webhook patterns and event delivery behavior across Talkturo.
+
+</Card>
+
+</Columns>

@@ -355,6 +355,11 @@
                     "title": "Files",
                     "path": "en/api-reference/files",
                     "icon": "file"
+                  },
+                  {
+                    "title": "Inbox",
+                    "path": "en/api-reference/inbox",
+                    "icon": "inbox"
                   }
                 ]
               },
@@ -805,6 +810,11 @@
                     "title": "Dateien",
                     "path": "de/api-reference/files",
                     "icon": "file"
+                  },
+                  {
+                    "title": "Inbox",
+                    "path": "de/api-reference/inbox",
+                    "icon": "inbox"
                   }
                 ]
               },
