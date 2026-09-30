@@ -8,6 +8,33 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-09-29" description="v3.8.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Inbox: email for assistants** — Assistants can now have their own email mailboxes. Receive, read, and reply to emails in a dedicated Inbox tab. Assistants can send emails during calls with per-call and daily limits. Includes spam folders, sender blocking, and "Not spam" actions. Contact memory is built automatically from call and email history. See [Assistant Configuration](/en/assistants/configuration).
+  - **CRM contact timeline** — See a contact's calls and emails in one chronological view, with links back into the Inbox to reply. Shows the newest 20 events initially, with an option to load more. See [Contacts](/en/crm/contacts).
+  - **Knowledge-base language detection** — Crawled website pages are now automatically detected as German or English, with language badges shown in the library and assistant tab. See [Knowledge Base](/en/knowledge-base).
+  - **Bulk document deletion** — Select and delete multiple knowledge-base documents at once. Detaching documents from an assistant is now separate from deleting them from the entire library. See [Knowledge Base](/en/knowledge-base).
+
+  ## Improvements
+
+  - **Call-log search by call ID** — Search the call list by call ID prefix. Supports partial UUIDs, case-insensitive input, dashes, and copied ellipses. See [Call Logs](/en/call-logs).
+  - **Inbox conversation view** — Opening a conversation now replaces the list instead of showing it in a narrow side pane, with a back button to return. See [Assistant Configuration](/en/assistants/configuration).
+  - **Inbox pricing transparency** — Mailbox and per-1,000-email pricing is shown before creating an address. Email sending is off by default and must be explicitly enabled per assistant. See [Billing](/en/billing).
+  - **Send-email tool visible** — The assistant's email-sending capability now appears in the Tools & Functions tab, showing the mailbox address used as sender and disabling the tool when no mailbox is set. See [Assistant Configuration](/en/assistants/configuration).
+  - **CRM calls API returns linked contact** — The CRM calls API now returns the contact actually linked to an outbound call, and per-call `{{call.<key>}}` variables are documented. See [Calls API](/en/api-reference/calls).
+
+  ## Bug Fixes
+
+  - **API keys blocked from cross-workspace access** — API keys can no longer use a request slug to operate on another workspace. Phone-number assignment now uses the authenticated workspace. See [API Authentication](/en/api-reference/authentication).
+  - **Assistant creation failures fixed** — Assistant creation no longer fails due to a removed field reference. See [AI Voice Agents](/en/assistants/overview).
+  - **API-placed calls resolve contact variables** — API-initiated calls now correctly resolve `{{contact.*}}` prompt variables instead of rendering them empty. See [Calls API](/en/api-reference/calls).
+  - **Assistant mailboxes no longer created as CRM contacts** — Assistant mailbox addresses are no longer accidentally created as CRM contacts, across all workspaces. See [Contacts](/en/crm/contacts).
+  - **Mailbox released on assistant deletion** — Deleting an assistant now releases its email mailbox, preventing orphaned mailboxes. See [Assistant Configuration](/en/assistants/configuration).
+  - **Contact merge preserves data** — Merging contacts no longer loses existing fields and tags. Invalid contact sources fall back safely while preserving the original value as a tag. See [Contacts](/en/crm/contacts).
+  - **Website crawl imports all pages** — Fixed an issue where website crawl imports stopped after the first 50 pages. All discovered pages are now imported, and interrupted reads are retried. See [Knowledge Base](/en/knowledge-base).
+</Update>
+
 <Update label="2026-09-24" description="v3.7.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
