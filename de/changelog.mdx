@@ -8,6 +8,33 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-09-29" description="v3.8.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Inbox: E-Mail für Assistenten** — Assistenten können jetzt eigene E-Mail-Postfächer haben. Empfange, lese und beantworte E-Mails in einer eigenen Inbox-Registerkarte. Assistenten können während Anrufen E-Mails senden, mit Limits pro Anruf und pro Tag. Enthält Spam-Ordner, Absender-Blockierung und „Kein Spam"-Aktionen. Kontaktgedächtnis wird automatisch aus Anruf- und E-Mail-Verlauf erstellt. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **CRM-Kontakt-Timeline** — Sieh Anrufe und E-Mails eines Kontakts in einer chronologischen Ansicht, mit Links zurück in die Inbox zum Antworten. Zeigt zunächst die neuesten 20 Ereignisse, mit Option zum Laden älterer Einträge. Siehe [Kontakte](/de/crm/contacts).
+  - **Sprachkennung in der Knowledge Base** — Gecrawlte Website-Seiten werden automatisch als Deutsch oder Englisch erkannt, mit Sprach-Badges in der Bibliothek und der Assistenten-Registerkarte. Siehe [Knowledge Base](/de/knowledge-base).
+  - **Mehrfachlöschung von Dokumenten** — Wähle und lösche mehrere Knowledge-Base-Dokumente gleichzeitig. Das Trennen von Dokumenten von einem Assistenten ist jetzt vom Löschen aus der gesamten Bibliothek getrennt. Siehe [Knowledge Base](/de/knowledge-base).
+
+  ## Verbesserungen
+
+  - **Anrufprotokoll-Suche nach Anruf-ID** — Durchsuche die Anrufliste nach Anruf-ID-Präfix. Unterstützt partielle UUIDs, unabhängig von Groß-/Kleinschreibung, Bindestriche und kopierte Auslassungspunkte. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Inbox-Konversationsansicht** — Das Öffnen einer Konversation ersetzt jetzt die Liste statt sie in einem schmalen Seitenpanel anzuzeigen, mit einer Zurück-Schaltfläche. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Inbox-Preistransparenz** — Postfach- und Preis pro 1.000 E-Mails wird vor der Erstellung einer Adresse angezeigt. E-Mail-Senden ist standardmäßig deaktiviert und muss pro Assistent explizit aktiviert werden. Siehe [Abrechnung](/de/billing).
+  - **E-Mail-Sendentool sichtbar** — Die E-Mail-Sendefunktion des Assistenten erscheint jetzt in der Tools-&-Funktionen-Registerkarte und zeigt die verwendete Postfachadresse als Absender an. Das Tool wird deaktiviert, wenn kein Postfach eingerichtet ist. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **CRM-Anrufe-API gibt verknüpften Kontakt zurück** — Die CRM-Anrufe-API gibt jetzt den tatsächlich verknüpften Kontakt eines ausgehenden Anrufs zurück, und pro-Anruf-Variablen `{{call.<key>}}` sind dokumentiert. Siehe [Calls-API](/de/api-reference/calls).
+
+  ## Bugfixes
+
+  - **API-Keys blockiert für workspace-übergreifenden Zugriff** — API-Keys können nicht mehr einen Request-Slug nutzen, um auf einen anderen Workspace zuzugreifen. Die Telefonnummern-Zuweisung verwendet jetzt den authentifizierten Workspace. Siehe [API-Authentifizierung](/de/api-reference/authentication).
+  - **Assistenten-Erstellung behoben** — Die Assistenten-Erstellung schlägt nicht mehr durch eine entfernte Feldreferenz fehl. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **API-gestartete Anrufe lösen Kontaktvariablen auf** — API-initiierte Anrufe lösen jetzt `{{contact.*}}`-Prompt-Variablen korrekt auf, statt sie leer zu lassen. Siehe [Calls-API](/de/api-reference/calls).
+  - **Assistenten-Postfächer nicht mehr als CRM-Kontakte erstellt** — Assistenten-Postfachadressen werden nicht mehr versehentlich als CRM-Kontakte erstellt, workspace-übergreifend. Siehe [Kontakte](/de/crm/contacts).
+  - **Postfach bei Assistenten-Löschung freigegeben** — Das Löschen eines Assistenten gibt jetzt dessen E-Mail-Postfach frei und verhindert verwaiste Postfächer. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Kontakt-Zusammenführung behält Daten** — Das Zusammenführen von Kontakten verliert keine vorhandenen Felder und Tags mehr. Ungültige Kontaktquellen fallen sicher zurück, während der ursprüngliche Wert als Tag erhalten bleibt. Siehe [Kontakte](/de/crm/contacts).
+  - **Website-Crawl importiert alle Seiten** — Behoben: Website-Crawl-Imports brachen nach den ersten 50 Seiten ab. Alle gefundenen Seiten werden jetzt importiert und unterbrochene Lesevorgänge werden wiederholt. Siehe [Knowledge Base](/de/knowledge-base).
+</Update>
+
 <Update label="2026-09-24" description="v3.7.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
