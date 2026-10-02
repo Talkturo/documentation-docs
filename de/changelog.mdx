@@ -8,6 +8,30 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-10-02" description="v3.9.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Live-Anrufüberwachung (nur Anhören)** — Workspace-Besitzer und Super-Admins können aktive Anrufe im Nur-Anhören-Modus von der Anrufprotokoll-Seite beitreten. Höre Audio beider Seiten, sieh das Live-Transkript und passe die Lautstärke an. Zuhörer sind für Anrufer und Assistenten unsichtbar — kein Sprechen, keine Anrufdaten, keine Präsenzanzeige. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Propstack-Plugin-Integration** — Verbinde Propstack mit einem API-Key, mit automatischer V1/V2-Schlüsselerkennung. Konfiguriere pro Verbindung Arbeitstage und -zeiten, Termin-Dauer, minimale Vorlaufzeit und Sprache. Enthält Prompt-Anleitungen für Anrufer-Suche, Immobilien-Suche, Terminbuchung, Notizen, Leads und Follow-ups. Siehe [Integrationen](/de/integrations).
+
+  ## Verbesserungen
+
+  - **Schutzmaßnahmen für Inbox-E-Mail-Versand** — Der E-Mail-Versand ist auf das eigene aktive Postfach des Assistenten beschränkt, mit Limits pro Anruf und pro Tag. Spam wird von der Nachrichtenabrechnung ausgeschlossen. Workspaces werden für Postfächer abgerechnet, die während des Abrechnungszeitraums aktiv waren, auch wenn sie später entfernt wurden. Siehe [Abrechnung](/de/billing).
+  - **Inbox-Nutzung in der Guthabenhistorie** — Die Inbox-Nutzung wird jetzt separat in der Guthabenhistorie kategorisiert. Siehe [Abrechnung](/de/billing).
+  - **„E-Mail bei Anrufen senden\" in die Inbox-Registerkarte verschoben** — Der Schalter für E-Mail-bei-Anrufen befindet sich jetzt in der Inbox-Registerkarte und ist damit pro Assistent explizit aktivierbar. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Kontakt-Gedächtnis wiederholt nach Modell-Ausfällen** — Aktualisierungen des Kontakt-Gedächtnisses werden nach Modell-Ausfällen wiederholt, statt bestehendes Gedächtnis mit leeren Ergebnissen zu überschreiben. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **ActiveCampaign-Lifecycle-Synchronisation** — Guthabenkäufe und Auto-Reloads werden jetzt als Käufe synchronisiert. Bezahlte Kontakte bleiben aus dem Trial-Status ausgeschlossen. Lifecycle-Daten verwenden das Datum des letzten Anrufs statt der letzten Anmeldung. Ein Credits-low-Lifecycle-Status wurde hinzugefügt. Siehe [Integrationen](/de/integrations).
+
+  ## Bugfixes
+
+  - **Live-Überwachung zeigt korrekte Kontaktnummer** — Das Anrufprotokoll zeigt jetzt die korrekte Kontaktnummer basierend auf der Anrufrichtung. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Anrufliste aktualisiert sich automatisch während der Überwachung** — Die Anrufliste aktualisiert sich automatisch, während die Seite sichtbar ist, sodass Live-Anrufe ohne manuelles Neuladen erscheinen und verschwinden. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Live-Anhören nur bei aktiven Anrufen** — Die Option zum Live-Anhören erscheint jetzt nur, wenn ein Anruf tatsächlich live ist. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Überwachungssitzungen werden korrekt geschlossen** — Überwachungssitzungen werden jetzt korrekt geschlossen, wenn der Anruf endet oder der Zuhörer nicht beitreten kann. Der Live-Anhör-Dialog zeigt außerdem den Workspace-Namen für Super-Admins an. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Fehlende Rechnungen für Zahlungslink-Käufe** — Rechnungen für ältere Agent-Zahlungslink-Käufe werden jetzt wiederhergestellt und korrekt verknüpft. Siehe [Abrechnung](/de/billing).
+  - **Desktop-Pläne vom Guthaben-Backfill ausgeschlossen** — Desktop-Abonnements werden beim Marketing-Sync nicht mehr fälschlich als Guthabenkäufe behandelt. Siehe [Integrationen](/de/integrations).
+</Update>
+
 <Update label="2026-09-29" description="v3.8.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

@@ -8,6 +8,30 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-10-02" description="v3.9.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Live call monitoring (listen-only)** — Workspace owners and super-admins can join active calls in listen-only mode from the Call logs page. Hear both caller and assistant audio, view the live transcript, and adjust listening volume. Listeners are invisible to callers and assistants — no speaking, no call data, no presence shown. See [Call Logs](/en/call-logs).
+  - **Propstack plugin integration** — Connect Propstack with an API key, with automatic V1/V2 key detection. Configure per-connection settings for working days and hours, appointment duration, minimum booking notice, and language. Includes prompt guidance for caller lookup, property search, appointment booking, notes, leads, and follow-ups. See [Integrations](/en/integrations).
+
+  ## Improvements
+
+  - **Inbox email sending safeguards** — Email sending is restricted to the assistant's own active mailbox, subject to per-call and daily limits. Spam is excluded from message billing. Workspaces are billed for mailboxes active during the billing period, even if later removed. See [Billing](/en/billing).
+  - **Inbox usage in credit history** — Inbox usage is now categorized separately in credit history. See [Billing](/en/billing).
+  - **"Send email on calls" moved to Inbox tab** — The email-on-calls toggle is now in the Inbox tab, making it explicitly opt-in per assistant. See [Assistant Configuration](/en/assistants/configuration).
+  - **Contact memory retries after model outages** — Contact-memory refreshes now retry after model outages instead of overwriting existing memory with empty results. See [Assistant Configuration](/en/assistants/configuration).
+  - **ActiveCampaign lifecycle sync** — Credit purchases and auto-reloads are now synced as purchases. Paid contacts are kept out of Trial status. Lifecycle data uses the latest call date instead of the latest login. Added a credits-low lifecycle state. See [Integrations](/en/integrations).
+
+  ## Bug Fixes
+
+  - **Live monitoring shows correct contact number** — The call log now displays the correct contact number based on call direction. See [Call Logs](/en/call-logs).
+  - **Call list auto-refreshes during monitoring** — The call list refreshes automatically while the page is visible, so live calls appear and disappear without a manual reload. See [Call Logs](/en/call-logs).
+  - **Live-listening shown only for active calls** — The live-listening option now appears only when a call is actually live. See [Call Logs](/en/call-logs).
+  - **Monitoring sessions close properly** — Monitoring sessions are now correctly closed when the call ends or when the listener fails to join. The live-listening dialog also shows the workspace name for super-admins. See [Call Logs](/en/call-logs).
+  - **Missing invoices for payment-link purchases** — Invoices for older agent payment-link purchases are now recovered and linked correctly. See [Billing](/en/billing).
+  - **Desktop plans excluded from credit backfill** — Desktop subscriptions are no longer incorrectly treated as credit purchases during marketing sync. See [Integrations](/en/integrations).
+</Update>
+
 <Update label="2026-09-29" description="v3.8.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
