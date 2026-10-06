@@ -8,6 +8,31 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-10-06" description="v4.0.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Assistant Checks** — Create, edit, and run repeatable test scenarios for your voice assistants. Generate checks from your assistant's prompt, run them as text or audio, and watch live progress with transcripts, tool calls, and pass/fail verdicts. Checks run in your assistant's detected language, and only meaningful tool actions are judged — conversational tools like lookups and call termination don't count against the result. See [Assistant Configuration](/en/assistants/configuration).
+  - **Opportunity destination stages** — Choose which stage opportunities are created in, or let the assistant decide with per-stage guidance. Assign an opportunity owner and set a name prefix for opportunities created by each assistant. See [Assistant Configuration](/en/assistants/configuration).
+  - **Opportunity deletion** — Delete opportunities from the detail dialog or card menu, with a confirmation step to prevent accidental removal. See [CRM Opportunities](/en/crm/opportunities).
+  - **Knowledge Base crawl diagnostics** — Inspect what a website crawl imported at the page level. Each URL shows whether it was imported, updated, unchanged, excluded, too thin, or failed. When a crawl returns no content, you get a clear explanation — no pages found, pages skipped intentionally, JavaScript required, or no readable content. JavaScript-heavy sites get an automatic browser-rendered retry. See [Knowledge Base](/en/knowledge-base).
+  - **Crawl cost estimates** — See the estimated crawl cost and your current credit balance before importing. The import button is disabled when your workspace can't afford the estimated crawl. See [Knowledge Base](/en/knowledge-base).
+
+  ## Improvements
+
+  - **Web-call security hardened** — Web calls no longer trust workspace or billing information supplied by the browser. The assistant's workspace is resolved server-side, and billing exemptions are allowed only for authenticated workspace members. Unknown assistant IDs no longer create rooms or dispatch agents. See [Authentication](/en/authentication).
+  - **Searchable timezone picker** — The timezone selector in workspace settings is now a searchable combobox. Search by IANA name, alias, region, or UTC offset, with support for legacy aliases. See [Workspaces](/en/workspaces).
+  - **Checks credit usage in history** — Assistant Checks runs are categorized separately in credit history, with per-scenario pricing. See [Billing](/en/billing).
+  - **Faster saved-check feedback** — Newly saved or generated checks appear in the list immediately, without waiting for a background refresh. See [Assistant Configuration](/en/assistants/configuration).
+
+  ## Bug Fixes
+
+  - **Silent checks not charged** — When a test run goes silent (the assistant stops responding), the result is classified as an error rather than a failure and is excluded from billing. See [Assistant Configuration](/en/assistants/configuration).
+  - **Duplicate check deletion prevented** — Clicking delete on a check multiple times no longer sends duplicate requests. See [Assistant Configuration](/en/assistants/configuration).
+  - **Opportunity probability display fixed** — Empty probability values now display correctly instead of showing stale data. See [CRM Opportunities](/en/crm/opportunities).
+  - **Opportunity owner preserved across reloads** — The assigned opportunity owner is now correctly retained after page reloads. See [CRM Opportunities](/en/crm/opportunities).
+  - **Opportunity owner and name prefix alignment** — Fixed a layout issue where the opportunity owner selector and name prefix field were misaligned. See [Assistant Configuration](/en/assistants/configuration).
+</Update>
+
 <Update label="2026-10-02" description="v3.9.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 

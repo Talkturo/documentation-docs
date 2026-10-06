@@ -8,6 +8,31 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-10-06" description="v4.0.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Assistenten-Checks** — Erstelle, bearbeite und führe wiederholbare Testszenarien für deine Sprachassistenten aus. Generiere Checks aus dem Prompt deines Assistenten, führe sie als Text oder Audio aus und verfolge den Live-Fortschritt mit Transkripten, Tool-Aufrufen und Bestanden/Nicht-bestanden-Urteilen. Checks laufen in der erkannten Sprache deines Assistenten, und nur sinnvolle Tool-Aktionen werden bewertet — Gesprächs-Tools wie Lookups und Anrufbeendigung zählen nicht gegen das Ergebnis. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Opportunity-Ziel-Phasen** — Wähle, in welcher Phase Opportunities erstellt werden, oder lass den Assistenten mit phasenbezogener Steuerung entscheiden. Weise einen Opportunity-Verantwortlichen zu und lege ein Namenspräfix für Opportunities fest, die von jedem Assistenten erstellt werden. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Opportunity-Löschung** — Lösche Opportunities aus dem Detaildialog oder dem Kartenmenü, mit einem Bestätigungsschritt zur Vermeidung versehentlicher Entfernungen. Siehe [CRM-Opportunities](/de/crm/opportunities).
+  - **Knowledge-Base-Crawl-Diagnose** — Überprüfe seitenbezogen, was ein Website-Crawl importiert hat. Jede URL zeigt, ob sie importiert, aktualisiert, unverändert, ausgeschlossen, zu dünn oder fehlgeschlagen wurde. Wenn ein Crawl keinen Inhalt zurückgibt, erhältst du eine klare Erklärung — keine Seiten gefunden, Seiten absichtlich übersprungen, JavaScript erforderlich oder kein lesbarer Inhalt. JavaScript-lastige Seiten erhalten ein automatisches Browser-Rendering-Repeat. Siehe [Knowledge Base](/de/knowledge-base).
+  - **Crawl-Kostenschätzung** — Sieh die geschätzten Crawl-Kosten und deinen aktuellen Guthabenstand vor dem Import. Die Import-Schaltfläche ist deaktiviert, wenn dein Workspace sich den geschätzten Crawl nicht leisten kann. Siehe [Knowledge Base](/de/knowledge-base).
+
+  ## Verbesserungen
+
+  - **Web-Anruf-Sicherheit verstärkt** — Web-Anrufe vertrauen nicht mehr Workspace- oder Abrechnungsinformationen, die vom Browser geliefert werden. Der Workspace des Assistenten wird serverseitig aufgelöst, und Abrechnungsbefreiungen sind nur für authentifizierte Workspace-Mitglieder erlaubt. Unbekannte Assistenten-IDs erstellen keine Räume und dispatchen keine Agenten mehr. Siehe [Authentifizierung](/de/authentication).
+  - **Durchsuchbare Zeitzonen-Auswahl** — Die Zeitzonen-Auswahl in den Workspace-Einstellungen ist jetzt eine durchsuchbare Combobox. Suche nach IANA-Name, Alias, Region oder UTC-Offset, mit Unterstützung für veraltete Aliase. Siehe [Workspaces](/de/workspaces).
+  - **Checks-Guthabennutzung in der Historie** — Assistenten-Check-Läufe werden separat in der Guthabenhistorie kategorisiert, mit Preisgestaltung pro Szenario. Siehe [Abrechnung](/de/billing).
+  - **Schnelleres Feedback bei gespeicherten Checks** — Neu gespeicherte oder generierte Checks erscheinen sofort in der Liste, ohne auf eine Hintergrund-Aktualisierung zu warten. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+
+  ## Bugfixes
+
+  - **Stille Checks nicht berechnet** — Wenn ein Test-Lauf verstummt (der Assistent reagiert nicht mehr), wird das Ergebnis als Fehler statt als Fehlschlag eingestuft und von der Abrechnung ausgeschlossen. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Doppelte Check-Löschung verhindert** — Mehrfaches Klicken auf Löschen bei einem Check sendet keine doppelten Anfragen mehr. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Opportunity-Wahrscheinlichkeit-Anzeige behoben** — Leere Wahrscheinlichkeitswerte werden jetzt korrekt angezeigt statt veraltete Daten zu zeigen. Siehe [CRM-Opportunities](/de/crm/opportunities).
+  - **Opportunity-Verantwortlicher über Neuladungen erhalten** — Der zugewiesene Opportunity-Verantwortliche wird nach Seiten-Neuladungen korrekt beibehalten. Siehe [CRM-Opportunities](/de/crm/opportunities).
+  - **Opportunity-Verantwortlicher- und Namenspräfix-Ausrichtung** — Behoben: Ein Layout-Problem, bei dem die Auswahl des Opportunity-Verantwortlichen und das Namenspräfix-Feld falsch ausgerichtet waren. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+</Update>
+
 <Update label="2026-10-02" description="v3.9.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
