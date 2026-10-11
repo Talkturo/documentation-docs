@@ -8,6 +8,26 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Mehrfachlöschung von CRM-Kontakten** — Wähle und lösche mehrere Kontakte gleichzeitig. Mit „Alle übereinstimmenden auswählen" kannst du jeden Kontakt erfassen, der deinen aktuellen Filtern entspricht. Die Löschung ist alles-oder-nichts, wenn ein Kontakt noch in einer Live-Kampagne queued, sodass keine partiellen Daten zurückbleiben. Siehe [Kontakte](/de/crm/contacts).
+  - **Kontaktgruppen-Löschung** — Lösche eine Kontaktgruppe, während die Kontakte selbst erhalten bleiben. Vor der Löschung siehst du, welche Assistenten und Kampagnen betroffen sind, und das Routing wird automatisch neu zugewiesen, sodass nichts kaputtgeht. Siehe [Kampagnen](/de/campaigns/overview).
+  - **Erweiterter Sprachkatalog** — Die Sprachbibliothek enthält jetzt jede verfügbare Stimme in jeder unterstützten Sprache, mit Stimmvorschauen vor der Auswahl. Der Katalog paginiert über 1.000 Zeilen hinaus, mit lesbaren Sprachnamen und gekürzten Beschreibungen, um die Auswahl nutzbar zu halten. Siehe [Sprachbibliothek](/de/voice-library).
+  - **Partner-Programm auf Deutsch** — Das Partner-Programm ist jetzt vollständig auf Deutsch verfügbar, mit übersetzten Fehlermeldungen, lokalisierten Auszahlungs- und Lead-Beschriftungen sowie Währungsformatierung basierend auf deiner aktiven Sprache. Siehe [Abrechnung](/de/billing).
+
+  ## Verbesserungen
+
+  - **CRM-Löschung auf Workspace-Besitzer beschränkt** — Nur Workspace-Besitzer können Kontakte und Gruppen löschen. Mitglieder sehen keine Löschen-Buttons mehr, und serverseitige Schutzmaßnahmen verhindern Löschungen über direkten API-Zugriff. Siehe [Kontakte](/de/crm/contacts).
+  - **Credits-Widget-Navigation** — Ein Klick auf dein Guthaben führt dich direkt zur Abrechnung, und die Plus-Schaltfläche öffnet das Kauf-Modal — kein defekter Dialog mehr. Siehe [Abrechnung](/de/billing).
+
+  ## Bugfixes
+
+  - **Kampagnen-Anrufer-ID-Ladezustand** — Der Kampagnen-Editor zeigt nicht mehr „keine gültige Anrufer-ID" an, während die Telefonnummern des Assistenten noch geladen werden. Gespeicherte Anrufer-ID-Auswahlen werden beim erneuten Öffnen einer Kampagne jetzt korrekt wiederhergestellt. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Credits-Widget-Anzeige** — Behoben: Ein Darstellungsproblem im Credits-Widget, bei dem Schaltflächen auf dem Dashboard falsch angezeigt werden konnten. Siehe [Abrechnung](/de/billing).
+  - **CRM-Kontaktlisten-Paginierung** — Kontakte werden beim Paginieren durch große Listen nicht mehr übersprungen oder wiederholt. Siehe [Kontakte](/de/crm/contacts).
+</Update>
+
 <Update label="2026-10-06" description="v4.0.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 

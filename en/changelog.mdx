@@ -8,6 +8,26 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **CRM bulk contact deletion** — Select and delete multiple contacts at once. Use "select all matching" to target every contact that fits your current filters. Deletion is all-or-nothing when a contact is still queued in a live campaign, so you won't leave partial data behind. See [Contacts](/en/crm/contacts).
+  - **Contact group deletion** — Delete a contact group while preserving the contacts themselves. Before deletion, you'll see which assistants and campaigns are affected, and routing is automatically reassigned so nothing breaks. See [Campaigns](/en/campaigns/overview).
+  - **Expanded voice catalog** — The voice library now includes every available voice in every supported language, with per-voice previews before you select. The catalog paginates beyond 1,000 rows with readable language names and shortened descriptions to keep the selector usable. See [Voice Library](/en/voice-library).
+  - **Partner program in German** — The partner program is now fully available in German, with translated error messages, localized payout and lead labels, and currency formatting based on your active language. See [Billing](/en/billing).
+
+  ## Improvements
+
+  - **CRM deletion restricted to workspace owners** — Only workspace owners can delete contacts and groups. Members no longer see delete buttons, and server-side protections prevent deletion through direct API access. See [Contacts](/en/crm/contacts).
+  - **Credits widget navigation** — Clicking your credit balance takes you directly to billing, and the plus button opens the purchase modal — no more dead-end dialog. See [Billing](/en/billing).
+
+  ## Bug Fixes
+
+  - **Campaign caller-ID loading** — The campaign editor no longer shows "no valid caller ID" while assistant phone numbers are still loading. Saved caller-ID selections are now correctly restored when reopening a campaign. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Credits widget display** — Fixed a rendering issue in the credits widget where buttons could display incorrectly on the dashboard. See [Billing](/en/billing).
+  - **CRM contact list paging** — Contacts no longer get skipped or repeated when paginating through large lists. See [Contacts](/en/crm/contacts).
+</Update>
+
 <Update label="2026-10-06" description="v4.0.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
