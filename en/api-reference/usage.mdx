@@ -70,13 +70,13 @@ Account or workspace identifier.
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl "https://api.talkturo.com/api/usage/current?accountId=7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25" \
+curl "https://app.talkturo.com/api/usage/current?accountId=7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/usage/current?accountId=7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25",
+  "https://app.talkturo.com/api/usage/current?accountId=7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25",
   {
     headers: {
       Authorization: "Bearer tk_live_example_9xmk7q2r"
@@ -251,7 +251,7 @@ Optional user email stored in the event metadata. The value may be `null`.
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl "https://api.talkturo.com/api/usage/voice" \
+curl "https://app.talkturo.com/api/usage/voice" \
   -X POST \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktop" \
   -H "Content-Type: application/json" \
@@ -265,7 +265,7 @@ curl "https://api.talkturo.com/api/usage/voice" \
 ```
 
 ```javascript
-const response = await fetch("https://api.talkturo.com/api/usage/voice", {
+const response = await fetch("https://app.talkturo.com/api/usage/voice", {
   method: "POST",
   headers: {
     Authorization:
@@ -395,7 +395,7 @@ Series grouping. Defaults to `day`. When set to `week`, the `series` values are 
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl "https://api.talkturo.com/api/accounts/7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25/usage?from=2026-09-01T00%3A00%3A00Z&to=2026-09-12T23%3A59%3A59Z&granularity=day&page=1&pageSize=25" \
+curl "https://app.talkturo.com/api/accounts/7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25/usage?from=2026-09-01T00%3A00%3A00Z&to=2026-09-12T23%3A59%3A59Z&granularity=day&page=1&pageSize=25" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.session"
 ```
 
@@ -409,7 +409,7 @@ const params = new URLSearchParams({
 });
 
 const response = await fetch(
-  `https://api.talkturo.com/api/accounts/7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25/usage?${params}`,
+  `https://app.talkturo.com/api/accounts/7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25/usage?${params}`,
   {
     headers: {
       Authorization:
@@ -579,7 +579,7 @@ Each object in `series` and `daily` includes the following fields:
 
 <Columns cols={2}>
 
-<Card title="Time and volume" href="/api-reference/usage" icon="bar-chart">
+<Card title="Time and volume" href="/en/api-reference/usage" icon="bar-chart">
 
 `day`, `period`, and `call_count` identify the reporting period and number of calls.
 
@@ -638,7 +638,7 @@ Optional usage kind. The handler accepts `listen` or `ask` but does not use the 
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl "https://api.talkturo.com/api/desktop/usage" \
+curl "https://app.talkturo.com/api/desktop/usage" \
   -X POST \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.desktop" \
   -H "x-talkturo-account: 7b3f4c2a-5d61-4e89-9a72-1c6f8b0d4e25" \
@@ -651,7 +651,7 @@ curl "https://api.talkturo.com/api/desktop/usage" \
 ```
 
 ```javascript
-const response = await fetch("https://api.talkturo.com/api/desktop/usage", {
+const response = await fetch("https://app.talkturo.com/api/desktop/usage", {
   method: "POST",
   headers: {
     Authorization:
@@ -782,13 +782,13 @@ Handle the HTTP status before reading endpoint-specific fields. The usage endpoi
 
 <Columns cols={2}>
 
-<Card title="Credits" href="/api-reference/credits" icon="database" cta="View credits reference">
+<Card title="Credits" href="/en/api-reference/credits" icon="database" cta="View credits reference">
 
 Review credit concepts and credit-related API behavior.
 
 </Card>
 
-<Card title="Authentication" href="/api-reference/authentication" icon="lock" cta="View authentication reference">
+<Card title="Authentication" href="/en/api-reference/authentication" icon="lock" cta="View authentication reference">
 
 Configure API keys, session tokens, and desktop JWT authentication.
 

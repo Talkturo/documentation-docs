@@ -24,6 +24,7 @@ Verwenden Sie für serverseitige Integrationen bevorzugt einen API-Schlüssel. S
 | `POST` | `/api/credits/checkout` | API-Schlüssel oder Sitzung | Stripe-Checkout für den Guthabenkauf erstellen |
 | `GET` | `/api/credits/auto-reload` | Nur Sitzung | Auto-Reload-Konfiguration abrufen |
 | `POST` | `/api/credits/auto-reload` | API-Schlüssel oder Sitzung | Auto-Reload-Konfiguration speichern |
+| `GET` | `/api/credits/claim-grants` | Nur Sitzung | Verfügbare Grants auflisten |
 | `POST` | `/api/credits/claim-grants` | Nur Sitzung | Verfügbare Grants beanspruchen |
 | `POST` | `/api/credits/claim-grants/new-workspace` | Nur Sitzung | Grant für neuen Workspace beanspruchen |
 | `POST` | `/api/credits/welcome-bonus` | Nur Sitzung | Willkommensbonus-Guthaben beanspruchen |
@@ -37,13 +38,13 @@ Rufen Sie den aktuellen Guthabenstand eines Kontos mit `GET /api/credits` ab. We
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/credits?accountId=acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931" \
+curl -X GET "https://app.talkturo.com/api/credits?accountId=acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/credits?accountId=acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931",
+  "https://app.talkturo.com/api/credits?accountId=acc_7f2c91d8-3b31-4b4d-bf80-5c6f11a2d931",
   {
     method: "GET",
     headers: {
@@ -129,7 +130,7 @@ Verwenden Sie `POST /api/credits`, um Guthaben für Nutzungsvorgänge zu verbuch
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/credits" \
+curl -X POST "https://app.talkturo.com/api/credits" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
   -H "Content-Type: application/json" \
   -d '{
@@ -144,7 +145,7 @@ curl -X POST "https://api.talkturo.com/api/credits" \
 ```
 
 ```javascript
-const response = await fetch("https://api.talkturo.com/api/credits", {
+const response = await fetch("https://app.talkturo.com/api/credits", {
   method: "POST",
   headers: {
     Authorization: "Bearer tk_live_example_9xmk7q2r",
@@ -232,7 +233,7 @@ Erstellen Sie mit `POST /api/credits/checkout` eine Stripe-Checkout-Sitzung für
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/credits/checkout" \
+curl -X POST "https://app.talkturo.com/api/credits/checkout" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
   -H "Content-Type: application/json" \
   -d '{
@@ -244,7 +245,7 @@ curl -X POST "https://api.talkturo.com/api/credits/checkout" \
 ```
 
 ```javascript
-const response = await fetch("https://api.talkturo.com/api/credits/checkout", {
+const response = await fetch("https://app.talkturo.com/api/credits/checkout", {
   method: "POST",
   headers: {
     Authorization: "Bearer tk_live_example_9xmk7q2r",
@@ -345,6 +346,7 @@ Die folgenden Guthaben-Endpunkte unterstützen keinen API-Schlüssel. Rufen Sie 
 | --- | --- | --- |
 | `GET` | `/api/credits/auto-reload` | Aktuelle Auto-Reload-Einstellungen abrufen |
 | `POST` | `/api/credits/auto-reload` | Auto-Reload-Einstellungen aktualisieren (unterstützt auch API-Schlüssel) |
+| `GET` | `/api/credits/claim-grants` | Verfügbare Guthaben-Grants auflisten |
 | `POST` | `/api/credits/claim-grants` | Verfügbare Guthaben-Grants beanspruchen |
 | `POST` | `/api/credits/claim-grants/new-workspace` | Grant für neuen Workspace beanspruchen |
 | `POST` | `/api/credits/welcome-bonus` | Willkommensbonus-Guthaben beanspruchen |

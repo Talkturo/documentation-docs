@@ -40,7 +40,7 @@ Do not treat a request to `/api/billing/webhook` as trusted unless Stripe signat
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/billing/webhook" \
+curl -X POST "https://app.talkturo.com/api/billing/webhook" \
   -H "Content-Type: application/json" \
   -H "stripe-signature: t=1731544800,v1=3f2f0f3816a9a9f5d9f5f8d91d2b1cc95fb08b19e92d7fbb7ebdf1fd4d6f2ab4" \
   -d '{
@@ -361,7 +361,7 @@ This endpoint uses session authentication. It is intended for authenticated dash
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -G "https://api.talkturo.com/auth/token" \
+curl -G "https://app.talkturo.com/auth/token" \
   --data-urlencode "mode=voice" \
   --data-urlencode "room=sales-demo-room" \
   --data-urlencode "assistant_id=ast_7c91e4f0" \
@@ -492,6 +492,6 @@ The webhook surface in Talkturo falls into three patterns:
 ## Related endpoints
 
 <Columns cols={2}>
-  <Card title="Flow integrations" href="/en/api-reference/flow" icon="zap" cta="Open flow API reference" />
+  <Card title="Flow integrations" href="/en/api-reference/turboflow" icon="zap" cta="Open flow API reference" />
   <Card title="Assistants" href="/en/api-reference/assistants" icon="users" cta="Open assistants API reference" />
 </Columns>

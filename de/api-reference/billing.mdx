@@ -25,7 +25,7 @@ Vertrauen Sie eingehenden Webhook-Anfragen nie ohne Signaturprüfung. Der Endpun
 
 <Request>
 ```bash
-curl -X POST "https://api.talkturo.com/api/billing/webhook" \
+curl -X POST "https://app.talkturo.com/api/billing/webhook" \
   -H "Content-Type: application/json" \
   -H "stripe-signature: t=1726074120,v1=9d4a7e8d3d27f2d1a3a42e0c4a1b7a70d0f5e8a0d8c2b6f9c4d1e2f3a4b5c6d7" \
   -d '{
@@ -141,7 +141,7 @@ Dieser Endpunkt listet Rechnungen für die aktuelle angemeldete Sitzung auf. Er 
 
 <Request>
 ```bash
-curl -X GET "https://api.talkturo.com/api/billing/invoices" \
+curl -X GET "https://app.talkturo.com/api/billing/invoices" \
   -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.session_example_9xmk7q2r"
 ```
 </Request>

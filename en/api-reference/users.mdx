@@ -15,7 +15,7 @@ description: Manage user profiles, subscriptions, workspaces, and business setti
 | `PUT` | `/api/account/business` | Update a workspace business profile | Session cookie |
 | `GET` | `/api/account/language` | Get a workspace language | Session cookie |
 | `PUT` | `/api/account/language` | Update a workspace language | Session cookie, owner only |
-| `POST` | `/api/users/me/auto-update` | Toggle desktop auto-update preference | Desktop JWT |
+| `PATCH` | `/api/users/me/auto-update` | Toggle desktop auto-update preference | Desktop JWT |
 | `GET` | `/api/account/verifications` | Get account verification status | Session cookie |
 | `POST` | `/api/account/verifications` | Submit account verification data | Session cookie |
 
@@ -818,7 +818,7 @@ Toggle the desktop auto-update preference for the authenticated desktop user.
 
 ### Endpoint
 
-`POST https://app.talkturo.com/api/users/me/auto-update`
+`PATCH https://app.talkturo.com/api/users/me/auto-update`
 
 ### Body parameters
 

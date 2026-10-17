@@ -71,7 +71,7 @@ Rufen Sie die API-Schlüssel eines Kontos ab, um vorhandene Schlüssel, ihre Ber
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/api-keys?accountSlug=acme-sales" \
+curl -X GET "https://app.talkturo.com/api/api-keys?accountSlug=acme-sales" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.jwt"
 ```
 </Request>
@@ -124,7 +124,7 @@ Erstellen Sie einen neuen API-Schlüssel, wenn Sie programmatischen Zugriff für
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/api-keys" \
+curl -X POST "https://app.talkturo.com/api/api-keys" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.jwt" \
   -H "Content-Type: application/json" \
   -d '{
@@ -212,7 +212,7 @@ Aktualisieren Sie den Namen, die Beschreibung oder den Aktivstatus eines vorhand
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X PATCH "https://api.talkturo.com/api/api-keys/key_01hxyb8r2m4q6s7t9v1w3z5acd" \
+curl -X PATCH "https://app.talkturo.com/api/api-keys/key_01hxyb8r2m4q6s7t9v1w3z5acd" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.jwt" \
   -H "Content-Type: application/json" \
   -d '{
@@ -277,7 +277,7 @@ Widerrufen Sie einen API-Schlüssel dauerhaft, wenn er nicht mehr benötigt wird
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X DELETE "https://api.talkturo.com/api/api-keys/key_01hxyb8r2m4q6s7t9v1w3z5acd" \
+curl -X DELETE "https://app.talkturo.com/api/api-keys/key_01hxyb8r2m4q6s7t9v1w3z5acd" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.jwt"
 ```
 </Request>

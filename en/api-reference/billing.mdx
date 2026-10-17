@@ -25,7 +25,7 @@ Only send raw Stripe webhook payloads to this endpoint. If your proxy, framework
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/billing/webhook" \
+curl -X POST "https://app.talkturo.com/api/billing/webhook" \
   -H "Content-Type: application/json" \
   -H "stripe-signature: t=1725624600,v1=8f3b53d5c0e5f9dfc44cb7ec9885f38baf3d66ea9c77f1a0dcb2b2f4c3be8f25" \
   -d '{
@@ -189,7 +189,7 @@ This endpoint requires session authentication.
 
 <Request tabs="HTTP" default-tab="1">
 ```bash
-curl "https://api.talkturo.com/api/billing/invoices" \
+curl "https://app.talkturo.com/api/billing/invoices" \
   -H "Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.session_example"
 ```
 </Request>

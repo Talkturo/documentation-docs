@@ -30,7 +30,7 @@ Diese Endpunkte decken das aktuelle Benutzerprofil, Abonnementdaten, Workspace-Z
   - `PUT /api/users/me`
   - `GET /api/users/me/subscription`
   - `GET /api/users/me/workspaces`
-  - `POST /api/users/me/auto-update`
+  - `PATCH /api/users/me/auto-update`
 
   </Tab>
   <Tab title="Session-Cookie" icon="shield">
@@ -564,7 +564,7 @@ Schalten Sie die Auto-Update-Einstellung für den authentifizierten Desktop-Benu
 
 ### Endpunkt
 
-`POST https://app.talkturo.com/api/users/me/auto-update`
+`PATCH https://app.talkturo.com/api/users/me/auto-update`
 
 ### Body-Parameter
 

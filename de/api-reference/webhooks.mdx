@@ -40,7 +40,7 @@ Behandeln Sie eine Anfrage an `/api/billing/webhook` nicht als vertrauenswürdig
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/billing/webhook" \
+curl -X POST "https://app.talkturo.com/api/billing/webhook" \
   -H "Content-Type: application/json" \
   -H "stripe-signature: t=1731544800,v1=3f2f0f3816a9a9f5d9f5f8d91d2b1cc95fb08b19e92d7fbb7ebdf1fd4d6f2ab4" \
   -d '{
@@ -361,7 +361,7 @@ Dieser Endpunkt verwendet Sitzungsauthentifizierung. Er ist für authentifiziert
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -G "https://api.talkturo.com/auth/token" \
+curl -G "https://app.talkturo.com/auth/token" \
   --data-urlencode "mode=voice" \
   --data-urlencode "room=sales-demo-room" \
   --data-urlencode "assistant_id=ast_7c91e4f0" \
@@ -492,6 +492,6 @@ Die Webhook-Oberfläche in Talkturo folgt drei Mustern:
 ## Verwandte Endpunkte
 
 <Columns cols={2}>
-  <Card title="Flow-Integrationen" href="/de/api-reference/flow" icon="zap" cta="Flow-API-Referenz öffnen" />
+  <Card title="Flow-Integrationen" href="/de/api-reference/turboflow" icon="zap" cta="Flow-API-Referenz öffnen" />
   <Card title="Assistenten" href="/de/api-reference/assistants" icon="users" cta="Assistenten-API-Referenz öffnen" />
 </Columns>

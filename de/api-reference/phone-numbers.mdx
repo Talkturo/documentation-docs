@@ -46,7 +46,7 @@ Rufen Sie `GET /api/phone-numbers/search` auf, um freie Telefonnummern anhand vo
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/phone-numbers/search?areaCode=415&countryCode=US&phoneNumberPattern=555&features=sms,voice" \
+curl -X GET "https://app.talkturo.com/api/phone-numbers/search?areaCode=415&countryCode=US&phoneNumberPattern=555&features=sms,voice" \
   -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
 ```
 </Request>
@@ -112,7 +112,7 @@ Rufen Sie `POST /api/phone-numbers/purchase` auf, um eine verfügbare Telefonnum
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/phone-numbers/purchase" \
+curl -X POST "https://app.talkturo.com/api/phone-numbers/purchase" \
   -H "Content-Type: application/json" \
   -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -d '{
@@ -162,7 +162,7 @@ Rufen Sie `GET /api/phone-numbers/{id}` auf, um die Details einer bestimmten Tel
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X GET "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
+curl -X GET "https://app.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
   -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
 ```
 </Request>
@@ -203,7 +203,7 @@ Rufen Sie `DELETE /api/phone-numbers/{id}` auf, um eine Telefonnummer aus Ihrem 
 
 <Request tabs="cURL" default-tab="1">
 ```bash
-curl -X DELETE "https://api.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
+curl -X DELETE "https://app.talkturo.com/api/phone-numbers/pn_2f6c9a41" \
   -H "Cookie: sb-session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
 ```
 </Request>
@@ -240,7 +240,7 @@ Dieser Endpunkt prüft eine ED25519-Signatur gegen den konfigurierten öffentlic
 
 <Request tabs="HTTP" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/phone-numbers/telnyx-webhook" \
+curl -X POST "https://app.talkturo.com/api/phone-numbers/telnyx-webhook" \
   -H "Content-Type: application/json" \
   -H "Telnyx-Signature-Ed25519: 4f8f7f4f2fb1d5e8a03ef9b4df2ac7f1a0d75c2d6d1f2e8c9a3e7b5f4d2c1a9e" \
   -H "Telnyx-Timestamp: 1731002201" \
@@ -277,7 +277,7 @@ Dieser Endpunkt vertraut dem eingehenden Statusfeld nicht direkt. Stattdessen li
 
 <Request tabs="HTTP" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/phone-numbers/twilio-webhook" \
+curl -X POST "https://app.talkturo.com/api/phone-numbers/twilio-webhook" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "BundleSID=BU7f3b0d9c5a1e44e6a8c2f11d9a7b3c4"
 ```
