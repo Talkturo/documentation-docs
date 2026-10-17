@@ -8,6 +8,26 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-10-15" description="v4.2.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **ElevenLabs Voice Library** — Search, preview, and add voices from the ElevenLabs Voice Library directly in the voice management page. New voices are checked against your subscription plan before being added, so you won't add a voice that later fails during synthesis. See [Voice Library](/en/voice-library).
+  - **ElevenLabs v4 and v4 Turbo models** — Two new ElevenLabs text-to-speech model options are available with their own pricing. See [Features](/en/features).
+  - **Kugel 3.5 model** — A new text-to-speech model is available with at-cost pricing. See [Features](/en/features).
+  - **Transcription language mismatch warning** — When your assistant's voice language doesn't match its transcription language, you'll see a warning with a one-click fix to align your settings. Polish is now supported as a transcription language. See [Assistant Configuration](/en/assistants/configuration).
+
+  ## Improvements
+
+  - **Default German voice corrected** — Onboarding and AI Employee flows now default to the correct "Lena Hoffmann" voice, instead of the first voice with "Lena" in its name. See [AI Voice Agents](/en/assistants/overview).
+  - **Dark mode dropdown readability** — Native dropdown menus are now readable in dark mode.
+  - **Admin API authorization strengthened** — All admin API routes and server actions now enforce super-admin verification. Unauthorized requests are rejected instead of processed.
+  - **Real-time call credential security** — Real-time call platform credentials are now handled entirely server-side, removing them from browser-exposed code. See [Authentication](/en/authentication).
+
+  ## Bug Fixes
+
+  - **Voice provider loading counts** — The voice management page no longer shows misleading zero counts for voice providers while the catalog is still loading. See [Voice Library](/en/voice-library).
+</Update>
+
 <Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 

@@ -8,6 +8,26 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-10-15" description="v4.2.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **ElevenLabs-Sprachbibliothek** — Suche, höre dir an und füge Stimmen aus der ElevenLabs-Sprachbibliothek direkt auf der Sprachverwaltungsseite hinzu. Neue Stimmen werden vor dem Hinzufügen gegen deinen Abonnement-Plan geprüft, sodass du keine Stimme hinzufügst, die später bei der Sprachsynthese fehlschlägt. Siehe [Sprachbibliothek](/de/voice-library).
+  - **ElevenLabs v4 und v4 Turbo Modelle** — Zwei neue ElevenLabs-Text-to-Speech-Modell-Optionen sind verfügbar, mit eigener Preisgestaltung. Siehe [Features](/de/features).
+  - **Kugel-3.5-Modell** — Ein neues Text-to-Speech-Modell ist verfügbar, mit Preisgestaltung zu Selbstkosten. Siehe [Features](/de/features).
+  - **Warnung bei Sprach-Mismatch der Transkription** — Wenn die Stimmsprache deines Assistenten nicht mit seiner Transkriptionssprache übereinstimmt, siehst du eine Warnung mit einem Ein-Klick-Fix zum Ausrichten deiner Einstellungen. Polnisch wird jetzt als Transkriptionssprache unterstützt. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+
+  ## Verbesserungen
+
+  - **Deutsche Standardstimme korrigiert** — Onboarding- und AI-Employee-Flows verwenden jetzt standardmäßig die richtige Stimme „Lena Hoffmann" statt die erste Stimme mit „Lena" im Namen. Siehe [KI-Sprachagenten](/de/assistants/overview).
+  - **Lesbarkeit von Dropdown-Menüs im dunklen Modus** — Native Dropdown-Menüs sind jetzt im dunklen Modus lesbar.
+  - **Admin-API-Autorisierung verstärkt** — Alle Admin-API-Routen und Server-Aktionen erzwingen jetzt eine Super-Admin-Verifikation. Nicht autorisierte Anfragen werden abgewiesen statt verarbeitet.
+  - **Sicherheit der Echtzeit-Anruf-Anmeldedaten** — Plattform-Anmeldedaten für Echtzeit-Anrufe werden jetzt vollständig serverseitig verarbeitet und aus dem browser-exponierten Code entfernt. Siehe [Authentifizierung](/de/authentication).
+
+  ## Bugfixes
+
+  - **Lade-Zustand der Sprachanbieter-Zählungen** — Die Sprachverwaltungsseite zeigt keine irreführenden Null-Zählungen für Sprachanbieter mehr an, während der Katalog noch geladen wird. Siehe [Sprachbibliothek](/de/voice-library).
+</Update>
+
 <Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
