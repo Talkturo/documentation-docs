@@ -5,19 +5,22 @@ description: Authenticate API requests with API keys, session cookies, or JWT be
 
 ## Authenticate requests
 
-Authenticate every Talkturo API request with one of three methods: **API keys**, **session cookies**, or **JWT bearer tokens**. Most external integrations use API keys in the `Authorization` header, browser-based requests can rely on the authenticated session cookie, and desktop app requests use a bearer token issued by Supabase.
+Authenticate shared Talkturo API routes with a **Talkturo API key**, a **Supabase bearer session token**, or a **browser session cookie**. API keys identify the account associated with the key, Supabase bearer tokens require an `accountSlug` query parameter, and cookie-based requests use `accountSlug` or `teamId` from the query or request body when the route supports it.
 
 ### Authentication methods at a glance
 
 | Method | Best for | How to send it |
 | --- | --- | --- |
 | API key | Server-to-server integrations and external apps | `Authorization: Bearer tk_live_...` or `Authorization: Bearer tk_test_...` |
-| Session cookie | Requests made from the Talkturo web app | Automatic httpOnly cookie |
-| JWT bearer token | Desktop app requests | `Authorization: Bearer eyJhbGciOi...` |
+| Supabase bearer session token | Shared API routes called with an authenticated user session | `Authorization: Bearer eyJhbGciOi...` with `accountSlug` in the query |
+| Session cookie | Requests made from the Talkturo web app | No `Authorization` header; browser sends the httpOnly cookie automatically |
+| Desktop authentication | Desktop app route family | Supabase bearer token on desktop-specific routes |
+
+API-key management endpoints use Supabase bearer session tokens and never accept Talkturo API keys. Desktop authentication is also a separate route family, not a general authentication method for every API endpoint.
 
 ## API key authentication
 
-Send your API key in the `Authorization` header as a bearer token. Talkturo accepts keys in both live and test environments, using the prefixes `tk_live_` and `tk_test_`.
+Send your Talkturo API key in the `Authorization` header as a bearer token. Talkturo accepts keys with both `tk_live_` and `tk_test_` prefixes from the same key store. The prefix does not establish a separate environment.
 
 <CodeGroup tabs="cURL">
 
@@ -28,7 +31,9 @@ curl -X GET "https://api.talkturo.com/api/test-api-key" \
 
 </CodeGroup>
 
-Talkturo validates API keys by hashing the submitted key and looking it up through the `validate_api_key()` database function. If the key is valid, active, not expired, and has the required scope, the request proceeds and usage is logged.
+Talkturo securely validates the submitted key and checks it against the stored key record. The key grants access within the account associated with it. Routes that define scope requirements check those scopes during authentication, while other routes may only validate the key and its account.
+
+If a request includes an invalid `tk_` API key, Talkturo returns `401` and does not fall back to a session cookie.
 
 <Callout kind="alert">
 
@@ -40,18 +45,18 @@ Treat API keys like passwords. Store them in a secret manager or environment var
 
 API keys use one of these prefixes:
 
-- **`tk_live_`** — live environment key
-- **`tk_test_`** — test environment key
+- **`tk_live_`**: live key prefix
+- **`tk_test_`**: test key prefix
 
-A key is returned only once when you create it. Talkturo stores only a SHA-256 hash of the full key, so you cannot retrieve the plaintext value later.
+Both prefixes use the same key store and authentication flow. A key is returned only once when you create it. Talkturo stores only a SHA-256 hash of the full key, so you cannot retrieve the plaintext value later.
 
 ## Scope system
 
-Scopes control which operations an API key can perform. A key can allow everything, a namespace of related operations, or a specific permission string.
+Scopes control access on routes that define scope requirements. A key can allow everything, a namespace of related operations, or a specific permission string.
 
 <ParamField body="*" param-type="scope string" required="false" show-location="false">
 
-Default full-access scope. Grants access to all endpoints that support API key authentication.
+Default full-access scope for routes that use scope checks. Grants access to all scopes supported by those routes.
 
 </ParamField>
 
@@ -69,33 +74,50 @@ Exact-match scope. Grants access only when the required scope string matches exa
 
 <ParamField body="rate_limit_per_hour" param-type="integer" required="false" show-location="false">
 
-Hourly request limit attached to the key permissions. Newly created keys default to `1000`.
+Hourly request limit stored as metadata on the key permissions. Newly created keys default to `1000`. Talkturo's shared API authentication stores this value but does not enforce it; individual endpoints may apply their own limits.
 
 </ParamField>
 
-Talkturo checks scopes in this order: full wildcard, prefix wildcard, then exact match. Newly created API keys default to the `*` scope unless you set a narrower permission set.
+When a route uses scope checks, Talkturo checks scopes in this order: full wildcard, prefix wildcard, then exact match. Newly created API keys default to the `*` scope unless you set a narrower permission set.
 
 ## Dual-auth mode
 
-Some Talkturo API routes support both API keys and authenticated browser sessions. These routes use the `withApiAuth` wrapper.
+Some Talkturo API routes support API keys and authenticated browser sessions through shared API authentication. These routes also support a non-`tk_` Supabase bearer session token when the request includes `accountSlug` in the query.
 
 <Callout kind="info">
 
-In dual-auth mode, Talkturo tries API key authentication first. If no valid API key is present, Talkturo falls back to the current session cookie.
+Dual-auth routes choose the authentication method from the request. A valid Talkturo API key authenticates the request for the account associated with that key. Without an `Authorization` header, a supported browser session cookie can authenticate the request when the route receives `accountSlug` or `teamId` from the query or request body. An invalid `tk_` API key returns `401` and does not fall back to the cookie.
 
 </Callout>
 
-This behavior lets the same endpoint work for external integrations and for requests made from the Talkturo web app. Routes such as assistant and credits endpoints use this pattern.
+This behavior lets supported endpoints work for external integrations and requests made from the Talkturo web app. Route-specific scope checks still apply only where the route defines them.
 
 ## Session cookie authentication
 
-Session cookie authentication is the standard browser flow for the Talkturo web app. After a user signs in, Supabase stores the authenticated session in an httpOnly cookie, and browser requests to session-protected routes use that cookie automatically.
+Session cookie authentication is the standard browser flow for the Talkturo web app. After a user signs in, Supabase stores the authenticated session in an httpOnly cookie, and browser requests to session-protected routes send that cookie automatically.
+
+Do not send an `Authorization` header when you want a supported route to use the browser session cookie. Include `accountSlug` or `teamId` in the query or request body when the route requires one.
 
 Use session cookies when your code runs inside the web app context. For external integrations, use API keys instead.
 
-## JWT bearer token authentication
+## Supabase bearer token authentication
 
-Desktop app routes accept a Supabase access token in the `Authorization` header. Talkturo validates the token by calling `supabase.auth.getUser()` for the presented bearer token.
+Shared API routes can accept a Supabase access token in the `Authorization` header when the token is not a Talkturo `tk_` API key. Include `accountSlug` in the query so the route can resolve the account for the request.
+
+<CodeGroup tabs="cURL">
+
+```bash
+curl -X GET "https://api.talkturo.com/api/test-api-key?accountSlug=acme" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfYTFiMmMzZDQiLCJlbWFpbCI6ImphbmVAYWNtZS5jb20ifQ.desktop_example_token"
+```
+
+</CodeGroup>
+
+API-key management endpoints require this Supabase bearer session token. They do not accept a Talkturo API key.
+
+## Desktop authentication
+
+Desktop app routes form a separate route family and accept a Supabase access token in the `Authorization` header. Talkturo validates the token with Supabase for the presented bearer token.
 
 <CodeGroup tabs="cURL">
 
@@ -110,7 +132,7 @@ Desktop routes also support cross-origin requests and handle `OPTIONS` preflight
 
 ## Test authentication
 
-Call `GET /api/test-api-key` to confirm that your credentials are valid and accepted by Talkturo. This endpoint uses the same authentication flow as other API-key-enabled routes.
+Call `GET /api/test-api-key` to confirm that your Talkturo API key is valid and accepted by the endpoint. This endpoint uses the API-key authentication flow and does not represent the requirements of every API route.
 
 <Request tabs="cURL" default-tab="1">
 
@@ -139,4 +161,4 @@ curl -X GET "https://api.talkturo.com/api/test-api-key" \
 
 </Response>
 
-A successful response confirms that the key is active, not expired, and allowed through scope validation. If the request fails, verify the bearer token format, key environment prefix, key status, and scope configuration.
+A successful response confirms that the key is active and accepted by this endpoint. If the request fails, verify the bearer token format, key prefix, key status, and any scope requirements defined by the route.

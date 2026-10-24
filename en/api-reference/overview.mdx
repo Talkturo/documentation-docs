@@ -18,7 +18,7 @@ Talkturo supports three authentication methods. Most external integrations shoul
 
 <Tabs>
   <Tab title="API keys" icon="key">
-    Use a bearer token that starts with `tk_live_` or `tk_test_` to authenticate server-to-server requests. API keys support scopes and have a default rate limit of 1000 requests per hour.
+    Use a bearer token that starts with `tk_live_` or `tk_test_` to authenticate server-to-server requests. API keys support scopes.
 
     See [Authentication](/en/api-reference/authentication) for header format, scope behavior, and security guidance.
   </Tab>
@@ -36,32 +36,13 @@ Talkturo supports three authentication methods. Most external integrations shoul
   </Tab>
 </Tabs>
 
-## Understand the response format
+## Understand response formats
 
-Most endpoints return JSON in a consistent envelope so you can handle success and failure predictably across the API. Successful responses return a `success` flag and response data, while failed responses return a `success` flag and error details.
-
-<Request show-lines="true">
-  ```json
-  {
-    "success": true,
-    "data": {
-      "id": "ast_9f3d2c11",
-      "name": "Inbound Support Assistant"
-    }
-  }
-  ```
-
-  ```json
-  {
-    "success": false,
-    "error": "Unauthorized"
-  }
-  ```
-</Request>
+Response shapes are endpoint-specific. Check the response example in each endpoint reference instead of assuming that every endpoint returns the same `success` or `data` envelope. Depending on the endpoint, a response can be a top-level resource object, an error object, or another documented shape.
 
 ### Handle HTTP status codes
 
-Talkturo uses standard HTTP status codes in addition to the JSON response body. Check the status code first, then inspect the response envelope for details your application can log or surface.
+Talkturo uses standard HTTP status codes alongside endpoint-specific response bodies. Check the status code first, then inspect the documented response fields for details your application can log or surface.
 
 | Status | Meaning              |
 | ------ | -------------------- |
@@ -74,9 +55,9 @@ Talkturo uses standard HTTP status codes in addition to the JSON response body. 
 | `404`  | Not found            |
 | `500`  | Server error         |
 
-## Plan for rate limits
+## Understand rate-limit metadata
 
-API keys are limited to 1000 requests per hour by default. If you build background jobs, retries, or bulk syncs, add backoff and retry handling so your integration degrades gracefully when it reaches the limit.
+API keys can include a `rate_limit_per_hour` value in their permissions metadata. The API-key middleware currently stores this field but does not enforce it. Individual endpoints may have their own rate limits, so check the relevant endpoint reference before designing retries or bulk operations.
 
 ## Browse endpoint groups
 

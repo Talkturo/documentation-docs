@@ -7,7 +7,7 @@ description: Erstellen, auflisten, aktualisieren und widerrufen Sie API-Schlüss
 
 Verwalten Sie API-Schlüssel für ein Talkturo-Konto mit REST-Endpunkten, die Schlüssel auflisten, neue Schlüssel erstellen, Metadaten aktualisieren und Zugriff widerrufen. Diese Endpunkte geben Schlüssel-Metadaten für vorhandene Schlüssel zurück und liefern den Klartextwert `fullKey` nur dann, wenn Sie einen neuen Schlüssel erstellen.
 
-Authentifizieren Sie jede Anfrage mit einem Bearer-JWT und verwenden Sie ein Kontomitglied mit der Rolle Owner oder Admin. Diese Endpunkte akzeptieren keine Authentifizierung per API-Schlüssel.
+Authentifizieren Sie jede Anfrage mit einem gültigen Supabase-Bearer-Sitzungstoken. GET-Anfragen erfordern eine Mitgliedschaft im Konto. POST-, PATCH- und DELETE-Anfragen erfordern ein Kontomitglied mit der Rolle Owner oder Admin. API-Schlüssel selbst können diese Management-Endpunkte nicht authentifizieren.
 
 <Callout kind="info">
 
@@ -61,7 +61,7 @@ Kennung des Benutzers, der den Schlüssel erstellt hat.
 
 ### Schlüsselformat und Lebenszyklus
 
-Neue Schlüssel verwenden das Format `tk_{environment}_{random}`. Talkturo speichert einen SHA-256-Hash und speichert den Klartext nicht.
+Neue Schlüssel verwenden das Format `tk_{environment}_{random}`. Sowohl Präfixe mit `tk_live_` als auch Präfixe mit `tk_test_` werden vom selben Validator akzeptiert und stellen keine getrennten Authentifizierungsumgebungen dar. Talkturo speichert einen SHA-256-Hash und speichert den Klartext nicht.
 
 `fullKey` wird nur einmal bei der Erstellung zurückgegeben. Wenn Sie diesen Wert verlieren, erstellen Sie einen neuen Schlüssel und widerrufen Sie den alten.
 
@@ -185,7 +185,7 @@ Optionale Beschreibung, die erklärt, wofür der Schlüssel verwendet wird.
 </ParamField>
 
 <ParamField body="environment" param-type="string" required="false" enum="live,test">
-Zielumgebung für den Schlüssel. Wenn kein Wert angegeben wird, verwendet Talkturo den Standardwert `live`.
+Präfix für den Schlüssel. Die Werte `live` und `test` werden vom selben Validator akzeptiert und stellen keine getrennten Authentifizierungsumgebungen dar. Wenn kein Wert angegeben wird, verwendet Talkturo den Standardwert `live`.
 </ParamField>
 
 <ParamField body="expiresInDays" param-type="number" required="false">
@@ -193,7 +193,7 @@ Anzahl der Tage bis zum Ablauf des Schlüssels. Lassen Sie dieses Feld weg, wenn
 </ParamField>
 
 <ParamField body="permissions" param-type="object" required="false">
-Berechtigungen für den Schlüssel. Wenn kein Wert angegeben wird, verwendet Talkturo standardmäßig `scopes` mit `["*"]` und `rate_limit_per_hour` mit `1000`.
+Berechtigungen für den Schlüssel. Wenn kein Wert angegeben wird, verwendet Talkturo standardmäßig `scopes` mit `["*"]` und `rate_limit_per_hour` mit `1000`. Der Wert `rate_limit_per_hour` wird als Berechtigungsmetadatum gespeichert, aber von der API-Key-Middleware nicht durchgesetzt. Einzelne Endpunkte können eigene Limits haben.
 </ParamField>
 
 ### Antwortfelder
@@ -208,7 +208,7 @@ Vollständiger Klartext-API-Schlüssel. Dieser Wert wird nur in der Erstellungsa
 
 ## API-Schlüssel aktualisieren
 
-Aktualisieren Sie den Namen, die Beschreibung oder den Aktivstatus eines vorhandenen API-Schlüssels, ohne einen neuen Schlüssel auszustellen.
+Aktualisieren Sie ausschließlich den Namen, die Beschreibung oder den Aktivstatus eines vorhandenen API-Schlüssels, ohne einen neuen Schlüssel auszustellen. PATCH ändert keine Berechtigungen, Ablaufdaten oder anderen Schlüsselattribute.
 
 <Request tabs="cURL" default-tab="1">
 ```bash
@@ -273,7 +273,7 @@ Setzen Sie diesen Wert auf `false`, um den Schlüssel zu deaktivieren, oder auf 
 
 ## API-Schlüssel widerrufen
 
-Widerrufen Sie einen API-Schlüssel dauerhaft, wenn er nicht mehr benötigt wird oder kompromittiert wurde.
+Löschen Sie einen API-Schlüssel dauerhaft, wenn er nicht mehr benötigt wird oder kompromittiert wurde. DELETE entfernt den Schlüssel-Datensatz dauerhaft, statt ihn nur zu deaktivieren.
 
 <Request tabs="cURL" default-tab="1">
 ```bash
@@ -300,17 +300,17 @@ curl -X DELETE "https://api.talkturo.com/api/api-keys/key_01hxyb8r2m4q6s7t9v1w3z
 ### Pfadparameter
 
 <ParamField path="id" param-type="string" required="true">
-Kennung des API-Schlüssels, den Sie widerrufen möchten.
+Kennung des API-Schlüssels, den Sie dauerhaft löschen möchten.
 </ParamField>
 
 ## Hinweise zu Berechtigungen
 
-Berechtigungen steuern, was ein API-Schlüssel tun darf und wie häufig er verwendet werden kann. Jeder Schlüssel unterstützt `scopes` und `rate_limit_per_hour`.
+Berechtigungen steuern, welche Scopes ein API-Schlüssel verwenden darf und welche zusätzlichen Metadaten für ihn gespeichert werden. Jeder Schlüssel unterstützt `scopes` und `rate_limit_per_hour`. Die API-Key-Middleware setzt `rate_limit_per_hour` nicht als Anfrage-Limit durch; einzelne Endpunkte können eigene Limits haben.
 
-- **Wildcard-Scopes** — Verwenden Sie `*`, um alle verfügbaren Scopes zu erlauben.
-- **Präfix-Wildcards** — Verwenden Sie Werte wie `assistants:*`, um alle Scopes innerhalb eines Präfixes zu erlauben.
-- **Exakte Scopes** — Verwenden Sie vollständige Scope-Strings, wenn Sie den Zugriff auf bestimmte Aktionen beschränken möchten.
-- **Standardwerte** — Neue Schlüssel verwenden standardmäßig `scopes` mit `["*"]` und `rate_limit_per_hour` mit `1000`.
+- **Wildcard-Scopes**: Verwenden Sie `*`, um alle verfügbaren Scopes zu erlauben.
+- **Präfix-Wildcards**: Verwenden Sie Werte wie `assistants:*`, um alle Scopes innerhalb eines Präfixes zu erlauben.
+- **Exakte Scopes**: Verwenden Sie vollständige Scope-Strings, wenn Sie den Zugriff auf bestimmte Aktionen beschränken möchten.
+- **Standardwerte**: Neue Schlüssel verwenden standardmäßig `scopes` mit `["*"]` und `rate_limit_per_hour` mit `1000`.
 
 <Callout kind="tip">
 

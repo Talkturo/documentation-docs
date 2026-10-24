@@ -18,7 +18,7 @@ Talkturo unterstützt drei Authentifizierungsmethoden. Die meisten externen Inte
 
 <Tabs>
   <Tab title="API-Schlüssel" icon="key">
-    Verwenden Sie ein Bearer-Token, das mit `tk_live_` oder `tk_test_` beginnt, um Server-zu-Server-Anfragen zu authentifizieren. API-Schlüssel unterstützen Scopes und haben standardmäßig ein Ratenlimit von 1000 Anfragen pro Stunde.
+    Verwenden Sie ein Bearer-Token, das mit `tk_live_` oder `tk_test_` beginnt, um Server-zu-Server-Anfragen zu authentifizieren. API-Schlüssel unterstützen Scopes. `rate_limit_per_hour` wird als Berechtigungsmetadatum gespeichert, aber von der API-Key-Middleware nicht erzwungen.
 
     Unter [Authentifizierung](/de/api-reference/authentication) finden Sie das Header-Format, das Verhalten von Scopes und Sicherheitshinweise.
   </Tab>
@@ -38,7 +38,7 @@ Talkturo unterstützt drei Authentifizierungsmethoden. Die meisten externen Inte
 
 ## Antwortformat verstehen
 
-Die meisten Endpunkte geben JSON in einem einheitlichen Format zurück, sodass Sie Erfolg und Misserfolg vorhersehbar behandeln können. Erfolgreiche Antworten geben ein `success`-Flag und Antwortdaten zurück, während fehlgeschlagene Antworten ein `success`-Flag und Fehlerdetails zurückgeben.
+Die Antwortformate und Antwortkörper variieren je nach Endpunkt und sind in der jeweiligen Referenz dokumentiert.
 
 ### HTTP-Statuscodes
 
@@ -53,9 +53,9 @@ Die meisten Endpunkte geben JSON in einem einheitlichen Format zurück, sodass S
 | `404`  | Nicht gefunden        |
 | `500`  | Serverfehler          |
 
-## Ratenlimits
+## Gespeicherte Rate-Limit-Metadaten
 
-API-Schlüssel sind standardmäßig auf 1000 Anfragen pro Stunde begrenzt. Wenn Sie Hintergrundjobs, Wiederholungen oder Massensynchronisierungen entwickeln, fügen Sie Backoff- und Wiederholungsbehandlung hinzu.
+`rate_limit_per_hour` wird als Berechtigungsmetadatum gespeichert, aber von der API-Key-Middleware nicht erzwungen. Einzelne Endpunkte können eigene Rate-Limits haben.
 
 ## Endpunktgruppen durchsuchen
 

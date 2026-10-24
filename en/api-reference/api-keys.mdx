@@ -9,7 +9,7 @@ Manage API keys for a Talkturo account with REST endpoints that list keys, creat
 
 <Callout kind="info">
 
-Authenticate every request with a Bearer JWT and use an account member with the `owner` or `admin` role. These endpoints do not accept API key authentication.
+Authenticate every request with a valid Supabase bearer session token. `GET` requests require account membership. `POST`, `PATCH`, and `DELETE` requests require an account member with the `owner` or `admin` role. API keys cannot authenticate management requests.
 
 </Callout>
 
@@ -34,7 +34,7 @@ Non-secret prefix used to identify the key in the dashboard and API responses.
 </ResponseField>
 
 <ResponseField name="permissions" field-type="object" required="true">
-Permission settings for the key, including scopes and rate limit configuration.
+Permission settings for the key, including scopes and stored rate limit configuration.
 </ResponseField>
 
 <ResponseField name="last_used_at" field-type="string | null" required="true">
@@ -59,7 +59,7 @@ User ID of the account member who created the key.
 
 ### Key format and lifecycle
 
-New keys use the format `tk_{environment}_{random}` where `environment` is `live` or `test`. Talkturo stores a SHA-256 hash of the key and does not store the plaintext value.
+New keys use the format `tk_{environment}_{random}` where `environment` is `live` or `test`. The same key validator accepts both `tk_live_` and `tk_test_` prefixes; the prefixes do not provide separate live and test authentication environments. Talkturo stores a SHA-256 hash of the key and does not store the plaintext value.
 
 <Callout kind="alert">
 
@@ -160,7 +160,7 @@ curl -X POST "https://api.talkturo.com/api/api-keys" \
 
 </Request>
 
-<Response tabs="200" default-tab="1">
+<Response tabs="201" default-tab="1">
 
 ```json
 {
@@ -208,7 +208,7 @@ Number of days until the key expires. Omit this field to create a key without an
 </ParamField>
 
 <ParamField body="permissions" param-type="object" required="false">
-Permission object for the new key. Defaults to `scopes: ["*"]` and `rate_limit_per_hour: 1000`.
+Permission object for the new key. Defaults to `scopes: ["*"]` and `rate_limit_per_hour: 1000`. The stored rate limit value is not enforced by the API-key middleware; endpoint-specific limits may still apply.
 </ParamField>
 
 <ParamField body="permissions.scopes" param-type="array<string>" required="false">
@@ -216,7 +216,7 @@ Allowed scopes for the key. The default value is `["*"]`.
 </ParamField>
 
 <ParamField body="permissions.rate_limit_per_hour" param-type="number" required="false">
-Maximum number of requests the key can make per hour. The default value is `1000`.
+Rate limit value stored with the key permissions. The API-key middleware does not enforce this value; endpoint-specific limits may still apply. The default value is `1000`.
 </ParamField>
 
 ### Response fields
@@ -231,7 +231,7 @@ Plaintext API key. Talkturo returns this field once at creation time and never r
 
 ## Update API key
 
-Update mutable fields on an existing API key. This endpoint changes display metadata or active status and does not rotate the key value.
+Update mutable fields on an existing API key. This endpoint changes only `name`, `description`, or `isActive` and does not rotate the key value.
 
 <Request tabs="cURL" default-tab="1">
 
@@ -301,7 +301,7 @@ Updated API key object.
 
 ## Revoke API key
 
-Delete an API key and immediately revoke its access. Use this endpoint when a key is no longer needed or you suspect it has been exposed.
+Delete an API key and permanently remove its record. Use this endpoint when a key is no longer needed or you suspect it has been exposed.
 
 <Request tabs="cURL" default-tab="1">
 
@@ -342,14 +342,14 @@ Human-readable status message for the revoke operation.
 
 ## Notes on permissions
 
-Permissions are stored as an object on each key. A typical payload includes `scopes` and `rate_limit_per_hour`.
+Permissions are stored as an object on each key. A typical payload includes `scopes` and `rate_limit_per_hour`. The stored `rate_limit_per_hour` value is not enforced by the API-key middleware, and endpoint-specific limits may still apply.
 
 <ResponseField name="permissions.scopes" field-type="array<string>" required="true">
 List of scopes assigned to the key.
 </ResponseField>
 
 <ResponseField name="permissions.rate_limit_per_hour" field-type="number" required="true">
-Hourly request limit assigned to the key.
+Rate limit value stored with the key permissions. The API-key middleware does not enforce this value.
 </ResponseField>
 
 Keys can use wildcard scopes such as `*`, prefix wildcards such as `assistants:*`, or exact scope strings. Choose the narrowest scopes that match your integration.
