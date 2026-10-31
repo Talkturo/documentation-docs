@@ -9,18 +9,18 @@ description: >-
 Erstellen Sie Integrationen und Automatisierungen auf Basis der Voice-AI-Plattform von Talkturo mit einer REST-API für Assistenten, Telefonie, Telefonnummern, Guthaben, CRM-Daten, Workflows und Kontoverwaltung. Auf dieser Seite lernen Sie die grundlegenden API-Konventionen kennen und finden die Endpunktgruppe, die Sie benötigen.
 
 <Callout kind="info" collapsed="false">
-  Senden Sie alle API-Anfragen an `https://app.talkturo.com/api`.
+  Senden Sie alle API-Anfragen an den deployment-spezifischen Origin mit dem Suffix `/api`.
 </Callout>
 
 ## Authentifizieren Sie Anfragen
 
-Talkturo unterstützt drei Authentifizierungsmethoden. Die meisten externen Integrationen sollten API-Schlüssel verwenden, während Browser- und Desktop-Clients plattformspezifische Authentifizierungsabläufe nutzen.
+Talkturo unterstützt mehrere Authentifizierungsmethoden. Gemeinsame Routen können API-Schlüssel, Sitzungs-Bearer-Token oder Sitzungscookies akzeptieren. Welche Methoden unterstützt werden und welche Anforderungen gelten, hängt von der jeweiligen Route ab.
 
 <Tabs>
   <Tab title="API-Schlüssel" icon="key">
-    Verwenden Sie ein Bearer-Token, das mit `tk_live_` oder `tk_test_` beginnt, um Server-zu-Server-Anfragen zu authentifizieren. API-Schlüssel unterstützen Scopes und haben standardmäßig ein Ratenlimit von 1000 Anfragen pro Stunde.
+    Verwenden Sie ein Bearer-Token, das mit `tk_live_` oder `tk_test_` beginnt, um Server-zu-Server-Anfragen zu authentifizieren. Scopes werden nicht für alle Routen einheitlich erzwungen. Prüfen Sie daher die Authentifizierungsanforderungen auf der jeweiligen Endpunktseite.
 
-    Unter [Authentifizierung](/de/api-reference/authentication) finden Sie das Header-Format, das Verhalten von Scopes und Sicherheitshinweise.
+    Unter [Authentifizierung](/de/api-reference/authentication) finden Sie das Header-Format und Sicherheitshinweise.
   </Tab>
 
   <Tab title="Sitzungs-Cookies" icon="lock">
@@ -38,7 +38,7 @@ Talkturo unterstützt drei Authentifizierungsmethoden. Die meisten externen Inte
 
 ## Antwortformat verstehen
 
-Die meisten Endpunkte geben JSON in einem einheitlichen Format zurück, sodass Sie Erfolg und Misserfolg vorhersehbar behandeln können. Erfolgreiche Antworten geben ein `success`-Flag und Antwortdaten zurück, während fehlgeschlagene Antworten ein `success`-Flag und Fehlerdetails zurückgeben.
+Antwortkörper, Fehlerstrukturen und das Verhalten bei HTTP-Statuscodes sind endpoint-spezifisch. Prüfen Sie die jeweilige Endpunktseite, bevor Sie Antwortdaten oder Fehlerbehandlung implementieren.
 
 ### HTTP-Statuscodes
 
@@ -53,13 +53,17 @@ Die meisten Endpunkte geben JSON in einem einheitlichen Format zurück, sodass S
 | `404`  | Nicht gefunden        |
 | `500`  | Serverfehler          |
 
+Die tatsächlich verwendeten Statuscodes und ihre Bedeutung können je nach Endpunkt variieren. Die Endpunktreferenz enthält die gültigen Antwort- und Fehlerschemas.
+
 ## Ratenlimits
 
-API-Schlüssel sind standardmäßig auf 1000 Anfragen pro Stunde begrenzt. Wenn Sie Hintergrundjobs, Wiederholungen oder Massensynchronisierungen entwickeln, fügen Sie Backoff- und Wiederholungsbehandlung hinzu.
+Bei der Erstellung eines API-Schlüssels ist das Feld `rate_limit_per_hour` standardmäßig auf `1000` gesetzt. Der vorhandene Code legt nicht fest, dass dieser Wert global für alle API-Schlüssel oder Routen erzwungen wird. Prüfen Sie die Angaben auf der jeweiligen Endpunktseite und implementieren Sie bei Hintergrundjobs, Wiederholungen oder Massensynchronisierungen eine Backoff- und Wiederholungsbehandlung.
 
 ## Endpunktgruppen durchsuchen
 
-Beginnen Sie mit der Gruppe, die zur Ressource oder zum Workflow passt, den Sie integrieren möchten. Jede Referenzseite dokumentiert Endpunkte, Authentifizierungsanforderungen und Anfrage-/Antwortdetails.
+Beginnen Sie mit der Gruppe, die zur Ressource oder zum Workflow passt, den Sie integrieren möchten. Jede Referenzseite dokumentiert Endpunkte, Authentifizierungsanforderungen sowie Anfrage-, Antwort- und Fehlerschemas.
+
+Die Erstellung von Unternehmen ist veraltet: `POST` gibt für diesen Vorgang den Status `410` zurück. Verwenden Sie stattdessen [CRM Groups](/de/api-reference/crm-groups).
 
 ## Mit dem häufigsten Integrationspfad beginnen
 

@@ -7,7 +7,7 @@ description: Erstellen, aktualisieren, klonen, löschen und verwalten Sie KI-Spr
 
 Erstellen Sie Assistenten, aktualisieren Sie ihre Konfiguration, klonen Sie bestehende Setups, löschen Sie nicht mehr benötigte Assistenten und rufen Sie Nutzungsdaten für Reporting oder operative Prüfungen ab.
 
-Alle Assistant-Endpunkte unterstützen Dual-Authentifizierung über `withApiAuth`. Authentifizieren Sie sich entweder mit einem Talkturo-API-Schlüssel oder mit einem authentifizierten Session-Cookie.
+Die Authentifizierung hängt von der jeweiligen Route ab. Viele Assistant-Endpunkte akzeptieren entweder einen Talkturo-API-Schlüssel oder eine authentifizierte Sitzung. Werkzeugkonfigurationen und die meisten Telefonieverwaltungs-Endpunkte sind jedoch nur mit Session-Authentifizierung nutzbar.
 
 Basispfad: `/api/assistants`
 
@@ -48,22 +48,23 @@ Basispfad: `/api/assistants`
 
 ## Einen Assistenten erstellen
 
-Erstellen Sie einen Assistenten mit einem Kontoslug und einem Namen. Optional können Sie auch eine Vorlage angeben, um den Assistententyp beim Anlegen zu setzen.
+Erstellen Sie einen Assistenten mit einem Namen. `accountSlug` ist ein optionales Legacy-Feld und wählt oder überschreibt das Konto nicht. Der API-Schlüssel oder die authentifizierte Sitzung bestimmt den Workspace. Optional können Sie `templateId` angeben, um den Assistententyp beim Anlegen zu setzen, und mit `groupId` eine CRM-Gruppe zuweisen. Die Gruppe muss zum authentifizierten Workspace gehören; andernfalls verwendet Talkturo die Standardgruppe.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 ```bash
-curl -X POST "https://api.talkturo.com/api/assistants" \
+curl -X POST "https://your-deployment-host/api/assistants" \
   -H "Authorization: Bearer tk_test_example_9xmk7q2r" \
   -H "Content-Type: application/json" \
   -d '{
     "accountSlug": "acme-sales",
     "name": "Inbound Qualification Assistant",
-    "templateId": "tmpl_voice_inbound"
+    "templateId": "tmpl_voice_inbound",
+    "groupId": "3c8a1f2e-6d47-4b91-a2f8-9e5c7d3b1a64"
   }'
 ```
 
 ```javascript
-const response = await fetch("https://api.talkturo.com/api/assistants", {
+const response = await fetch("https://your-deployment-host/api/assistants", {
   method: "POST",
   headers: {
     "Authorization": "Bearer tk_test_example_9xmk7q2r",
@@ -72,7 +73,8 @@ const response = await fetch("https://api.talkturo.com/api/assistants", {
   body: JSON.stringify({
     accountSlug: "acme-sales",
     name: "Inbound Qualification Assistant",
-    templateId: "tmpl_voice_inbound"
+    templateId: "tmpl_voice_inbound",
+    groupId: "3c8a1f2e-6d47-4b91-a2f8-9e5c7d3b1a64"
   })
 });
 
@@ -99,8 +101,8 @@ console.log(data);
 
 ### Request-Body
 
-<ParamField body="accountSlug" param-type="string" required="true">
-Der Slug des Kontos, in dem der Assistent erstellt wird.
+<ParamField body="accountSlug" param-type="string" required="false">
+Optionales Legacy-Feld. Der Wert wählt oder überschreibt das Konto nicht; der API-Schlüssel oder die authentifizierte Sitzung bestimmt den Workspace.
 </ParamField>
 
 <ParamField body="name" param-type="string" required="true">
@@ -109,6 +111,10 @@ Der Anzeigename des Assistenten.
 
 <ParamField body="templateId" param-type="string" required="false">
 Optionale Vorlagen-ID. Wenn angegeben, setzt Talkturo den Assistententyp aus dieser Vorlage.
+</ParamField>
+
+<ParamField body="groupId" param-type="string" required="false">
+Optionale UUID einer CRM-Gruppe. Die Gruppe muss zum authentifizierten Workspace gehören. Wenn die Gruppe fehlt oder nicht zum Workspace gehört, verwendet Talkturo die Standardgruppe.
 </ParamField>
 
 ### Antwortfelder

@@ -9,7 +9,7 @@ Create assistants, update their configuration, clone existing setups, delete ass
 
 <Callout kind="info">
 
-All assistant endpoints support dual authentication through `withApiAuth`. Authenticate with either a Talkturo API key or an authenticated session cookie.
+Authentication varies by route. Assistant endpoints may accept a Talkturo API key or an authenticated session cookie, while tool configuration endpoints and most telephony management endpoints require session authentication.
 
 </Callout>
 
@@ -24,11 +24,10 @@ Send your API key in the `Authorization` header as a bearer token.
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/assistants" \
+curl -X POST "https://your-deployment-host/api/assistants" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
   -H "Content-Type: application/json" \
   -d '{
-    "accountSlug": "acme-sales",
     "name": "Inbound Sales Assistant"
   }'
 ```
@@ -49,36 +48,38 @@ curl -X POST "https://api.talkturo.com/api/assistants" \
 
 </Response>
 
-If you use session-based auth from the Talkturo app, the browser sends the session cookie automatically. External integrations usually use API keys.
+If you use session-based auth from the Talkturo app, the browser sends the session cookie automatically. External integrations usually use API keys. The authenticated session or API key determines the workspace for the request.
 
 ## Create an assistant
 
-Create a new assistant under an account by sending the account slug and assistant name. If you provide a template ID, Talkturo sets the assistant type from that template.
+Create a new assistant in the workspace associated with the authenticated session or API key. The `name` field is required. You can optionally provide a legacy `accountSlug`, a `templateId`, or a `groupId`; `accountSlug` does not select or override the authenticated workspace. When you provide a `templateId`, Talkturo sets the assistant type from that template. When you provide a `groupId`, the group must belong to the authenticated workspace. If you omit `groupId`, Talkturo uses the default group.
 
 <Request tabs="cURL,JavaScript,Python" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/assistants" \
+curl -X POST "https://your-deployment-host/api/assistants" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
   -H "Content-Type: application/json" \
   -d '{
-    "accountSlug": "acme-sales",
     "name": "Inbound Sales Assistant",
-    "templateId": "tmpl_sales_inbound_v1"
+    "accountSlug": "acme-sales",
+    "templateId": "tmpl_sales_inbound_v1",
+    "groupId": "grp_sales_7c8d9e10"
   }'
 ```
 
 ```javascript
-const response = await fetch("https://api.talkturo.com/api/assistants", {
+const response = await fetch("https://your-deployment-host/api/assistants", {
   method: "POST",
   headers: {
     "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    accountSlug: "acme-sales",
     name: "Inbound Sales Assistant",
-    templateId: "tmpl_sales_inbound_v1"
+    accountSlug: "acme-sales",
+    templateId: "tmpl_sales_inbound_v1",
+    groupId: "grp_sales_7c8d9e10"
   })
 });
 
@@ -90,15 +91,16 @@ console.log(data);
 import requests
 
 response = requests.post(
-    "https://api.talkturo.com/api/assistants",
+    "https://your-deployment-host/api/assistants",
     headers={
         "Authorization": "Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8",
         "Content-Type": "application/json"
     },
     json={
-        "accountSlug": "acme-sales",
         "name": "Inbound Sales Assistant",
-        "templateId": "tmpl_sales_inbound_v1"
+        "accountSlug": "acme-sales",
+        "templateId": "tmpl_sales_inbound_v1",
+        "groupId": "grp_sales_7c8d9e10"
     }
 )
 
@@ -131,16 +133,20 @@ print(response.json())
 
 ### Body parameters
 
-<ParamField body="accountSlug" param-type="string" required="true">
-The account slug that owns the assistant.
-</ParamField>
-
 <ParamField body="name" param-type="string" required="true">
 The assistant name.
 </ParamField>
 
+<ParamField body="accountSlug" param-type="string" required="false">
+Legacy account slug field. The authenticated session or API key determines the workspace, and this value does not select or override it.
+</ParamField>
+
 <ParamField body="templateId" param-type="string" required="false">
 An optional template identifier. When present, Talkturo sets the assistant type from the template.
+</ParamField>
+
+<ParamField body="groupId" param-type="string" required="false">
+An optional group UUID. When provided, the group must belong to the authenticated workspace. When omitted, Talkturo uses the default group.
 </ParamField>
 
 ### Response fields
@@ -169,12 +175,12 @@ Talkturo creates the assistant with default or null values for fields you do not
 
 ## Update an assistant
 
-Update an existing assistant by assistant ID. The update endpoint accepts `accountSlug` and any assistant fields supported by the backend.
+Update an existing assistant by assistant ID. The update endpoint accepts `accountSlug` and any assistant fields supported by the backend. API keys and authenticated sessions can be used where the route permits them.
 
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl -X PATCH "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
+curl -X PATCH "https://your-deployment-host/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
   -H "Content-Type: application/json" \
   -d '{
@@ -187,7 +193,7 @@ curl -X PATCH "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
+  "https://your-deployment-host/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a",
   {
     method: "PATCH",
     headers: {
@@ -271,7 +277,7 @@ Delete an assistant permanently by ID. Talkturo checks ownership before removing
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X DELETE "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
+curl -X DELETE "https://your-deployment-host/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
 ```
 
@@ -321,13 +327,13 @@ Clone an existing assistant to duplicate its configuration into a new assistant 
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone" \
+curl -X POST "https://your-deployment-host/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone",
+  "https://your-deployment-host/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/clone",
   {
     method: "POST",
     headers: {
@@ -397,13 +403,13 @@ Fetch usage data for a single assistant. Use this endpoint for monitoring, dashb
 <Request tabs="cURL,JavaScript" default-tab="1">
 
 ```bash
-curl -X GET "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?accountId=9a6e7d1c-3fd1-4af6-a3ab-b0e9d3ac4a71" \
+curl -X GET "https://your-deployment-host/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?accountId=9a6e7d1c-3fd1-4af6-a3ab-b0e9d3ac4a71" \
   -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
 ```
 
 ```javascript
 const response = await fetch(
-  "https://api.talkturo.com/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?accountId=9a6e7d1c-3fd1-4af6-a3ab-b0e9d3ac4a71",
+  "https://your-deployment-host/api/assistants/7f5a4d6e-1d1b-4f76-9b03-2e9f48d09f6a/usage-stats?accountId=9a6e7d1c-3fd1-4af6-a3ab-b0e9d3ac4a71",
   {
     method: "GET",
     headers: {
@@ -1159,7 +1165,7 @@ Confirmation message. Value is `Test event queued`.
 
 Track and restore previous versions of an assistant's system prompt. Each time the prompt changes, Talkturo saves a versioned snapshot. Use these endpoints to browse the history, save a new version, restore an old prompt, or delete a version you no longer need.
 
-All prompt-version endpoints use `withApiAuth` and support both API key and session cookie authentication. API-key requests use the account bound to the key. Session-token requests require `accountSlug` in the query string. Cookie-session requests require `teamId` or `accountSlug` in the query string or request body.
+All prompt-version endpoints support both API key and session cookie authentication. API-key requests use the account bound to the key. Session-token requests require `accountSlug` in the query string. Cookie-session requests require `teamId` or `accountSlug` in the query string or request body.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -1414,3 +1420,5 @@ Returned by the delete endpoint.
 | `POST` | `/api/assistants/{assistantId}/prompt-versions/{versionId}/restore` | Restore a prompt version |
 | `POST` | `/api/assistants/{assistantId}/tools/workflow` | Attach a workflow tool |
 | `DELETE` | `/api/assistants/{assistantId}/tools/workflow` | Detach a workflow tool |
+
+Authentication and response details vary by endpoint. Follow the specific section above when building a client.

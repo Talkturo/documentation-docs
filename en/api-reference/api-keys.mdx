@@ -9,7 +9,7 @@ Manage API keys for a Talkturo account with REST endpoints that list keys, creat
 
 <Callout kind="info">
 
-Authenticate every request with a Bearer JWT and use an account member with the `owner` or `admin` role. These endpoints do not accept API key authentication.
+Authenticate every request with a valid Supabase session bearer JWT. The list endpoint accepts requests from any account member. Create, update, and revoke operations require an account member with the `owner` or `admin` role. These endpoints do not accept API key authentication.
 
 </Callout>
 
@@ -34,7 +34,7 @@ Non-secret prefix used to identify the key in the dashboard and API responses.
 </ResponseField>
 
 <ResponseField name="permissions" field-type="object" required="true">
-Permission settings for the key, including scopes and rate limit configuration.
+Permission settings stored for the key, including scopes and the configured rate limit value.
 </ResponseField>
 
 <ResponseField name="last_used_at" field-type="string | null" required="true">
@@ -69,12 +69,12 @@ Copy and store `fullKey` when you create a key. Talkturo returns the plaintext k
 
 ## List API keys
 
-Get all API keys for an account. The response includes metadata only and never includes plaintext keys.
+Get all API keys for an account. Any account member can list keys. The response includes metadata only and never includes plaintext keys.
 
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X GET "https://api.talkturo.com/api/api-keys?accountSlug=acme-sales" \
+curl -X GET "https://your-deployment-origin.invalid/api/api-keys?accountSlug=acme-sales" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -H "Accept: application/json"
 ```
@@ -136,12 +136,12 @@ Array of API key objects for the specified account.
 
 ## Create API key
 
-Create a new API key for an account. The response includes the standard key metadata plus `fullKey`.
+Create a new API key for an account. The authenticated account member must have the `owner` or `admin` role. The response includes the standard key metadata plus `fullKey`.
 
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X POST "https://api.talkturo.com/api/api-keys" \
+curl -X POST "https://your-deployment-origin.invalid/api/api-keys" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
@@ -160,7 +160,7 @@ curl -X POST "https://api.talkturo.com/api/api-keys" \
 
 </Request>
 
-<Response tabs="200" default-tab="1">
+<Response tabs="201" default-tab="1">
 
 ```json
 {
@@ -204,19 +204,19 @@ Key environment. Defaults to `live`.
 </ParamField>
 
 <ParamField body="expiresInDays" param-type="number" required="false">
-Number of days until the key expires. Omit this field to create a key without an expiration date.
+Positive number of days until the key expires. Omit this field, or provide a non-positive value, to create a key without an expiration date.
 </ParamField>
 
 <ParamField body="permissions" param-type="object" required="false">
-Permission object for the new key. Defaults to `scopes: ["*"]` and `rate_limit_per_hour: 1000`.
+Permission object stored for the new key. Defaults to `scopes: ["*"]` and `rate_limit_per_hour: 1000`.
 </ParamField>
 
 <ParamField body="permissions.scopes" param-type="array<string>" required="false">
-Allowed scopes for the key. The default value is `["*"]`.
+Endpoint-specific scopes assigned to the key. The default value is `["*"]`.
 </ParamField>
 
 <ParamField body="permissions.rate_limit_per_hour" param-type="number" required="false">
-Maximum number of requests the key can make per hour. The default value is `1000`.
+Rate limit value stored with the key. The default value is `1000`; this field is not a globally enforced hourly maximum.
 </ParamField>
 
 ### Response fields
@@ -231,12 +231,12 @@ Plaintext API key. Talkturo returns this field once at creation time and never r
 
 ## Update API key
 
-Update mutable fields on an existing API key. This endpoint changes display metadata or active status and does not rotate the key value.
+Update mutable fields on an existing API key. The authenticated account member must have the `owner` or `admin` role. This endpoint changes display metadata or active status and does not rotate the key value.
 
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X PATCH "https://api.talkturo.com/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
+curl -X PATCH "https://your-deployment-origin.invalid/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
@@ -301,12 +301,12 @@ Updated API key object.
 
 ## Revoke API key
 
-Delete an API key and immediately revoke its access. Use this endpoint when a key is no longer needed or you suspect it has been exposed.
+Delete an API key and immediately revoke its access. The authenticated account member must have the `owner` or `admin` role. Use this endpoint when a key is no longer needed or you suspect it has been exposed.
 
 <Request tabs="cURL" default-tab="1">
 
 ```bash
-curl -X DELETE "https://api.talkturo.com/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
+curl -X DELETE "https://your-deployment-origin.invalid/api/api-keys/9d12c4d8-4cbf-4a20-b8a2-4a3fe1d94b55" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" \
   -H "Accept: application/json"
 ```
@@ -345,11 +345,11 @@ Human-readable status message for the revoke operation.
 Permissions are stored as an object on each key. A typical payload includes `scopes` and `rate_limit_per_hour`.
 
 <ResponseField name="permissions.scopes" field-type="array<string>" required="true">
-List of scopes assigned to the key.
+List of endpoint-specific scopes assigned to the key. Scope values are not globally enforced across all endpoints.
 </ResponseField>
 
 <ResponseField name="permissions.rate_limit_per_hour" field-type="number" required="true">
-Hourly request limit assigned to the key.
+Rate limit value stored with the key. The default is `1000`; the field does not represent a globally enforced hourly maximum.
 </ResponseField>
 
 Keys can use wildcard scopes such as `*`, prefix wildcards such as `assistants:*`, or exact scope strings. Choose the narrowest scopes that match your integration.

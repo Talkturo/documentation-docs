@@ -1,26 +1,26 @@
 ---
 title: API Overview
 description: >-
-  Get started with the Talkturo REST API — base URL, authentication, response
-  format, rate limits, and available endpoint groups.
+  Get started with the Talkturo REST API using deployment-specific API paths,
+  supported authentication methods, endpoint-specific responses, and resource references.
 ---
 ## Build on the Talkturo API
 
 Build integrations and automations on top of Talkturo's voice AI platform with a REST API for assistants, telephony, phone numbers, credits, CRM data, workflows, and account management. Use this page to understand the API's core conventions and find the endpoint group you need.
 
 <Callout kind="info" collapsed="false">
-  Send all API requests to `https://app.talkturo.com/api`.
+  Send API requests to your deployment's origin followed by `/api`. Talkturo does not define a single production hostname or `/v1` base path in the API implementation.
 </Callout>
 
 ## Authenticate requests
 
-Talkturo supports three authentication methods. Most external integrations should use API keys, while browser and desktop clients use platform-specific authentication flows.
+Shared routes can accept API keys, session bearer tokens, or authenticated cookies, but individual routes do not necessarily support every authentication method. Check [Authentication](/en/api-reference/authentication) and the specific endpoint reference before choosing an authentication flow.
 
 <Tabs>
   <Tab title="API keys" icon="key">
-    Use a bearer token that starts with `tk_live_` or `tk_test_` to authenticate server-to-server requests. API keys support scopes and have a default rate limit of 1000 requests per hour.
+    Use a bearer token that starts with `tk_live_` or `tk_test_` for server-to-server requests. Authentication behavior can vary by route, so review the endpoint reference and [Authentication](/en/api-reference/authentication) for supported credentials.
 
-    See [Authentication](/en/api-reference/authentication) for header format, scope behavior, and security guidance.
+    API-key creation includes a `rate_limit_per_hour` value that defaults to `1000`. Do not treat that field as a globally enforced request limit.
   </Tab>
 
   <Tab title="Session cookies" icon="lock">
@@ -30,38 +30,44 @@ Talkturo supports three authentication methods. Most external integrations shoul
   </Tab>
 
   <Tab title="JWT bearer tokens" icon="monitor">
-    The desktop app uses bearer JWT tokens for authenticated API access. This flow is specific to desktop clients that authenticate through Talkturo user sessions.
+    Session-based clients can use bearer JWT tokens for authenticated API access. The routes that accept this method vary by endpoint.
 
     See [Authentication](/en/api-reference/authentication) and [Desktop Auth](/en/api-reference/desktop) for details.
   </Tab>
 </Tabs>
 
-## Understand the response format
+## Understand endpoint-specific responses
 
-Most endpoints return JSON in a consistent envelope so you can handle success and failure predictably across the API. Successful responses return a `success` flag and response data, while failed responses return a `success` flag and error details.
+Talkturo does not apply one response envelope or error schema to every endpoint. Individual routes can return different response bodies and HTTP statuses, so use the reference page for the endpoint you are calling instead of assuming that every response contains a `success` field.
+
+The API-key diagnostic endpoint is one documented example. Call `GET /api/test-api-key` with a valid API key to verify authentication and inspect the authentication context returned by that route.
 
 <Request show-lines="true">
+  ```http
+  GET /api/test-api-key
+  Authorization: Bearer tk_live_example_9xmk7q2r
+  ```
+
+</Request>
+
+<Response show-lines="false">
   ```json
   {
     "success": true,
-    "data": {
-      "id": "ast_9f3d2c11",
-      "name": "Inbound Support Assistant"
-    }
+    "message": "Authentication successful!",
+    "authMethod": "api_key",
+    "accountId": "acc_7f31c9e2",
+    "userId": "usr_a1b2c3d4",
+    "apiKeyId": "key_4e8f2a1c",
+    "timestamp": "2025-01-15T14:30:00.000Z"
   }
   ```
 
-  ```json
-  {
-    "success": false,
-    "error": "Unauthorized"
-  }
-  ```
-</Request>
+</Response>
 
 ### Handle HTTP status codes
 
-Talkturo uses standard HTTP status codes in addition to the JSON response body. Check the status code first, then inspect the response envelope for details your application can log or surface.
+Status codes vary by endpoint. Check the status codes documented on the reference page for the route you are calling, then inspect that endpoint's response body for details your application can log or surface.
 
 | Status | Meaning              |
 | ------ | -------------------- |
@@ -76,11 +82,13 @@ Talkturo uses standard HTTP status codes in addition to the JSON response body. 
 
 ## Plan for rate limits
 
-API keys are limited to 1000 requests per hour by default. If you build background jobs, retries, or bulk syncs, add backoff and retry handling so your integration degrades gracefully when it reaches the limit.
+Do not assume a global API-key rate limit. API-key creation includes a `rate_limit_per_hour` value that defaults to `1000`, but the checked-in API code does not establish that value as a globally enforced limit.
+
+If an endpoint documents a limit, add backoff and retry handling to background jobs, retries, or bulk syncs so your integration handles that endpoint's behavior gracefully.
 
 ## Browse endpoint groups
 
-Start with the group that matches the resource or workflow you need to integrate. Each reference page documents endpoints, authentication requirements, and request or response details for that area of the API.
+Start with the group that matches the resource or workflow you need to integrate. Each reference page documents the authentication requirements, response shape, and status behavior for its endpoints.
 
 <Columns cols="2">
   <Card title="Authentication" href="/en/api-reference/authentication" icon="lock" cta="Open reference" horizontal="false">
@@ -115,8 +123,8 @@ Start with the group that matches the resource or workflow you need to integrate
     List, create, update, delete, and import contact records for CRM workflows.
   </Card>
 
-  <Card title="CRM Companies" href="/en/api-reference/crm-companies" icon="folder" cta="Open reference" horizontal="false">
-    Manage company records and view contacts associated with each company.
+  <Card title="CRM Companies (legacy)" href="/en/api-reference/crm-companies" icon="folder" cta="Open reference" horizontal="false">
+    Review the legacy company routes. The company creation route is deprecated; use [CRM Groups](/en/api-reference/crm-groups) for the replacement workflow.
   </Card>
 
   <Card title="CRM Opportunities" href="/en/api-reference/crm-opportunities" icon="rocket" cta="Open reference" horizontal="false">
