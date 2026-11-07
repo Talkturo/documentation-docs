@@ -8,6 +8,27 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-11-07" description="v4.2.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Outbound calls from your own system** — Start a single outbound call without building a campaign. Send the assistant, the number to dial or an existing contact, the caller number, plus optional variables and metadata, and Talkturo places the call. Every request needs an idempotency key, so a retried request never double-dials anyone, and API calls follow the same verification, do-not-call and calling-hours rules as campaigns, with up to 10 concurrent API calls per workspace. See [Calls API](/en/api-reference/calls).
+  - **Call history and recordings via the API** — List the calls your workspace has made, filtered by assistant, contact or date range, with an option to include the transcript, and fetch a fresh one-hour recording link for any call. See [Calls API](/en/api-reference/calls).
+  - **Verified webhooks and call analysis events** — Webhook deliveries can now be verified with a signature so you can trust every request, retries are automatic, and a new call analysis event delivers the call result and outcome to your endpoint. See [Webhooks](/en/api-reference/webhooks).
+  - **Assistant call results** — Decide which results your assistant can report for a call, for example interested, not interested or callback requested, with a short description of each. Results arrive with the call analysis webhook and in the calls API. Off by default and opt-in for workspaces in the EU. See [Assistant Configuration](/en/assistants/configuration).
+  - **Voicemail message on chosen attempts only** — In the campaign editor you can now choose which attempts leave your voicemail message, for example the first and the tenth. Leave the field empty to keep leaving the message on every attempt. See [Campaign Configuration](/en/campaigns/configuration).
+
+  ## Improvements
+
+  - **Call results sent by default** — New assistants now send the call analysis event out of the box. Assistants that already have a custom event selection keep exactly the events they chose.
+  - **Accurate callback times** — Callbacks returned by the API now report when the call actually goes out, including any shift caused by calling hours, instead of the tentatively booked time. Callback metadata is returned exactly as you sent it.
+  - **Pipedrive connections work reliably** — Connecting Pipedrive now goes through Talkturo's own verified app, so "Connect Pipedrive" completes instead of failing. Existing connections keep their permissions. See [Integrations](/en/integrations).
+
+  ## Bug Fixes
+
+  - **German campaign voicemail panel** — The voicemail section of the campaign editor no longer falls back to English labels in the German interface. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Voicemail attempts warning** — The warning that a voicemail message would never be left now uses the campaign's saved no-answer limit, so an unsaved edit no longer hides it, and it points to the correct setting. See [Campaign Configuration](/en/campaigns/configuration).
+</Update>
+
 <Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 

@@ -8,6 +8,27 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-11-07" description="v4.2.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Ausgehende Anrufe aus deinem eigenen System** — Starte einen einzelnen ausgehenden Anruf, ohne eine Kampagne zu erstellen. Übermittle den Assistenten, die anzurufende Nummer oder einen bestehenden Kontakt, die Anrufernummer sowie optionale Variablen und Metadaten, und Talkturo führt den Anruf aus. Jede Anfrage benötigt einen Idempotenz-Schlüssel, sodass eine wiederholte Anfrage niemanden doppelt anruft, und API-Anrufe folgen denselben Regeln für Verifizierung, Do-Not-Call und Anrufzeiten wie Kampagnen, mit bis zu 10 gleichzeitigen API-Anrufen pro Workspace. Siehe [Calls-API](/de/api-reference/calls).
+  - **Anrufhistorie und Aufzeichnungen über die API** — Liste die Anrufe deines Workspace auf, gefiltert nach Assistent, Kontakt oder Zeitraum, optional inklusive Transkript, und rufe für jeden Anruf einen frischen, eine Stunde gültigen Link zur Aufzeichnung ab. Siehe [Calls-API](/de/api-reference/calls).
+  - **Signaturgeprüfte Webhooks und Ereignisse zur Anrufanalyse** — Webhook-Zustellungen lassen sich jetzt per Signatur prüfen, damit du jeder Anfrage vertrauen kannst, Wiederholungen erfolgen automatisch, und ein neues Ereignis zur Anrufanalyse liefert Anrufergebnis und Outcome an deinen Endpunkt. Siehe [Webhooks](/de/api-reference/webhooks).
+  - **Anrufergebnisse pro Assistent** — Lege fest, welche Ergebnisse dein Assistent für einen Anruf melden kann, zum Beispiel interessiert, nicht interessiert oder Rückruf gewünscht, jeweils mit kurzer Beschreibung. Die Ergebnisse kommen mit dem Webhook zur Anrufanalyse und in der Calls-API. Standardmäßig deaktiviert und für Workspaces in der EU optional zuschaltbar. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Anrufbeantworter-Nachricht nur bei gewählten Versuchen** — Im Kampagnen-Editor kannst du jetzt festlegen, bei welchen Versuchen deine Anrufbeantworter-Nachricht hinterlassen wird, zum Beispiel beim ersten und beim zehnten. Bleibt das Feld leer, wird die Nachricht weiterhin bei jedem Versuch hinterlassen. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+
+  ## Verbesserungen
+
+  - **Anrufergebnisse standardmäßig gesendet** — Neue Assistenten senden das Ereignis zur Anrufanalyse von Anfang an. Assistenten mit bereits eigener Ereignisauswahl behalten genau die gewählten Ereignisse.
+  - **Korrekte Rückrufzeiten** — Rückrufe, die die API zurückgibt, nennen jetzt den tatsächlichen Zeitpunkt des Anrufs, inklusive einer Verschiebung durch Anrufzeiten, statt der vorläufig gebuchten Zeit. Rückruf-Metadaten werden exakt so zurückgegeben, wie du sie gesendet hast.
+  - **Pipedrive-Verbindungen funktionieren zuverlässig** — Das Verbinden von Pipedrive läuft jetzt über die eigene, verifizierte Talkturo-App, sodass „Pipedrive verbinden" abgeschlossen wird statt fehlzuschlagen. Bestehende Verbindungen behalten ihre Berechtigungen. Siehe [Integrationen](/de/integrations).
+
+  ## Bugfixes
+
+  - **Deutsches Anrufbeantworter-Panel in Kampagnen** — Der Anrufbeantworter-Bereich im Kampagnen-Editor fällt in der deutschen Oberfläche nicht mehr auf englische Bezeichnungen zurück. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Warnung zu Anrufbeantworter-Versuchen** — Die Warnung, dass eine Anrufbeantworter-Nachricht nie hinterlassen würde, nutzt jetzt das gespeicherte Limit für nicht beantwortete Anrufe der Kampagne, sodass eine ungespeicherte Änderung sie nicht mehr verdeckt, und sie verweist auf die richtige Einstellung. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+</Update>
+
 <Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
