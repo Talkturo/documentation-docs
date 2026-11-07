@@ -1,0 +1,115 @@
+---
+title: "Templates (v1)"
+description: "Find the approved WhatsApp templates your workspace can send, with the variables you fill yourself and the ones Talkturo fills for you."
+---
+
+List the WhatsApp templates this workspace is allowed to send, together with the variables you supply and the ones Talkturo fills itself. All requests go to `https://app.talkturo.com/api/v1` and must carry an API key with the `templates:read` scope; see [Authentication](/en/api-reference/v1-overview) for how to attach the key. To send one of these templates after you have picked it, continue to [Messages (v1)](/en/api-reference/v1-messages).
+
+## List sendable templates: GET /api/v1/templates
+
+Returns the approved utility templates this workspace may send, already resolved against the workspace's WhatsApp connection. Marketing templates are not returned, because they belong to a person and are sent under that person's own name rather than the workspace's. A template that needs a value you are not permitted to see is omitted entirely instead of being returned with a missing variable.
+
+Requires the `templates:read` scope.
+
+### Query parameters
+
+<ParamField query="language" param-type="string" enum="en,de">
+Return only templates written in this language. Omit the parameter to get every language the connection has templates in. Any value other than `en` or `de` is rejected with a `400`.
+</ParamField>
+
+### Example request
+
+<Request>
+
+```bash
+curl --request GET "https://app.talkturo.com/api/v1/templates?language=en" \
+  --header "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "connected": true,
+  "templates": [
+    {
+      "name": "delivery_window_confirmed",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, your delivery for order {{2}} is confirmed for {{3}}.",
+      "variables": [
+        { "key": "2", "example": "AC-10482", "max_length": 60 },
+        { "key": "3", "example": "Friday afternoon", "max_length": 40 }
+      ],
+      "filled_by_talkturo": ["1"]
+    }
+  ]
+}
+```
+
+</Response>
+
+### Response fields
+
+<ResponseField name="connected" field-type="boolean">
+Whether the workspace currently has a WhatsApp connection that can send messages. When it is `false`, there is no connection for a template to be sent through.
+</ResponseField>
+
+<ResponseField name="templates" field-type="array">
+The sendable templates, each with its text, its category, and the split of variables between you and Talkturo.
+</ResponseField>
+
+<ResponseField name="templates[].name" field-type="string">
+The template identifier to pass when sending a message.
+</ResponseField>
+
+<ResponseField name="templates[].language" field-type="string">
+The language code of the template body, either `en` or `de`.
+</ResponseField>
+
+<ResponseField name="templates[].category" field-type="string">
+Always `UTILITY`, because only approved utility templates are listed here.
+</ResponseField>
+
+<ResponseField name="templates[].body" field-type="string">
+The approved template text with its numbered placeholders, for example `{{1}}` and `{{2}}`. Use it to check which values land where before you send.
+</ResponseField>
+
+<ResponseField name="templates[].variables" field-type="array">
+The placeholders you must fill. Each entry carries a `key` (the placeholder number, as a string), an `example` value showing the expected format, and a `max_length` in characters that your value must not exceed.
+</ResponseField>
+
+<ResponseField name="templates[].filled_by_talkturo" field-type="array">
+Placeholder keys that Talkturo fills itself, such as the contact's first name and the workspace name. You do not send values for these keys.
+</ResponseField>
+
+<Callout kind="info">
+
+Supply your values by key inside the `template.variables` object of `POST /api/v1/messages`. Keys listed in `filled_by_talkturo` are populated automatically, so send only the keys listed in `variables`.
+
+</Callout>
+
+### Error responses
+
+| Status | Code | Cause | What to do |
+| --- | --- | --- | --- |
+| `400` | `invalid_request` | `language` is present but is not `en` or `de` | Correct the value, or drop the parameter to list every language |
+| `500` | `internal_error` | The templates could not be read | Retry the request; if it keeps failing, contact support with the timestamp |
+
+## Next steps
+
+Once you have a template name and its variable values, send it to a contact.
+
+<Columns cols={2}>
+
+<Card title="Send a template message" icon="arrow-right" href="/en/api-reference/v1-messages">
+Compose the `template.variables` object and post the message to a contact.
+</Card>
+
+<Card title="Authenticate v1 requests" icon="lock" href="/en/api-reference/v1-overview">
+Create an API key, pass it as a bearer token, and check the scopes each endpoint needs.
+</Card>
+
+</Columns>

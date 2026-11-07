@@ -247,6 +247,10 @@
                     "icon": "bot"
                   },
                   {
+                    "title": "Assistant Checks",
+                    "path": "en/api-reference/checks"
+                  },
+                  {
                     "title": "Phone Numbers",
                     "path": "en/api-reference/phone-numbers",
                     "icon": "phone"
@@ -330,6 +334,26 @@
                     "title": "Public API",
                     "path": "en/api-reference/public",
                     "icon": "globe"
+                  },
+                  {
+                    "title": "API v1 Overview",
+                    "path": "en/api-reference/v1-overview"
+                  },
+                  {
+                    "title": "Calls (v1)",
+                    "path": "en/api-reference/v1-calls"
+                  },
+                  {
+                    "title": "Messages (v1)",
+                    "path": "en/api-reference/v1-messages"
+                  },
+                  {
+                    "title": "Templates (v1)",
+                    "path": "en/api-reference/v1-templates"
+                  },
+                  {
+                    "title": "Plans (v1)",
+                    "path": "en/api-reference/v1-plans"
                   },
                   {
                     "title": "Payment Links",
@@ -702,6 +726,10 @@
                     "icon": "bot"
                   },
                   {
+                    "title": "Assistenten-Checks",
+                    "path": "de/api-reference/checks"
+                  },
+                  {
                     "title": "Telefonnummern",
                     "path": "de/api-reference/phone-numbers",
                     "icon": "phone"
@@ -785,6 +813,26 @@
                     "title": "Öffentliche API",
                     "path": "de/api-reference/public",
                     "icon": "globe"
+                  },
+                  {
+                    "title": "API v1 Übersicht",
+                    "path": "de/api-reference/v1-overview"
+                  },
+                  {
+                    "title": "Anrufe (v1)",
+                    "path": "de/api-reference/v1-calls"
+                  },
+                  {
+                    "title": "Nachrichten (v1)",
+                    "path": "de/api-reference/v1-messages"
+                  },
+                  {
+                    "title": "Vorlagen (v1)",
+                    "path": "de/api-reference/v1-templates"
+                  },
+                  {
+                    "title": "Pläne (v1)",
+                    "path": "de/api-reference/v1-plans"
                   },
                   {
                     "title": "Zahlungs-Links",

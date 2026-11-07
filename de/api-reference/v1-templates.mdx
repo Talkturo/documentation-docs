@@ -1,0 +1,115 @@
+---
+title: "Vorlagen (v1)"
+description: "Rufen Sie die freigegebenen WhatsApp-Vorlagen ab, die Ihr Workspace versenden darf, einschließlich der Variablen, die Sie selbst befüllen, und derer, die Talkturo für Sie einsetzt."
+---
+
+Listen Sie die WhatsApp-Vorlagen auf, die dieser Workspace versenden darf, zusammen mit den Variablen, die Sie liefern, und denen, die Talkturo selbst befüllt. Alle Anfragen gehen an `https://app.talkturo.com/api/v1` und müssen einen API-Schlüssel mit dem Scope `templates:read` tragen; wie Sie den Schlüssel übergeben, erfahren Sie unter [Authentifizierung](/de/api-reference/v1-overview). Um eine dieser Vorlagen nach der Auswahl zu versenden, fahren Sie mit [Nachrichten (v1)](/de/api-reference/v1-messages) fort.
+
+## Versendbare Vorlagen auflisten: GET /api/v1/templates
+
+Gibt die freigegebenen Utility-Vorlagen zurück, die dieser Workspace versenden darf, bereits aufgelöst gegen die WhatsApp-Verbindung des Workspace. Marketing-Vorlagen werden nicht zurückgegeben, da sie zu einer Person gehören und unter deren eigenem Namen statt unter dem des Workspace versendet werden. Eine Vorlage, die einen Wert benötigt, den Sie nicht sehen dürfen, wird vollständig ausgelassen, statt mit einer fehlenden Variable zurückgegeben zu werden.
+
+Erfordert den Scope `templates:read`.
+
+### Query-Parameter
+
+<ParamField query="language" param-type="string" enum="en,de">
+Gibt nur Vorlagen in dieser Sprache zurück. Lassen Sie den Parameter weg, um alle Sprachen zu erhalten, für die die Verbindung Vorlagen besitzt. Jeder andere Wert als `en` oder `de` wird mit einem `400` abgelehnt.
+</ParamField>
+
+### Beispielanfrage
+
+<Request>
+
+```bash
+curl --request GET "https://app.talkturo.com/api/v1/templates?language=en" \
+  --header "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+</Request>
+
+<Response>
+
+```json
+{
+  "connected": true,
+  "templates": [
+    {
+      "name": "delivery_window_confirmed",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, your delivery for order {{2}} is confirmed for {{3}}.",
+      "variables": [
+        { "key": "2", "example": "AC-10482", "max_length": 60 },
+        { "key": "3", "example": "Friday afternoon", "max_length": 40 }
+      ],
+      "filled_by_talkturo": ["1"]
+    }
+  ]
+}
+```
+
+</Response>
+
+### Antwortfelder
+
+<ResponseField name="connected" field-type="boolean">
+Gibt an, ob der Workspace derzeit über eine WhatsApp-Verbindung verfügt, die Nachrichten senden kann. Wenn dieser Wert `false` ist, ist `templates` leer, und kein Versand ist erfolgreich, bis die Verbindung wiederhergestellt ist.
+</ResponseField>
+
+<ResponseField name="templates" field-type="array">
+Die versendbaren Vorlagen, jeweils mit ihrem Text, ihrer Kategorie und der Aufteilung der Variablen zwischen Ihnen und Talkturo.
+</ResponseField>
+
+<ResponseField name="templates[].name" field-type="string">
+Die Vorlagenkennung, die Sie beim Versenden einer Nachricht übergeben.
+</ResponseField>
+
+<ResponseField name="templates[].language" field-type="string">
+Der Sprachcode des Vorlagentexts, entweder `en` oder `de`.
+</ResponseField>
+
+<ResponseField name="templates[].category" field-type="string">
+Immer `UTILITY`, da hier ausschließlich freigegebene Utility-Vorlagen aufgelistet werden.
+</ResponseField>
+
+<ResponseField name="templates[].body" field-type="string">
+Der freigegebene Vorlagentext mit seinen nummerierten Platzhaltern, zum Beispiel `{{1}}` und `{{2}}`. Nutzen Sie ihn, um vor dem Versand zu prüfen, welcher Wert an welcher Stelle landet.
+</ResponseField>
+
+<ResponseField name="templates[].variables" field-type="array">
+Die Platzhalter, die Sie befüllen müssen. Jeder Eintrag enthält einen `key` (die Platzhalternummer als String), einen `example`-Wert, der das erwartete Format zeigt, sowie eine `max_length` in Zeichen, die Ihr Wert nicht überschreiten darf.
+</ResponseField>
+
+<ResponseField name="templates[].filled_by_talkturo" field-type="array">
+Platzhalterschlüssel, die Talkturo selbst befüllt, etwa der Vorname des Kontakts und der Name des Workspace. Senden Sie für diese Schlüssel niemals Werte.
+</ResponseField>
+
+<Callout kind="info">
+
+Übergeben Sie Ihre Werte nach Schlüssel im Objekt `template.variables` von `POST /api/v1/messages`. Schlüssel aus `filled_by_talkturo` werden automatisch befüllt; sie selbst zu senden ist daher unnötig und wird als ungültige Anfrage abgelehnt.
+
+</Callout>
+
+### Fehlerantworten
+
+| Status | Code | Ursache | Vorgehen |
+| --- | --- | --- | --- |
+| `400` | `invalid_request` | `language` ist vorhanden, aber nicht `en` oder `de` | Korrigieren Sie den Wert, oder lassen Sie den Parameter weg, um alle Sprachen aufzulisten |
+| `500` | `internal_error` | Die Vorlagen konnten nicht gelesen werden | Wiederholen Sie die Anfrage; falls dies weiterhin fehlschlägt, wenden Sie sich mit dem Zeitstempel an den Support |
+
+## Nächste Schritte
+
+Sobald Sie einen Vorlagennamen und seine Variablenwerte haben, versenden Sie ihn an einen Kontakt.
+
+<Columns cols={2}>
+
+<Card title="Eine Vorlagennachricht versenden" icon="arrow-right" href="/de/api-reference/v1-messages">
+Erstellen Sie das Objekt `template.variables` und senden Sie die Nachricht an einen Kontakt.
+</Card>
+
+<Card title="v1-Anfragen authentifizieren" icon="lock" href="/de/api-reference/v1-overview">
+Erstellen Sie einen API-Schlüssel, übergeben Sie ihn als Bearer-Token und prüfen Sie die Scopes, die jeder Endpunkt benötigt.
+</Card>
+
+</Columns>

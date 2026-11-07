@@ -1,0 +1,458 @@
+---
+title: "Calls (v1)"
+description: "Place one outbound call to a contact, follow it through to its result, and fetch the recording with the versioned Talkturo API."
+---
+
+## Place and follow calls
+
+With a workspace API key you can place one outbound call to a contact, list the workspace's calls newest first, read a single call with its result, and fetch the recording.
+
+Every request goes to `https://app.talkturo.com/api/v1`. Authentication, scopes, rate limits, and idempotency behave the same across the whole version; the [v1 API overview](/en/api-reference/v1-overview) covers them once.
+
+## Place a call
+
+Places one outbound call for an assistant and returns the call immediately, before it is dialled. The endpoint requires the `calls:create` scope and an `Idempotency-Key` header. The request body is validated strictly: any field not listed below is rejected.
+
+### Body parameters
+
+<ParamField body="assistant_id" param-type="string" required="true">
+
+The assistant that places the call, as a UUID.
+
+</ParamField>
+
+<ParamField body="to_number" param-type="string">
+
+The number to dial, 4 to 32 characters. Send this or `contact_id`.
+
+</ParamField>
+
+<ParamField body="contact_id" param-type="string">
+
+A contact in the workspace to dial instead of a raw number, as a UUID. Send this or `to_number`.
+
+</ParamField>
+
+<ParamField body="from_number" param-type="string">
+
+The number to call from, 4 to 32 characters.
+
+</ParamField>
+
+<ParamField body="variables" param-type="object">
+
+Values rendered into the assistant's prompt as `{{call.x}}`. Each value may be a string up to 2000 characters, a number, or a boolean.
+
+</ParamField>
+
+<ParamField body="metadata" param-type="object">
+
+Your own data, stored with the call and echoed back on it so you can match the call to your own records.
+
+</ParamField>
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+
+A unique key for this request. Replaying the same key returns the original call with `200` instead of placing a second call.
+
+</ParamField>
+
+### Rules the validator enforces
+
+- **A dial target is required.** Send at least one of `to_number` or `contact_id`. Without either, the request is rejected with `invalid_request`.
+- **The payload is capped at 8 KB.** `metadata` and `variables` together may be at most 8 KB.
+- **`variables` never comes back.** Values in `variables` travel into the prompt only. The call's `metadata` echoes `metadata` alone.
+
+<Request tabs="cURL">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/v1/calls" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Idempotency-Key: call-acme-2025-06-18-0917" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assistant_id": "3c9f7d21-8b4a-4e56-9f10-2d7c8a5b1e34",
+    "contact_id": "b8e3d9c2-56a7-4f02-ab34-7d8e9c3f2a15",
+    "from_number": "+14155550100",
+    "variables": {
+      "first_name": "Jordan",
+      "order_number": "AC-10482"
+    },
+    "metadata": {
+      "crm_deal_id": "DL-88213"
+    }
+  }'
+```
+
+</Request>
+
+<Response tabs="201">
+
+```json
+{
+  "id": "5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63",
+  "status": "queued",
+  "assistant_id": "3c9f7d21-8b4a-4e56-9f10-2d7c8a5b1e34",
+  "contact_id": "b8e3d9c2-56a7-4f02-ab34-7d8e9c3f2a15",
+  "campaign_id": null,
+  "direction": "outbound",
+  "from_number": "+14155550100",
+  "to_number": "+14155550184",
+  "created_at": "2025-06-18T09:17:04.512Z",
+  "started_at": null,
+  "ended_at": null,
+  "duration_seconds": null,
+  "answered_by": null,
+  "ended_reason": null,
+  "failure_reason": null,
+  "outcome": null,
+  "summary": null,
+  "transcript": null,
+  "recording_url": null,
+  "analysis": null,
+  "callback": null,
+  "metadata": {
+    "crm_deal_id": "DL-88213"
+  }
+}
+```
+
+</Response>
+
+A freshly placed call comes back as `queued`: the request succeeded, but nothing has been dialled yet. The response returns `201` when the call is placed and `200` when the request replays an `Idempotency-Key` you already used, in which case the body is the original call.
+
+Keep the `id`. It is the call's id everywhere: on `GET /api/v1/calls/{id}` and as `call_id` on the call webhooks.
+
+A call that has not started within ten minutes is reported as `failed`, with `failure_reason` set to `call_not_started` and `outcome` set to `unreachable`.
+
+<Callout kind="alert">
+
+Some checks can refuse a call before it is dialled, for example when the number opted out or the workspace has no credit left. The response is then a 4xx carrying the standard error object. When the block lifts by itself, the error object also carries an `until` timestamp telling you when to retry.
+
+</Callout>
+
+## List calls
+
+Returns the workspace's calls newest first, one page at a time. Requires the `calls:read` scope.
+
+### Query parameters
+
+<ParamField query="assistant_id" param-type="string">
+
+Only calls placed by this assistant, as a UUID.
+
+</ParamField>
+
+<ParamField query="contact_id" param-type="string">
+
+Only calls to this contact, as a UUID.
+
+</ParamField>
+
+<ParamField query="from" param-type="string">
+
+An ISO 8601 timestamp with offset. Only calls created at or after it.
+
+</ParamField>
+
+<ParamField query="to" param-type="string">
+
+An ISO 8601 timestamp with offset. Only calls created before it.
+
+</ParamField>
+
+<ParamField query="cursor" param-type="string">
+
+The `next_cursor` of the previous page.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer" enum="1,100">
+
+Page size from 1 to 100. Defaults to 25.
+
+</ParamField>
+
+<ParamField query="include" param-type="string">
+
+The only accepted value is `transcript`. Without it, every call in the page is returned without its transcript.
+
+</ParamField>
+
+The response carries `data`, an array of call objects, and `next_cursor`. `next_cursor` is `null` on the last page; otherwise pass it back as `cursor` to get the next one.
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/calls?limit=2&include=transcript" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "data": [
+    {
+      "id": "5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63",
+      "status": "completed",
+      "assistant_id": "3c9f7d21-8b4a-4e56-9f10-2d7c8a5b1e34",
+      "contact_id": "b8e3d9c2-56a7-4f02-ab34-7d8e9c3f2a15",
+      "direction": "outbound",
+      "created_at": "2025-06-18T09:17:04.512Z",
+      "duration_seconds": 148,
+      "outcome": "answered",
+      "transcript": "Assistant: Hi Jordan, this is Ava from Acme about order AC-10482. Customer: Hi, yes, I wanted to move the delivery to Friday."
+    },
+    {
+      "id": "1a7c5e93-6d42-4b81-b0f5-8e2d3c9a4f76",
+      "status": "failed",
+      "assistant_id": "3c9f7d21-8b4a-4e56-9f10-2d7c8a5b1e34",
+      "contact_id": "e4f1a8b3-92c5-47d0-8a63-1f5b7c2d9e08",
+      "direction": "outbound",
+      "created_at": "2025-06-17T16:02:11.000Z",
+      "duration_seconds": null,
+      "outcome": "unreachable",
+      "transcript": null
+    }
+  ],
+  "next_cursor": "2025-06-17T16:02:11.000Z"
+}
+```
+
+</Response>
+
+## Read one call
+
+Returns one call with the same shape as a call in the list, plus its transcript. Requires the `calls:read` scope.
+
+The payload here is the same result the call webhooks deliver, which makes this the endpoint to call after a missed webhook delivery. A call that belongs to another workspace, or an id that is not a UUID, returns `404` with code `call_not_found`.
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/calls/5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "id": "5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63",
+  "status": "completed",
+  "assistant_id": "3c9f7d21-8b4a-4e56-9f10-2d7c8a5b1e34",
+  "contact_id": "b8e3d9c2-56a7-4f02-ab34-7d8e9c3f2a15",
+  "campaign_id": null,
+  "direction": "outbound",
+  "from_number": "+14155550100",
+  "to_number": "+14155550184",
+  "created_at": "2025-06-18T09:17:04.512Z",
+  "started_at": "2025-06-18T09:17:12.038Z",
+  "ended_at": "2025-06-18T09:19:40.771Z",
+  "duration_seconds": 148,
+  "answered_by": "human",
+  "ended_reason": "customer_hangup",
+  "failure_reason": null,
+  "outcome": "answered",
+  "summary": "Jordan confirmed the delivery address for order AC-10482 and asked to move the delivery window to Friday afternoon.",
+  "transcript": "Assistant: Hi Jordan, this is Ava from Acme about order AC-10482. Customer: Hi, yes, I wanted to move the delivery to Friday. Assistant: I can do Friday afternoon. Would 2pm work? Customer: Yes, and please have the courier call before arriving.",
+  "recording_url": "https://app.talkturo.com/api/v1/calls/5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63/recording",
+  "analysis": {
+    "sentiment": "positive",
+    "success": true,
+    "key_points": [
+      "Delivery address for AC-10482 confirmed",
+      "Customer wants a Friday afternoon window at 2pm"
+    ],
+    "objections": [
+      "Thursday delivery no longer works"
+    ],
+    "questions_asked": [
+      "Can the courier call before arriving?"
+    ],
+    "action_items": [
+      "Move the delivery window to Friday 2pm and flag the pre-arrival call request"
+    ]
+  },
+  "callback": {
+    "requested": true,
+    "scheduled_call_id": "9b6d2f18-4c73-4a95-8e0b-3d1f7a6c5b42",
+    "run_at": "2025-06-20T21:00:00.000Z",
+    "timezone": "America/Los_Angeles",
+    "when_words": "Friday afternoon",
+    "reason": "Customer asked to confirm the delivery window the day before."
+  },
+  "metadata": {
+    "crm_deal_id": "DL-88213"
+  }
+}
+```
+
+</Response>
+
+### Call object fields
+
+<ResponseField name="id" field-type="string" required="true">
+
+The call's id. Use it on `GET /api/v1/calls/{id}` and match it against `call_id` on the call webhooks.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+
+One of `queued` (placed but not answered yet), `ringing` (the call is going out), `in_progress` (the assistant is talking), `completed` (ended with a conversation), or `failed` (ended without one).
+
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+
+The assistant that placed the call.
+
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string">
+
+The contact that was dialled, when the call was placed with `contact_id`.
+
+</ResponseField>
+
+<ResponseField name="campaign_id" field-type="string">
+
+Always `null` for calls placed through v1, which do not belong to a campaign.
+
+</ResponseField>
+
+<ResponseField name="direction" field-type="string" required="true">
+
+The direction of the call. Calls placed here are `outbound`.
+
+</ResponseField>
+
+<ResponseField name="from_number" field-type="string">
+
+The number the call was placed from.
+
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string">
+
+The number that was dialled.
+
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+
+ISO 8601 timestamp of when the call was placed.
+
+</ResponseField>
+
+<ResponseField name="started_at" field-type="string">
+
+ISO 8601 timestamp of when the call connected, or `null` while it has not.
+
+</ResponseField>
+
+<ResponseField name="ended_at" field-type="string">
+
+ISO 8601 timestamp of when the call ended, or `null` while it is still running.
+
+</ResponseField>
+
+<ResponseField name="duration_seconds" field-type="integer">
+
+How long the call lasted, in seconds. `null` until the call has ended.
+
+</ResponseField>
+
+<ResponseField name="answered_by" field-type="string">
+
+`human`, `voicemail`, `unknown`, or `null`. It is `null` when nobody answered.
+
+</ResponseField>
+
+<ResponseField name="ended_reason" field-type="string">
+
+Why the conversation ended, as reported by the carrier. `null` until the call has ended.
+
+</ResponseField>
+
+<ResponseField name="failure_reason" field-type="string">
+
+`busy`, `no_answer`, `call_not_started`, or `null` when the call was not a failure.
+
+</ResponseField>
+
+<ResponseField name="outcome" field-type="string">
+
+`answered`, `unreachable`, `voicemail`, or `do_not_call`. `null` until the call has ended.
+
+</ResponseField>
+
+<ResponseField name="summary" field-type="string">
+
+A short written summary of the conversation, or `null` until the call has been analysed.
+
+</ResponseField>
+
+<ResponseField name="transcript" field-type="string">
+
+The full transcript of the conversation, or `null` until the call has been analysed. Included on this endpoint and on `GET /api/v1/calls` only when you send `include=transcript`.
+
+</ResponseField>
+
+<ResponseField name="recording_url" field-type="string">
+
+The stable address of the recording on this API, or `null` when the call has no recording. Requesting it redirects to a fresh signed link, so store this value rather than the link it hands back.
+
+</ResponseField>
+
+<ResponseField name="analysis" field-type="object">
+
+Contains `sentiment`, `success`, `key_points`, `objections`, `questions_asked`, and `action_items`. `null` until the call has been analysed.
+
+</ResponseField>
+
+<ResponseField name="callback" field-type="object">
+
+Contains `requested`, `scheduled_call_id`, `run_at`, `timezone`, `when_words`, and `reason`. `null` until the call has been analysed.
+
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object">
+
+Your own `metadata` exactly as you sent it, or `null` when the request carried none.
+
+</ResponseField>
+
+## Fetch a recording
+
+Returns `302` with a `Location` header pointing at a signed link that works for one hour. Requires the `calls:read` scope.
+
+`recording_url` in the call object holds this stable address. Following it is how you get a fresh one-hour link: the address itself never expires and never reveals where recordings are stored, so it is safe to keep and safe to hand to a browser. Clients must follow redirects, which is `curl -L` on the command line and the default in most HTTP clients.
+
+<Request tabs="cURL">
+
+```bash
+curl -L "https://app.talkturo.com/api/v1/calls/5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63/recording" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  --output call-5f2b9c47.mp3
+```
+
+</Request>
+
+| Response | What it means |
+| --- | --- |
+| `302` | `Location` holds a signed link valid for one hour. |
+| `404` `recording_not_found` | The call has no recording, or it is not in this workspace. |
+| `503` `recording_unavailable` | The link cannot be produced right now. Retry after a short wait. |
+
+## Poll for a result
+
+A placed call is answered immediately as `queued`, so the result arrives later. Poll `GET /api/v1/calls/{id}` until `status` is `completed` or `failed` and `analysis` is no longer `null`, backing off a few seconds between attempts.
+
+Where call webhooks are available, hand the waiting over to them instead: the webhook payload is the same call object this endpoint returns, so the delivery is both faster and cheaper than a polling loop.

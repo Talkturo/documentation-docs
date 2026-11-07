@@ -1,0 +1,238 @@
+---
+title: Pläne (v1)
+description: Kontaktpläne eines Workspace auflisten und einen wartenden Plan als bereit melden, damit der Assistent den Kontakt genau einmal anschreibt.
+---
+
+## Was Pläne sind
+
+Ein Plan ist etwas, zu dem sich der Assistent gegenüber einem Kontakt verpflichtet hat: ein Anruf, den er tätigen will, eine Nachricht, die er zurückhält, bis eine Bedingung erfüllt ist, ein Follow-up, das er zu senden wartet. Pläne gehören zu Kontakten in Ihrem Workspace. Sie existieren, damit der Assistent zum richtigen Zeitpunkt auf die richtige Sache reagiert, statt den Kunden später erneut nachfragen zu lassen.
+
+Ihr Backend besitzt den Zustand, auf den der Assistent wartet. Eine Bestellung verlässt das Lager, ein Angebot wird freigegeben, ein Lieferfenster wird bestätigt. `POST /api/v1/plans/{id}/ready` ist der Weg, diesen Zustand zu übergeben: Der Endpunkt teilt dem Assistenten mit, dass das eingetreten ist, worauf der Kontakt gewartet hat, und der Assistent schreibt diesen Kontakt genau einmal an. Die beiden Endpunkte auf dieser Seite decken beide Richtungen ab: `GET /api/v1/plans` zeigt Ihnen, was der Assistent geplant hat, und der Ready-Aufruf schließt den Kreis.
+
+Beide Endpunkte erfordern einen API-Schlüssel mit den in den jeweiligen Abschnitten genannten Scopes. Authentifizierung und Rate-Limit-Verhalten finden Sie im [Überblick über die versionierte API](/de/api-reference/v1-overview).
+
+## Wie ein Plan voranschreitet
+
+Die meisten Pläne beginnen als `waiting`: Der Assistent weiß, dass er sich melden soll, aber zuerst muss etwas in Ihrem System passieren. Wenn Ihr Backend den Plan als bereit meldet, setzt der Assistent ihn auf `scheduled`, und die Nachricht oder der Anruf geht genau einmal raus.
+
+```mermaid
+graph LR
+  W[waiting] --> S[scheduled]
+  S --> T[sending]
+  T --> U[sent]
+  W --> X[cancelled or expired]
+```
+
+Ein als bereit gemeldeter Plan wird nicht erneut gesendet. Rufen Sie den Ready-Endpunkt zweimal für denselben Plan auf, liefert der zweite Aufruf `409 not_waiting`, statt den Kontakt erneut anzuschreiben. Ein erneuter Versuch nach Netzwerkfehlern ist also sicher, ein Polling nicht. Um die benötigten Plan-IDs zu finden, listen Sie zuerst die wartenden Pläne des Kontakts auf.
+
+## Pläne auflisten
+
+Gibt zurück, was der Assistent für die Kontakte Ihres Workspace geplant hat oder worauf er wartet, neueste zuerst. Erfordert den Scope `plans:read`.
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/plans?status=waiting" \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tzp"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "data": [
+    {
+      "id": "b1e7c4a9-2f83-4d16-9a05-6c8e2f7d4b31",
+      "contact_id": "c7f3a1e2-9b4d-4f6a-8e21-3d5b7c9a1f04",
+      "kind": "call",
+      "about": "Quote for 400 units of the X200 sensor, requested Tuesday",
+      "status": "waiting",
+      "due_at": "2026-03-04T09:00:00.000Z",
+      "created_at": "2026-02-27T14:32:51.118Z"
+    },
+    {
+      "id": "5d92f0c6-8a13-4b7e-bc48-2e9f61a0d573",
+      "contact_id": "c7f3a1e2-9b4d-4f6a-8e21-3d5b7c9a1f04",
+      "kind": "message",
+      "about": "Confirm the delivery window for order SO-24817",
+      "status": "waiting",
+      "due_at": "2026-03-02T08:00:00.000Z",
+      "created_at": "2026-02-26T09:11:04.902Z"
+    }
+  ]
+}
+```
+
+</Response>
+
+### Query-Parameter
+
+<ParamField query="status" param-type="string" enum="scheduled,waiting,reopener_sent,sending,sent,cancelled,expired,blocked">
+Gibt nur Pläne mit diesem Status zurück. Lassen Sie den Parameter weg, um nur offene Pläne zu erhalten: `scheduled`, `waiting` und `reopener_sent`.
+</ParamField>
+
+<ParamField query="contact_id" param-type="string">
+Gibt nur Pläne für diesen Kontakt zurück. Muss eine UUID sein.
+</ParamField>
+
+<Callout kind="info">
+
+Die Liste ist auf 100 Pläne begrenzt und hat keine Paginierung. Wenn Sie die Pläne eines bestimmten Kontakts benötigen, filtern Sie nach `contact_id`, statt die vollständige Liste zu durchlaufen.
+
+</Callout>
+
+### Das Plan-Objekt
+
+Jeder Eintrag in `data` beschreibt einen Plan.
+
+<ResponseField name="data" field-type="object[]" required="true">
+Pläne, die dem Filter entsprechen, neueste zuerst.
+</ResponseField>
+
+<ResponseField name="data[].id" field-type="string" required="true">
+Die Kennung des Plans. Verwenden Sie diesen Wert im Pfad, wenn Sie den Plan als bereit melden.
+</ResponseField>
+
+<ResponseField name="data[].contact_id" field-type="string" required="true">
+UUID des Kontakts, zu dem der Plan gehört.
+</ResponseField>
+
+<ResponseField name="data[].kind" field-type="string" required="true">
+Der Plantyp, den der Assistent erstellt hat. Er bestimmt, was der Assistent tut, wenn der Plan rausgeht.
+</ResponseField>
+
+<ResponseField name="data[].about" field-type="string" required="true">
+Eine kurze, für Menschen lesbare Beschreibung dessen, was der Plan umfasst. Der Text ist für Ihr Team gedacht und wird nicht von der API ausgewertet.
+</ResponseField>
+
+<ResponseField name="data[].status" field-type="string" required="true">
+Aktueller Status. `waiting` bedeutet, der Assistent wartet, bis Sie den Plan als bereit melden; `scheduled` bedeutet, er wird rausgehen; `sending` und `sent` zeigen den Fortschritt der Zustellung; `cancelled`, `expired` und `blocked` sind Endzustände.
+</ResponseField>
+
+<ResponseField name="data[].due_at" field-type="string">
+ISO-8601-Zeitstempel für die Fälligkeit des Plans oder `null`, wenn der Plan keine Frist hat.
+</ResponseField>
+
+<ResponseField name="data[].created_at" field-type="string" required="true">
+ISO-8601-Zeitstempel für die Erstellung des Plans.
+</ResponseField>
+
+### Fehler
+
+<Response tabs="400">
+
+```json
+{
+  "error": {
+    "code": "invalid_status",
+    "message": "status must be one of: scheduled, waiting, reopener_sent, sending, sent, cancelled, expired, blocked."
+  }
+}
+```
+
+</Response>
+
+| Status | Fehlercode | Wann er auftritt |
+| --- | --- | --- |
+| 400 | `invalid_status` | Der Wert von `status` ist keiner der akzeptierten Status. Die Meldung listet die gültigen Werte auf. |
+| 400 | `invalid_contact_id` | Der Wert von `contact_id` ist keine UUID. |
+
+## Einen Plan als bereit melden
+
+Teilt dem Assistenten mit, dass das bereit ist, worauf ein Kontakt gewartet hat, damit er diesen Kontakt genau einmal anschreibt. Erfordert den Scope `plans:write`.
+
+Der Request-Body ist strikt: Er akzeptiert ausschließlich das optionale Feld `note`.
+
+<Request tabs="cURL,JavaScript">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/v1/plans/b1e7c4a9-2f83-4d16-9a05-6c8e2f7d4b31/ready" \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tzp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "note": "Order SO-24817 left the Hamburg warehouse this morning. DHL tracking 00340434161234567890."
+  }'
+```
+
+```javascript
+const planId = "b1e7c4a9-2f83-4d16-9a05-6c8e2f7d4b31";
+
+const response = await fetch(
+  `https://app.talkturo.com/api/v1/plans/${planId}/ready`,
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer tk_live_9xmk7q2r4tzp",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      note: "Order SO-24817 left the Hamburg warehouse this morning. DHL tracking 00340434161234567890.",
+    }),
+  }
+);
+
+if (!response.ok) {
+  const error = await response.json();
+  throw new Error(`${error.error.code}: ${error.error.message}`);
+}
+
+const plan = await response.json();
+console.log(plan.id, plan.status);
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "id": "b1e7c4a9-2f83-4d16-9a05-6c8e2f7d4b31",
+  "status": "scheduled"
+}
+```
+
+</Response>
+
+### Pfadparameter
+
+<ParamField path="id" param-type="string" required="true">
+Die Kennung des Plans, entnommen aus dem Feld `id` eines Plans, den Sie aufgelistet haben.
+</ParamField>
+
+### Body-Parameter
+
+<ParamField body="note" param-type="string">
+Was sich geändert hat, in einfacher Sprache. Der Assistent liest diesen Text, wenn er den Kontakt anschreibt; beschreiben Sie daher das Ergebnis, nicht das interne Ereignis. Führende und abschließende Leerzeichen werden entfernt, die maximale Länge beträgt 300 Zeichen, und eine leere Notiz wird behandelt, als hätten Sie keine Notiz gesendet.
+</ParamField>
+
+<Callout kind="alert">
+
+Senden Sie ausschließlich `note`. Jedes andere Feld im Body oder eine Notiz mit mehr als 300 Zeichen lässt die Anfrage mit `400 invalid_body` fehlschlagen, und der Plan bleibt unverändert.
+
+</Callout>
+
+### Fehler
+
+| Status | Fehlercode | Wann er auftritt |
+| --- | --- | --- |
+| 400 | `invalid_body` | Der Body enthält etwas anderes als einen `note`-String mit bis zu 300 Zeichen. |
+| 404 | `plan_not_found` | Die ID gehört zu keinem Plan in diesem Workspace. |
+| 409 | `not_waiting` | Der Plan wartet auf nichts, es gibt also nichts als bereit zu melden. |
+
+Ein `409` bedeutet meist, dass der Plan bereits rausgegangen, storniert oder abgelaufen ist. Listen Sie die Pläne des Kontakts mit `status=waiting` auf, um eine aktuelle ID zu erhalten, statt dieselbe erneut zu versuchen.
+
+## Nächste Schritte
+
+<Columns cols={2}>
+
+<Card title="Überblick über die versionierte API" href="/de/api-reference/v1-overview" icon="book-open">
+Authentifizierung, Scopes, Rate-Limit-Header und die Konventionen, denen jeder versionierte Endpunkt folgt.
+</Card>
+
+<Card title="Nachrichten senden und verfolgen" href="/de/api-reference/v1-messages" icon="zap">
+Senden Sie eine WhatsApp-Nachricht an einen Kontakt und verfolgen Sie ihren Status von `sending` bis `read`.
+</Card>
+
+</Columns>

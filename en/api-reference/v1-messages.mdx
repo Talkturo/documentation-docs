@@ -1,0 +1,203 @@
+---
+title: "Messages (v1)"
+description: "Send a WhatsApp message to a contact in the workspace and follow it through every status until it reaches a final outcome."
+---
+
+## Send a message
+
+`POST /api/v1/messages` sends one WhatsApp message to one contact of the workspace, either as free text inside the reply window or as an approved template, and answers with the message id you use to follow it. The endpoint sits at `https://app.talkturo.com/api/v1/messages`, requires the `messages:send` scope, and needs an `Idempotency-Key` header. Read the [v1 API overview](/en/api-reference/v1-overview) for authentication, scopes, rate limits and idempotency before your first call.
+
+WhatsApp accepts free text only inside the 24-hour reply window that opens when the contact last writes to you. Outside that window, send an approved utility template instead. List the templates the workspace may send with `GET /api/v1/templates`, documented on [Templates (v1)](/en/api-reference/v1-templates).
+
+The request body is validated strictly, so send only the fields described below.
+
+<Request tabs="cURL">
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/messages \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Idempotency-Key: msg-acme-2025-06-18-0917" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contact_id": "e4f1a8b3-92c5-47d0-8a63-1f5b7c2d9e08",
+    "assistant_id": "3c9f7d21-8b4a-4e56-9f10-2d7c8a5b1e34",
+    "template": {
+      "name": "delivery_window_confirmed",
+      "language": "en",
+      "variables": {
+        "first_name": "Jordan",
+        "delivery_day": "Friday"
+      }
+    },
+    "consent": {
+      "evidence": "Opted in on the checkout form on 2025-05-02"
+    }
+  }'
+```
+
+</Request>
+
+### Body parameters
+
+<ParamField body="contact_id" param-type="string (UUID)" required="true">
+The contact to message.
+</ParamField>
+
+<ParamField body="assistant_id" param-type="string (UUID) or null">
+The assistant whose WhatsApp number sends the message. Required when the workspace has more than one WhatsApp number.
+</ParamField>
+
+<ParamField body="text" param-type="string">
+Free text of 1 to 4096 characters. Allowed only inside the contact's 24-hour reply window.
+</ParamField>
+
+<ParamField body="template" param-type="object">
+An approved utility template. Send exactly one of `text` or `template` in the same request.
+</ParamField>
+
+<ParamField body="template.name" param-type="string" required="true">
+The template name, 1 to 512 characters.
+</ParamField>
+
+<ParamField body="template.language" param-type="string" required="true">
+The template language code, 2 to 16 characters, such as `en` or `de`.
+</ParamField>
+
+<ParamField body="template.variables" param-type="object">
+Values for the template's variables. Each value is a string of up to 1024 characters.
+</ParamField>
+
+<ParamField body="consent" param-type="object">
+Records that the contact agreed to receive messages from you.
+</ParamField>
+
+<ParamField body="consent.evidence" param-type="string">
+The evidence behind the opt-in, 1 to 500 characters, such as where and when the contact agreed.
+</ParamField>
+
+### Request headers
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+A key of 1 to 100 letters, digits or `:`, `_`, `.`, `-` that ties a request to its answer. Repeat the key with the same body to get the first answer back instead of sending the message twice.
+</ParamField>
+
+<Response tabs="201">
+
+```json
+{
+  "id": "c7a2f5d1-8e34-4b96-a1f7-2c9d4e6b8a13",
+  "status": "sent",
+  "replay": false
+}
+```
+
+</Response>
+
+`replay` is `true` when the response repeats an earlier request that carried the same idempotency key. A replay returns `200` with the first answer's body and `replay` set to `true`; the original send answered `201`.
+
+### Response codes
+
+| Status | Code | What it means |
+| --- | --- | --- |
+| 201 | `sent` | The message left for WhatsApp. Body: `{ id, status: "sent", replay }`. |
+| 200 | | The request replayed an idempotency key. Same body as the first answer, with `replay` set to `true`. |
+| 202 | | Still sending, or the final state is not known yet. Body: `{ id, status, replay }`. Poll `GET /api/v1/messages/{id}`. |
+| 422 | `refused` | Refused by policy. Body: `{ id, status: "refused", refusal: { code, reason, retry_after, needs_person }, replay }`. |
+| 502 | `failed` | Failed at WhatsApp. Body: `{ id, status: "failed", failure, replay }`. |
+| 409 | `idempotency_key_reused` | The idempotency key was already used with a different body. |
+| 404 | `contact_not_found` | No contact with this id in this workspace. |
+| 422 | `contact_has_no_phone` | The contact has no phone number a WhatsApp message can go to. |
+| 422 | `no_whatsapp_number` | Neither the assistant nor the workspace has an active WhatsApp number. |
+| 422 | `assistant_required` | The workspace has more than one WhatsApp number. Send `assistant_id`. |
+
+<Callout kind="info">
+A refused send returns the message id and a `refusal` object, so you can inspect the outcome instead of parsing an error:
+
+- `code` and `reason` name the policy that blocked the send and explain it for logs or for a person reading the ticket.
+- `needs_person` is `true` when only a person can unblock the send. Repeating the request will not help until someone acts.
+- `retry_after` marks when a retry makes sense. When it is `null`, waiting will not change the outcome.
+
+</Callout>
+
+## Read one message
+
+`GET /api/v1/messages/{id}` returns where one message stands, from `sending` through to its final state. The call needs the `messages:read` scope.
+
+```bash
+curl https://app.talkturo.com/api/v1/messages/c7a2f5d1-8e34-4b96-a1f7-2c9d4e6b8a13 \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```json
+{
+  "id": "c7a2f5d1-8e34-4b96-a1f7-2c9d4e6b8a13",
+  "contact_id": "e4f1a8b3-92c5-47d0-8a63-1f5b7c2d9e08",
+  "status": "delivered",
+  "kind": "template",
+  "template": {
+    "name": "delivery_window_confirmed",
+    "language": "en"
+  },
+  "created_at": "2025-06-18T09:17:04.221Z",
+  "sent_at": "2025-06-18T09:17:05.018Z",
+  "refusal": null,
+  "failure": null
+}
+```
+
+<ParamField path="id" param-type="string (UUID)" required="true">
+The id returned when the message was sent.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" field-type="string (UUID)" required="true">
+The message id.
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string (UUID)" required="true">
+The contact the message was addressed to.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Where the message stands: `sending`, `sent`, `delivered`, `read`, `failed`, `refused` or `unknown`.
+</ResponseField>
+
+<ResponseField name="kind" field-type="string" required="true">
+How the message was composed, for example `template` when an approved template was sent.
+</ResponseField>
+
+<ResponseField name="template" field-type="object">
+The template that was sent, with its `name` and `language`.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string (timestamp)" required="true">
+When the message was created.
+</ResponseField>
+
+<ResponseField name="sent_at" field-type="string (timestamp)">
+When the message was sent.
+</ResponseField>
+
+<ResponseField name="refusal" field-type="object">
+`null` when the message was not refused. Otherwise an object with `code`, `reason`, `retry_after` and `needs_person`.
+</ResponseField>
+
+<ResponseField name="failure" field-type="object">
+`null` unless the message failed at WhatsApp, in which case it describes the failure.
+</ResponseField>
+
+A message that belongs to another workspace returns `404` with code `message_not_found`. An id that is not a UUID returns the same `404`, so a mistyped id and a message you cannot see look identical from the outside.
+
+## Track a message
+
+The send answers as soon as WhatsApp accepts the message, so `sent` is not the final word. Poll `GET /api/v1/messages/{id}` a few seconds apart at first, then less often, until `status` is `delivered`, `read`, `failed` or `refused`. A status of `unknown` means the final state could not be read yet, so treat it as unresolved and keep it in your reconciliation queue rather than as a success or a failure.
+
+<Columns cols={2}>
+  <Card title="v1 API overview" icon="book-open" href="/en/api-reference/v1-overview">
+    Authentication, scopes, rate limits and idempotency for every v1 endpoint.
+  </Card>
+  <Card title="List the templates you can send" icon="package" href="/en/api-reference/v1-templates">
+    Find approved utility templates and their variables before composing a message.
+  </Card>
+</Columns>

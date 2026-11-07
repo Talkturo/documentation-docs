@@ -1,0 +1,176 @@
+---
+title: API v1 Übersicht
+description: Platzieren Sie ausgehende Anrufe, senden Sie WhatsApp-Nachrichten und lesen Sie Assistentenpläne aus Ihrem Backend mit der schlüsselauthentifizierten v1 API.
+---
+
+## Was Sie mit der v1 API tun können
+
+Die versionierte API ermöglicht es Ihrem Backend, ausgehende Anrufe zu platzieren, WhatsApp-Nachrichten an Kontakte zu senden, die Pläne zu lesen, die der Assistent für diese Kontakte führt, und die WhatsApp-Vorlagen aufzulisten, die er senden darf. Jede Anfrage ist auf einen einzigen Workspace beschränkt und wird mit dem API-Schlüssel dieses Workspaces authentifiziert. So automatisieren Sie Outreach von einem Server aus, ohne dass an irgendeiner Stelle eine Browsersitzung im Spiel ist.
+
+Damit ist v1 die richtige Oberfläche für Cron-Jobs, CRM-Synchronisierungen und interne Tools, die nach eigenem Zeitplan auf Kontakte einwirken müssen. Alles, was eine angemeldete Person erfordert, etwa die Verwaltung von Schlüsseln, die Abrechnung oder die Konfiguration von Assistenten, bleibt bei den Endpunkten, die an anderer Stelle in dieser Referenz dokumentiert sind.
+
+<Callout kind="info">
+Die Basisadresse lautet `https://app.talkturo.com/api/v1`. Die Endpunkte auf den anderen Referenzseiten liegen unter `/api` und akzeptieren entweder einen Workspace-API-Schlüssel oder ein Session-Cookie. Die versionierte API akzeptiert ausschließlich Workspace-API-Schlüssel, niemals eine Session. Ein Browser-Cookie kann sie daher nicht aufrufen.
+</Callout>
+
+## Mit einem Workspace-API-Schlüssel authentifizieren
+
+Übermitteln Sie den Schlüssel bei jeder Anfrage als Bearer-Token im Header `Authorization`, entweder in der Form `tk_live_...` oder in der Form `tk_test_...`. Eine andere Anmeldeinformation wird nicht akzeptiert.
+
+```bash
+curl https://app.talkturo.com/api/v1/calls \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Accept: application/json"
+```
+
+```http
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 997
+X-RateLimit-Reset: 2025-06-18T15:00:00Z
+```
+
+Eine Antwort mit `200 OK` und einem JSON-Body mit Anrufen bestätigt, dass der Schlüssel funktioniert und den Scope mitbringt, den die Route benötigt. Fehlerfälle sind eindeutig:
+
+- Fehlt der Schlüssel oder ist der Header `Authorization` fehlerhaft: Die Anfrage gibt 401 mit dem Code `unauthorized` zurück.
+- Ist der Schlüssel ungültig, abgelaufen oder deaktiviert: Die Anfrage gibt 401 mit dem Code `unauthorized` zurück.
+- Ist der Schlüssel gültig, fehlt ihm aber der Scope, den die Route benötigt: Die Anfrage gibt 403 mit dem Code `missing_scope` zurück, und die Meldung nennt den fehlenden Scope.
+
+Test-Schlüssel verhalten sich gegenüber Testdaten wie Live-Schlüssel. Das macht sie zur sichereren Wahl, während Sie eine Integration aufbauen.
+
+## Scopes
+
+Jeder Schlüssel trägt eine Reihe von Scopes, die bei der Erstellung des Schlüssels gewählt werden. Ein Schlüssel kann nur die Scopes halten, die Sie ihm gewährt haben. Geben Sie einem Backend daher die engste Menge, die seine Arbeit abdeckt.
+
+| Scope | Was er erlaubt |
+| --- | --- |
+| `calls:create` | Ausgehende Anrufe platzieren |
+| `calls:read` | Anrufe auflisten und lesen sowie Aufzeichnungen herunterladen |
+| `messages:send` | WhatsApp-Nachrichten an Kontakte senden |
+| `messages:read` | Den Status einer Nachricht lesen |
+| `templates:read` | Die WhatsApp-Vorlagen auflisten, die der Workspace senden darf |
+| `plans:read` | Die Pläne auflisten, die der Assistent für Kontakte führt |
+| `plans:write` | Einen Plan als bereit markieren |
+| `*` | Jeder Scope |
+
+Jede Route nennt genau einen Scope, aufgeführt in der Endpunkttabelle unten und auf der Seite des jeweiligen Endpunkts. Eine Route akzeptiert nie einen alternativen Scope: Ein Schlüssel mit `calls:read` kann keinen Anruf platzieren, und ein Schlüssel mit `messages:send` kann den Status einer Nachricht nicht lesen.
+
+## Rate Limits
+
+Jede Anfrage zählt gegen das Stundenlimit des Schlüssels, das aus der Berechtigung `rate_limit_per_hour` des Schlüssels stammt. Der Standard sind 1000 Anfragen pro Stunde und Schlüssel.
+
+Erfolgreiche Antworten tragen drei Header, damit Sie Ihr Tempo drosseln können, bevor Sie die Obergrenze erreichen:
+
+```http
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 997
+X-RateLimit-Reset: 2025-06-18T15:00:00Z
+```
+
+Ist das Limit aufgebraucht, gibt die Anfrage 429 mit dem Code `rate_limited` zurück, dazu dieselben drei Header und einen Header `Retry-After` mit der Anzahl Sekunden, die Sie warten müssen:
+
+```json
+{"error": {"code": "rate_limited", "message": "Hourly rate limit exceeded for this API key"}}
+```
+
+Lesen Sie `X-RateLimit-Remaining` vor jedem Sendeschub und warten Sie bis `X-RateLimit-Reset`, wenn er null erreicht. Behandeln Sie 429 als wiederholbare Antwort: Warten Sie `Retry-After` Sekunden und senden Sie dieselbe Anfrage erneut, wobei Sie einen eventuellen Idempotenz-Schlüssel unverändert lassen, damit eine Wiederholung nichts doppelt ausführt.
+
+## Idempotenz-Schlüssel mitsenden
+
+`POST /api/v1/calls` und `POST /api/v1/messages` erfordern beide einen Header `Idempotency-Key`. Ohne ihn wird die Anfrage als `idempotency_key_required` abgelehnt. Der Wert des Headers besteht aus 1 bis 100 Zeichen aus Buchstaben, Ziffern und `:`, `_`, `.`, `-`.
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/calls \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Idempotency-Key: call-acme-2025-06-18-0917" \
+  -H "Content-Type: application/json" \
+  --data @call.json
+```
+
+Der Schlüssel macht ein Senden gefahrlos wiederholbar. Derselbe Schlüssel mit demselben Body liefert genau das, was die erste Anfrage geantwortet hat, und der Anruf wird nie zweimal gewählt noch die Nachricht zweimal gesendet, selbst wenn Ihr Client nach einem Timeout erneut versucht. Derselbe Schlüssel mit einem anderen Body gibt 409 mit dem Code `idempotency_key_reused` zurück, weil dieser Schlüssel bereits für ein anderes Senden steht.
+
+Leiten Sie den Schlüssel aus etwas Stabilem über die Arbeit selbst ab, etwa aus Kontakt plus Tag plus Kampagnenschritt, statt aus einem Zeitstempel oder einem Zufallswert. Ein Schlüssel, den Sie bei jedem Versuch neu erzeugen, schützt nichts.
+
+## Fehler haben eine gemeinsame Form
+
+Jede Fehlerantwort hat denselben Body: ein `error`-Objekt mit einem maschinenlesbaren `code` und einer für Menschen lesbaren `message`. Verzweigen Sie in Ihrem Client nach `code` und protokollieren Sie `message` für die Menschen, die die Logs lesen.
+
+```json
+{"error": {"code": "missing_scope", "message": "This API key is missing the required scope: calls:create"}}
+```
+
+| Status | Codes | Was er bedeutet |
+| --- | --- | --- |
+| 400 | `invalid_request`, `idempotency_key_required` | Der Body oder die Query ist fehlerhaft, oder ein Senden kam ohne seinen Idempotenz-Schlüssel an. |
+| 401 | `unauthorized` | Der Schlüssel fehlt, ist fehlerhaft, ungültig, abgelaufen oder deaktiviert. |
+| 403 | `missing_scope` | Der Schlüssel ist gültig, trägt aber nicht den Scope, den die Route benötigt. |
+| 404 | `call_not_found`, `message_not_found`, `contact_not_found`, `plan_not_found`, `recording_not_found` | Die Ressource existiert nicht in diesem Workspace. |
+| 409 | `idempotency_key_reused`, `not_waiting` | Der Idempotenz-Schlüssel wurde mit einem anderen Body wiederverwendet, oder Sie haben einen Plan als bereit markiert, der nicht wartet. |
+| 422 | Siehe Meldung | WhatsApp hat das Senden abgelehnt, oder der Kontakt hat keine routbare Adresse. |
+| 429 | `rate_limited` | Das Stundenlimit ist aufgebraucht. |
+| 500 | `internal_error` | Auf unserer Seite ist etwas fehlgeschlagen. |
+| 502 | Siehe Meldung | Das Senden ist bei WhatsApp fehlgeschlagen. |
+| 503 | `recording_unavailable` | Der Aufzeichnungslink kann gerade nicht erzeugt werden. |
+
+Wiederholen Sie 429 und 503 mit Backoff und lassen Sie den Idempotenz-Schlüssel unverändert. Wiederholen Sie 400, 403, 404, 409 oder 422 nicht, ohne die Anfrage zu ändern: Dieselbe Eingabe führt zur selben Antwort.
+
+## Endpunkte
+
+Jeder der folgenden Endpunkte liegt unter der Basisadresse und erfordert einen Workspace-API-Schlüssel mit dem angegebenen Scope.
+
+| Methode | Pfad | Zweck | Scope |
+| --- | --- | --- | --- |
+| POST | `/api/v1/calls` | Einen ausgehenden Anruf platzieren | `calls:create` |
+| GET | `/api/v1/calls` | Die Anrufe des Workspaces auflisten | `calls:read` |
+| GET | `/api/v1/calls/{id}` | Einen Anruf und sein Ergebnis lesen | `calls:read` |
+| GET | `/api/v1/calls/{id}/recording` | Einen eine Stunde gültigen Aufzeichnungslink abrufen | `calls:read` |
+| POST | `/api/v1/messages` | Eine WhatsApp-Nachricht senden | `messages:send` |
+| GET | `/api/v1/messages/{id}` | Prüfen, wo eine Nachricht steht | `messages:read` |
+| GET | `/api/v1/templates` | Die Vorlagen auflisten, die Sie senden dürfen | `templates:read` |
+| GET | `/api/v1/plans` | Die Pläne auflisten, die der Assistent für Kontakte führt | `plans:read` |
+| POST | `/api/v1/plans/{id}/ready` | Dem Assistenten mitteilen, dass etwas bereit ist | `plans:write` |
+
+## Wie es weitergeht
+
+Jede der folgenden Seiten dokumentiert eine Ressource vollständig: Parameter, Request-Bodys, Antwortfelder und durchgerechnete Beispiele.
+
+<Columns cols={3}>
+
+<Card title="Anrufe" href="/de/api-reference/v1-calls" icon="play-circle">
+
+Ausgehende Anrufe platzieren, auflisten, ihre Ergebnisse lesen und Aufzeichnungen abrufen.
+
+</Card>
+
+<Card title="Nachrichten" href="/de/api-reference/v1-messages" icon="users">
+
+WhatsApp-Nachrichten an Kontakte senden und eine Nachricht bis zu ihrem endgültigen Status verfolgen.
+
+</Card>
+
+<Card title="Vorlagen" href="/de/api-reference/v1-templates" icon="code">
+
+Die WhatsApp-Vorlagen auflisten, die der Workspace senden darf.
+
+</Card>
+
+<Card title="Pläne" href="/de/api-reference/v1-plans" icon="check-circle">
+
+Die Pläne lesen, die der Assistent für Kontakte hält, und einen davon als bereit markieren.
+
+</Card>
+
+<Card title="Assistenten-Checks" href="/de/api-reference/checks" icon="shield">
+
+Prüfen, dass sich ein Assistent so verhält, wie Sie es erwarten, bevor er mit echten Kontakten spricht.
+
+</Card>
+
+<Card title="Authentifizierung" href="/de/api-reference/authentication" icon="lock">
+
+Workspace-API-Schlüssel erstellen, Scopes zuweisen und Rate Limits festlegen.
+
+</Card>
+
+</Columns>

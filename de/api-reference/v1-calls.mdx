@@ -1,0 +1,484 @@
+---
+title: "Anrufe (v1)"
+description: "Einen ausgehenden Anruf an einen Kontakt platzieren, bis zum Ergebnis verfolgen und die Aufzeichnung über die versionierte Talkturo-API abrufen."
+---
+
+## Anrufe platzieren und verfolgen
+
+Mit einem Workspace-API-Schlüssel platzieren Sie einen ausgehenden Anruf an einen Kontakt, listen die Anrufe des Workspace mit dem neuesten zuerst auf, lesen einen einzelnen Anruf samt Ergebnis und rufen die Aufzeichnung ab.
+
+Jede Anfrage geht an `https://app.talkturo.com/api/v1`. Authentifizierung, Scopes, Rate Limits und Idempotenz verhalten sich über die gesamte Version hinweg gleich; die [v1-API-Übersicht](/de/api-reference/v1-overview) erklärt sie einmal zentral.
+
+## Anruf platzieren
+
+Platziert einen ausgehenden Anruf für einen Assistenten und gibt den Anruf sofort zurück, noch bevor gewählt wird. Der Endpunkt erfordert den Scope `calls:create` und einen `Idempotency-Key`-Header. Der Request-Body wird strikt validiert: Jedes Feld, das unten nicht aufgeführt ist, wird abgelehnt.
+
+### Body-Parameter
+
+<ParamField body="assistant_id" param-type="string" required="true">
+
+Der Assistent, der den Anruf platziert, als UUID.
+
+</ParamField>
+
+<ParamField body="to_number" param-type="string">
+
+Die zu wählende Nummer, 4 bis 32 Zeichen. Senden Sie diese oder `contact_id`.
+
+</ParamField>
+
+<ParamField body="contact_id" param-type="string">
+
+Ein Kontakt im Workspace, der statt einer rohen Nummer gewählt wird, als UUID. Senden Sie diesen oder `to_number`.
+
+</ParamField>
+
+<ParamField body="from_number" param-type="string">
+
+Die Nummer, von der aus der Anruf erfolgt, 4 bis 32 Zeichen.
+
+</ParamField>
+
+<ParamField body="variables" param-type="object">
+
+Werte, die als `{{call.x}}` in den Prompt des Assistenten gerendert werden. Jeder Wert kann ein String mit bis zu 2000 Zeichen, eine Zahl oder ein Boolean sein.
+
+</ParamField>
+
+<ParamField body="metadata" param-type="object">
+
+Ihre eigenen Daten, die mit dem Anruf gespeichert und am Anruf zurückgegeben werden, damit Sie den Anruf Ihren eigenen Datensätzen zuordnen können.
+
+</ParamField>
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+
+Ein eindeutiger Schlüssel für diese Anfrage. Senden Sie denselben Schlüssel erneut, erhalten Sie den ursprünglichen Anruf mit `200` zurück, statt einen zweiten Anruf zu platzieren.
+
+</ParamField>
+
+### Regeln, die der Validator durchsetzt
+
+- **Ein Wählziel ist erforderlich.** Senden Sie mindestens eines von `to_number` oder `contact_id`. Fehlt beides, wird die Anfrage mit `invalid_request` abgelehnt.
+- **Der Payload ist auf 8 KB begrenzt.** `metadata` und `variables` dürfen zusammen höchstens 8 KB groß sein.
+- **`variables` wird nie zurückgegeben.** Werte in `variables` fließen ausschließlich in den Prompt. Die `metadata` des Anrufs gibt nur `metadata` zurück.
+
+<Request tabs="cURL">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/v1/calls" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  -H "Idempotency-Key: call-acme-2025-06-18-0917" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assistant_id": "a1f4c2d8-7b90-4e35-9c6a-2d8f1b0e4a72",
+    "contact_id": "0d7e5b31-2c84-4a19-b6f3-8e51c9a72d40",
+    "from_number": "+14155550132",
+    "variables": {
+      "first_name": "Julia",
+      "order_number": "ORD-88421"
+    },
+    "metadata": {
+      "crm_deal_id": "deal_9f31ac"
+    }
+  }'
+```
+
+</Request>
+
+<Response tabs="201">
+
+```json
+{
+  "id": "5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63",
+  "status": "queued",
+  "assistant_id": "a1f4c2d8-7b90-4e35-9c6a-2d8f1b0e4a72",
+  "contact_id": "0d7e5b31-2c84-4a19-b6f3-8e51c9a72d40",
+  "campaign_id": null,
+  "direction": "outbound",
+  "from_number": "+14155550132",
+  "to_number": "+4915112345678",
+  "created_at": "2025-06-18T09:17:04+00:00",
+  "started_at": null,
+  "ended_at": null,
+  "duration_seconds": null,
+  "answered_by": null,
+  "ended_reason": null,
+  "failure_reason": null,
+  "outcome": null,
+  "summary": null,
+  "transcript": null,
+  "recording_url": null,
+  "analysis": null,
+  "callback": null,
+  "metadata": {
+    "crm_deal_id": "deal_9f31ac"
+  }
+}
+```
+
+</Response>
+
+Ein frisch platzierter Anruf kommt als `queued` zurück: Die Anfrage war erfolgreich, gewählt wurde aber noch nichts. Die Antwort liefert `201`, wenn der Anruf platziert wurde, und `200`, wenn die Anfrage einen bereits verwendeten `Idempotency-Key` wiederholt; in diesem Fall enthält der Body den ursprünglichen Anruf.
+
+Behalten Sie die `id`. Sie ist die ID des Anrufs an jeder Stelle: bei `GET /api/v1/calls/{id}` und als `call_id` in den Call-Webhooks.
+
+Ein Anruf, der innerhalb von zehn Minuten nicht startet, wird als `failed` gemeldet, mit `failure_reason` gleich `call_not_started` und `outcome` gleich `unreachable`.
+
+<Callout kind="alert">
+
+Einige Prüfungen können einen Anruf ablehnen, bevor gewählt wird, zum Beispiel wenn die Nummer abgemeldet ist oder dem Workspace kein Guthaben mehr zur Verfügung steht. Die Antwort ist dann ein 4xx mit dem Standard-Fehlerobjekt. Wenn die Sperre von selbst endet, enthält das Fehlerobjekt zusätzlich einen `until`-Zeitstempel, der angibt, wann Sie es erneut versuchen können.
+
+</Callout>
+
+## Anrufe auflisten
+
+Gibt die Anrufe des Workspace mit dem neuesten zuerst zurück, Seite für Seite. Erfordert den Scope `calls:read`.
+
+### Query-Parameter
+
+<ParamField query="assistant_id" param-type="string">
+
+Nur Anrufe, die dieser Assistent platziert hat, als UUID.
+
+</ParamField>
+
+<ParamField query="contact_id" param-type="string">
+
+Nur Anrufe an diesen Kontakt, als UUID.
+
+</ParamField>
+
+<ParamField query="from" param-type="string">
+
+Ein ISO-8601-Zeitstempel mit Offset. Nur Anrufe, die zu diesem Zeitpunkt oder später erstellt wurden.
+
+</ParamField>
+
+<ParamField query="to" param-type="string">
+
+Ein ISO-8601-Zeitstempel mit Offset. Nur Anrufe, die vor diesem Zeitpunkt erstellt wurden.
+
+</ParamField>
+
+<ParamField query="cursor" param-type="string">
+
+Der `next_cursor` der vorherigen Seite.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer" enum="1,100">
+
+Seitengröße von 1 bis 100. Standardwert ist 25.
+
+</ParamField>
+
+<ParamField query="include" param-type="string">
+
+Der einzige akzeptierte Wert ist `transcript`. Ohne diesen Wert wird jeder Anruf der Seite ohne sein Transkript zurückgegeben.
+
+</ParamField>
+
+Die Antwort enthält `data`, ein Array von Anrufobjekten, und `next_cursor`. Auf der letzten Seite ist `next_cursor` gleich `null`; andernfalls senden Sie den Wert als `cursor` zurück, um die nächste Seite zu erhalten.
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/calls?limit=2&include=transcript" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "data": [
+    {
+      "id": "5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63",
+      "status": "completed",
+      "assistant_id": "a1f4c2d8-7b90-4e35-9c6a-2d8f1b0e4a72",
+      "contact_id": "0d7e5b31-2c84-4a19-b6f3-8e51c9a72d40",
+      "campaign_id": null,
+      "direction": "outbound",
+      "from_number": "+14155550132",
+      "to_number": "+4915112345678",
+      "created_at": "2025-06-18T09:17:04+00:00",
+      "started_at": "2025-06-18T09:17:12+00:00",
+      "ended_at": "2025-06-18T09:19:40+00:00",
+      "duration_seconds": 148,
+      "answered_by": "human",
+      "ended_reason": "customer_hangup",
+      "failure_reason": null,
+      "outcome": "answered",
+      "summary": "Die Kundin bestätigt die Lieferadresse und verschiebt den Wunschtermin auf Freitag.",
+      "transcript": "Assistent: Guten Tag, spreche ich mit Julia Weber? Kundin: Ja, am Apparat. ...",
+      "recording_url": "https://app.talkturo.com/api/v1/calls/5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63/recording",
+      "analysis": {
+        "sentiment": "positive",
+        "success": true,
+        "key_points": ["Lieferadresse bestätigt", "Wunschtermin auf Freitag verschoben"],
+        "objections": [],
+        "questions_asked": ["Kommt die Lieferung am Freitag vor 12 Uhr?"],
+        "action_items": ["Zustellung für Freitagvormittag einplanen"]
+      },
+      "callback": null,
+      "metadata": {
+        "crm_deal_id": "deal_9f31ac"
+      }
+    },
+    {
+      "id": "b83d1a06-5c72-4f18-9d3e-7a2c6041e5b9",
+      "status": "failed",
+      "assistant_id": "a1f4c2d8-7b90-4e35-9c6a-2d8f1b0e4a72",
+      "contact_id": "e4c19a7d-3f58-4b26-8a70-1d95f3c2b608",
+      "campaign_id": null,
+      "direction": "outbound",
+      "from_number": "+14155550132",
+      "to_number": "+491709876543",
+      "created_at": "2025-06-18T08:41:55+00:00",
+      "started_at": null,
+      "ended_at": null,
+      "duration_seconds": null,
+      "answered_by": null,
+      "ended_reason": null,
+      "failure_reason": "no_answer",
+      "outcome": "unreachable",
+      "summary": null,
+      "transcript": null,
+      "recording_url": null,
+      "analysis": null,
+      "callback": null,
+      "metadata": null
+    }
+  ],
+  "next_cursor": "2025-06-18T08:41:55+00:00"
+}
+```
+
+</Response>
+
+## Einen Anruf lesen
+
+Gibt einen Anruf in derselben Struktur wie in der Liste zurück, zusätzlich mit seinem Transkript. Erfordert den Scope `calls:read`.
+
+Der Payload ist hier dasselbe Ergebnis, das die Call-Webhooks liefern. Damit ist dieser Endpunkt die richtige Adresse, wenn eine Webhook-Zustellung ausgefallen ist. Ein Anruf aus einem anderen Workspace oder eine ID, die keine UUID ist, liefert `404` mit dem Code `call_not_found`.
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/calls/5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "id": "5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63",
+  "status": "completed",
+  "assistant_id": "a1f4c2d8-7b90-4e35-9c6a-2d8f1b0e4a72",
+  "contact_id": "0d7e5b31-2c84-4a19-b6f3-8e51c9a72d40",
+  "campaign_id": null,
+  "direction": "outbound",
+  "from_number": "+14155550132",
+  "to_number": "+4915112345678",
+  "created_at": "2025-06-18T09:17:04+00:00",
+  "started_at": "2025-06-18T09:17:12+00:00",
+  "ended_at": "2025-06-18T09:19:40+00:00",
+  "duration_seconds": 148,
+  "answered_by": "human",
+  "ended_reason": "customer_hangup",
+  "failure_reason": null,
+  "outcome": "answered",
+  "summary": "Die Kundin bestätigt die Lieferadresse und verschiebt den Wunschtermin auf Freitag.",
+  "transcript": "Assistent: Guten Tag, spreche ich mit Julia Weber? Kundin: Ja, am Apparat. ...",
+  "recording_url": "https://app.talkturo.com/api/v1/calls/5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63/recording",
+  "analysis": {
+    "sentiment": "positive",
+    "success": true,
+    "key_points": ["Lieferadresse bestätigt", "Wunschtermin auf Freitag verschoben"],
+    "objections": [],
+    "questions_asked": ["Kommt die Lieferung am Freitag vor 12 Uhr?"],
+    "action_items": ["Zustellung für Freitagvormittag einplanen"]
+  },
+  "callback": {
+    "requested": false,
+    "scheduled_call_id": null,
+    "run_at": null,
+    "timezone": null,
+    "when_words": null,
+    "reason": null
+  },
+  "metadata": {
+    "crm_deal_id": "deal_9f31ac"
+  }
+}
+```
+
+</Response>
+
+### Felder des Anrufobjekts
+
+<ResponseField name="id" field-type="string" required="true">
+
+Die ID des Anrufs. Verwenden Sie sie bei `GET /api/v1/calls/{id}` und gleichen Sie sie mit `call_id` in den Call-Webhooks ab.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+
+Einer von `queued` (platziert, aber noch nicht angenommen), `ringing` (der Anruf geht raus), `in_progress` (der Assistent spricht), `completed` (mit einem Gespräch beendet) oder `failed` (ohne Gespräch beendet).
+
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+
+Der Assistent, der den Anruf platziert hat.
+
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string">
+
+Der gewählte Kontakt, wenn der Anruf mit `contact_id` platziert wurde.
+
+</ResponseField>
+
+<ResponseField name="campaign_id" field-type="string">
+
+Bei Anrufen über v1 immer `null`, da sie zu keiner Kampagne gehören.
+
+</ResponseField>
+
+<ResponseField name="direction" field-type="string" required="true">
+
+Die Richtung des Anrufs. Hier platzierte Anrufe sind `outbound`.
+
+</ResponseField>
+
+<ResponseField name="from_number" field-type="string">
+
+Die Nummer, von der aus der Anruf platziert wurde.
+
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string">
+
+Die Nummer, die gewählt wurde.
+
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string" required="true">
+
+ISO-8601-Zeitstempel, wann der Anruf platziert wurde.
+
+</ResponseField>
+
+<ResponseField name="started_at" field-type="string">
+
+ISO-8601-Zeitstempel, wann der Anruf verbunden wurde, oder `null`, solange das nicht geschehen ist.
+
+</ResponseField>
+
+<ResponseField name="ended_at" field-type="string">
+
+ISO-8601-Zeitstempel, wann der Anruf endete, oder `null`, solange er noch läuft.
+
+</ResponseField>
+
+<ResponseField name="duration_seconds" field-type="integer">
+
+Wie lange der Anruf dauerte, in Sekunden. `null`, bis der Anruf beendet ist.
+
+</ResponseField>
+
+<ResponseField name="answered_by" field-type="string">
+
+`human`, `voicemail`, `unknown` oder `null`. Ist `null`, wenn niemand geantwortet hat.
+
+</ResponseField>
+
+<ResponseField name="ended_reason" field-type="string">
+
+Warum das Gespräch endete, gemeldet vom Carrier. `null`, bis der Anruf beendet ist.
+
+</ResponseField>
+
+<ResponseField name="failure_reason" field-type="string">
+
+`busy`, `no_answer`, `call_not_started` oder `null`, wenn der Anruf kein Fehlschlag war.
+
+</ResponseField>
+
+<ResponseField name="outcome" field-type="string">
+
+`answered`, `unreachable`, `voicemail` oder `do_not_call`. `null`, bis der Anruf beendet ist.
+
+</ResponseField>
+
+<ResponseField name="summary" field-type="string">
+
+Eine kurze schriftliche Zusammenfassung des Gesprächs oder `null`, bis der Anruf analysiert wurde.
+
+</ResponseField>
+
+<ResponseField name="transcript" field-type="string">
+
+Das vollständige Transkript des Gesprächs oder `null`, bis der Anruf analysiert wurde. Wird auf diesem Endpunkt und bei `GET /api/v1/calls` nur zurückgegeben, wenn Sie `include=transcript` senden.
+
+</ResponseField>
+
+<ResponseField name="recording_url" field-type="string">
+
+Die stabile Adresse der Aufzeichnung in dieser API oder `null`, wenn der Anruf keine Aufzeichnung hat. Ein Abruf leitet zu einem frischen signierten Link weiter; speichern Sie deshalb diesen Wert und nicht den Link, den Sie zurückbekommen.
+
+</ResponseField>
+
+<ResponseField name="analysis" field-type="object">
+
+Enthält `sentiment`, `success`, `key_points`, `objections`, `questions_asked` und `action_items`. `null`, bis der Anruf analysiert wurde.
+
+</ResponseField>
+
+<ResponseField name="callback" field-type="object">
+
+Enthält `requested`, `scheduled_call_id`, `run_at`, `timezone`, `when_words` und `reason`. `null`, bis der Anruf analysiert wurde.
+
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object">
+
+Ihre eigenen `metadata` genau wie gesendet oder `null`, wenn die Anfrage keine enthielt.
+
+</ResponseField>
+
+## Aufzeichnung abrufen
+
+Gibt `302` mit einem `Location`-Header zurück, der auf einen signierten Link zeigt, der eine Stunde lang gültig ist. Erfordert den Scope `calls:read`.
+
+`recording_url` im Anrufobjekt enthält diese stabile Adresse. Indem Sie ihr folgen, erhalten Sie einen frischen einstündigen Link: Die Adresse selbst läuft nie ab und verrät nie, wo Aufzeichnungen gespeichert sind, Sie können sie also aufbewahren und an einen Browser weitergeben. Clients müssen Weiterleitungen folgen, also `curl -L` auf der Kommandozeile und der Standard in den meisten HTTP-Clients.
+
+<Request tabs="cURL">
+
+```bash
+curl -L "https://app.talkturo.com/api/v1/calls/5f2b9c47-3a18-4d6e-8f21-9c4e7b2a1d63/recording" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r" \
+  --output call-5f2b9c47.mp3
+```
+
+</Request>
+
+| Status | Bedeutung |
+| --- | --- |
+| `302` | `Location` enthält einen signierten Link, der eine Stunde lang gültig ist. |
+| `404` `recording_not_found` | Der Anruf hat keine Aufzeichnung, oder sie gehört nicht zu diesem Workspace. |
+| `503` `recording_unavailable` | Der Link kann gerade nicht erzeugt werden. Versuchen Sie es nach kurzer Wartezeit erneut. |
+
+## Auf ein Ergebnis warten
+
+Ein platzierter Anruf wird sofort als `queued` beantwortet, das Ergebnis kommt also später. Fragen Sie `GET /api/v1/calls/{id}` ab, bis `status` gleich `completed` oder `failed` ist und `analysis` nicht mehr `null` ist, und warten Sie zwischen den Versuchen einige Sekunden länger.
+
+Wo Call-Webhooks verfügbar sind, übergeben Sie das Warten besser an sie: Der Webhook-Payload ist dasselbe Anrufobjekt, das dieser Endpunkt zurückgibt, die Zustellung ist damit schneller und günstiger als eine Polling-Schleife.

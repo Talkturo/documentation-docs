@@ -1,0 +1,203 @@
+---
+title: "Nachrichten (v1)"
+description: "Senden Sie eine WhatsApp-Nachricht an einen Kontakt im Workspace und verfolgen Sie sie über jeden Status hinweg bis zum endgültigen Ergebnis."
+---
+
+## Nachricht senden
+
+`POST /api/v1/messages` sendet eine WhatsApp-Nachricht an einen Kontakt des Workspace, entweder als Freitext innerhalb des Antwortfensters oder als genehmigte Vorlage, und antwortet mit der Nachrichten-ID, über die Sie den Versand weiterverfolgen. Der Endpunkt liegt unter `https://app.talkturo.com/api/v1/messages`, erfordert den Scope `messages:send` und benötigt einen `Idempotency-Key`-Header. Lesen Sie die [v1-API-Übersicht](/de/api-reference/v1-overview) zu Authentifizierung, Scopes, Rate Limits und Idempotenz, bevor Sie den ersten Aufruf machen.
+
+WhatsApp akzeptiert Freitext nur innerhalb des 24-Stunden-Antwortfensters, das sich öffnet, wenn der Kontakt Ihnen zuletzt geschrieben hat. Außerhalb dieses Fensters senden Sie stattdessen eine genehmigte Utility-Vorlage. Welche Vorlagen der Workspace senden darf, listen Sie mit `GET /api/v1/templates` auf, dokumentiert unter [Vorlagen (v1)](/de/api-reference/v1-templates).
+
+Der Request-Body wird strikt validiert. Senden Sie daher nur die unten beschriebenen Felder.
+
+<Request tabs="cURL">
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/messages \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Idempotency-Key: msg-acme-2025-06-18-0917" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contact_id": "e4f1a8b3-92c5-47d0-8a63-1f5b7c2d9e08",
+    "assistant_id": "3c9f7d21-8b4a-4e56-9f10-2d7c8a5b1e34",
+    "template": {
+      "name": "delivery_window_confirmed",
+      "language": "en",
+      "variables": {
+        "first_name": "Jordan",
+        "delivery_day": "Friday"
+      }
+    },
+    "consent": {
+      "evidence": "Opted in on the checkout form on 2025-05-02"
+    }
+  }'
+```
+
+</Request>
+
+### Body-Parameter
+
+<ParamField body="contact_id" param-type="string (UUID)" required="true">
+Der Kontakt, dem die Nachricht gilt.
+</ParamField>
+
+<ParamField body="assistant_id" param-type="string (UUID) or null">
+Der Assistant, dessen WhatsApp-Nummer die Nachricht sendet. Erforderlich, wenn der Workspace mehr als eine WhatsApp-Nummer hat.
+</ParamField>
+
+<ParamField body="text" param-type="string">
+Freitext mit 1 bis 4096 Zeichen. Nur innerhalb des 24-Stunden-Antwortfensters des Kontakts erlaubt.
+</ParamField>
+
+<ParamField body="template" param-type="object">
+Eine genehmigte Utility-Vorlage. Senden Sie im selben Request genau eines von `text` oder `template`.
+</ParamField>
+
+<ParamField body="template.name" param-type="string" required="true">
+Der Name der Vorlage, 1 bis 512 Zeichen.
+</ParamField>
+
+<ParamField body="template.language" param-type="string" required="true">
+Der Sprachcode der Vorlage, 2 bis 16 Zeichen, zum Beispiel `en` oder `de`.
+</ParamField>
+
+<ParamField body="template.variables" param-type="object">
+Werte für die Variablen der Vorlage. Jeder Wert ist ein String mit bis zu 1024 Zeichen.
+</ParamField>
+
+<ParamField body="consent" param-type="object">
+Hält fest, dass der Kontakt dem Empfang von Nachrichten von Ihnen zugestimmt hat.
+</ParamField>
+
+<ParamField body="consent.evidence" param-type="string">
+Der Nachweis für das Opt-in, 1 bis 500 Zeichen, etwa wo und wann der Kontakt zugestimmt hat.
+</ParamField>
+
+### Request-Header
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+Ein Schlüssel aus 1 bis 100 Buchstaben, Ziffern oder `:`, `_`, `.`, `-`, der einen Request mit seiner Antwort verbindet. Wiederholen Sie den Schlüssel mit demselben Body, um die erste Antwort erneut zu erhalten, statt die Nachricht zweimal zu senden.
+</ParamField>
+
+<Response tabs="201">
+
+```json
+{
+  "id": "c7a2f5d1-8e34-4b96-a1f7-2c9d4e6b8a13",
+  "status": "sent",
+  "replay": false
+}
+```
+
+</Response>
+
+`replay` ist `true`, wenn die Antwort einen früheren Request mit demselben Idempotency-Key wiederholt. Ein Replay liefert `200` mit dem Body der ersten Antwort und `replay` auf `true` gesetzt; der ursprüngliche Versand antwortete mit `201`.
+
+### Antwortcodes
+
+| Status | Code | Bedeutung |
+| --- | --- | --- |
+| 201 | `sent` | Die Nachricht ist an WhatsApp rausgegangen. Body: `{ id, status: "sent", replay }`. |
+| 200 | | Der Request hat einen Idempotency-Key wiederholt. Gleicher Body wie die erste Antwort, `replay` auf `true` gesetzt. |
+| 202 | | Wird noch gesendet, oder der finale Zustand ist noch nicht bekannt. Body: `{ id, status, replay }`. Fragen Sie `GET /api/v1/messages/{id}` ab. |
+| 422 | `refused` | Durch Policy abgelehnt. Body: `{ id, status: "refused", refusal: { code, reason, retry_after, needs_person }, replay }`. |
+| 502 | `failed` | Bei WhatsApp fehlgeschlagen. Body: `{ id, status: "failed", failure, replay }`. |
+| 409 | `idempotency_key_reused` | Der Idempotency-Key wurde bereits mit einem anderen Body verwendet. |
+| 404 | `contact_not_found` | Kein Kontakt mit dieser ID in diesem Workspace. |
+| 422 | `contact_has_no_phone` | Der Kontakt hat keine Telefonnummer, an die eine WhatsApp-Nachricht gehen kann. |
+| 422 | `no_whatsapp_number` | Weder der Assistant noch der Workspace hat eine aktive WhatsApp-Nummer. |
+| 422 | `assistant_required` | Der Workspace hat mehr als eine WhatsApp-Nummer. Senden Sie `assistant_id`. |
+
+<Callout kind="info">
+Ein abgelehnter Versand liefert die Nachrichten-ID und ein `refusal`-Objekt zurück, sodass Sie das Ergebnis prüfen können, statt einen Fehler zu parsen:
+
+- `code` und `reason` benennen die Policy, die den Versand blockiert hat, und erläutern sie für Logs oder für eine Person, die das Ticket liest.
+- `needs_person` ist `true`, wenn nur ein Mensch den Versand freigeben kann. Den Request zu wiederholen hilft nicht, bis jemand handelt.
+- `retry_after` gibt an, wann ein erneuter Versuch sinnvoll ist. Ist der Wert `null`, ändert Warten das Ergebnis nicht.
+
+</Callout>
+
+## Eine Nachricht lesen
+
+`GET /api/v1/messages/{id}` liefert den Stand einer Nachricht, von `sending` bis zum finalen Zustand. Der Aufruf benötigt den Scope `messages:read`.
+
+```bash
+curl https://app.talkturo.com/api/v1/messages/c7a2f5d1-8e34-4b96-a1f7-2c9d4e6b8a13 \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8"
+```
+
+```json
+{
+  "id": "c7a2f5d1-8e34-4b96-a1f7-2c9d4e6b8a13",
+  "contact_id": "e4f1a8b3-92c5-47d0-8a63-1f5b7c2d9e08",
+  "status": "delivered",
+  "kind": "template",
+  "template": {
+    "name": "delivery_window_confirmed",
+    "language": "en"
+  },
+  "created_at": "2025-06-18T09:17:04.221Z",
+  "sent_at": "2025-06-18T09:17:05.018Z",
+  "refusal": null,
+  "failure": null
+}
+```
+
+<ParamField path="id" param-type="string (UUID)" required="true">
+Die ID, die beim Senden der Nachricht zurückgegeben wurde.
+</ParamField>
+
+### Antwortfelder
+
+<ResponseField name="id" field-type="string (UUID)" required="true">
+Die Nachrichten-ID.
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string (UUID)" required="true">
+Der Kontakt, an den die Nachricht adressiert war.
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+Wo die Nachricht steht: `sending`, `sent`, `delivered`, `read`, `failed`, `refused` oder `unknown`.
+</ResponseField>
+
+<ResponseField name="kind" field-type="string" required="true">
+Wie die Nachricht zusammengestellt wurde, zum Beispiel `template`, wenn eine genehmigte Vorlage gesendet wurde.
+</ResponseField>
+
+<ResponseField name="template" field-type="object">
+Die gesendete Vorlage mit `name` und `language`.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string (timestamp)" required="true">
+Wann die Nachricht erstellt wurde.
+</ResponseField>
+
+<ResponseField name="sent_at" field-type="string (timestamp)">
+Wann die Nachricht gesendet wurde.
+</ResponseField>
+
+<ResponseField name="refusal" field-type="object">
+`null`, wenn die Nachricht nicht abgelehnt wurde. Andernfalls ein Objekt mit `code`, `reason`, `retry_after` und `needs_person`.
+</ResponseField>
+
+<ResponseField name="failure" field-type="object">
+`null`, außer die Nachricht ist bei WhatsApp fehlgeschlagen; dann beschreibt das Objekt den Fehler.
+</ResponseField>
+
+Eine Nachricht, die zu einem anderen Workspace gehört, liefert `404` mit dem Code `message_not_found`. Eine ID, die keine UUID ist, liefert denselben `404`. Eine vertippte ID und eine Nachricht, die Sie nicht sehen dürfen, sehen von außen also identisch aus.
+
+## Eine Nachricht verfolgen
+
+Der Versand antwortet, sobald WhatsApp die Nachricht annimmt. `sent` ist also nicht das letzte Wort. Fragen Sie `GET /api/v1/messages/{id}` zunächst im Abstand von wenigen Sekunden ab, später seltener, bis `status` den Wert `delivered`, `read`, `failed` oder `refused` hat. Der Status `unknown` bedeutet, dass der finale Zustand noch nicht gelesen werden konnte. Behandeln Sie ihn als ungeklärt und halten Sie ihn in Ihrer Abstimmungsqueue, statt ihn als Erfolg oder Fehler zu werten.
+
+<Columns cols={2}>
+  <Card title="v1-API-Übersicht" icon="book-open" href="/de/api-reference/v1-overview">
+    Authentifizierung, Scopes, Rate Limits und Idempotenz für jeden v1-Endpunkt.
+  </Card>
+  <Card title="Vorlagen auflisten, die Sie senden können" icon="package" href="/de/api-reference/v1-templates">
+    Finden Sie genehmigte Utility-Vorlagen und ihre Variablen, bevor Sie eine Nachricht zusammenstellen.
+  </Card>
+</Columns>

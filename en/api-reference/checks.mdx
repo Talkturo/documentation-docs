@@ -1,0 +1,991 @@
+---
+title: Assistant checks
+description: Build a library of saved test conversations and run them against your assistant to catch behaviour regressions before callers do.
+---
+
+## What a check is
+
+A check (also called a scenario) is a saved test conversation for one assistant. It holds a label, the instructions the simulated caller follows, and the expectations the assistant's behaviour is judged against. Keep a set of checks per assistant and run them after you change the prompt or tools, to confirm the assistant still behaves the way you rely on.
+
+A run executes one or more checks and reports a verdict per check. Runs are priced in credits before they start; the current prices and your balance come back with the run history.
+
+## Authenticate requests
+
+The checks routes accept either a workspace API key or a signed-in session cookie from the web app.
+
+- **API key**: send `Authorization: Bearer tk_live_...`, or `tk_test_...` for a test workspace.
+- **Session**: reuse the cookie the web app sets when a user signs in.
+
+The workspace is always derived from the credential. Passing a workspace or account identifier in the body or the query string does not switch targets, so a key issued to one workspace can never read another workspace's checks.
+
+<Callout kind="info">
+
+These routes accept both credential types because the dashboard front end calls them. The versioned [API v1](/en/api-reference/v1-overview) surface accepts API keys only. See [Authentication](/en/api-reference/api-keys) for creating and rotating keys.
+
+</Callout>
+
+## Endpoint reference
+
+Every path is relative to `https://app.talkturo.com` and is scoped to one assistant.
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/assistants/{assistantId}/checks` | List the assistant's checks |
+| POST | `/api/assistants/{assistantId}/checks` | Create a check |
+| PATCH | `/api/assistants/{assistantId}/checks/{checkId}` | Edit a check or switch it off |
+| DELETE | `/api/assistants/{assistantId}/checks/{checkId}` | Delete a check |
+| GET | `/api/assistants/{assistantId}/checks/runs` | Read the last 20 runs with current prices |
+| POST | `/api/assistants/{assistantId}/checks/runs` | Start a run |
+| GET | `/api/assistants/{assistantId}/checks/runs/{runId}` | Read a run and its results |
+| PATCH | `/api/assistants/{assistantId}/checks/runs/{runId}` | Cancel a run |
+
+## The check object
+
+Every check response returns the same set of snake_case fields.
+
+<ParamField body="id" param-type="string" show-location="false">
+
+Unique identifier for the check.
+
+</ParamField>
+
+<ParamField body="label" param-type="string" show-location="false">
+
+Short name of the scenario, used as the label on results and in reports.
+
+</ParamField>
+
+<ParamField body="instructions" param-type="string" show-location="false">
+
+What the simulated caller does and says. Maximum 20000 characters.
+
+</ParamField>
+
+<ParamField body="agent_expectations" param-type="string" show-location="false">
+
+What the assistant is expected to do. Maximum 5000 characters. In request bodies this field is spelled `agentExpectations`.
+
+</ParamField>
+
+<ParamField body="tags" param-type="string[]" show-location="false">
+
+Array of strings for grouping and filtering checks.
+
+</ParamField>
+
+<ParamField body="userdata" param-type="object" show-location="false">
+
+Object of values that stands in for the caller's record during the simulated conversation, such as a name, a phone number, or a booking reference.
+
+</ParamField>
+
+<ParamField body="source" param-type="string" show-location="false">
+
+Where the check came from: `manual` for one you wrote, or `generated` for one proposed from a past call.
+
+</ParamField>
+
+<ParamField body="source_call_id" param-type="string" show-location="false">
+
+The call a generated check was derived from, or `null` for a manual check.
+
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean" show-location="false">
+
+Whether the check takes part in runs started without an explicit check list. Defaults to `true`.
+
+</ParamField>
+
+<ParamField body="created_at" param-type="string" show-location="false">
+
+ISO 8601 timestamp of when the check was created.
+
+</ParamField>
+
+<ParamField body="updated_at" param-type="string" show-location="false">
+
+ISO 8601 timestamp of when the check was last modified.
+
+</ParamField>
+
+## Manage checks
+
+### List checks
+
+Returns the assistant's checks, newest first, including the disabled ones, together with the language that checks run in.
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+ID of the assistant whose checks you want to read.
+
+</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tz"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "success": true,
+  "language": {
+    "code": "en",
+    "source": "assistant"
+  },
+  "checks": [
+    {
+      "id": "chk_3f9a1c72",
+      "label": "Reschedule a booked appointment",
+      "instructions": "You want to move your Tuesday 10:00 appointment to the following week. Stay on the same service and do not accept a different time on Tuesday.",
+      "agent_expectations": "The assistant offers the nearest available slot next week, reads the new time back to the caller, and keeps the same service.",
+      "tags": ["rescheduling", "regression"],
+      "userdata": {
+        "name": "Dana Whitfield",
+        "phone": "+14155550143",
+        "booking_reference": "BK-48213"
+      },
+      "source": "manual",
+      "source_call_id": null,
+      "enabled": true,
+      "created_at": "2025-02-11T09:24:18.000Z",
+      "updated_at": "2025-02-11T09:24:18.000Z"
+    },
+    {
+      "id": "chk_ba72e091",
+      "label": "Caller asks for a refund",
+      "instructions": "You have been a customer for four months and want last month's invoice refunded. You are firm but polite and you do not accept a credit note on the first ask.",
+      "agent_expectations": "The assistant explains the refund policy and offers a credit note instead of a cash refund.",
+      "tags": ["billing"],
+      "userdata": {
+        "name": "Marcus Ide",
+        "phone": "+14155550178",
+        "invoice_reference": "INV-2025-0142"
+      },
+      "source": "generated",
+      "source_call_id": "call_5d81c3a4",
+      "enabled": false,
+      "created_at": "2025-02-09T16:03:44.000Z",
+      "updated_at": "2025-02-14T11:52:07.000Z"
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="success" field-type="boolean">
+
+`true` when the request succeeded.
+
+</ResponseField>
+
+<ResponseField name="language.code" field-type="string">
+
+Language code the checks are executed in, for example `en`.
+
+</ResponseField>
+
+<ResponseField name="language.source" field-type="string">
+
+Where the language setting comes from, for example the assistant's own configuration.
+
+</ResponseField>
+
+<ResponseField name="checks" field-type="object[]">
+
+The assistant's checks, newest first. Disabled checks are included.
+
+</ResponseField>
+
+### Create a check
+
+Adds a check to the assistant. A created check is not executed; start a run to get a verdict.
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+ID of the assistant to attach the check to.
+
+</ParamField>
+
+<ParamField body="label" param-type="string" required="true">
+
+Short name of the scenario. Between 1 and 200 characters.
+
+</ParamField>
+
+<ParamField body="instructions" param-type="string" required="true">
+
+What the simulated caller does and says. Between 1 and 20000 characters. Write it as a briefing: the situation, the details the caller knows, and the tone they take.
+
+</ParamField>
+
+<ParamField body="agentExpectations" param-type="string" required="true">
+
+What the assistant is expected to do. Between 1 and 5000 characters. This request field is camelCase; it is stored and returned as `agent_expectations`.
+
+</ParamField>
+
+<ParamField body="tags" param-type="string[]">
+
+Optional array of strings for grouping checks.
+
+</ParamField>
+
+<ParamField body="userdata" param-type="object">
+
+Optional object of values that stands in for the caller's record during the simulated conversation.
+
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean">
+
+Whether the check takes part in runs started without an explicit check list. Defaults to `true`.
+
+</ParamField>
+
+<ParamField body="source" param-type="string" enum="manual,generated">
+
+Where the check came from. Defaults to `manual`; use `generated` for a check derived from a past call and pair it with a `source_call_id`.
+
+</ParamField>
+
+<Request tabs="cURL,JavaScript">
+
+```bash
+curl -X POST https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tz" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label": "Reschedule a booked appointment",
+    "instructions": "You want to move your Tuesday 10:00 appointment to the following week. Stay on the same service and do not accept a different time on Tuesday.",
+    "agentExpectations": "The assistant offers the nearest available slot next week, reads the new time back to the caller, and keeps the same service.",
+    "tags": ["rescheduling", "regression"],
+    "userdata": {
+      "name": "Dana Whitfield",
+      "phone": "+14155550143",
+      "booking_reference": "BK-48213"
+    }
+  }'
+```
+
+```javascript
+const res = await fetch(
+  "https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer tk_live_9xmk7q2r4tz",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      label: "Reschedule a booked appointment",
+      instructions:
+        "You want to move your Tuesday 10:00 appointment to the following week. Stay on the same service and do not accept a different time on Tuesday.",
+      agentExpectations:
+        "The assistant offers the nearest available slot next week, reads the new time back to the caller, and keeps the same service.",
+      tags: ["rescheduling", "regression"],
+      userdata: {
+        name: "Dana Whitfield",
+        phone: "+14155550143",
+        booking_reference: "BK-48213",
+      },
+    }),
+  },
+);
+
+const check = await res.json();
+```
+
+</Request>
+
+<Response tabs="201">
+
+```json
+{
+  "success": true,
+  "check": {
+    "id": "chk_3f9a1c72",
+    "label": "Reschedule a booked appointment",
+    "instructions": "You want to move your Tuesday 10:00 appointment to the following week. Stay on the same service and do not accept a different time on Tuesday.",
+    "agent_expectations": "The assistant offers the nearest available slot next week, reads the new time back to the caller, and keeps the same service.",
+    "tags": ["rescheduling", "regression"],
+    "userdata": {
+      "name": "Dana Whitfield",
+      "phone": "+14155550143",
+      "booking_reference": "BK-48213"
+    },
+    "source": "manual",
+    "source_call_id": null,
+    "enabled": true,
+    "created_at": "2025-02-11T09:24:18.000Z",
+    "updated_at": "2025-02-11T09:24:18.000Z"
+  }
+}
+```
+
+</Response>
+
+A payload that fails validation returns `400` with the code `invalid_body`. The body carries a `details` entry describing each rejected field, so you can report every problem in one pass instead of fixing them one at a time.
+
+### Update or disable a check
+
+Sends a partial update to one check. Include any subset of `label`, `instructions`, `agentExpectations`, `tags`, `userdata`, and `enabled`; at least one field is required, and an empty body is rejected with `400 invalid_body`.
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+ID of the assistant that owns the check.
+
+</ParamField>
+
+<ParamField path="checkId" param-type="string" required="true">
+
+ID of the check to update.
+
+</ParamField>
+
+<ParamField body="label" param-type="string">
+
+New label for the check.
+
+</ParamField>
+
+<ParamField body="instructions" param-type="string">
+
+Replacement instructions for the simulated caller.
+
+</ParamField>
+
+<ParamField body="agentExpectations" param-type="string">
+
+Replacement expectations for the assistant.
+
+</ParamField>
+
+<ParamField body="tags" param-type="string[]">
+
+Replacement tag list.
+
+</ParamField>
+
+<ParamField body="userdata" param-type="object">
+
+Replacement caller record.
+
+</ParamField>
+
+<ParamField body="enabled" param-type="boolean">
+
+`false` excludes the check from runs started without an explicit check list; `true` brings it back.
+
+</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl -X PATCH https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks/chk_3f9a1c72 \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tz" \
+  -H "Content-Type: application/json" \
+  -d '{ "enabled": false }'
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "success": true,
+  "check": {
+    "id": "chk_3f9a1c72",
+    "label": "Reschedule a booked appointment",
+    "instructions": "You want to move your Tuesday 10:00 appointment to the following week. Stay on the same service and do not accept a different time on Tuesday.",
+    "agent_expectations": "The assistant offers the nearest available slot next week, reads the new time back to the caller, and keeps the same service.",
+    "tags": ["rescheduling", "regression"],
+    "userdata": {
+      "name": "Dana Whitfield",
+      "phone": "+14155550143",
+      "booking_reference": "BK-48213"
+    },
+    "source": "manual",
+    "source_call_id": null,
+    "enabled": false,
+    "created_at": "2025-02-11T09:24:18.000Z",
+    "updated_at": "2025-02-14T11:52:07.000Z"
+  }
+}
+```
+
+</Response>
+
+An unknown check id returns `404` with the code `check_not_found`. When you only want a check to stop running, send `enabled: false` instead of deleting it: the wording stays available, and past result labels stay tied to a live record.
+
+### Delete a check
+
+Removes the check permanently.
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+ID of the assistant that owns the check.
+
+</ParamField>
+
+<ParamField path="checkId" param-type="string" required="true">
+
+ID of the check to delete.
+
+</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl -X DELETE https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks/chk_ba72e091 \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tz"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "success": true
+}
+```
+
+</Response>
+
+An unknown check id returns `404` with the code `check_not_found`. Past run results keep the labels they recorded at the time of the run, so deleting a check does not rewrite history.
+
+## Run checks
+
+### Read run history
+
+Returns the 20 most recent runs for the assistant, newest first, together with the current prices and the workspace's credit balance.
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+ID of the assistant whose runs you want to read.
+
+</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks/runs \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tz"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "success": true,
+  "pricing": {
+    "text": 2,
+    "audio": 9
+  },
+  "balance": 4180,
+  "runs": [
+    {
+      "id": "run_5a90f2c8",
+      "mode": "text",
+      "status": "cancelled",
+      "total": 4,
+      "passed": 1,
+      "failed": 0,
+      "credits_estimated": 8,
+      "credits_charged": 2,
+      "note": "Stopped early to check the new refund wording",
+      "prompt_version_id": "pv_2b6f90d1",
+      "error": null,
+      "started_at": "2025-02-12T15:41:03.000Z",
+      "finished_at": "2025-02-12T15:42:19.000Z",
+      "created_at": "2025-02-12T15:41:01.000Z"
+    },
+    {
+      "id": "run_1d47ae60",
+      "mode": "text",
+      "status": "failed",
+      "total": 3,
+      "passed": 1,
+      "failed": 0,
+      "credits_estimated": 6,
+      "credits_charged": 2,
+      "note": "",
+      "prompt_version_id": null,
+      "error": "Runner stopped after the second check",
+      "started_at": "2025-02-10T08:12:44.000Z",
+      "finished_at": "2025-02-10T08:14:02.000Z",
+      "created_at": "2025-02-10T08:12:41.000Z"
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="pricing" field-type="object">
+
+Current price per check in credits, split into `text` and `audio`, or `null` when prices are unavailable right now.
+
+</ResponseField>
+
+<ResponseField name="balance" field-type="number">
+
+The workspace's credit balance.
+
+</ResponseField>
+
+<ResponseField name="runs" field-type="object[]">
+
+The 20 most recent runs, newest first.
+
+</ResponseField>
+
+<ResponseField name="runs[].id" field-type="string">
+
+Run identifier.
+
+</ResponseField>
+
+<ResponseField name="runs[].mode" field-type="string">
+
+`text` or `audio`.
+
+</ResponseField>
+
+<ResponseField name="runs[].status" field-type="string">
+
+Run status: `queued`, `running`, `cancelled`, or `failed`. See [Run status values](#run-status-values).
+
+</ResponseField>
+
+<ResponseField name="runs[].total" field-type="number">
+
+Number of checks in the run.
+
+</ResponseField>
+
+<ResponseField name="runs[].passed" field-type="number">
+
+Checks that passed.
+
+</ResponseField>
+
+<ResponseField name="runs[].failed" field-type="number">
+
+Checks that failed.
+
+</ResponseField>
+
+<ResponseField name="runs[].credits_estimated" field-type="number">
+
+Credits priced for the run before it started.
+
+</ResponseField>
+
+<ResponseField name="runs[].credits_charged" field-type="number">
+
+Credits actually charged once results came back.
+
+</ResponseField>
+
+<ResponseField name="runs[].note" field-type="string">
+
+Free text recorded with the run.
+
+</ResponseField>
+
+<ResponseField name="runs[].prompt_version_id" field-type="string">
+
+The saved prompt version the run used, or `null` when it ran against the assistant's current prompt.
+
+</ResponseField>
+
+<ResponseField name="runs[].error" field-type="string">
+
+Set when the run failed, `null` otherwise.
+
+</ResponseField>
+
+<ResponseField name="runs[].started_at" field-type="string">
+
+ISO 8601 timestamp of when the run started.
+
+</ResponseField>
+
+<ResponseField name="runs[].finished_at" field-type="string">
+
+ISO 8601 timestamp of when the run reached its final state, or `null` while it is still in progress.
+
+</ResponseField>
+
+<ResponseField name="runs[].created_at" field-type="string">
+
+ISO 8601 timestamp of when the run was accepted.
+
+</ResponseField>
+
+### Start a run
+
+Starts executing checks. Omit `checkIds` to run every enabled check on the assistant, or send an explicit list to target specific checks.
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+ID of the assistant to test.
+
+</ParamField>
+
+<ParamField body="mode" param-type="string" enum="text,audio">
+
+How the simulated conversation is carried out. Defaults to `text`.
+
+</ParamField>
+
+<ParamField body="checkIds" param-type="string[]">
+
+Explicit list of check ids to execute, at most 25 per run. When omitted, every enabled check of the assistant runs.
+
+</ParamField>
+
+<ParamField body="promptVersionId" param-type="string">
+
+Run the checks against a specific saved prompt version instead of the assistant's current prompt.
+
+</ParamField>
+
+<ParamField body="options" param-type="object">
+
+Optional object passed through to the runner.
+
+</ParamField>
+
+<Request tabs="cURL,JavaScript">
+
+```bash
+curl -X POST https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks/runs \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tz" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mode": "text",
+    "checkIds": ["chk_3f9a1c72", "chk_ba72e091", "chk_6e02b4d9"],
+    "promptVersionId": "pv_2b6f90d1"
+  }'
+```
+
+```javascript
+const res = await fetch(
+  "https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks/runs",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer tk_live_9xmk7q2r4tz",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mode: "text",
+      checkIds: ["chk_3f9a1c72", "chk_ba72e091", "chk_6e02b4d9"],
+      promptVersionId: "pv_2b6f90d1",
+    }),
+  },
+);
+
+const { run } = await res.json();
+```
+
+</Request>
+
+<Response tabs="202">
+
+```json
+{
+  "success": true,
+  "run": {
+    "id": "run_8c14bd3a",
+    "mode": "text",
+    "status": "running",
+    "total": 3,
+    "credits_estimated": 6,
+    "created_at": "2025-02-14T10:02:09.000Z"
+  }
+}
+```
+
+</Response>
+
+The run is priced before it starts, the estimate comes back as `credits_estimated`, and your balance must cover it. When results come back, credits are charged only for the checks that actually ran. A cancelled run is charged only for the checks that produced a real verdict.
+
+One run per assistant at a time. A start request either queues the whole run or fails outright.
+
+<Callout kind="alert">
+
+A start request is all-or-nothing. There are no partial runs: if the request fails, no check is queued and nothing is charged.
+
+</Callout>
+
+#### Start-run errors
+
+| Status | Code | Meaning |
+|---|---|---|
+| `400` | `no_checks` | The assistant has no enabled checks to run. The message reads "There is nothing to run: add a check first." |
+| `400` | | More than 25 check ids were sent. |
+| `400` | `bad_prompt_version` | The prompt version does not belong to this assistant. |
+| `402` | `insufficient_credits` | The balance does not cover the estimate. The body also carries `required_credits` and `balance`. |
+| `409` | | A run is already in progress for this assistant. Wait for it to finish. |
+| `503` | | The run could not be priced right now. Retry later. |
+| `500` | | Starting the run failed. If the runner rejected it, the run is closed as failed and its id is returned. |
+
+### Read a run
+
+Returns the run's current state plus one result per check that has finished so far. Results arrive as they complete, so a run can still be `running` with a partial `results` array.
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+ID of the assistant that owns the run.
+
+</ParamField>
+
+<ParamField path="runId" param-type="string" required="true">
+
+ID returned when the run was started.
+
+</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks/runs/run_8c14bd3a \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tz"
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "success": true,
+  "completed": false,
+  "run": {
+    "id": "run_8c14bd3a",
+    "mode": "text",
+    "status": "running",
+    "total": 3,
+    "passed": 1,
+    "failed": 0,
+    "credits_estimated": 6,
+    "credits_charged": null,
+    "note": "Prompt v14 regression pass",
+    "prompt_version_id": "pv_2b6f90d1",
+    "error": null,
+    "started_at": "2025-02-14T10:02:11.000Z",
+    "finished_at": null,
+    "created_at": "2025-02-14T10:02:09.000Z"
+  },
+  "results": [
+    {
+      "id": "res_1a7c40ee",
+      "check_id": "chk_3f9a1c72",
+      "label": "Reschedule a booked appointment",
+      "verdict": "pass",
+      "judge_reason": "The assistant offered the following Tuesday at 10:00, read the new time back to the caller, and kept the same service.",
+      "transcript": [
+        { "role": "caller", "text": "Hi, I need to move my Tuesday appointment to next week." },
+        { "role": "assistant", "text": "Of course. I have Tuesday the 18th at 10:00 available with the same technician. Shall I move it?" }
+      ],
+      "tool_calls": ["check_availability", "reschedule_appointment"],
+      "state_check": {
+        "appointment_date_changed": true,
+        "service_unchanged": true
+      },
+      "metrics": {
+        "turns": 4,
+        "latency_ms_avg": 812
+      },
+      "duration_ms": 42180
+    }
+  ]
+}
+```
+
+</Response>
+
+<ResponseField name="completed" field-type="boolean">
+
+`true` once the run has reached its final state. Poll until this is `true`; a finished run reports its `passed` and `failed` counts and a `finished_at` timestamp.
+
+</ResponseField>
+
+<ResponseField name="run" field-type="object">
+
+The full run object, with the same fields as in [Read run history](#read-run-history).
+
+</ResponseField>
+
+<ResponseField name="results" field-type="object[]">
+
+Per-check outcomes, growing as checks finish. Treat it as partial until `completed` is `true`.
+
+</ResponseField>
+
+<ResponseField name="results[].id" field-type="string">
+
+Result identifier.
+
+</ResponseField>
+
+<ResponseField name="results[].check_id" field-type="string">
+
+ID of the check that was executed.
+
+</ResponseField>
+
+<ResponseField name="results[].label" field-type="string">
+
+Label of the check at the time of the run.
+
+</ResponseField>
+
+<ResponseField name="results[].verdict" field-type="string">
+
+`pass`, `fail`, or `error`.
+
+</ResponseField>
+
+<ResponseField name="results[].judge_reason" field-type="string">
+
+Explanation of why the verdict was reached.
+
+</ResponseField>
+
+<ResponseField name="results[].transcript" field-type="object[]">
+
+The simulated conversation.
+
+</ResponseField>
+
+<ResponseField name="results[].tool_calls" field-type="object[]">
+
+The tools the assistant used during the conversation.
+
+</ResponseField>
+
+<ResponseField name="results[].state_check" field-type="object">
+
+What the assistant changed in the workspace during the conversation.
+
+</ResponseField>
+
+<ResponseField name="results[].metrics" field-type="object">
+
+Timing and usage numbers for the check.
+
+</ResponseField>
+
+<ResponseField name="results[].duration_ms" field-type="number">
+
+How long the check took, in milliseconds.
+
+</ResponseField>
+
+<Callout kind="tip">
+
+Poll every few seconds rather than in a tight loop, and stop as soon as `completed` is `true`. A check takes tens of seconds to run, so a tight loop only adds load without returning results any sooner.
+
+</Callout>
+
+### Run status values
+
+A run carries one of four statuses.
+
+| Status | Meaning |
+|---|---|
+| `queued` | Accepted and waiting for the runner to pick it up |
+| `running` | Checks are being executed |
+| `cancelled` | Stopped by a cancel request |
+| `failed` | The run did not finish |
+
+A run that completes normally reports its `passed` and `failed` counts and a `finished_at` timestamp. Per-check verdicts are separate from run status, so a run can finish with individual results marked `fail` or `error`.
+
+### Cancel a run
+
+Stops a run that has not finished yet. Checks that already produced a result keep it and are the ones charged; the remaining checks are not run.
+
+<ParamField path="assistantId" param-type="string" required="true">
+
+ID of the assistant that owns the run.
+
+</ParamField>
+
+<ParamField path="runId" param-type="string" required="true">
+
+ID of the run to cancel.
+
+</ParamField>
+
+<ParamField body="action" param-type="string" required="true" enum="cancel">
+
+The action to perform. `cancel` is the only accepted value; anything else returns `400`.
+
+</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl -X PATCH https://app.talkturo.com/api/assistants/ast_9c4b7e21/checks/runs/run_8c14bd3a \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4tz" \
+  -H "Content-Type: application/json" \
+  -d '{ "action": "cancel" }'
+```
+
+</Request>
+
+<Response tabs="200">
+
+```json
+{
+  "success": true,
+  "status": "cancelled",
+  "completed": false
+}
+```
+
+</Response>
+
+<ResponseField name="status" field-type="string">
+
+The run's status after the request.
+
+</ResponseField>
+
+<ResponseField name="completed" field-type="boolean">
+
+Whether the run has reached its final state.
+
+</ResponseField>
+
+If the run already finished, nothing is cancelled and the response carries `alreadyFinished: true` with the run's current status instead.
+
+## Keep going
+
+<Columns cols={2}>
+  <Card title="Assistants" href="/en/api-reference/assistants" icon="users">
+
+  Read, update, and configure the assistants that checks run against.
+
+  </Card>
+  <Card title="Assistant configuration" href="/en/assistants/configuration" icon="settings">
+
+  Set the prompt, tools, and language that determine how a check is judged.
+
+  </Card>
+</Columns>

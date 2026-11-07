@@ -1,0 +1,185 @@
+---
+title: API v1 Overview
+description: Place outbound calls, send WhatsApp messages, and read assistant plans from your backend using the scoped, key-authenticated v1 API
+---
+
+## What you can do with the v1 API
+
+The versioned API lets your backend place outbound calls, send WhatsApp messages to contacts, read the plans the assistant keeps for those contacts, and list the WhatsApp templates it is allowed to send. Every request is scoped to a single workspace and authenticated with that workspace's API key, so you can automate outreach from a server without a browser session anywhere in the loop.
+
+That makes v1 the right surface for cron jobs, CRM syncs, and internal tools that need to act on contacts on their own schedule. Anything that requires a signed-in person, such as managing keys, billing, or assistant configuration, stays on the endpoints documented elsewhere in this reference.
+
+<Callout kind="info">
+
+The base address is `https://app.talkturo.com/api/v1`. The endpoints on the other reference pages live under `/api` and accept either a workspace API key or a session cookie. The versioned API accepts only workspace API keys, never a session, so a browser cookie cannot call it.
+
+</Callout>
+
+## Authenticate with a workspace API key
+
+Send the key on every request as a bearer token in the `Authorization` header, using either the `tk_live_...` or the `tk_test_...` form of the key. No other credential is accepted.
+
+```bash
+curl https://app.talkturo.com/api/v1/calls \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Accept: application/json"
+```
+
+A `200 OK` response with a JSON body of calls confirms the key works and carries the scope the route needs. Failures are specific:
+
+- **No key, or a malformed `Authorization` header**: the request returns 401 with code `unauthorized`.
+- **A key that is invalid, expired, or switched off**: the request returns 401 with code `unauthorized`.
+- **A valid key without the scope the route needs**: the request returns 403 with code `missing_scope`, and the message names the scope you are missing.
+
+## Scopes
+
+Each key carries a set of scopes chosen when the key is created. A key can hold only the scopes you granted it, so give a backend the narrowest set that covers the work it does.
+
+| Scope | What it allows |
+| --- | --- |
+| `calls:create` | Place outbound calls |
+| `calls:read` | List and read calls, and download recordings |
+| `messages:send` | Send WhatsApp messages to contacts |
+| `messages:read` | Read the status of a message |
+| `templates:read` | List the WhatsApp templates the workspace may send |
+| `plans:read` | List the plans the assistant keeps for contacts |
+| `plans:write` | Mark a plan as ready |
+| `*` | Every scope |
+
+Every route names exactly one scope, listed in the endpoints table below and on each endpoint's own page. A route never accepts an alternative scope: a key with `calls:read` cannot place a call, and a key with `messages:send` cannot read a message's status.
+
+## Rate limits
+
+Every request counts against the hourly limit the key carries, taken from the key's `rate_limit_per_hour` permission. The default is 1000 requests per hour per key.
+
+Successful responses carry three headers so you can pace yourself before you hit the ceiling:
+
+```http
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 997
+X-RateLimit-Reset: 2025-06-18T15:00:00Z
+```
+
+When the limit is used up, the request returns 429 with code `rate_limited`, the same three headers, and a `Retry-After` header giving the number of seconds to wait:
+
+```http
+HTTP/1.1 429 Too Many Requests
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 2025-06-18T15:00:00Z
+Retry-After: 240
+
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "This API key has used its 1000 requests for this hour."
+  }
+}
+```
+
+Read `X-RateLimit-Remaining` before each burst of sends and sleep until `X-RateLimit-Reset` when it reaches zero. Treat 429 as a retryable response: wait for `Retry-After` seconds, then resend the same request, keeping any idempotency key unchanged so a retry cannot double up.
+
+## Send idempotency keys
+
+`POST /api/v1/calls` and `POST /api/v1/messages` both require an `Idempotency-Key` header. Without it, the request is rejected as `idempotency_key_required`. The header value is 1 to 100 characters drawn from letters, digits, and `:`, `_`, `.`, `-`.
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/calls \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4f8n6p1s3d5h7j9k2m4q6w8" \
+  -H "Idempotency-Key: call-acme-2025-06-18-0917" \
+  -H "Content-Type: application/json" \
+  --data @call.json
+```
+
+The key makes a send safe to retry. The same key with the same body returns exactly what the first request answered, and the call is never dialled twice or the message never sent twice, even if your client retries after a timeout. The same key with a different body returns 409 with code `idempotency_key_reused`, because that key already stands for a different send.
+
+Derive the key from something stable about the work itself, such as the contact plus the day plus the campaign step, rather than from a timestamp or a random value. A key you regenerate on every attempt protects nothing.
+
+## Errors share one shape
+
+Every error response has the same body: an `error` object holding a machine-readable `code` and a human-readable `message`. Branch on `code` in your client, and log `message` for the humans reading the logs.
+
+```json
+{
+  "error": {
+    "code": "missing_scope",
+    "message": "This API key does not have the calls:create scope."
+  }
+}
+```
+
+| Status | Codes | What it means |
+| --- | --- | --- |
+| 400 | `invalid_request`, `idempotency_key_required` | The body or query is malformed, or a send arrived without its idempotency key. |
+| 401 | `unauthorized` | The key is missing, malformed, invalid, expired, or switched off. |
+| 403 | `missing_scope` | The key is valid but does not carry the scope the route needs. |
+| 404 | `call_not_found`, `message_not_found`, `contact_not_found`, `plan_not_found`, `recording_not_found` | The resource does not exist in this workspace. |
+| 409 | `idempotency_key_reused`, `not_waiting` | The idempotency key was reused with a different body, or you marked ready a plan that is not waiting. |
+| 422 | `contact_has_no_phone`, `no_whatsapp_number`, `assistant_required` | The message has no address it can go to. A send that WhatsApp policy refuses is not an error object: it answers 422 with the message `id` and a `refusal` object. |
+| 429 | `rate_limited` | The hourly limit is used up. |
+| 500 | `internal_error` | Something failed on our side. |
+| 502 | — | The send failed at WhatsApp. Like a refusal, this answers with the message `id` and a `failure` object instead of an error object. |
+| 503 | `recording_unavailable` | The recording link cannot be produced right now. |
+
+Retry 429 and 503 with backoff, keeping the idempotency key unchanged. Do not retry 400, 403, 404, 409, or 422 without changing the request: the same input will produce the same answer.
+
+## Endpoints
+
+Every endpoint below sits under the base address and requires a workspace API key carrying the scope shown.
+
+| Method | Path | Purpose | Scope |
+| --- | --- | --- | --- |
+| POST | `/api/v1/calls` | Place one outbound call | `calls:create` |
+| GET | `/api/v1/calls` | List the workspace's calls | `calls:read` |
+| GET | `/api/v1/calls/{id}` | Read one call and its result | `calls:read` |
+| GET | `/api/v1/calls/{id}/recording` | Get a recording link valid for one hour | `calls:read` |
+| POST | `/api/v1/messages` | Send a WhatsApp message | `messages:send` |
+| GET | `/api/v1/messages/{id}` | Check where a message stands | `messages:read` |
+| GET | `/api/v1/templates` | List the templates you may send | `templates:read` |
+| GET | `/api/v1/plans` | List the plans the assistant keeps for contacts | `plans:read` |
+| POST | `/api/v1/plans/{id}/ready` | Tell the assistant something is ready | `plans:write` |
+
+## Where to go next
+
+Each page below documents one resource in full: parameters, request bodies, response fields, and worked examples.
+
+<Columns cols={3}>
+
+<Card title="Calls" href="/en/api-reference/v1-calls" icon="play-circle">
+
+Place outbound calls, list them, read their results, and fetch recordings.
+
+</Card>
+
+<Card title="Messages" href="/en/api-reference/v1-messages" icon="users">
+
+Send WhatsApp messages to contacts and follow a message through to its final status.
+
+</Card>
+
+<Card title="Templates" href="/en/api-reference/v1-templates" icon="code">
+
+List the WhatsApp templates the workspace is allowed to send.
+
+</Card>
+
+<Card title="Plans" href="/en/api-reference/v1-plans" icon="check-circle">
+
+Read the plans the assistant holds for contacts, and mark one ready.
+
+</Card>
+
+<Card title="Assistant Checks" href="/en/api-reference/checks" icon="shield">
+
+Verify an assistant behaves the way you expect before it talks to real contacts.
+
+</Card>
+
+<Card title="Authentication" href="/en/api-reference/authentication" icon="lock">
+
+Create workspace API keys, assign scopes, and set rate limits.
+
+</Card>
+
+</Columns>
