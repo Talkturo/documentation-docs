@@ -1,0 +1,1221 @@
+---
+title: Public API v1
+description: Place calls, send WhatsApp messages, read call results and follow up on plans from your own server with a workspace API key.
+---
+
+## What you can build with the v1 API
+
+The v1 API is a JSON REST interface for server-to-server integrations. From your own backend you can place an outbound call to a single contact, send a WhatsApp message, read back what happened on a call (status, summary, transcript, recording, analysis), follow up when something a contact was waiting for becomes available, and list the message templates approved for your workspace.
+
+<Callout kind="info">
+
+Every request goes to `https://app.talkturo.com/api/v1`. Send `Content-Type: application/json` on requests with a body, and expect a JSON body back on every response.
+
+</Callout>
+
+## Authenticate with a workspace API key
+
+Send a workspace API key as a Bearer token in the `authorization` header. Session cookies, dashboard logins and browser tokens are rejected.
+
+```bash
+curl "https://app.talkturo.com/api/v1/calls/c4a8e21f-6b03-4d97-8e5a-2f17b9c4d803" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w"
+```
+
+Keys start with `tk_live_` for a production workspace or `tk_test_` for a test one. Talkturo stores only a hash of the key, so the full value is shown once, when you create it. If you lose it, create a new key and delete the old one.
+
+A key belongs to exactly one workspace, and that binding is fixed the moment the key authenticates. No request parameter, header or body field can point the key at a different workspace, so a key cannot read or write data outside the workspace that issued it.
+
+A missing header answers `401` with the message `Send a workspace API key: Authorization: Bearer tk_live_…`. A key that no longer works (deleted, expired or switched off) answers `401` with `The API key is invalid, expired or switched off.`
+
+To create a key, choose its scopes and see the full lifecycle, read [Authentication](/en/api-reference/authentication) and [API Keys](/en/api-reference/api-keys).
+
+## Scopes
+
+Every endpoint requires a named scope, and the key must carry it. Scope matching happens in three steps: `*` grants everything, a prefix wildcard such as `calls:*` grants every scope in that namespace, and otherwise the scope must match exactly.
+
+| Scope | Grants access to |
+| --- | --- |
+| `calls:create` | Placing outbound calls |
+| `calls:read` | Listing and reading calls, downloading recordings |
+| `messages:send` | Sending WhatsApp messages |
+| `messages:read` | Reading a message and its delivery status |
+| `plans:read` | Listing follow-up plans |
+| `plans:write` | Marking a plan ready |
+| `templates:read` | Listing approved WhatsApp templates |
+
+A key without the required scope answers `403` with code `missing_scope` and a message naming the scope you need, for example `This API key does not have the messages:send scope.`
+
+## Rate limits and headers
+
+Every request counts against the key's hourly allowance. The default is 1000 requests per hour, and each key can be configured with its own limit up to 100000.
+
+Three headers come back on every response, successful or not, so you can pace your client before you hit the ceiling:
+
+| Header | Meaning |
+| --- | --- |
+| `X-RateLimit-Limit` | Requests the key may make in the current hour |
+| `X-RateLimit-Remaining` | Requests left in the window, never below zero |
+| `X-RateLimit-Reset` | When the current window resets |
+
+Over the limit, the request answers `429` with code `rate_limited` and a `Retry-After` header holding the number of seconds until the window resets.
+
+```json
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "This API key has used its 1000 requests for this hour."
+  }
+}
+```
+
+## Error responses
+
+Every failure uses the same envelope: an `error` object with a short machine-readable `code` and a human-readable `message`. Branch on `code`, and log `message` for whoever is reading the logs.
+
+```json
+{
+  "error": {
+    "code": "call_not_found",
+    "message": "No call with this id in this workspace."
+  }
+}
+```
+
+| Status | Code | When it happens |
+| --- | --- | --- |
+| 400 | `invalid_request` | The body or query string is malformed, a field is missing, or a value has the wrong type |
+| 400 | `idempotency_key_required` | The POST request has no usable `Idempotency-Key` header |
+| 400 | `invalid_status` | `status` on the plans list is not one of the allowed values |
+| 400 | `invalid_contact_id` | `contact_id` on the plans list is not a UUID |
+| 400 | `invalid_body` | The ready body carries a field other than `note`, or a note longer than 300 characters |
+| 401 | `unauthorized` | The `Authorization` header is missing, or the key is invalid, expired or switched off |
+| 403 | `missing_scope` | The key does not carry the scope the endpoint requires |
+| 404 | `call_not_found` | No call with this id in this workspace |
+| 404 | `message_not_found` | No message with this id in this workspace |
+| 404 | `plan_not_found` | No plan with this id in this workspace |
+| 404 | `recording_not_found` | The call exists but has no recording |
+| 404 | `contact_not_found` | The contact does not exist in this workspace |
+| 409 | `idempotency_key_reused` | The same key was used before with a different body |
+| 409 | `not_waiting` | The plan is not waiting for anything |
+| 422 | `contact_has_no_phone` | The contact has no phone number to call |
+| 422 | `no_whatsapp_number` | The workspace has no WhatsApp number to send from |
+| 422 | `assistant_required` | The workspace sends from more than one WhatsApp number, so `assistant_id` must be sent |
+| 429 | `rate_limited` | The key has used its hourly allowance |
+| 500 | `internal_error` | Something failed on the Talkturo side. Retry the request |
+| 502 | `failed` | WhatsApp did not accept the message. The body carries a `failure` object |
+| 503 | `recording_unavailable` | The recording link could not be signed right now. Retry later |
+
+<Callout kind="alert">
+
+Do not retry `401`, `403`, `404`, `409` or `422` responses unchanged. Every one of them means the request itself will keep failing until you change the key, the body or the resource.
+
+</Callout>
+
+## Idempotency
+
+`POST /api/v1/calls` and `POST /api/v1/messages` both require an `Idempotency-Key` header. The value must be 1 to 100 characters of letters, digits or `:`, `_`, `.` and `-`. Anything else, or a missing header, answers `400` with code `idempotency_key_required`.
+
+Send the same key again with the same body and Talkturo returns what the first request returned without repeating the action: no second call is placed and no second message is sent. Send the same key with a different body and you get `409` with code `idempotency_key_reused`, which protects you from a retry loop that quietly mutates the request.
+
+Pick keys that are unique to the logical operation rather than to the HTTP attempt, so a retry after a timeout reuses the original key:
+
+```text
+acme-sales:call:deal_7781:1
+acme-sales:msg:deal_7781:order_ready
+```
+
+`POST /api/v1/plans/{id}/ready` does not take an `Idempotency-Key`. A successful ready moves the plan out of `waiting`, so a retry answers `409` with code `not_waiting` instead of writing to the contact twice.
+
+## The call object
+
+The calls endpoints all return the same resource. Here is every field it carries.
+
+<ResponseField name="id" field-type="string">
+The call's identifier, a UUID. Use it with the retrieve and recording endpoints, and to match a call against the `call.analyzed` webhook.
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+Where the call is in its life cycle: `queued` (accepted, not dialled yet), `ringing`, `in_progress`, `completed` or `failed`.
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string">
+The assistant whose voice and prompt configuration ran the call.
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string | null">
+The contact the call was placed to, or `null` when the request named a bare `to_number` instead.
+</ResponseField>
+
+<ResponseField name="campaign_id" field-type="string | null">
+The campaign that produced the call. `null` for calls placed through this API.
+</ResponseField>
+
+<ResponseField name="direction" field-type="string">
+`outbound` for calls you place, `inbound` for calls the workspace received.
+</ResponseField>
+
+<ResponseField name="from_number" field-type="string | null">
+The number the call was placed from, in E.164 format.
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string | null">
+The number that was dialled, in E.164 format.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string">
+When the request was accepted, as an ISO 8601 timestamp.
+</ResponseField>
+
+<ResponseField name="started_at" field-type="string | null">
+When the phone started ringing at the other end. `null` until the call connects.
+</ResponseField>
+
+<ResponseField name="ended_at" field-type="string | null">
+When the call finished. `null` while it is still running.
+</ResponseField>
+
+<ResponseField name="duration_seconds" field-type="integer | null">
+Length of the connected call in rounded seconds. `0` when the call ended without ever starting, and `null` before it starts.
+</ResponseField>
+
+<ResponseField name="answered_by" field-type="string | null">
+Who picked up: `human`, `voicemail` or `unknown`. `null` before the call is answered.
+</ResponseField>
+
+<ResponseField name="ended_reason" field-type="string | null">
+Why the call ended. Always `null` unless the call started.
+</ResponseField>
+
+<ResponseField name="failure_reason" field-type="string | null">
+Why a call never connected: `busy`, `no_answer`, or `call_not_started` when a queued request never became a call.
+</ResponseField>
+
+<ResponseField name="outcome" field-type="string | null">
+What was achieved: `answered`, `unreachable` (the call ended without starting), `voicemail`, `do_not_call`, or the outcome the assistant recorded after the call.
+</ResponseField>
+
+<ResponseField name="summary" field-type="string | null">
+A short written summary of the conversation, produced after the call ends.
+</ResponseField>
+
+<ResponseField name="transcript" field-type="string | null">
+The conversation transcript as text. Only sent when you request `include=transcript`, and only for calls that started.
+</ResponseField>
+
+<ResponseField name="recording_url" field-type="string | null">
+The stable address of the recording on this API, `https://app.talkturo.com/api/v1/calls/{id}/recording`. `null` when the call has no recording.
+</ResponseField>
+
+<ResponseField name="analysis" field-type="object | null">
+The structured read of the call, or `null` when no analysis exists. Carries `sentiment` and `success` (both filled only when the call result was judged), plus the lists `key_points`, `objections`, `questions_asked` and `action_items`.
+</ResponseField>
+
+<ResponseField name="callback" field-type="object">
+What the contact asked for. Carries `requested` (boolean), `scheduled_call_id`, `run_at`, `timezone`, `when_words` (the phrase the contact used, such as "Thursday afternoon") and `reason`.
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object">
+The `metadata` you sent when placing the call, returned as you sent it. The variables used only to build the prompt are stripped out.
+</ResponseField>
+
+<Callout kind="alert">
+
+A request that never produced a call is reported as `failed` with `failure_reason` `call_not_started` once ten minutes have passed since it was created. A `queued` status older than ten minutes is therefore never permanent, and polling for it will not resolve it.
+
+</Callout>
+
+## Place a call
+
+Places one outbound call to a contact or a bare phone number and returns the call object immediately. The response tells you the request was accepted, not how the call went: listen for the `call.analyzed` webhook or poll the retrieve endpoint for the result. Requires the `calls:create` scope.
+
+The workspace must be verified for outbound calling before calls are accepted. If it is not, the request is refused with an `until` field in the error body telling you when outbound calling can resume.
+
+### Endpoint
+
+`POST /api/v1/calls`
+
+### Headers
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+Unique to this call. 1 to 100 characters of letters, digits or `:` `_` `.` `-`.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="assistant_id" param-type="string" required="true">
+UUID of the assistant that runs the call. Its voice, prompt, language and tools decide what happens.
+</ParamField>
+
+<ParamField body="to_number" param-type="string">
+The number to dial, 4 to 32 characters, in E.164 format. Provide this or `contact_id`, or both.
+</ParamField>
+
+<ParamField body="contact_id" param-type="string">
+UUID of the contact to call. Use it instead of `to_number` when you want the call attached to the contact's history. Provide this or `to_number`, or both.
+</ParamField>
+
+<ParamField body="from_number" param-type="string">
+The number to place the call from, 4 to 32 characters. Leave it out to use the assistant's default number.
+</ParamField>
+
+<ParamField body="variables" param-type="object">
+Values for the assistant's prompt, rendered as `{{call.key}}`. Each value is a string of up to 2000 characters, a number, or a boolean. Keys are strings.
+</ParamField>
+
+<ParamField body="metadata" param-type="object">
+Your own data to attach to the call. It comes back on every webhook for this call and on the call object.
+</ParamField>
+
+The body is strict: send a field that is not listed above and the request answers `400`. `metadata` and `variables` together may be at most 8 KB of JSON.
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/v1/calls" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: acme-sales:call:deal_7781:1" \
+  -d '{
+    "assistant_id": "6d2f9a44-1c83-4b0e-9f57-a1c8e3b6d204",
+    "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+    "from_number": "+14155550184",
+    "variables": {
+      "first_name": "Dana",
+      "order_number": "ORD-48213"
+    },
+    "metadata": {
+      "crm_deal_id": "deal_7781"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/v1/calls", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r4w",
+    "Content-Type": "application/json",
+    "Idempotency-Key": "acme-sales:call:deal_7781:1",
+  },
+  body: JSON.stringify({
+    assistant_id: "6d2f9a44-1c83-4b0e-9f57-a1c8e3b6d204",
+    contact_id: "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+    from_number: "+14155550184",
+    variables: { first_name: "Dana", order_number: "ORD-48213" },
+    metadata: { crm_deal_id: "deal_7781" },
+  }),
+});
+
+const call = await response.json();
+if (!response.ok) throw new Error(call.error.message);
+
+console.log(call.id, call.status);
+```
+
+</Request>
+
+### Response
+
+`201` when the call is placed, `200` when the request replays an earlier one with the same `Idempotency-Key`.
+
+<Response tabs="201,200" default-tab="1">
+
+```json
+{
+  "id": "c4a8e21f-6b03-4d97-8e5a-2f17b9c4d803",
+  "status": "queued",
+  "assistant_id": "6d2f9a44-1c83-4b0e-9f57-a1c8e3b6d204",
+  "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+  "campaign_id": null,
+  "direction": "outbound",
+  "from_number": "+14155550184",
+  "to_number": "+14155550192",
+  "created_at": "2025-03-11T09:24:07.412Z",
+  "started_at": null,
+  "ended_at": null,
+  "duration_seconds": null,
+  "answered_by": null,
+  "ended_reason": null,
+  "failure_reason": null,
+  "outcome": null,
+  "summary": null,
+  "transcript": null,
+  "recording_url": null,
+  "analysis": null,
+  "callback": {
+    "requested": false,
+    "scheduled_call_id": null,
+    "run_at": null,
+    "timezone": null,
+    "when_words": null,
+    "reason": null
+  },
+  "metadata": {
+    "crm_deal_id": "deal_7781"
+  }
+}
+```
+
+```json
+{
+  "id": "c4a8e21f-6b03-4d97-8e5a-2f17b9c4d803",
+  "status": "ringing",
+  "assistant_id": "6d2f9a44-1c83-4b0e-9f57-a1c8e3b6d204",
+  "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+  "campaign_id": null,
+  "direction": "outbound",
+  "from_number": "+14155550184",
+  "to_number": "+14155550192",
+  "created_at": "2025-03-11T09:24:07.412Z",
+  "started_at": "2025-03-11T09:24:19.003Z",
+  "ended_at": null,
+  "duration_seconds": null,
+  "answered_by": null,
+  "ended_reason": null,
+  "failure_reason": null,
+  "outcome": null,
+  "summary": null,
+  "transcript": null,
+  "recording_url": null,
+  "analysis": null,
+  "callback": {
+    "requested": false,
+    "scheduled_call_id": null,
+    "run_at": null,
+    "timezone": null,
+    "when_words": null,
+    "reason": null
+  },
+  "metadata": {
+    "crm_deal_id": "deal_7781"
+  }
+}
+```
+
+</Response>
+
+## List calls
+
+Lists the calls in your workspace, newest first, with filters for assistant, contact and time window. Use it to build your own call log, or to reconcile results after a webhook delivery you missed. Requires the `calls:read` scope.
+
+### Endpoint
+
+`GET /api/v1/calls`
+
+### Query parameters
+
+<ParamField query="assistant_id" param-type="string">
+Return only calls run by this assistant. A UUID.
+</ParamField>
+
+<ParamField query="contact_id" param-type="string">
+Return only calls placed to this contact. A UUID.
+</ParamField>
+
+<ParamField query="from" param-type="string">
+Start of the window, inclusive, as an ISO 8601 timestamp with an offset. Compared against `created_at`.
+</ParamField>
+
+<ParamField query="to" param-type="string">
+End of the window, exclusive, as an ISO 8601 timestamp with an offset. Compared against `created_at`.
+</ParamField>
+
+<ParamField query="cursor" param-type="string">
+The `next_cursor` value from the previous page. Leave it out for the first page.
+</ParamField>
+
+<ParamField query="limit" param-type="integer">
+Page size from 1 to 100. Defaults to 25.
+</ParamField>
+
+<ParamField query="include" param-type="string">
+Pass `transcript` to fill the `transcript` field on every call in the page.
+</ParamField>
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://app.talkturo.com/api/v1/calls?assistant_id=6d2f9a44-1c83-4b0e-9f57-a1c8e3b6d204&from=2025-03-01T00:00:00Z&limit=1" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w"
+```
+
+```javascript
+const params = new URLSearchParams({
+  assistant_id: "6d2f9a44-1c83-4b0e-9f57-a1c8e3b6d204",
+  from: "2025-03-01T00:00:00Z",
+  limit: "1",
+});
+
+const response = await fetch(`https://app.talkturo.com/api/v1/calls?${params}`, {
+  headers: { Authorization: "Bearer tk_live_example_9xmk7q2r4w" },
+});
+
+const page = await response.json();
+console.log(page.data.length, page.next_cursor);
+```
+
+</Request>
+
+### Response
+
+The page answers an envelope with the calls and a cursor. Each entry is a call object as described in [The call object](#the-call-object).
+
+<ResponseField name="data" field-type="array" required="true">
+The calls on this page, ordered by `created_at` descending.
+</ResponseField>
+
+<ResponseField name="next_cursor" field-type="string | null" required="true">
+Pass this as `cursor` to fetch the next page. `null` means you have reached the last page.
+</ResponseField>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "data": [
+    {
+      "id": "c4a8e21f-6b03-4d97-8e5a-2f17b9c4d803",
+      "status": "completed",
+      "assistant_id": "6d2f9a44-1c83-4b0e-9f57-a1c8e3b6d204",
+      "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+      "campaign_id": null,
+      "direction": "outbound",
+      "from_number": "+14155550184",
+      "to_number": "+14155550192",
+      "created_at": "2025-03-11T09:24:07.412Z",
+      "started_at": "2025-03-11T09:24:19.003Z",
+      "ended_at": "2025-03-11T09:27:41.882Z",
+      "duration_seconds": 202,
+      "answered_by": "human",
+      "ended_reason": "completed",
+      "failure_reason": null,
+      "outcome": "answered",
+      "summary": "Dana confirmed order ORD-48213 for Thursday pickup and asked for the invoice by email.",
+      "transcript": null,
+      "recording_url": "https://app.talkturo.com/api/v1/calls/c4a8e21f-6b03-4d97-8e5a-2f17b9c4d803/recording",
+      "analysis": {
+        "sentiment": "positive",
+        "success": true,
+        "key_points": [
+          "Order ORD-48213 confirmed for Thursday pickup",
+          "Invoice requested by email"
+        ],
+        "objections": [
+          "The delivery window was shorter than expected"
+        ],
+        "questions_asked": [
+          "Can the invoice go to our accounts address?"
+        ],
+        "action_items": [
+          "Send the invoice to accounts@northwind-supply.com"
+        ]
+      },
+      "callback": {
+        "requested": true,
+        "scheduled_call_id": "f0b2c6d8-91a4-4e37-b8d5-6a1c3e9f7b42",
+        "run_at": "2025-03-13T16:00:00Z",
+        "timezone": "America/Los_Angeles",
+        "when_words": "Thursday afternoon",
+        "reason": "Dana wants a reminder before the pickup."
+      },
+      "metadata": {
+        "crm_deal_id": "deal_7781"
+      }
+    }
+  ],
+  "next_cursor": "2025-03-11T09:24:07.412Z"
+}
+```
+
+</Response>
+
+## Retrieve one call
+
+Returns the current state of a single call, including its summary, analysis and callback request once the call has ended. The payload is the same result the `call.analyzed` webhook delivers, so this endpoint is how you catch up after a delivery you missed. Requires the `calls:read` scope.
+
+### Endpoint
+
+`GET /api/v1/calls/{id}`
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the call.
+</ParamField>
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://app.talkturo.com/api/v1/calls/a72d5b91-3c48-4f60-8b2e-5d90c1f7a263" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w"
+```
+
+```javascript
+const callId = "a72d5b91-3c48-4f60-8b2e-5d90c1f7a263";
+
+const response = await fetch(`https://app.talkturo.com/api/v1/calls/${callId}`, {
+  headers: { Authorization: "Bearer tk_live_example_9xmk7q2r4w" },
+});
+
+if (response.status === 404) {
+  console.log("No such call in this workspace");
+}
+
+const call = await response.json();
+```
+
+</Request>
+
+### Response
+
+<Response tabs="200,404" default-tab="1">
+
+```json
+{
+  "id": "a72d5b91-3c48-4f60-8b2e-5d90c1f7a263",
+  "status": "failed",
+  "assistant_id": "6d2f9a44-1c83-4b0e-9f57-a1c8e3b6d204",
+  "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+  "campaign_id": "e3f1a7c2-8b04-4d39-a6f7-0c2b8e14d596",
+  "direction": "outbound",
+  "from_number": "+14155550184",
+  "to_number": "+14155550192",
+  "created_at": "2025-03-10T15:58:03.640Z",
+  "started_at": null,
+  "ended_at": null,
+  "duration_seconds": 0,
+  "answered_by": null,
+  "ended_reason": null,
+  "failure_reason": "no_answer",
+  "outcome": "unreachable",
+  "summary": null,
+  "transcript": null,
+  "recording_url": null,
+  "analysis": null,
+  "callback": {
+    "requested": false,
+    "scheduled_call_id": null,
+    "run_at": null,
+    "timezone": null,
+    "when_words": null,
+    "reason": null
+  },
+  "metadata": {
+    "crm_deal_id": "deal_7781"
+  }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "call_not_found",
+    "message": "No call with this id in this workspace."
+  }
+}
+```
+
+</Response>
+
+## Download a recording
+
+Returns a `302` to a signed link for the call's recording. The signed link works for one hour. The API address in `recording_url` never expires and never reveals where recordings are stored, so store that address and fetch a fresh redirect whenever you need the audio. Requires the `calls:read` scope.
+
+### Endpoint
+
+`GET /api/v1/calls/{id}/recording`
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of a call that has a recording.
+</ParamField>
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -L "https://app.talkturo.com/api/v1/calls/c4a8e21f-6b03-4d97-8e5a-2f17b9c4d803/recording" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w" \
+  -o call-c4a8e21f.mp3
+```
+
+```javascript
+const recordingUrl =
+  "https://app.talkturo.com/api/v1/calls/c4a8e21f-6b03-4d97-8e5a-2f17b9c4d803/recording";
+
+const response = await fetch(recordingUrl, {
+  headers: { Authorization: "Bearer tk_live_example_9xmk7q2r4w" },
+  redirect: "follow",
+});
+
+if (!response.ok) throw new Error("Recording not available");
+
+const audio = await response.arrayBuffer();
+```
+
+</Request>
+
+### Response
+
+The redirect carries no body. Send your HTTP client's redirect following, otherwise you get the `302` and have to read the `Location` header yourself.
+
+<Response tabs="302,404,503" default-tab="1">
+
+```http
+HTTP/1.1 302 Found
+Location: https://<signed recording link, valid for one hour>
+```
+
+```json
+{
+  "error": {
+    "code": "recording_not_found",
+    "message": "No recording for this call in this workspace."
+  }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "recording_unavailable",
+    "message": "The recording link could not be signed right now."
+  }
+}
+```
+
+</Response>
+
+<Callout kind="info">
+
+A `503` is transient. Retry with backoff rather than treating the recording as lost.
+
+</Callout>
+
+## Send a WhatsApp message
+
+Sends one WhatsApp message to a contact, either free text inside the contact's 24-hour window or an approved utility template outside it. Requires the `messages:send` scope.
+
+Send exactly one of `text` or `template`. Anything else, including both, answers `400`.
+
+### Endpoint
+
+`POST /api/v1/messages`
+
+### Headers
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+Unique per message. 1 to 100 characters of letters, digits or `:` `_` `.` `-`.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="contact_id" param-type="string" required="true">
+UUID of the contact to message.
+</ParamField>
+
+<ParamField body="assistant_id" param-type="string">
+UUID of the assistant whose WhatsApp number sends the message, or `null`. Send it when the workspace has more than one WhatsApp number, otherwise the request answers `422` with code `assistant_required`.
+</ParamField>
+
+<ParamField body="text" param-type="string">
+Free text, 1 to 4096 characters. Only accepted inside the contact's 24-hour window. Provide this or `template`.
+</ParamField>
+
+<ParamField body="template" param-type="object">
+The approved template to send. Provide this or `text`.
+</ParamField>
+
+<ParamField body="template.name" param-type="string" required="true">
+Template name, 1 to 512 characters, as returned by the templates endpoint.
+</ParamField>
+
+<ParamField body="template.language" param-type="string" required="true">
+Template language, 2 to 16 characters. `en` and `de` are the languages available from the templates endpoint.
+</ParamField>
+
+<ParamField body="template.variables" param-type="object">
+Values for the template's variables: keys are strings, values are strings of up to 1024 characters. Defaults to an empty object.
+</ParamField>
+
+<ParamField body="consent" param-type="object">
+Optional record of why you are allowed to message this contact.
+</ParamField>
+
+<ParamField body="consent.evidence" param-type="string">
+Where and when the contact agreed, 1 to 500 characters.
+</ParamField>
+
+Only approved utility templates can be sent through the API. Marketing templates are a person's to send, and requesting one answers `422` with a `refusal` object.
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/v1/messages" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: acme-sales:msg:deal_7781:order_ready" \
+  -d '{
+    "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+    "template": {
+      "name": "order_ready",
+      "language": "en",
+      "variables": {
+        "order_number": "ORD-48213",
+        "pickup_location": "Northwind Supply, 1420 Bryant St"
+      }
+    },
+    "consent": {
+      "evidence": "Opted in at checkout on 2025-02-27"
+    }
+  }'
+```
+
+```javascript
+const response = await fetch("https://app.talkturo.com/api/v1/messages", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer tk_live_example_9xmk7q2r4w",
+    "Content-Type": "application/json",
+    "Idempotency-Key": "acme-sales:msg:deal_7781:order_ready",
+  },
+  body: JSON.stringify({
+    contact_id: "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+    template: {
+      name: "order_ready",
+      language: "en",
+      variables: {
+        order_number: "ORD-48213",
+        pickup_location: "Northwind Supply, 1420 Bryant St",
+      },
+    },
+    consent: { evidence: "Opted in at checkout on 2025-02-27" },
+  }),
+});
+
+const message = await response.json();
+console.log(message.id, message.status);
+```
+
+</Request>
+
+### Response
+
+`201` when the message is sent, `200` when the request replays an earlier one, `202` when WhatsApp has not confirmed yet.
+
+<Response tabs="201,202" default-tab="1">
+
+```json
+{
+  "id": "8e51b7d2-4c06-4a19-9f3e-6d2b8c7a1e04",
+  "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+  "status": "sent",
+  "kind": "template",
+  "template": {
+    "name": "order_ready",
+    "language": "en"
+  },
+  "created_at": "2025-03-11T10:02:19.128Z",
+  "sent_at": "2025-03-11T10:02:20.004Z",
+  "refusal": null,
+  "failure": null
+}
+```
+
+```json
+{
+  "id": "8e51b7d2-4c06-4a19-9f3e-6d2b8c7a1e04",
+  "status": "sending"
+}
+```
+
+</Response>
+
+### Refused and failed messages
+
+A `422` means the message was not sent and will not be sent as written. The body carries the message id and a `refusal` object explaining why.
+
+<ResponseField name="refusal.code" field-type="string">
+A short machine-readable reason for the refusal. Branch on this.
+</ResponseField>
+
+<ResponseField name="refusal.reason" field-type="string">
+A sentence you can show to the person who triggered the send.
+</ResponseField>
+
+<ResponseField name="refusal.retry_after" field-type="integer | null">
+Seconds to wait before the same message can succeed, or `null` when retrying will not help without changing something.
+</ResponseField>
+
+<ResponseField name="refusal.needs_person" field-type="boolean">
+`true` when a human has to decide or act before this contact can be messaged again.
+</ResponseField>
+
+A `502` means WhatsApp rejected the message after Talkturo accepted it. The body carries the message id, `status` `failed`, and a `failure` object from WhatsApp.
+
+## Retrieve a message
+
+Returns one message and its delivery status. Poll it after a `202` to find out whether the message went out. Requires the `messages:read` scope.
+
+### Endpoint
+
+`GET /api/v1/messages/{id}`
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the message. Anything that is not a UUID, or a message from another workspace, answers `404` with code `message_not_found`.
+</ParamField>
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://app.talkturo.com/api/v1/messages/8e51b7d2-4c06-4a19-9f3e-6d2b8c7a1e04" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w"
+```
+
+```javascript
+const messageId = "8e51b7d2-4c06-4a19-9f3e-6d2b8c7a1e04";
+
+const response = await fetch(`https://app.talkturo.com/api/v1/messages/${messageId}`, {
+  headers: { Authorization: "Bearer tk_live_example_9xmk7q2r4w" },
+});
+
+const message = await response.json();
+if (message.status === "failed") console.log(message.failure);
+```
+
+</Request>
+
+### Response
+
+<ResponseField name="id" field-type="string">
+The message UUID.
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string">
+The contact the message was sent to.
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+One of `sending`, `sent`, `delivered`, `read`, `failed`, `refused`, `unknown`.
+</ResponseField>
+
+<ResponseField name="kind" field-type="string">
+Whether the message went out as `text` or as a `template`.
+</ResponseField>
+
+<ResponseField name="template" field-type="object | null">
+The template `name` and `language` used, or `null` for free text.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string">
+When the send was accepted, as an ISO 8601 timestamp.
+</ResponseField>
+
+<ResponseField name="sent_at" field-type="string | null">
+When WhatsApp accepted the message. `null` while it is still sending.
+</ResponseField>
+
+<ResponseField name="refusal" field-type="object | null">
+The refusal object when the message was refused, otherwise `null`.
+</ResponseField>
+
+<ResponseField name="failure" field-type="object | null">
+What WhatsApp reported when the message failed, otherwise `null`.
+</ResponseField>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "id": "8e51b7d2-4c06-4a19-9f3e-6d2b8c7a1e04",
+  "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+  "status": "delivered",
+  "kind": "template",
+  "template": {
+    "name": "order_ready",
+    "language": "en"
+  },
+  "created_at": "2025-03-11T10:02:19.128Z",
+  "sent_at": "2025-03-11T10:02:20.004Z",
+  "refusal": null,
+  "failure": null
+}
+```
+
+</Response>
+
+## List plans
+
+Lists the follow-up plans in your workspace: the things a contact is waiting for, and the follow-ups already scheduled. The list is capped at 100 items and ordered newest first. Requires the `plans:read` scope.
+
+### Endpoint
+
+`GET /api/v1/plans`
+
+### Query parameters
+
+<ParamField query="status" param-type="string">
+Filter by plan status: `scheduled`, `waiting`, `reopener_sent`, `sending`, `sent`, `cancelled`, `expired` or `blocked`. Leave it out to get only the open plans (`scheduled`, `waiting`, `reopener_sent`).
+</ParamField>
+
+<ParamField query="contact_id" param-type="string">
+Return only this contact's plans. A UUID.
+</ParamField>
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://app.talkturo.com/api/v1/plans?status=waiting" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w"
+```
+
+```javascript
+const params = new URLSearchParams({ status: "waiting" });
+
+const response = await fetch(`https://app.talkturo.com/api/v1/plans?${params}`, {
+  headers: { Authorization: "Bearer tk_live_example_9xmk7q2r4w" },
+});
+
+const { data } = await response.json();
+```
+
+</Request>
+
+### Response
+
+<ResponseField name="data" field-type="array" required="true">
+The matching plans, at most 100, newest first. Each carries `id`, `contact_id`, `kind`, `about`, `status`, `due_at` and `created_at`.
+</ResponseField>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "data": [
+    {
+      "id": "2f7c9a18-3d64-4e0b-b5a7-91c4e2d6f830",
+      "contact_id": "1b9e7c30-5f42-4a86-8d11-7c0e2f5a9b38",
+      "kind": "waiting_for_stock",
+      "about": "Replacement filter for the NW-220 air purifier",
+      "status": "waiting",
+      "due_at": "2025-03-18T08:00:00Z",
+      "created_at": "2025-03-04T14:31:52.207Z"
+    }
+  ]
+}
+```
+
+</Response>
+
+## Mark a plan ready
+
+Tells Talkturo that what a contact was waiting for is now available, so the assistant can write to them once. Typically called from your order, stock or ticketing system. Requires the `plans:write` scope.
+
+### Endpoint
+
+`POST /api/v1/plans/{id}/ready`
+
+### Path parameters
+
+<ParamField path="id" param-type="string" required="true">
+UUID of the plan. A plan from another workspace answers `404` with code `plan_not_found`.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="note" param-type="string">
+What changed, up to 300 characters, trimmed of surrounding whitespace. The assistant uses it to make the follow-up concrete. Optional.
+</ParamField>
+
+The body is strict: any key other than `note` answers `400` with code `invalid_body`.
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/v1/plans/2f7c9a18-3d64-4e0b-b5a7-91c4e2d6f830/ready" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "note": "The NW-220 filter is back in stock, 14 units."
+  }'
+```
+
+```javascript
+const planId = "2f7c9a18-3d64-4e0b-b5a7-91c4e2d6f830";
+
+const response = await fetch(
+  `https://app.talkturo.com/api/v1/plans/${planId}/ready`,
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer tk_live_example_9xmk7q2r4w",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      note: "The NW-220 filter is back in stock, 14 units.",
+    }),
+  },
+);
+
+const plan = await response.json();
+```
+
+</Request>
+
+### Response
+
+`200` when the plan is scheduled, `409` when it was not waiting for anything.
+
+<Response tabs="200,409" default-tab="1">
+
+```json
+{
+  "id": "2f7c9a18-3d64-4e0b-b5a7-91c4e2d6f830",
+  "status": "scheduled"
+}
+```
+
+```json
+{
+  "error": {
+    "code": "not_waiting",
+    "message": "This plan is not waiting for anything."
+  }
+}
+```
+
+</Response>
+
+## List WhatsApp templates
+
+Lists the approved WhatsApp templates you can send through the messages endpoint. Only sendable utility templates are returned: templates with secret variables and marketing templates are left out. Requires the `templates:read` scope.
+
+### Endpoint
+
+`GET /api/v1/templates`
+
+### Query parameters
+
+<ParamField query="language" param-type="string" required="false">
+Template language, either `en` or `de`. Leave it out to get templates in every language. Any other value answers `400` with code `invalid_request`.
+</ParamField>
+
+### Example request
+
+<Request tabs="cURL,JavaScript" default-tab="1">
+
+```bash
+curl "https://app.talkturo.com/api/v1/templates?language=en" \
+  -H "Authorization: Bearer tk_live_example_9xmk7q2r4w"
+```
+
+```javascript
+const response = await fetch(
+  "https://app.talkturo.com/api/v1/templates?language=en",
+  {
+    headers: { Authorization: "Bearer tk_live_example_9xmk7q2r4w" },
+  },
+);
+
+const { connected, templates } = await response.json();
+```
+
+</Request>
+
+### Response
+
+<ResponseField name="connected" field-type="boolean">
+Whether the workspace has a usable WhatsApp connection. When it is `false`, sends will not go out.
+</ResponseField>
+
+<ResponseField name="templates" field-type="array">
+The approved, sendable utility templates.
+</ResponseField>
+
+<ResponseField name="templates.name" field-type="string">
+The template name to pass as `template.name` when sending.
+</ResponseField>
+
+<ResponseField name="templates.language" field-type="string">
+The template language to pass as `template.language`.
+</ResponseField>
+
+<ResponseField name="templates.category" field-type="string">
+The template category. Only `utility` templates are returned here.
+</ResponseField>
+
+<ResponseField name="templates.body" field-type="string">
+The template text, with its variable placeholders in place.
+</ResponseField>
+
+<ResponseField name="templates.variables" field-type="array">
+The values you must supply. Each entry has a `key` to send in `template.variables`, an `example` value, and a `max_length` for that value.
+</ResponseField>
+
+<ResponseField name="templates.filled_by_talkturo" field-type="array">
+Keys Talkturo fills itself, such as the contact's first name and the workspace name. Do not send these in `template.variables`.
+</ResponseField>
+
+<Response tabs="200" default-tab="1">
+
+```json
+{
+  "connected": true,
+  "templates": [
+    {
+      "name": "order_ready",
+      "language": "en",
+      "category": "utility",
+      "body": "Hi {{first_name}}, your order {{order_number}} is ready to collect at {{pickup_location}}.",
+      "variables": [
+        {
+          "key": "order_number",
+          "example": "ORD-48213",
+          "max_length": 40
+        },
+        {
+          "key": "pickup_location",
+          "example": "Northwind Supply, 1420 Bryant St",
+          "max_length": 120
+        }
+      ],
+      "filled_by_talkturo": ["first_name"]
+    }
+  ]
+}
+```
+
+</Response>
+
+## Endpoint summary
+
+| Method | Path | Scope | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/calls` | `calls:create` | Place one outbound call |
+| `GET` | `/api/v1/calls` | `calls:read` | List calls, newest first, with filters and paging |
+| `GET` | `/api/v1/calls/{id}` | `calls:read` | Read one call with its summary, analysis and callback |
+| `GET` | `/api/v1/calls/{id}/recording` | `calls:read` | Redirect to the call recording |
+| `POST` | `/api/v1/messages` | `messages:send` | Send a WhatsApp text or approved utility template |
+| `GET` | `/api/v1/messages/{id}` | `messages:read` | Read one message and its delivery status |
+| `GET` | `/api/v1/plans` | `plans:read` | List follow-up plans |
+| `POST` | `/api/v1/plans/{id}/ready` | `plans:write` | Tell the assistant that what a contact was waiting for is ready |
+| `GET` | `/api/v1/templates` | `templates:read` | List approved, sendable utility templates |

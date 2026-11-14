@@ -234,6 +234,10 @@
                     "title": "API Keys",
                     "path": "en/api-reference/api-keys",
                     "icon": "key"
+                  },
+                  {
+                    "title": "Public API v1",
+                    "path": "en/api-reference/v1"
                   }
                 ]
               },
@@ -689,6 +693,10 @@
                     "title": "API-Schlüssel",
                     "path": "de/api-reference/api-keys",
                     "icon": "key"
+                  },
+                  {
+                    "title": "Öffentliche API v1",
+                    "path": "de/api-reference/v1"
                   }
                 ]
               },
