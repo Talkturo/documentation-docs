@@ -8,6 +8,33 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-11-13" description="v4.2.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Calls API** — Place outbound calls from your own systems with `POST /api/v1/calls`, without building a campaign. Read calls back with `GET /api/v1/calls` and `GET /api/v1/calls/{id}`, and fetch the recording through `GET /api/v1/calls/{id}/recording`, which returns a signed link valid for one hour. Every request carries an idempotency key, so a retried request never dials twice. Verification and do-not-call checks run before every dial, including against every contact saved under the same number. See [Calls API](/en/api-reference/calls).
+  - **`call.analyzed` webhook** — A new post-call event delivers the analysis of a finished call, and it is on by default for new webhooks. Turn it on or off per assistant on the Analysis tab. Recording addresses in webhook payloads are now stable API links instead of internal storage addresses. See [Webhooks](/en/api-reference/webhooks).
+  - **Transfer targets that dial a number from the contact** — A transfer target can now call a number stored on the contact instead of a fixed number — for example the broker who looks after that contact. Choose the contact field, add an optional second field and a fallback number, and enable "Try the next number when nobody answers" for warm transfers. Optional reachable hours (days, times, time zone) stop the assistant from calling a target outside your hours; it tells the caller nobody is available and continues as your prompt says. Call logs and summary emails report "outside reachable hours" as the transfer outcome. See [Assistant Configuration](/en/assistants/configuration).
+  - **CRM lead routing** — Route incoming leads to a group, campaign and assistant by rule instead of by hand. Rules match on lead source, status and Merkmal, run in the order you set, and the first match wins — a lead a rule blocks is never handed to a later rule. Each rule has a consent setting, an immediate or scheduled dial mode, and covers new leads only or existing contacts too. A dry run reads the CRM live and shows what the rule would do without writing anything, and each rule reports routed, called and reached counts for today and the last 7 days plus median and 90th-percentile time to first call. New rules start in shadow mode. See [Integrations](/en/integrations).
+  - **Private memory per assistant** — The new Own memory switch in the Advanced tab keeps what an assistant learns out of your other assistants' memory and out of the contact summary, so the assistant only remembers its own conversations plus the notes your team wrote. Contact identity — name, number, email and do-not-call — stays shared either way, and turning the switch off brings what it learned back into the shared summary. Deleting a private assistant deletes what it learned; its calls and inbox conversations stay in the logs but no longer feed any memory. See [Assistant Configuration](/en/assistants/configuration).
+  - **TurboFlow Lookup table step** — Add a Lookup table step to a flow to match a value against a CSV table by exact match and branch on the result. See [Node Types](/en/turboflow/triggers-actions).
+  - **Pipedrive plugin** — Connect Pipedrive over OAuth and let assistants work with contacts, deals, activities and diaries without leaving the call. Eleven of Pipedrive's actions are recommended for the assistant, and meeting bookings check the caller's proposed time for clashes first. See [Integrations](/en/integrations).
+  - **Talkturo Uncensored models** — Two new models are available in the Model tab: DeepSeek V4.1 Flash Uncensored and Gemma 4 Uncensored. Gemma 4 is talk-only — it cannot end a call, book an appointment, transfer, send messages or use plugins and workflows — and a warning in the Model tab says so. See [Features](/en/features).
+
+  ## Improvements
+
+  - **Voicemail message on the attempts you choose** — Set a campaign's voicemail message to play only on specific attempts, for example `1 10`. The field warns when the highest attempt is beyond your no-answer limit. See [Campaign Configuration](/en/campaigns/configuration).
+  - **The flow canvas fits the whole flow** — Opening a TurboFlow flow now zooms to fit every step, so you no longer scroll to find where it starts or ends. See [TurboFlow](/en/turboflow/overview).
+  - **Shorter Pipedrive consent screen** — The Pipedrive consent screen now asks for the 7 permissions the integration uses instead of all 16. See [Integrations](/en/integrations).
+  - **Metadata delivered unchanged** — Metadata you send with a call now reaches your webhooks exactly as sent, and a callback reports the real dial time as its `run_at` value.
+
+  ## Bug Fixes
+
+  - **Skipped flow steps no longer take their branch with them** — Only the first step behind a losing If/Else branch used to be skipped, so chained conditions ran the wrong branch and a trailing "not found" answer could overwrite the correct one — a flow that found the right sales rep for a postal code could still answer "nobody". See [Node Types](/en/turboflow/triggers-actions).
+  - **German spoken digits in verification codes** — Digit words spoken in German are now recognised when the assistant collects a WhatsApp verification code during a call.
+  - **German campaign voicemail panel** — The campaign voicemail panel is now fully translated instead of falling back to English text in a German workspace. See [Campaign Configuration](/en/campaigns/configuration).
+  - **Teamleader plugin card** — The Teamleader plugin card now uses the official logo and brand colour. See [Integrations](/en/integrations).
+</Update>
+
 <Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 
@@ -594,4 +621,3 @@ Track upcoming priorities for Talkturo's voice AI features.
 <Callout kind="info" collapsed="false">
   Subscribe to our changelog RSS feed or join the support mailing list at [info@talkturo.com](mailto:info@talkturo.com) for instant notifications.
 </Callout>
-
