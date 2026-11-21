@@ -1,0 +1,131 @@
+---
+title: "Templates (v1)"
+description: "List the approved WhatsApp templates your workspace can send through the API, with the variable keys each template requires."
+---
+
+Returns the approved WhatsApp templates your system may send, with the `name`, `language` and `variables` keys you need to send a message through [Messages (v1)](/en/api-reference/v1-messages).
+
+## List sendable templates
+
+Lists the utility templates an outside sender may send. Only approved, sendable templates appear. Marketing templates are a person's to send and never appear here, and a template that is not approved for sending is left out.
+
+Templates whose variables include a secret are also left out of the list entirely.
+
+Requires the `templates:read` scope.
+
+<ParamField query="language" param-type="string" enum="en,de">
+  Filters the list by template language. Accepts `en` or `de` only. Any other value answers `400` with the code `invalid_request`.
+</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/templates?language=de" \
+  -H "Authorization: Bearer tk_live_9xmk7q2rd4f8"
+```
+
+</Request>
+
+<Response tabs="200,400">
+
+```json
+{
+  "connected": true,
+  "templates": [
+    {
+      "name": "appointment_reminder",
+      "language": "de",
+      "category": "UTILITY",
+      "body": "Hallo {{1}}, Ihr Termin am {{2}} im Studio {{3}} steht an. Bitte bestätigen Sie kurz mit JA.",
+      "variables": [
+        {
+          "key": "appointment_date",
+          "example": "22. April",
+          "max_length": 60
+        }
+      ],
+      "filled_by_talkturo": ["first_name", "workspace_name"]
+    },
+    {
+      "name": "order_ready",
+      "language": "de",
+      "category": "UTILITY",
+      "body": "Ihre Bestellung ist abholbereit.",
+      "variables": [],
+      "filled_by_talkturo": []
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "language must be en or de."
+  }
+}
+```
+
+</Response>
+
+## Template fields
+
+<ResponseField name="connected" field-type="boolean">
+  Whether the workspace has a WhatsApp number connected. The list is empty when nothing is connected.
+</ResponseField>
+
+<ResponseField name="templates" field-type="array">
+  The sendable templates.
+</ResponseField>
+
+<ResponseField name="templates[].name" field-type="string">
+  Template name. Pass this when you send a message.
+</ResponseField>
+
+<ResponseField name="templates[].language" field-type="string">
+  Template language, either `en` or `de`.
+</ResponseField>
+
+<ResponseField name="templates[].category" field-type="string">
+  Template category. Always `UTILITY` for this endpoint.
+</ResponseField>
+
+<ResponseField name="templates[].body" field-type="string">
+  The template text with its placeholders.
+</ResponseField>
+
+<ResponseField name="templates[].variables" field-type="array">
+  The values you supply when you send the message. Empty when the template takes no values.
+</ResponseField>
+
+<ResponseField name="templates[].variables[].key" field-type="string">
+  Variable key to send with its value.
+</ResponseField>
+
+<ResponseField name="templates[].variables[].example" field-type="string">
+  Example value for the variable, useful for previews and testing.
+</ResponseField>
+
+<ResponseField name="templates[].variables[].max_length" field-type="integer">
+  Maximum number of characters the value may contain.
+</ResponseField>
+
+<ResponseField name="templates[].filled_by_talkturo" field-type="array">
+  Variable keys that Talkturo fills itself, for example the contact's first name or the workspace name. Never send these.
+</ResponseField>
+
+<Callout kind="info">
+  A template that expects values answers `422` with a refusal naming the offending keys if your `variables` do not match. Read `variables` here before you send.
+</Callout>
+
+## Related
+
+<Columns cols={2}>
+  <Card title="Send a message" href="/en/api-reference/v1-messages" icon="send">
+    Use a template name, language and variable keys to send a WhatsApp message.
+  </Card>
+  <Card title="API v1 overview" href="/en/api-reference/v1-overview" icon="book-open">
+    Base URL, authentication and scopes for the public REST API.
+  </Card>
+</Columns>

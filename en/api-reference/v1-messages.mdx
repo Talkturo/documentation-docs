@@ -1,0 +1,399 @@
+---
+title: "Messages (v1)"
+description: "Send a WhatsApp message to a contact from your own system and follow its status up to delivery."
+---
+
+## Endpoint summary
+
+| Method | Endpoint | Scope | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/messages` | `messages:send` | Send one WhatsApp message to a contact |
+| `GET` | `/api/v1/messages/{id}` | `messages:read` | Read where a message stands |
+
+<Callout kind="info">
+
+A message always addresses a contact, never a phone number. Talkturo picks the assistant's WhatsApp number and reads the contact's number itself. Nothing can be sent to a number that is not a contact of the workspace.
+
+</Callout>
+
+## Send a message
+
+`POST /api/v1/messages` sends one WhatsApp message to a contact from your own system. The call needs the `messages:send` scope and an `Idempotency-Key` header.
+
+**Base URL:** `https://app.talkturo.com/api/v1`
+
+### Headers
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Your API key as a bearer token: `Bearer tk_live_...`.
+
+</ParamField>
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+
+A stable key for this request, 1 to 100 characters of letters, digits, `:`, `_`, `.` or `-`. Repeat the call with the same key and the same body to receive the stored answer instead of sending a second message.
+
+</ParamField>
+
+<ParamField header="Content-Type" param-type="string" required="true">
+
+`application/json`.
+
+</ParamField>
+
+### Body
+
+<ParamField body="contact_id" param-type="string (UUID)" required="true">
+
+The contact that receives the message.
+
+</ParamField>
+
+<ParamField body="assistant_id" param-type="string (UUID)">
+
+Whose WhatsApp number sends the message. Needed only when the workspace has more than one WhatsApp number; a workspace with exactly one number uses it.
+
+</ParamField>
+
+<ParamField body="text" param-type="string">
+
+The message text, 1 to 4096 characters. Only allowed inside the contact's 24-hour window, the 24 hours after the contact last wrote. Give exactly one of `text` or `template`.
+
+</ParamField>
+
+<ParamField body="template" param-type="object">
+
+An approved utility template. Give exactly one of `text` or `template`.
+
+<ParamField body="name" param-type="string" show-location="false" required="true">
+
+The template name, 1 to 512 characters.
+
+</ParamField>
+
+<ParamField body="language" param-type="string" show-location="false" required="true">
+
+The template language, 2 to 16 characters, for example `en` or `de`.
+
+</ParamField>
+
+<ParamField body="variables" param-type="object" show-location="false">
+
+The values the template expects, for example `{ "first_name": "Jordan" }`.
+
+</ParamField>
+
+</ParamField>
+
+<ParamField body="consent" param-type="object">
+
+Proof that the contact agreed to receive messages. Talkturo records the consent when you send it.
+
+<ParamField body="evidence" param-type="string" show-location="false">
+
+A description of the proof, 1 to 500 characters, for example `"Signed form 2025-04-02, ticket 8841"`.
+
+</ParamField>
+
+</ParamField>
+
+The body is strict. An unknown field answers `400 invalid_request`, and so does giving both `text` and `template` or neither of them.
+
+Sending `text` outside the 24-hour window is refused; send an approved utility template instead. List the templates you may send with [Templates (v1)](/en/api-reference/v1-templates) and use their `variables` keys. Marketing templates cannot be sent through the API.
+
+### Request
+
+A template send with consent evidence:
+
+<Request tabs="cURL">
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/messages \
+  -H "Authorization: Bearer tk_live_9xmk7q2rd4f8" \
+  -H "Idempotency-Key: msg-2025-04-17-0001" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contact_id": "3f6b1c92-7d84-4a51-b0e3-9c2a7f48d615",
+    "template": {
+      "name": "appointment_reminder",
+      "language": "de",
+      "variables": {
+        "appointment_date": "22. April"
+      }
+    },
+    "consent": {
+      "evidence": "Signed form 2025-04-02, ticket 8841"
+    }
+  }'
+```
+
+</Request>
+
+A free-form reply inside the 24-hour window:
+
+<Request tabs="cURL">
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/messages \
+  -H "Authorization: Bearer tk_live_9xmk7q2rd4f8" \
+  -H "Idempotency-Key: msg-2025-04-17-0002" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contact_id": "3f6b1c92-7d84-4a51-b0e3-9c2a7f48d615",
+    "text": "Guten Tag Jordan, passt Ihnen Dienstag um 10 Uhr?"
+  }'
+```
+
+</Request>
+
+### Response
+
+Every send answers with the message `id` and its current `status`. The HTTP status code tells you how to read the rest of the answer:
+
+- **`201`**: The message was sent.
+- **`200`**: A replay of the same request, same key and same body. You receive the stored answer instead of a second send.
+- **`202`**: The message is still being sent, or its outcome is not known yet. Read it again with `GET /api/v1/messages/{id}`.
+- **`422`**: Refused, with a `refusal` object that says why.
+- **`502`**: Failed at WhatsApp, with a `failure` object.
+
+<Response tabs="201,200,202,422,502">
+
+```json
+{
+  "id": "7c2e5a91-4b6d-4f08-9a3e-1d2c8b7f0a45",
+  "status": "sent",
+  "replay": false
+}
+```
+
+```json
+{
+  "id": "7c2e5a91-4b6d-4f08-9a3e-1d2c8b7f0a45",
+  "status": "sent",
+  "replay": true
+}
+```
+
+```json
+{
+  "id": "9b4d1f27-8c3a-4e6b-b5d0-2a7f9c1e6b38",
+  "status": "sending",
+  "replay": false
+}
+```
+
+```json
+{
+  "id": "4e7a2c58-1f9b-4d36-8a02-6c5b3e9d1f74",
+  "status": "refused",
+  "refusal": {
+    "code": "window_closed",
+    "reason": "The 24-hour window since the contact last wrote has closed. Send an approved utility template instead.",
+    "retry_after": null,
+    "needs_person": false
+  },
+  "replay": false
+}
+```
+
+```json
+{
+  "id": "c1f83a76-5d92-4b64-9e07-3f8a2d5c4b19",
+  "status": "failed",
+  "failure": {
+    "code": "undeliverable",
+    "retryable": false
+  },
+  "replay": false
+}
+```
+
+</Response>
+
+### Refusals and failures
+
+A refusal means Talkturo did not hand the message to WhatsApp. The `refusal` object explains why, and its fields are also present on the message you read back later.
+
+<ResponseField name="refusal" field-type="object">
+
+The reason a message was refused. `null` when the message was not refused.
+
+<ResponseField name="code" field-type="string">
+
+A stable identifier for the refusal. Branch on this value; it does not change between requests.
+
+</ResponseField>
+
+<ResponseField name="reason" field-type="string">
+
+A description for humans. Show it to the person who is waiting for the message.
+
+</ResponseField>
+
+<ResponseField name="retry_after" field-type="string or null">
+
+The moment the same message may be tried again, or `null` when waiting will not help.
+
+</ResponseField>
+
+<ResponseField name="needs_person" field-type="boolean">
+
+`true` when a person in the workspace has to decide before the message can go out: consent, a block, or a template to fix.
+
+</ResponseField>
+
+</ResponseField>
+
+| Code | Meaning |
+| --- | --- |
+| `window_closed` | The 24-hour window since the contact last wrote has closed; send an approved utility template instead. |
+| `consent_withdrawn` | The contact withdrew consent for messages on this number. |
+| `contact_dnc` | The contact asked not to be contacted. |
+| `template_variables_invalid` | `variables` does not match what the template expects. The refusal names the offending keys. |
+
+Other refusals carry their own code and reason. Always branch on `code` and show `reason` to the person who is waiting.
+
+A `502` means something different: WhatsApp did not take the message. The `failure` object carries `code` and `retryable`. A retryable failure may be tried again later; a non-retryable one, for example `undeliverable`, will not succeed by repeating it.
+
+### Request errors
+
+Errors in the request itself come back before any message exists:
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| `400` | `idempotency_key_required` | The `Idempotency-Key` header is missing or malformed. |
+| `400` | `invalid_request` | The body is not valid, for example neither or both of `text` and `template`. |
+| `404` | `contact_not_found` | No contact with this id in this workspace. |
+| `409` | `idempotency_key_reused` | The key was already used for another request, with a different body. |
+| `422` | `contact_has_no_phone` | The contact has no phone number a WhatsApp message can go to. |
+| `422` | `no_whatsapp_number` | The assistant, or the workspace, has no active WhatsApp number. |
+| `422` | `assistant_required` | The workspace has more than one WhatsApp number; send `assistant_id`. |
+
+## Read where a message stands
+
+`GET /api/v1/messages/{id}` returns one message with its current status. The call needs the `messages:read` scope.
+
+<ParamField path="id" param-type="string (UUID)" required="true">
+
+The message id returned by the send call.
+
+</ParamField>
+
+A message moves `sending` → `sent` → `delivered` → `read`, and can instead end as `failed`, `refused` or `unknown`. `unknown` means Talkturo cannot tell whether WhatsApp took it; do not send it again under a new key.
+
+<Response tabs="200,404">
+
+```json
+{
+  "id": "7c2e5a91-4b6d-4f08-9a3e-1d2c8b7f0a45",
+  "contact_id": "3f6b1c92-7d84-4a51-b0e3-9c2a7f48d615",
+  "status": "delivered",
+  "kind": "template",
+  "template": {
+    "name": "appointment_reminder",
+    "language": "de"
+  },
+  "created_at": "2025-04-17T09:20:03Z",
+  "sent_at": "2025-04-17T09:20:04Z",
+  "refusal": null,
+  "failure": null
+}
+```
+
+```json
+{
+  "error": {
+    "code": "message_not_found",
+    "message": "No message with this id in this workspace."
+  }
+}
+```
+
+</Response>
+
+## Message object
+
+<ResponseField name="id" field-type="string">
+
+The message id, also used in `GET /api/v1/messages/{id}`.
+
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string or null">
+
+The contact that receives the message.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+
+Where the message stands: `sending`, `sent`, `delivered`, `read`, `failed`, `refused` or `unknown`.
+
+</ResponseField>
+
+<ResponseField name="kind" field-type="string">
+
+What was sent: `text` or `template`.
+
+</ResponseField>
+
+<ResponseField name="template" field-type="object or null">
+
+The template that was sent, with `name` and `language`. `null` for a `text` message.
+
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string">
+
+When Talkturo accepted the send request, in ISO 8601 format.
+
+</ResponseField>
+
+<ResponseField name="sent_at" field-type="string or null">
+
+When WhatsApp took the message, in ISO 8601 format. `null` while the message is still `sending`, and on messages that were refused or failed.
+
+</ResponseField>
+
+<ResponseField name="refusal" field-type="object or null">
+
+The same `refusal` object returned on the send answer, with `code`, `reason`, `retry_after` and `needs_person`. `null` when the message was not refused.
+
+</ResponseField>
+
+<ResponseField name="failure" field-type="object or null">
+
+A failure at WhatsApp, with `code` and `retryable`. `null` when the message did not fail.
+
+</ResponseField>
+
+## Related
+
+<Columns cols={2}>
+
+<Card title="API v1 overview" href="/en/api-reference/v1-overview" icon="book-open">
+
+Authentication, scopes and the shape of every v1 answer.
+
+</Card>
+
+<Card title="Send approved templates" href="/en/api-reference/v1-templates" icon="code">
+
+List the utility templates you may send and read their `variables` keys.
+
+</Card>
+
+<Card title="Calls (v1)" href="/en/api-reference/v1-calls" icon="terminal">
+
+Place an outbound call with an assistant and read it back with summary and transcript.
+
+</Card>
+
+<Card title="Inbox" href="/en/api-reference/inbox" icon="users">
+
+Read and answer the conversations your messages belong to.
+
+</Card>
+
+</Columns>

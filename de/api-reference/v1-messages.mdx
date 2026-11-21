@@ -1,0 +1,342 @@
+---
+title: Messages (v1)
+description: Senden Sie eine WhatsApp-Nachricht aus Ihrem eigenen System an einen Kontakt und verfolgen Sie ihren Status bis zur Zustellung.
+---
+
+## Endpoint-Übersicht
+
+Zwei Endpunkte decken den Versand und den Status einer Nachricht ab.
+
+| Methode | Endpunkt | Scope | Zweck |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/messages` | `messages:send` | Sendet eine WhatsApp-Nachricht an einen Kontakt |
+| `GET` | `/api/v1/messages/{id}` | `messages:read` | Liest den aktuellen Status einer Nachricht |
+
+<Callout kind="info">
+
+Eine Nachricht adressiert immer einen Kontakt, niemals eine Telefonnummer. Talkturo wählt die WhatsApp-Nummer des Assistenten und liest die Nummer des Kontakts selbst aus. An eine Nummer, die kein Kontakt des Workspace ist, kann nichts gesendet werden.
+
+</Callout>
+
+## Nachricht senden
+
+`POST /api/v1/messages` sendet eine WhatsApp-Nachricht aus Ihrem eigenen System an einen Kontakt. Der Aufruf benötigt den Scope `messages:send` und einen `Idempotency-Key`-Header.
+
+**Base URL:** `https://app.talkturo.com/api/v1`
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+Ihr API-Schlüssel als Bearer-Token: `Bearer tk_live_...`.
+</ParamField>
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+Ein stabiler Schlüssel für diese Anfrage, 1 bis 100 Zeichen aus Buchstaben, Ziffern, `:`, `_`, `.` oder `-`. Wiederholen Sie den Aufruf mit demselben Schlüssel und demselben Body, erhalten Sie die gespeicherte Antwort statt eines zweiten Versands.
+</ParamField>
+
+<ParamField header="Content-Type" param-type="string" required="true">
+`application/json`.
+</ParamField>
+
+### Body
+
+<ParamField body="contact_id" param-type="string (UUID)" required="true">
+Der Kontakt, der die Nachricht erhält.
+</ParamField>
+
+<ParamField body="assistant_id" param-type="string (UUID)">
+Wessen WhatsApp-Nummer die Nachricht sendet. Nur nötig, wenn der Workspace mehr als eine WhatsApp-Nummer hat; ein Workspace mit genau einer Nummer verwendet diese.
+</ParamField>
+
+<ParamField body="text" param-type="string">
+Der Nachrichtentext, 1 bis 4096 Zeichen. Nur innerhalb des 24-Stunden-Fensters des Kontakts erlaubt, also der 24 Stunden nach der letzten Nachricht des Kontakts. Geben Sie genau eines von `text` oder `template` an.
+</ParamField>
+
+<ParamField body="template" param-type="object">
+Ein genehmigtes Utility-Template. Geben Sie genau eines von `text` oder `template` an.
+
+<ParamField body="name" param-type="string" required="true" show-location="false">
+Der Name des Templates, 1 bis 512 Zeichen.
+</ParamField>
+
+<ParamField body="language" param-type="string" required="true" show-location="false">
+Die Sprache des Templates, 2 bis 16 Zeichen, zum Beispiel `en` oder `de`.
+</ParamField>
+
+<ParamField body="variables" param-type="object" show-location="false">
+Die Werte, die das Template erwartet, zum Beispiel `{"first_name": "Jordan"}`.
+</ParamField>
+
+</ParamField>
+
+<ParamField body="consent" param-type="object">
+Nachweis, dass der Kontakt dem Empfang von Nachrichten zugestimmt hat. Talkturo protokolliert die Zustimmung beim Senden.
+
+<ParamField body="evidence" param-type="string" show-location="false">
+Eine Beschreibung des Nachweises, 1 bis 500 Zeichen, zum Beispiel `"Signed form 2025-04-02, ticket 8841"`.
+</ParamField>
+
+</ParamField>
+
+Der Body ist strikt. Ein unbekanntes Feld beantwortet Talkturo mit `400 invalid_request`, ebenso wenn Sie sowohl `text` als auch `template` oder keines von beiden angeben.
+
+Das Senden von `text` außerhalb des 24-Stunden-Fensters wird abgelehnt; senden Sie stattdessen ein genehmigtes Utility-Template. Welche Templates Sie senden dürfen, listet [Templates (v1)](/de/api-reference/v1-templates) auf; verwenden Sie deren `variables`-Schlüssel. Marketing-Templates lassen sich nicht über die API senden.
+
+### Anfrage
+
+Ein Template-Versand mit Zustimmungsnachweis:
+
+<Request>
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/messages \
+  -H "Authorization: Bearer tk_live_9xmk7q2rd4f8" \
+  -H "Idempotency-Key: msg-2025-04-17-0001" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contact_id": "3f6b1c92-7d84-4a51-b0e3-9c2a7f48d615",
+    "template": {
+      "name": "appointment_reminder",
+      "language": "de",
+      "variables": {
+        "appointment_date": "22. April"
+      }
+    },
+    "consent": {
+      "evidence": "Signed form 2025-04-02, ticket 8841"
+    }
+  }'
+```
+
+</Request>
+
+Eine freie Antwort innerhalb des 24-Stunden-Fensters:
+
+<Request>
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/messages \
+  -H "Authorization: Bearer tk_live_9xmk7q2rd4f8" \
+  -H "Idempotency-Key: msg-2025-04-17-0002" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contact_id": "3f6b1c92-7d84-4a51-b0e3-9c2a7f48d615",
+    "text": "Guten Tag Jordan, passt Ihnen Dienstag um 10 Uhr?"
+  }'
+```
+
+</Request>
+
+### Antwort
+
+Jeder Versand antwortet mit der `id` der Nachricht und ihrem aktuellen `status`. Der HTTP-Statuscode sagt Ihnen, wie Sie den restlichen Inhalt der Antwort lesen:
+
+- **`201`**: Die Nachricht wurde gesendet.
+- **`200`**: Eine Wiederholung derselben Anfrage mit demselben Schlüssel und demselben Body. Sie erhalten die gespeicherte Antwort statt eines zweiten Versands.
+- **`202`**: Die Nachricht wird noch gesendet, oder ihr Ausgang ist noch nicht bekannt. Lesen Sie sie erneut mit `GET /api/v1/messages/{id}`.
+- **`422`**: Abgelehnt, mit einem `refusal`-Objekt, das den Grund nennt.
+- **`502`**: Bei WhatsApp fehlgeschlagen, mit einem `failure`-Objekt.
+
+<Response tabs="201,200,202,422,502">
+
+```json
+{
+  "id": "7c2e5a91-4b6d-4f08-9a3e-1d2c8b7f0a45",
+  "status": "sent",
+  "replay": false
+}
+```
+
+```json
+{
+  "id": "7c2e5a91-4b6d-4f08-9a3e-1d2c8b7f0a45",
+  "status": "sent",
+  "replay": true
+}
+```
+
+```json
+{
+  "id": "9b4d1f27-8c3a-4e6b-b5d0-2a7f9c1e6b38",
+  "status": "sending",
+  "replay": false
+}
+```
+
+```json
+{
+  "id": "4e7a2c58-1f9b-4d36-8a02-6c5b3e9d1f74",
+  "status": "refused",
+  "refusal": {
+    "code": "window_closed",
+    "reason": "The 24-hour window since the contact last wrote has closed. Send an approved utility template instead.",
+    "retry_after": null,
+    "needs_person": false
+  },
+  "replay": false
+}
+```
+
+```json
+{
+  "id": "c1f83a76-5d92-4b64-9e07-3f8a2d5c4b19",
+  "status": "failed",
+  "failure": {
+    "code": "undeliverable",
+    "retryable": false
+  },
+  "replay": false
+}
+```
+
+</Response>
+
+### Ablehnungen und Fehler
+
+Eine Ablehnung bedeutet, dass Talkturo die Nachricht nicht an WhatsApp übergeben hat. Das `refusal`-Objekt erklärt warum; seine Felder stehen auch an der Nachricht, die Sie später auslesen.
+
+<ResponseField name="refusal" field-type="object">
+Der Grund, warum eine Nachricht abgelehnt wurde. `null`, wenn die Nachricht nicht abgelehnt wurde.
+
+<ResponseField name="code" field-type="string">
+Eine stabile Kennung für die Ablehnung. Verzweigen Sie auf diesen Wert; er ändert sich zwischen Anfragen nicht.
+</ResponseField>
+
+<ResponseField name="reason" field-type="string">
+Eine Beschreibung für Menschen. Zeigen Sie sie der Person an, die auf die Nachricht wartet.
+</ResponseField>
+
+<ResponseField name="retry_after" field-type="string or null">
+Der Zeitpunkt, zu dem dieselbe Nachricht erneut versucht werden darf, oder `null`, wenn Warten nicht hilft.
+</ResponseField>
+
+<ResponseField name="needs_person" field-type="boolean">
+`true`, wenn eine Person im Workspace entscheiden muss, bevor die Nachricht rausgehen kann: Zustimmung, eine Sperre oder ein zu korrigierendes Template.
+</ResponseField>
+
+</ResponseField>
+
+| Code | Bedeutung |
+| --- | --- |
+| `window_closed` | Das 24-Stunden-Fenster seit der letzten Nachricht des Kontakts ist geschlossen; senden Sie stattdessen ein genehmigtes Utility-Template. |
+| `consent_withdrawn` | Der Kontakt hat die Zustimmung für Nachrichten auf dieser Nummer zurückgezogen. |
+| `contact_dnc` | Der Kontakt möchte nicht kontaktiert werden. |
+| `template_variables_invalid` | `variables` passt nicht zu dem, was das Template erwartet. Die Ablehnung nennt die betroffenen Schlüssel. |
+
+Andere Ablehnungen tragen einen eigenen Code und eine eigene Begründung. Verzweigen Sie immer auf `code` und zeigen Sie `reason` der Person an, die auf die Nachricht wartet.
+
+Ein `502` bedeutet etwas anderes: WhatsApp hat die Nachricht nicht angenommen. Das `failure`-Objekt enthält `code` und `retryable`. Ein wiederholbarer Fehler darf später erneut versucht werden; ein nicht wiederholbarer, zum Beispiel `undeliverable`, wird durch Wiederholen nicht erfolgreich.
+
+### Fehler in der Anfrage
+
+Fehler in der Anfrage selbst kommen zurück, bevor überhaupt eine Nachricht entsteht:
+
+| Status | Code | Bedeutung |
+| --- | --- | --- |
+| 400 | `idempotency_key_required` | Der Header `Idempotency-Key` fehlt oder ist fehlerhaft. |
+| 400 | `invalid_request` | Der Body ist ungültig, zum Beispiel weder `text` noch `template` oder beides. |
+| 404 | `contact_not_found` | Kein Kontakt mit dieser id in diesem Workspace. |
+| 409 | `idempotency_key_reused` | Der Schlüssel wurde bereits für eine andere Anfrage mit einem anderen Body verwendet. |
+| 422 | `contact_has_no_phone` | Der Kontakt hat keine Telefonnummer, an die eine WhatsApp-Nachricht gehen kann. |
+| 422 | `no_whatsapp_number` | Der Assistent oder der Workspace hat keine aktive WhatsApp-Nummer. |
+| 422 | `assistant_required` | Der Workspace hat mehr als eine WhatsApp-Nummer; senden Sie `assistant_id`. |
+
+## Status einer Nachricht lesen
+
+`GET /api/v1/messages/{id}` gibt eine Nachricht mit ihrem aktuellen Status zurück. Der Aufruf benötigt den Scope `messages:read`.
+
+<ParamField path="id" param-type="string (UUID)" required="true">
+Die id der Nachricht, die der Sendeaufruf zurückgegeben hat.
+</ParamField>
+
+Eine Nachricht durchläuft `sending` → `sent` → `delivered` → `read` und kann stattdessen als `failed`, `refused` oder `unknown` enden. `unknown` bedeutet, dass Talkturo nicht feststellen kann, ob WhatsApp die Nachricht angenommen hat; senden Sie sie nicht unter einem neuen Schlüssel erneut.
+
+<Response tabs="200,404">
+
+```json
+{
+  "id": "7c2e5a91-4b6d-4f08-9a3e-1d2c8b7f0a45",
+  "contact_id": "3f6b1c92-7d84-4a51-b0e3-9c2a7f48d615",
+  "status": "delivered",
+  "kind": "template",
+  "template": {
+    "name": "appointment_reminder",
+    "language": "de"
+  },
+  "created_at": "2025-04-17T09:20:03Z",
+  "sent_at": "2025-04-17T09:20:04Z",
+  "refusal": null,
+  "failure": null
+}
+```
+
+```json
+{
+  "error": {
+    "code": "message_not_found",
+    "message": "No message with this id in this workspace."
+  }
+}
+```
+
+</Response>
+
+## Nachrichtenobjekt
+
+<ResponseField name="id" field-type="string">
+Die id der Nachricht, die auch in `GET /api/v1/messages/{id}` verwendet wird.
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string or null">
+Der Kontakt, der die Nachricht erhält.
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+Wo die Nachricht steht: `sending`, `sent`, `delivered`, `read`, `failed`, `refused` oder `unknown`.
+</ResponseField>
+
+<ResponseField name="kind" field-type="string">
+Was gesendet wurde: `text` oder `template`.
+</ResponseField>
+
+<ResponseField name="template" field-type="object or null">
+Das gesendete Template mit `name` und `language`. `null` bei einer `text`-Nachricht.
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string">
+Wann Talkturo die Sendeanfrage angenommen hat, im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="sent_at" field-type="string or null">
+Wann WhatsApp die Nachricht angenommen hat, im ISO-8601-Format. `null`, solange die Nachricht noch `sending` ist, sowie bei abgelehnten oder fehlgeschlagenen Nachrichten.
+</ResponseField>
+
+<ResponseField name="refusal" field-type="object or null">
+Dasselbe `refusal`-Objekt, das die Sendeantwort zurückgibt, mit `code`, `reason`, `retry_after` und `needs_person`. `null`, wenn die Nachricht nicht abgelehnt wurde.
+</ResponseField>
+
+<ResponseField name="failure" field-type="object or null">
+Ein Fehler bei WhatsApp, mit `code` und `retryable`. `null`, wenn die Nachricht nicht fehlgeschlagen ist.
+</ResponseField>
+
+## Verwandte Seiten
+
+<Columns cols={2}>
+
+<Card title="API v1 overview" href="/de/api-reference/v1-overview" icon="book-open">
+Authentifizierung, Scopes und der Aufbau jeder v1-Antwort.
+</Card>
+
+<Card title="Send approved templates" href="/de/api-reference/v1-templates" icon="code">
+Listen Sie die Utility-Templates auf, die Sie senden dürfen, und lesen Sie deren `variables`-Schlüssel.
+</Card>
+
+<Card title="Calls (v1)" href="/de/api-reference/v1-calls" icon="terminal">
+Starten Sie einen ausgehenden Anruf mit einem Assistenten und lesen Sie ihn mit Zusammenfassung und Transkript aus.
+</Card>
+
+<Card title="Inbox" href="/de/api-reference/inbox" icon="users">
+Lesen Sie die Unterhaltungen, zu denen Ihre Nachrichten gehören, und beantworten Sie sie.
+</Card>
+
+</Columns>

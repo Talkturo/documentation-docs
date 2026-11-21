@@ -1,0 +1,205 @@
+---
+title: API v1 – Überblick
+description: Rufen Sie Anrufe ab, senden Sie WhatsApp-Nachrichten, verwalten Sie Kontaktpläne und lesen Sie Anrufe mit Zusammenfassung und Aufnahme über eine REST-API.
+---
+
+Mit der v1 REST API von Talkturo startet Ihr Backend einen ausgehenden Anruf mit einem Assistenten, versendet eine WhatsApp-Nachricht, liest die Pläne Ihrer Assistenten für Ihre Kontakte, markiert einen Plan als bereit und ruft Anrufe mit Zusammenfassung, Transkript und Link zur Aufnahme wieder ab. Jede v1-Anfrage authentifiziert sich mit einem Workspace-API-Schlüssel, sodass Server-zu-Server-Integrationen nie von einer Browsersitzung abhängen.
+
+<Callout kind="info">
+
+Senden Sie alle v1-Anfragen an `https://app.talkturo.com/api/v1`. Die Pfade in dieser Referenz sind relativ zu dieser Basis-URL angegeben.
+
+</Callout>
+
+## Mit einem Workspace-API-Schlüssel authentifizieren
+
+Übergeben Sie Ihren Schlüssel im Header `Authorization` als Bearer-Token. Produktionsschlüssel beginnen mit `tk_live_`, Testschlüssel mit `tk_test_`.
+
+v1-Routen akzeptieren ausschließlich Workspace-API-Schlüssel. Session-Cookies und Tokens der Desktop-App werden mit `401` abgelehnt. Eine Anfrage, die aus einer angemeldeten Browsersitzung weitergeleitet wird, schlägt daher fehl, obwohl der Benutzer angemeldet ist.
+
+<Request tabs="cURL">
+
+```bash
+curl https://app.talkturo.com/api/v1/calls \
+  -H "Authorization: Bearer tk_live_9f3a7c2e5b8d4160a72c"
+```
+
+</Request>
+
+<Response tabs="401,403">
+
+```json
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Missing or invalid API key."
+  }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "missing_scope",
+    "message": "This API key does not have the calls:read scope."
+  }
+}
+```
+
+</Response>
+
+Schlüssel erstellen Sie auf der Seite [API Keys](/de/api-reference/api-keys); dort legen Sie auch die Scopes fest, die der Schlüssel trägt. Die Seite [Authentication](/de/api-reference/authentication) beschreibt das Header-Format und die Schlüsselformate im Detail.
+
+## Erforderliche Scopes
+
+Jeder Endpoint prüft genau einen Scope des aufrufenden Schlüssels. Vergeben Sie nur die Scopes, die die Integration benötigt.
+
+| Scope | Erlaubt | Endpoints |
+| --- | --- | --- |
+| `calls:create` | Einen ausgehenden Anruf starten | `POST /calls` |
+| `calls:read` | Anrufe, einen einzelnen Anruf und dessen Link zur Aufnahme lesen | `GET /calls`, `GET /calls/{id}`, `GET /calls/{id}/recording` |
+| `messages:send` | Eine WhatsApp-Nachricht senden | `POST /messages` |
+| `messages:read` | Den Status einer Nachricht lesen | `GET /messages/{id}` |
+| `plans:read` | Kontaktpläne auflisten | `GET /plans` |
+| `plans:write` | Einen Plan als bereit markieren | `POST /plans/{id}/ready` |
+| `templates:read` | Die WhatsApp-Templates auflisten, die ein externer Absender senden darf | `GET /templates` |
+
+Ein Schlüssel mit dem Scope `*` besitzt alle diese Scopes. Fehlt einer Anfrage der Scope, den ihr Endpoint voraussetzt, antwortet die API mit `403` und dem Code `missing_scope`.
+
+## Idempotency-Key bei POST senden
+
+Beide POST-Endpoints in v1 verlangen den Header `Idempotency-Key`. Der Wert muss 1 bis 100 Zeichen lang sein und darf Buchstaben, Ziffern sowie `:`, `_`, `.` und `-` enthalten.
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/calls \
+  -H "Authorization: Bearer tk_live_9f3a7c2e5b8d4160a72c" \
+  -H "Idempotency-Key: order-4711-call-1" \
+  -H "Content-Type: application/json"
+```
+
+Wiederholen Sie eine Anfrage mit demselben Schlüssel und demselben Request-Body, erhalten Sie die Antwort der ersten Anfrage zurück, und es wird kein zweites Mal gewählt oder gesendet. Derselbe Schlüssel mit einem anderen Body führt zu `409`. Ein fehlender oder fehlerhafter Header führt zu `400` mit dem Code `idempotency_key_required`. Die Request-Bodys der einzelnen Endpoints sind auf den Seiten [Calls (v1)](/de/api-reference/v1-calls) und [Plans (v1)](/de/api-reference/v1-plans) dokumentiert.
+
+<Callout kind="alert">
+
+Verwenden Sie den Schlüssel bei einer Wiederholung nur dann erneut, wenn der Request-Body unverändert ist. Erzeugen Sie für jeden neuen Anruf und jede neue Nachricht einen frischen Schlüssel, und behalten Sie den ursprünglichen Schlüssel, wenn Sie nach einem Timeout erneut senden.
+
+</Callout>
+
+## Fehler haben eine einheitliche Struktur
+
+Jeder v1-Fehler ist ein JSON-Body mit einem `error`-Objekt. Der `code` ist stabil und eignet sich für Verzweigungen in Ihrer Integration; die `message` ist für Menschen geschrieben und kann sich ändern.
+
+```json
+{
+  "error": {
+    "code": "missing_scope",
+    "message": "This API key does not have the calls:create scope."
+  }
+}
+```
+
+Gilt eine Ablehnung nur für einen bestimmten Zeitraum, etwa bei einem Kontakt, der erst zu einem späteren Zeitpunkt kontaktiert werden möchte, ergänzt der Fehler das Feld `until` mit dem Zeitpunkt, ab dem die Anfrage erfolgreich sein kann.
+
+```json
+{
+  "error": {
+    "code": "contact_deferred",
+    "message": "Dieser Kontakt ist nur zu seinen bevorzugten Zeiten erreichbar.",
+    "until": "2025-04-18T09:00:00.000Z"
+  }
+}
+```
+
+Diese Codes können von jedem v1-Endpoint zurückkommen:
+
+| Code | Status | Bedeutung |
+| --- | --- | --- |
+| `unauthorized` | `401` | Der Schlüssel fehlt, ist fehlerhaft oder kein Workspace-API-Schlüssel |
+| `missing_scope` | `403` | Dem Schlüssel fehlt der Scope, den der Endpoint voraussetzt |
+| `rate_limited` | `429` | Der Schlüssel hat sein stündliches Anfragelimit überschritten |
+| `internal_error` | `500` | Auf Talkturo-Seite ist ein Fehler aufgetreten; versuchen Sie es später erneut |
+
+## Rate Limits
+
+Jeder Schlüssel hat ein Limit an Anfragen pro Stunde, standardmäßig 1000, das pro Schlüssel auf der Seite API Keys festgelegt wird. Jede Antwort enthält `X-RateLimit-Limit` mit dem Limit, `X-RateLimit-Remaining` mit den verbleibenden Anfragen im aktuellen Fenster und `X-RateLimit-Reset` mit dem Zeitpunkt, an dem das Fenster zurückgesetzt wird.
+
+Eine Anfrage über dem Limit antwortet mit `429`, dem Code `rate_limited` und dem Header `Retry-After`, der die Anzahl der Sekunden bis zum nächsten Versuch nennt. Lesen Sie `X-RateLimit-Remaining` in erfolgreichen Antworten, um zu drosseln, bevor Sie das Limit erreichen.
+
+## Endpoint-Übersicht
+
+Alle folgenden Pfade sind relativ zu `https://app.talkturo.com/api/v1`.
+
+| Methode | Endpoint | Scope | Zweck |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/calls` | `calls:create` | Einen ausgehenden Anruf mit einem Assistenten starten |
+| `GET` | `/api/v1/calls` | `calls:read` | Anrufe auflisten |
+| `GET` | `/api/v1/calls/{id}` | `calls:read` | Einen Anruf mit Zusammenfassung und Transkript lesen |
+| `GET` | `/api/v1/calls/{id}/recording` | `calls:read` | Den Link zur Aufnahme eines Anrufs lesen |
+| `POST` | `/api/v1/messages` | `messages:send` | Eine WhatsApp-Nachricht senden |
+| `GET` | `/api/v1/messages/{id}` | `messages:read` | Den Status einer Nachricht lesen |
+| `GET` | `/api/v1/plans` | `plans:read` | Auflisten, was Assistenten für Kontakte geplant haben |
+| `POST` | `/api/v1/plans/{id}/ready` | `plans:write` | Einen Plan als bereit markieren |
+| `GET` | `/api/v1/templates` | `templates:read` | Die WhatsApp-Templates auflisten, die ein externer Absender senden darf |
+
+## Paginierung für Anrufe
+
+`GET /calls` liefert ein `data`-Array und einen `next_cursor`-Wert. Übergeben Sie den Cursor als Query-Parameter `cursor`, um die nächste Seite zu lesen, und hören Sie auf, wenn `next_cursor` als `null` zurückkommt.
+
+<ParamField query="cursor" param-type="string">
+Der `next_cursor`-Wert der vorherigen Seite, also der Erstellungszeitpunkt des letzten Anrufs darauf. Lassen Sie ihn weg, um die erste Seite zu lesen.
+</ParamField>
+
+<ParamField query="limit" param-type="integer">
+Seitengröße von 1 bis 100. Standardwert ist 25.
+</ParamField>
+
+<ResponseField name="data" field-type="array">
+Die Anrufe dieser Seite. Die Felder eines Anrufs sind auf der Seite [Calls (v1)](/de/api-reference/v1-calls) dokumentiert.
+</ResponseField>
+
+<ResponseField name="next_cursor" field-type="string">
+Der Erstellungszeitpunkt des letzten Anrufs dieser Seite, den Sie als `cursor` zurückgeben, oder `null`, wenn es keine weitere Seite gibt.
+</ResponseField>
+
+```json
+{
+  "data": [
+    {
+      "id": "3f8a1c62-9d74-4b05-8e21-7a5c9d0b4f13"
+    }
+  ],
+  "next_cursor": "2025-04-17T10:20:31.000Z"
+}
+```
+
+## Weiterführende Referenzen
+
+Jede Endpoint-Gruppe hat ihre eigene Referenzseite mit Request-Feldern, Response-Feldern und vollständigen Beispielen.
+
+<Columns cols={2}>
+
+<Card title="Calls (v1)" href="/de/api-reference/v1-calls" icon="phone">
+
+Starten Sie ausgehende Anrufe und lesen Sie sie mit Zusammenfassung, Transkript und Link zur Aufnahme wieder ab.
+
+</Card>
+
+<Card title="Messages (v1)" href="/de/api-reference/v1-messages" icon="message-circle">
+
+Senden Sie eine WhatsApp-Nachricht und verfolgen Sie ihren Status.
+
+</Card>
+
+<Card title="Plans (v1)" href="/de/api-reference/v1-plans" icon="calendar">
+
+Listen Sie auf, was Assistenten für Kontakte geplant haben, und markieren Sie einen Plan als bereit.
+
+</Card>
+
+<Card title="Templates (v1)" href="/de/api-reference/v1-templates" icon="file-text">
+
+Listen Sie die WhatsApp-Templates auf, die ein externer Absender senden darf.
+
+</Card>
+
+</Columns>

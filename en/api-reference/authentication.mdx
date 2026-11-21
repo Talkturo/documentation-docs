@@ -28,7 +28,7 @@ curl -X GET "https://api.talkturo.com/api/test-api-key" \
 
 </CodeGroup>
 
-Talkturo validates API keys by hashing the submitted key and looking it up through the `validate_api_key()` database function. If the key is valid, active, not expired, and has the required scope, the request proceeds and usage is logged.
+Talkturo validates API keys by hashing the submitted key and looking it up. If the key is valid, active, not expired, and has the required scope, the request proceeds and usage is logged.
 
 <Callout kind="alert">
 
@@ -77,7 +77,7 @@ Talkturo checks scopes in this order: full wildcard, prefix wildcard, then exact
 
 ## Dual-auth mode
 
-Some Talkturo API routes support both API keys and authenticated browser sessions. These routes use the `withApiAuth` wrapper.
+Some Talkturo API routes support both API keys and authenticated browser sessions. These routes accept either credential.
 
 <Callout kind="info">
 
@@ -95,7 +95,7 @@ Use session cookies when your code runs inside the web app context. For external
 
 ## JWT bearer token authentication
 
-Desktop app routes accept a Supabase access token in the `Authorization` header. Talkturo validates the token by calling `supabase.auth.getUser()` for the presented bearer token.
+Desktop app routes accept a Supabase access token in the `Authorization` header. Talkturo validates the presented bearer token against the user's session.
 
 <CodeGroup tabs="cURL">
 

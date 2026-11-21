@@ -1,0 +1,138 @@
+---
+title: Templates (v1)
+description: Ruft die freigegebenen WhatsApp-Templates mit Name, Sprache und den benötigten Variablen-Schlüsseln ab, damit Sie Nachrichten korrekt senden.
+---
+
+Gibt die freigegebenen WhatsApp-Templates zurück, die Ihr System senden darf, mit den Schlüsseln `name`, `language` und `variables`, die Sie zum Senden einer Nachricht über [Messages (v1)](/de/api-reference/v1-messages) benötigen.
+
+## Versendbare Templates auflisten
+
+Listet die Utility-Templates auf, die ein externer Absender senden darf. Es erscheinen ausschließlich freigegebene, versendbare Templates. Marketing-Templates sind Sache der jeweiligen Person und erscheinen hier nie, und ein Template, das nicht zum Senden freigegeben ist, wird ausgelassen.
+
+Templates, deren Variablen ein Geheimnis enthalten, werden ebenfalls vollständig aus der Liste ausgelassen.
+
+Erfordert den Scope `templates:read`.
+
+<ParamField query="language" param-type="string" enum="en,de">
+Filtert die Liste nach der Sprache des Templates. Akzeptiert nur `en` oder `de`. Jeder andere Wert antwortet mit `400` und dem Code `invalid_request`.
+</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/templates?language=de" \
+  -H "Authorization: Bearer tk_live_9xmk7q2rd4f8"
+```
+
+</Request>
+
+<Response tabs="200,400">
+
+```json
+{
+  "connected": true,
+  "templates": [
+    {
+      "name": "appointment_reminder",
+      "language": "de",
+      "category": "UTILITY",
+      "body": "Hallo {{1}}, Ihr Termin am {{2}} im Studio {{3}} steht an. Bitte bestätigen Sie kurz mit JA.",
+      "variables": [
+        {
+          "key": "appointment_date",
+          "example": "22. April",
+          "max_length": 60
+        }
+      ],
+      "filled_by_talkturo": ["first_name", "workspace_name"]
+    },
+    {
+      "name": "order_ready",
+      "language": "de",
+      "category": "UTILITY",
+      "body": "Ihre Bestellung ist abholbereit.",
+      "variables": [],
+      "filled_by_talkturo": []
+    }
+  ]
+}
+```
+
+```json
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "language must be en or de."
+  }
+}
+```
+
+</Response>
+
+## Template-Felder
+
+<ResponseField name="connected" field-type="boolean">
+Ob im Workspace eine WhatsApp-Nummer verbunden ist. Die Liste ist leer, wenn nichts verbunden ist.
+</ResponseField>
+
+<ResponseField name="templates" field-type="array">
+Die versendbaren Templates.
+</ResponseField>
+
+<ResponseField name="templates[].name" field-type="string">
+Name des Templates. Diesen Namen übergeben Sie beim Senden einer Nachricht.
+</ResponseField>
+
+<ResponseField name="templates[].language" field-type="string">
+Sprache des Templates, entweder `en` oder `de`.
+</ResponseField>
+
+<ResponseField name="templates[].category" field-type="string">
+Kategorie des Templates. Für diesen Endpoint immer `UTILITY`.
+</ResponseField>
+
+<ResponseField name="templates[].body" field-type="string">
+Der Template-Text mit seinen Platzhaltern.
+</ResponseField>
+
+<ResponseField name="templates[].variables" field-type="array">
+Die Werte, die Sie beim Senden der Nachricht übergeben. Leer, wenn das Template keine Werte benötigt.
+</ResponseField>
+
+<ResponseField name="templates[].variables[].key" field-type="string">
+Variablen-Schlüssel, den Sie zusammen mit seinem Wert senden.
+</ResponseField>
+
+<ResponseField name="templates[].variables[].example" field-type="string">
+Beispielwert für die Variable, nützlich für Vorschauen und Tests.
+</ResponseField>
+
+<ResponseField name="templates[].variables[].max_length" field-type="integer">
+Maximale Anzahl an Zeichen, die der Wert enthalten darf.
+</ResponseField>
+
+<ResponseField name="templates[].filled_by_talkturo" field-type="array">
+Variablen-Schlüssel, die Talkturo selbst befüllt, zum Beispiel den Vornamen des Kontakts oder den Workspace-Namen. Diese niemals mitsenden.
+</ResponseField>
+
+<Callout kind="info">
+Ein Template, das Werte erwartet, antwortet mit `422` und einer Ablehnung, die die betroffenen Schlüssel nennt, wenn Ihre `variables` nicht dazu passen. Lesen Sie `variables` hier, bevor Sie senden.
+</Callout>
+
+## Verwandte Themen
+
+<Columns cols={2}>
+
+<Card title="Send a message" href="/de/api-reference/v1-messages" icon="send">
+
+Senden Sie eine WhatsApp-Nachricht mit Template-Namen, Sprache und Variablen-Schlüsseln.
+
+</Card>
+
+<Card title="API v1 overview" href="/de/api-reference/v1-overview" icon="book-open">
+
+Basis-URL, Authentifizierung und Scopes der öffentlichen REST-API.
+
+</Card>
+
+</Columns>

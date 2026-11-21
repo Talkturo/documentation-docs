@@ -238,6 +238,37 @@
                 ]
               },
               {
+                "group": "Public API (v1)",
+                "icon": "terminal",
+                "pages": [
+                  {
+                    "title": "API v1 Overview",
+                    "path": "en/api-reference/v1-overview",
+                    "icon": "book-open"
+                  },
+                  {
+                    "title": "Calls (v1)",
+                    "path": "en/api-reference/v1-calls",
+                    "icon": "phone"
+                  },
+                  {
+                    "title": "Messages (v1)",
+                    "path": "en/api-reference/v1-messages",
+                    "icon": "message-square"
+                  },
+                  {
+                    "title": "Templates (v1)",
+                    "path": "en/api-reference/v1-templates",
+                    "icon": "file-text"
+                  },
+                  {
+                    "title": "Plans (v1)",
+                    "path": "en/api-reference/v1-plans",
+                    "icon": "calendar"
+                  }
+                ]
+              },
+              {
                 "group": "Resources",
                 "icon": "box",
                 "pages": [
@@ -689,6 +720,37 @@
                     "title": "API-Schlüssel",
                     "path": "de/api-reference/api-keys",
                     "icon": "key"
+                  }
+                ]
+              },
+              {
+                "group": "Öffentliche API (v1)",
+                "icon": "terminal",
+                "pages": [
+                  {
+                    "title": "API v1 – Überblick",
+                    "path": "de/api-reference/v1-overview",
+                    "icon": "book-open"
+                  },
+                  {
+                    "title": "Calls (v1)",
+                    "path": "de/api-reference/v1-calls",
+                    "icon": "phone"
+                  },
+                  {
+                    "title": "Messages (v1)",
+                    "path": "de/api-reference/v1-messages",
+                    "icon": "message-square"
+                  },
+                  {
+                    "title": "Templates (v1)",
+                    "path": "de/api-reference/v1-templates",
+                    "icon": "file-text"
+                  },
+                  {
+                    "title": "Plans (v1)",
+                    "path": "de/api-reference/v1-plans",
+                    "icon": "calendar"
                   }
                 ]
               },

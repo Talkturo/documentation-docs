@@ -1,0 +1,209 @@
+---
+title: API v1 Overview
+description: Place calls, send WhatsApp messages, manage contact plans, and read calls back with summaries and recordings from one REST API.
+---
+
+Talkturo's v1 REST API lets your backend place an outbound call with an assistant, send a WhatsApp message, list what your assistants have planned for your contacts, mark a plan ready, and read calls back with their summary, transcript and recording link. Every v1 request authenticates with a workspace API key, so server-to-server integrations never depend on a browser session.
+
+<Callout kind="info">
+
+Send all v1 requests to `https://app.talkturo.com/api/v1`. Paths in this reference are shown relative to that base URL.
+
+</Callout>
+
+## Authenticate with a workspace API key
+
+Pass your key in the `Authorization` header as a bearer token. Production keys start with `tk_live_`, test keys with `tk_test_`.
+
+<Request tabs="cURL">
+
+```bash
+curl https://app.talkturo.com/api/v1/calls \
+  -H "Authorization: Bearer tk_live_9f3a7c2e5b8d4160a72c"
+```
+
+</Request>
+
+v1 routes accept workspace API keys only. Session cookies and desktop app tokens are rejected with `401`, so a request proxied from a signed-in browser session fails even though the user is logged in.
+
+<Response tabs="401,403">
+
+```json
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "The API key is invalid, expired or switched off."
+  }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "missing_scope",
+    "message": "This API key does not have the calls:read scope."
+  }
+}
+```
+
+</Response>
+
+Create keys on the [API Keys](/en/api-reference/api-keys) page, where you also choose the scopes the key carries. The [Authentication](/en/api-reference/authentication) page covers the header format and the key formats in full.
+
+## Required scopes
+
+Each endpoint checks one scope on the key that calls it. Grant only the scopes the integration needs.
+
+| Scope | Allows | Endpoints |
+| --- | --- | --- |
+| `calls:create` | Place an outbound call | `POST /calls` |
+| `calls:read` | Read calls, a single call, and its recording link | `GET /calls`, `GET /calls/{id}`, `GET /calls/{id}/recording` |
+| `messages:send` | Send a WhatsApp message | `POST /messages` |
+| `messages:read` | Read where a message stands | `GET /messages/{id}` |
+| `plans:read` | List contact plans | `GET /plans` |
+| `plans:write` | Mark a plan as ready | `POST /plans/{id}/ready` |
+| `templates:read` | List the WhatsApp templates an outside sender may send | `GET /templates` |
+
+A key with the `*` scope has all of them. When a request arrives without the scope its endpoint requires, the API answers `403` with the code `missing_scope`.
+
+## Send an idempotency key on POST
+
+Both POST endpoints in v1 require an `Idempotency-Key` header. The value must be 1 to 100 characters of letters, digits, `:`, `_`, `.` or `-`.
+
+```bash
+curl -X POST https://app.talkturo.com/api/v1/calls \
+  -H "Authorization: Bearer tk_live_9f3a7c2e5b8d4160a72c" \
+  -H "Idempotency-Key: order-4711-call-1" \
+  -H "Content-Type: application/json"
+```
+
+Repeating a request with the same key and the same request body returns what the first request returned and never dials or sends a second time. The same key with a different body answers `409`. A missing or malformed header answers `400` with the code `idempotency_key_required`. Request bodies for each endpoint are documented on the [Calls (v1)](/en/api-reference/v1-calls) and [Plans (v1)](/en/api-reference/v1-plans) pages.
+
+<Callout kind="alert">
+
+A retry must reuse the key only when the request body is unchanged. Generate a fresh key for every new call or message, and keep the original key when you resend after a timeout.
+
+</Callout>
+
+## Errors share one shape
+
+Every v1 error is a JSON body with an `error` object. The `code` is stable and safe to branch on in your integration; the `message` is written for humans and may change.
+
+```json
+{
+  "error": {
+    "code": "missing_scope",
+    "message": "This API key does not have the calls:create scope."
+  }
+}
+```
+
+When a contact can only be reached at their preferred hours, the error carries an `until` field naming the moment that deferral ends and the request can succeed.
+
+```json
+{
+  "error": {
+    "code": "contact_deferred",
+    "message": "This contact can only be reached at their preferred hours.",
+    "until": "2025-04-18T09:00:00.000Z"
+  }
+}
+```
+
+These codes can come back from any v1 endpoint:
+
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `unauthorized` | `401` | The key is missing, malformed, or not a workspace API key |
+| `missing_scope` | `403` | The key does not carry the scope the endpoint requires |
+| `rate_limited` | `429` | The key went over its hourly request limit |
+| `internal_error` | `500` | Something failed on the Talkturo side; retry later |
+
+## Rate limits
+
+Each key carries a limit of requests per hour, 1000 by default, and the limit is set per key on the [API Keys](/en/api-reference/api-keys) page. Every response carries `X-RateLimit-Limit` with the limit, `X-RateLimit-Remaining` with the requests left in the current window, and `X-RateLimit-Reset` with when that window resets.
+
+A request over the limit answers `429` with the code `rate_limited` and a `Retry-After` header giving the number of seconds to wait before the next attempt. Read `X-RateLimit-Remaining` on successful responses to slow down before you hit the ceiling.
+
+## Endpoint summary
+
+Every path below is relative to `https://app.talkturo.com/api/v1`.
+
+| Method | Endpoint | Scope | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/calls` | `calls:create` | Place an outbound call with an assistant |
+| `GET` | `/api/v1/calls` | `calls:read` | List calls |
+| `GET` | `/api/v1/calls/{id}` | `calls:read` | Read one call with summary and transcript |
+| `GET` | `/api/v1/calls/{id}/recording` | `calls:read` | Read the recording link for a call |
+| `POST` | `/api/v1/messages` | `messages:send` | Send a WhatsApp message |
+| `GET` | `/api/v1/messages/{id}` | `messages:read` | Read where a message stands |
+| `GET` | `/api/v1/plans` | `plans:read` | List what assistants have planned for contacts |
+| `POST` | `/api/v1/plans/{id}/ready` | `plans:write` | Mark a plan as ready |
+| `GET` | `/api/v1/templates` | `templates:read` | List the WhatsApp templates an outside sender may send |
+
+## Pagination for calls
+
+`GET /calls` returns a `data` array plus a `next_cursor` value. Pass the cursor back as the `cursor` query parameter to read the next page, and stop when `next_cursor` comes back as `null`.
+
+<ParamField query="cursor" param-type="string">
+The `next_cursor` value of the previous page, which is the creation time of the last call in it. Leave it out to read the first page.
+</ParamField>
+
+<ParamField query="limit" param-type="integer">
+Page size from 1 to 100. Defaults to 25.
+</ParamField>
+
+<ResponseField name="data" field-type="array">
+The calls in this page. Call fields are documented on the Calls (v1) page.
+</ResponseField>
+
+<ResponseField name="next_cursor" field-type="string">
+The creation timestamp of the last call on this page, to pass back as `cursor`, or `null` when there is no further page.
+</ResponseField>
+
+```json
+{
+  "data": [
+    {
+      "id": "3f8a1c62-9d74-4b05-8e21-7a5c9d0b4f13",
+      "status": "completed",
+      "direction": "outbound",
+      "to_number": "+491701234567",
+      "created_at": "2025-04-17T10:20:31.000Z"
+    }
+  ],
+  "next_cursor": "2025-04-17T10:20:31.000Z"
+}
+```
+
+## Go deeper
+
+Each endpoint group has its own reference page with request fields, response fields, and full examples.
+
+<Columns cols={2}>
+
+<Card title="Calls (v1)" href="/en/api-reference/v1-calls" icon="phone">
+
+Place outbound calls and read them back with summary, transcript and recording link.
+
+</Card>
+
+<Card title="Messages (v1)" href="/en/api-reference/v1-messages" icon="message-circle">
+
+Send a WhatsApp message and follow where it stands.
+
+</Card>
+
+<Card title="Plans (v1)" href="/en/api-reference/v1-plans" icon="calendar">
+
+List what assistants have planned for contacts and mark a plan as ready.
+
+</Card>
+
+<Card title="Templates (v1)" href="/en/api-reference/v1-templates" icon="file-text">
+
+List the WhatsApp templates an outside sender may send.
+
+</Card>
+
+</Columns>

@@ -475,6 +475,213 @@ Name of the dispatched agent.
 
 The exact payload and authentication behavior depend on the Zapier integration configuration. If you are building against this endpoint, validate the specific integration setup in your workspace before sending production traffic.
 
+## Assistant webhooks Talkturo sends
+
+Assistants can send call events to a URL you set on the assistant. See [Assistants configuration](/en/assistants/configuration) for where to set the URL and for the "Send test event" button that delivers a sample event. Every event shares the same envelope.
+
+### Envelope
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `version` | integer | Always `1`. |
+| `id` | string | Delivery id, unique per event. |
+| `event` | string | The event name, one of the values below. |
+| `created_at` | string | When the event was created, ISO 8601 in UTC. |
+| `data` | object | The call the event is about. |
+
+### Events
+
+| Event | Meaning |
+| --- | --- |
+| `call.started` | The call is being dialled. `status` is `ringing`. |
+| `call.answered` | The call was answered. `answered_by` tells whether a person or a mailbox answered. |
+| `call.voicemail_detected` | A mailbox was detected. `voicemail_detected` is `true`. |
+| `call.ended` | The call ended after being answered, with duration and `ended_reason`. |
+| `call.missed` | An inbound call that nobody answered. |
+| `call.failed` | The call was never answered, or it could not start. `failure_reason` says why. |
+| `call.analyzed` | The call's result is ready: `outcome`, `summary`, `transcript`, `analysis` and `callback`. This is the event to react to for follow-up work. |
+
+### Call fields in `data`
+
+<ResponseField name="call_id" field-type="string" required="true">
+
+The call's id, the same id the API uses.
+
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string" required="true">
+
+The assistant that handled the call.
+
+</ResponseField>
+
+<ResponseField name="account_id" field-type="string" required="true">
+
+The workspace the call belongs to.
+
+</ResponseField>
+
+<ResponseField name="campaign_id, campaign_name, campaign_contact_id" field-type="string or null" required="false">
+
+The campaign the call belongs to, `null` for a call placed outside a campaign.
+
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string or null" required="false">
+
+The contact, when known.
+
+</ResponseField>
+
+<ResponseField name="source" field-type="string" required="true">
+
+Where the call came from, for example `api`.
+
+</ResponseField>
+
+<ResponseField name="direction" field-type="string" required="true">
+
+`outbound` or `inbound`.
+
+</ResponseField>
+
+<ResponseField name="from_number, to_number" field-type="string" required="true">
+
+In E.164.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string" required="true">
+
+Where the call stands.
+
+</ResponseField>
+
+<ResponseField name="created_at, started_at, ended_at" field-type="string or null" required="false">
+
+ISO 8601 UTC; `started_at` is when the call was answered.
+
+</ResponseField>
+
+<ResponseField name="duration_seconds" field-type="integer or null" required="false">
+
+Talk time.
+
+</ResponseField>
+
+<ResponseField name="answered_by" field-type="string or null" required="false">
+
+`human`, `voicemail` or `unknown`.
+
+</ResponseField>
+
+<ResponseField name="voicemail_detected" field-type="boolean" required="true">
+
+Whether a mailbox was detected.
+
+</ResponseField>
+
+<ResponseField name="ended_reason" field-type="string or null" required="false">
+
+Why an answered call ended.
+
+</ResponseField>
+
+<ResponseField name="failure_reason" field-type="string or null" required="false">
+
+Why a call that was never answered ended.
+
+</ResponseField>
+
+<ResponseField name="summary" field-type="string or null" required="false">
+
+The post-call summary.
+
+</ResponseField>
+
+<ResponseField name="transcript" field-type="string or null" required="false">
+
+The transcript.
+
+</ResponseField>
+
+<ResponseField name="recording_url" field-type="string or null" required="false">
+
+Link to the recording, or `null`.
+
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object or null" required="false">
+
+The metadata you sent when you placed the call.
+
+</ResponseField>
+
+```json
+{
+  "version": 1,
+  "id": "evt_01HXYZ7K8M9P2Q3R4S5T6V7W93",
+  "event": "call.analyzed",
+  "created_at": "2025-04-17T09:15:14.000Z",
+  "data": {
+    "call_id": "call_01J9F2K7X3M8N4P6Q1R5S0T2VW",
+    "assistant_id": "ast_7c91e4f0",
+    "account_id": "acct_3f81c2",
+    "campaign_id": null,
+    "campaign_name": null,
+    "campaign_contact_id": null,
+    "contact_id": "cnt_5d2a9b7e",
+    "source": "api",
+    "direction": "outbound",
+    "from_number": "+493012345678",
+    "to_number": "+491701234567",
+    "status": "completed",
+    "created_at": "2025-04-17T09:12:58.000Z",
+    "started_at": "2025-04-17T09:13:03.000Z",
+    "ended_at": "2025-04-17T09:15:14.000Z",
+    "duration_seconds": 131,
+    "answered_by": "human",
+    "voicemail_detected": false,
+    "ended_reason": "completed_normally",
+    "failure_reason": null,
+    "summary": "The contact asked for a pricing overview for the Team plan and wants a follow-up call after discussing it with their operations lead.",
+    "transcript": "Agent: Good morning, this is the Acme Sales assistant calling about your demo request. Contact: Thanks for calling back, I have about two minutes.",
+    "recording_url": null,
+    "outcome": "interested",
+    "analysis": {
+      "sentiment": "positive",
+      "success": true,
+      "key_points": [
+        "Asked for pricing for the Team plan",
+        "Wants to align with their operations lead before deciding"
+      ],
+      "objections": [],
+      "questions_asked": [
+        "What does the Team plan include?",
+        "Can we add more phone numbers later?"
+      ],
+      "action_items": [
+        "Send the Team plan pricing sheet",
+        "Schedule a follow-up call for the next morning"
+      ]
+    },
+    "callback": {
+      "requested": true,
+      "scheduled_call_id": "call_01J9F2K7X3M8N4P6Q1R5S0T2VX",
+      "run_at": "2025-04-18T10:00:00.000Z",
+      "timezone": "Europe/Berlin",
+      "when_words": "tomorrow morning",
+      "reason": "Asked for a follow-up after checking pricing with the team"
+    },
+    "metadata": {
+      "crm_id": "ACME-4711"
+    }
+  }
+}
+```
+
+`GET /api/v1/calls/{id}` returns the same result as `call.analyzed`, so it is how you catch up after a missed delivery. See [Calls (v1)](/en/api-reference/v1-calls).
+
 ## Security guidance
 
 <Callout kind="info">
@@ -492,6 +699,6 @@ The webhook surface in Talkturo falls into three patterns:
 ## Related endpoints
 
 <Columns cols={2}>
-  <Card title="Flow integrations" href="/en/api-reference/flow" icon="zap" cta="Open flow API reference" />
+  <Card title="Calls (v1)" href="/en/api-reference/v1-calls" icon="phone" cta="Open the calls reference" />
   <Card title="Assistants" href="/en/api-reference/assistants" icon="users" cta="Open assistants API reference" />
 </Columns>

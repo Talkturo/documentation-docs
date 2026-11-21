@@ -1,0 +1,119 @@
+---
+title: "Plans (v1)"
+description: "List the items an assistant has promised a contact but does not have yet, then mark one ready so the assistant writes to that contact."
+---
+
+## Endpoint summary
+
+An assistant can promise a contact something it does not have yet, such as a document, an answer or a price, and holds the conversation open until it arrives. These endpoints let your own system read those open items and say when one is ready.
+
+| Method | Endpoint | Scope | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/plans` | `plans:read` | List the open items assistants hold for contacts |
+| `POST` | `/api/v1/plans/{id}/ready` | `plans:write` | Say the item is ready and let the assistant write to the contact |
+
+## List plans
+
+`GET /api/v1/plans`, scope `plans:read`. Without `status`, the answer holds the open items only: `scheduled`, `waiting` and `reopener_sent`. Results come newest first, at most 100 items per answer, and there is no pagination.
+
+<ParamField query="status" param-type="string" enum="scheduled,waiting,reopener_sent,sending,sent,cancelled,expired,blocked">Restricts results to one status.</ParamField>
+<ParamField query="contact_id" param-type="string">UUID of a contact. Restricts results to that contact's items.</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/plans?status=waiting" \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4t8v"
+```
+
+</Request>
+
+<Response tabs="200,400">
+
+```json
+{"data": [
+  {"id": "7b3e92ad-14f0-4c8a-9d51-2a7c4e0f8b13", "contact_id": "5d81b0f3-a2c9-4e17-8f60-1c9d3b7a2e44", "kind": "document", "about": "Signed framework agreement promised during the onboarding call.", "status": "waiting", "due_at": "2025-03-04T09:00:00Z", "created_at": "2025-02-27T14:12:05Z"},
+  {"id": "c2f60d8f-7a1b-4d33-b0e8-9a4c1f5d2b76", "contact_id": "88f3e12d-47aa-4b19-a2c5-6f0d8e3b71c9", "kind": "price", "about": "Preis für die jährliche Lizenz, zugesagt im Erstgespräch.", "status": "waiting", "due_at": null, "created_at": "2025-02-26T08:41:22Z"}
+]}
+```
+
+```json
+{"error":{"code":"invalid_status","message":"status must be one of: scheduled, waiting, reopener_sent, sending, sent, cancelled, expired, blocked."}}
+```
+
+</Response>
+
+<ResponseField name="id" field-type="string">UUID of the plan.</ResponseField>
+<ResponseField name="contact_id" field-type="string">UUID of the contact the item is for.</ResponseField>
+<ResponseField name="kind" field-type="string">The sort of item the contact is waiting for.</ResponseField>
+<ResponseField name="about" field-type="string">What the item is about, in a sentence.</ResponseField>
+<ResponseField name="status" field-type="string">One of the statuses below.</ResponseField>
+<ResponseField name="due_at" field-type="string">ISO 8601 timestamp by which the item was promised, or `null`.</ResponseField>
+<ResponseField name="created_at" field-type="string">Creation timestamp, ISO 8601 in UTC.</ResponseField>
+
+### Statuses
+
+| Status | Meaning |
+| --- | --- |
+| `scheduled` | The assistant will write at a set moment. |
+| `waiting` | The assistant is waiting for the item. |
+| `reopener_sent` | The assistant wrote to say it will come back. |
+| `sending` | The assistant is writing now. |
+| `sent` | The assistant has written. |
+| `cancelled` | The plan was cancelled. |
+| `expired` | The plan expired. |
+| `blocked` | The plan is blocked. |
+
+### Errors
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| `400` | `invalid_status` | The status is not one of the listed values. |
+| `400` | `invalid_contact_id` | `contact_id` is not a UUID. |
+
+## Mark a plan ready
+
+`POST /api/v1/plans/{id}/ready`, scope `plans:write`. Tell Talkturo that the item the contact is waiting for is now there. The assistant writes to that contact once and the plan moves to `scheduled`; it needs no `Idempotency-Key`.
+
+<ParamField path="id" param-type="string" required="true">UUID of the plan.</ParamField>
+<ParamField body="note" param-type="string">Optional, up to 300 characters: what changed, for example a link or a new price. The assistant reads it when it writes to the contact. The body is strict, `note` is the only field it accepts, and an empty body is allowed.</ParamField>
+
+<Request tabs="cURL">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/v1/plans/7b3e92ad-14f0-4c8a-9d51-2a7c4e0f8b13/ready" \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4t8v" -H "Content-Type: application/json" \
+  -d '{"note":"The signed contract is ready: https://portal.acme-example.com/d/4711"}'
+```
+
+</Request>
+
+<Response tabs="200,400,404,409">
+
+```json
+{"id": "7b3e92ad-14f0-4c8a-9d51-2a7c4e0f8b13", "status": "scheduled"}
+```
+
+```json
+{"error":{"code":"invalid_body","message":"The body may only have \"note\", a string of up to 300 characters."}}
+```
+
+```json
+{"error":{"code":"plan_not_found","message":"No plan with this id in this workspace."}}
+```
+
+```json
+{"error":{"code":"not_waiting","message":"This plan is not waiting for anything."}}
+```
+
+</Response>
+
+`404` means no such plan in the workspace. `409 not_waiting` means the plan is not in a state that waits for an item, so there is nothing to mark ready.
+
+## Related
+
+<Columns cols={2}>
+<Card title="API v1 overview" href="/en/api-reference/v1-overview" icon="book-open" />
+<Card title="Messages (v1)" href="/en/api-reference/v1-messages" icon="message-square" />
+<Card title="Calls (v1)" href="/en/api-reference/v1-calls" icon="phone" />
+</Columns>

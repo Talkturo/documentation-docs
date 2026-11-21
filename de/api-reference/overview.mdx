@@ -12,6 +12,8 @@ Erstellen Sie Integrationen und Automatisierungen auf Basis der Voice-AI-Plattfo
   Senden Sie alle API-Anfragen an `https://app.talkturo.com/api`.
 </Callout>
 
+Die Routen auf dieser Seite sind die internen Routen hinter der Talkturo-App, die Sie mit API-Schlüsseln, Sitzungs-Cookies oder Desktop-Token ansprechen. Die öffentliche REST-API für externe Integrationen liegt unter `https://app.talkturo.com/api/v1`, akzeptiert ausschließlich einen Workspace-API-Schlüssel und hat eine eigene Referenz: [API v1 – Überblick](/de/api-reference/v1-overview).
+
 ## Authentifizieren Sie Anfragen
 
 Talkturo unterstützt drei Authentifizierungsmethoden. Die meisten externen Integrationen sollten API-Schlüssel verwenden, während Browser- und Desktop-Clients plattformspezifische Authentifizierungsabläufe nutzen.
@@ -60,6 +62,44 @@ API-Schlüssel sind standardmäßig auf 1000 Anfragen pro Stunde begrenzt. Wenn 
 ## Endpunktgruppen durchsuchen
 
 Beginnen Sie mit der Gruppe, die zur Ressource oder zum Workflow passt, den Sie integrieren möchten. Jede Referenzseite dokumentiert Endpunkte, Authentifizierungsanforderungen und Anfrage-/Antwortdetails.
+
+## Die öffentliche v1 API
+
+Jede Gruppe der v1 API hat ihre eigene Referenzseite mit Anfragefeldern, Antwortfeldern und vollständigen Beispielen.
+
+<Columns cols={2}>
+
+<Card title="API v1 – Überblick" href="/de/api-reference/v1-overview" icon="book-open">
+
+Authentifizierung, Scopes, Idempotency-Key, Fehlerformate, Ratenlimits und Endpunktübersicht der v1 API.
+
+</Card>
+
+<Card title="Calls (v1)" href="/de/api-reference/v1-calls" icon="phone">
+
+Starten Sie ausgehende Anrufe und lesen Sie sie mit Ergebnis, Zusammenfassung, Transkript und Link zur Aufnahme wieder ab.
+
+</Card>
+
+<Card title="Messages (v1)" href="/de/api-reference/v1-messages" icon="message-circle">
+
+Senden Sie eine WhatsApp-Nachricht an einen Kontakt und verfolgen Sie ihren Status.
+
+</Card>
+
+<Card title="Plans (v1)" href="/de/api-reference/v1-plans" icon="calendar">
+
+Listen Sie offene Zusagen der Assistenten für Kontakte auf und markieren Sie einen Plan als bereit.
+
+</Card>
+
+<Card title="Templates (v1)" href="/de/api-reference/v1-templates" icon="file-text">
+
+Listen Sie die WhatsApp-Templates auf, die ein externer Absender senden darf, samt ihrer Variablen-Schlüssel.
+
+</Card>
+
+</Columns>
 
 ## Mit dem häufigsten Integrationspfad beginnen
 

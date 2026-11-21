@@ -1,0 +1,589 @@
+---
+title: "Calls (v1)"
+description: "Platzieren Sie einen ausgehenden Anruf mit einem Assistant und lesen Sie ihn mit Ergebnis, Zusammenfassung, Transkript und Aufnahme-Link wieder aus."
+---
+
+## Endpunktübersicht
+
+Jeder Endpunkt unten liegt unter `https://app.talkturo.com/api/v1` und erfordert `Authorization: Bearer tk_live_...`.
+
+| Methode | Endpunkt | Scope | Zweck |
+| --- | --- | --- | --- |
+| POST | `/api/v1/calls` | `calls:create` | Platziert einen ausgehenden Anruf mit einem Assistant |
+| GET | `/api/v1/calls` | `calls:read` | Listet die Anrufe des Workspace auf, neueste zuerst |
+| GET | `/api/v1/calls/{id}` | `calls:read` | Liest einen Anruf mit Ergebnis, Zusammenfassung und Transkript |
+| GET | `/api/v1/calls/{id}/recording` | `calls:read` | Leitet auf einen Link zur Aufnahme weiter |
+
+<Callout kind="info">
+
+Für das Platzieren eines Anrufs ist niemals eine Kampagne erforderlich. Die `id` in der Antwort ist überall die ID des Anrufs: in `GET /calls/{id}` und als `call_id` in Webhooks.
+
+</Callout>
+
+## Anruf platzieren
+
+`POST /api/v1/calls` platziert einen ausgehenden Anruf und antwortet mit dem Anrufobjekt. Der Endpunkt erfordert den Scope `calls:create` und einen `Idempotency-Key`-Header.
+
+### Header
+
+<ParamField header="Authorization" param-type="string" required="true">
+
+Ihr API-Schlüssel als Bearer-Token: `Bearer tk_live_...`.
+
+</ParamField>
+
+<ParamField header="Idempotency-Key" param-type="string" required="true">
+
+1 bis 100 Zeichen aus Buchstaben, Ziffern, `:`, `_`, `.` oder `-`. Eine Wiederholung mit demselben Schlüssel und demselben Body antwortet mit dem, was die erste Anfrage geantwortet hat, und wählt nie ein zweites Mal. Derselbe Schlüssel mit einem anderen Body antwortet mit `409`.
+
+</ParamField>
+
+<ParamField header="Content-Type" param-type="string" required="true">
+
+Auf `application/json` setzen.
+
+</ParamField>
+
+### Body
+
+<ParamField body="assistant_id" param-type="string" required="true">
+
+UUID des Assistants, der den Anruf durchführt.
+
+</ParamField>
+
+<ParamField body="to_number" param-type="string">
+
+Die anzurufende Nummer, 4 bis 32 Zeichen. Geben Sie diese oder `contact_id` an, oder beides.
+
+</ParamField>
+
+<ParamField body="contact_id" param-type="string">
+
+UUID eines Kontakts des Workspace. Wenn Sie nur dieses Feld angeben, verwendet der Anruf die Telefonnummer des Kontakts.
+
+</ParamField>
+
+<ParamField body="from_number" param-type="string">
+
+Die Rufnummernanzeige, von der gewählt wird, 4 bis 32 Zeichen. Wenn Sie das Feld weglassen, wird die eigene Nummer des Assistants verwendet.
+
+</ParamField>
+
+<ParamField body="variables" param-type="object">
+
+Werte, die der Assistant in seinem Prompt lesen kann. Jeder Wert ist ein String mit bis zu 2000 Zeichen, eine Zahl oder ein Boolean. Sie werden im Prompt als `{{call.variable_name}}` gerendert.
+
+</ParamField>
+
+<ParamField body="metadata" param-type="object">
+
+Ihre eigenen Daten. Talkturo sendet sie bei jedem Webhook zu diesem Anruf zurück, sodass Sie den Anruf Ihren eigenen Datensätzen zuordnen können.
+
+</ParamField>
+
+### Regeln, die darüber entscheiden, ob der Anruf gewählt wird
+
+Der Body ist strikt: Ein unbekanntes Feld antwortet mit `400 invalid_request`. `to_number` und `contact_id` dürfen zusammen mit `variables` höchstens 8 KB umfassen, und `to_number` muss E.164 entsprechen, zum Beispiel `+491701234567`.
+
+<Callout kind="alert">
+
+Die Regeln des Kontakts werden angewendet, bevor irgendetwas gewählt wird: Do-not-call, eingeschränkte Verarbeitung, falsche Nummer, fehlende Einwilligung, ein pausierter Kontakt oder bevorzugte Anrufzeiten. Eine Ablehnung nennt den Grund. Der Workspace muss außerdem die Verifizierung bestanden haben, und ein Assistant, der nur als Mailbox antwortet, kann keine Anrufe platzieren.
+
+</Callout>
+
+Ein Workspace kann höchstens 10 über die API platzierte Anrufe gleichzeitig in Bearbeitung haben. Ein Anruf zählt, bis er beendet ist, längstens zwei Stunden.
+
+### Anfrage
+
+<Request tabs="cURL">
+
+```bash
+curl -X POST "https://app.talkturo.com/api/v1/calls" \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4t8v" \
+  -H "Idempotency-Key: call-2025-04-17-0001" \
+  -H "Content-Type: application/json" \
+  -d '{"assistant_id": "2b8f4c1a-9d3e-4a6b-8f2c-7d5e1a3b9c4d", "to_number": "+491701234567", "variables": { "first_name": "Jordan" }, "metadata": { "crm_id": "ACME-4711" }}'
+```
+
+</Request>
+
+### Antwort
+
+Eine Wiederholung derselben Anfrage antwortet mit demselben Anruf und dem Status `200` statt `201`.
+
+<Response tabs="201,409,422">
+
+```json
+{
+  "id": "6f1d2c3b-8a4e-4f7d-9b2c-1e5a7c9d0b3f",
+  "status": "queued",
+  "assistant_id": "2b8f4c1a-9d3e-4a6b-8f2c-7d5e1a3b9c4d",
+  "contact_id": null,
+  "campaign_id": null,
+  "direction": "outbound",
+  "from_number": "+493012345678",
+  "to_number": "+491701234567",
+  "created_at": "2025-04-17T09:12:44Z",
+  "started_at": null,
+  "ended_at": null,
+  "duration_seconds": null,
+  "answered_by": null,
+  "ended_reason": null,
+  "failure_reason": null,
+  "outcome": null,
+  "summary": null,
+  "transcript": null,
+  "recording_url": null,
+  "analysis": null,
+  "callback": null,
+  "metadata": { "crm_id": "ACME-4711" }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "idempotency_conflict",
+    "message": "This Idempotency-Key was already used with a different body."
+  }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "contact_blocked",
+    "message": "This contact asked not to be contacted."
+  }
+}
+```
+
+</Response>
+
+### Ablehnungen und Fehler
+
+| Status | Code | Bedeutung |
+| --- | --- | --- |
+| 400 | `idempotency_key_required` | Der Header `Idempotency-Key` fehlt oder ist fehlerhaft. |
+| 400 | `invalid_request` | Der Body ist ungültig, zum Beispiel wegen eines unbekannten Felds oder weil weder `to_number` noch `contact_id` angegeben wurde. |
+| 400 | `invalid_number` | `to_number` ist nicht im E.164-Format. |
+| 402 | `insufficient_credits` | Im Workspace sind keine Credits mehr vorhanden, um den Anruf zu platzieren. |
+| 403 | `verification_required` | Der Inhaber des Workspace hat die Verifizierung noch nicht abgeschlossen. |
+| 404 | `contact_not_found` | Kein Kontakt mit dieser ID in diesem Workspace. |
+| 404 | `assistant_not_found` | Kein Assistant mit dieser ID in diesem Workspace. |
+| 409 | `idempotency_conflict` | Der `Idempotency-Key` wurde bereits mit einem anderen Body verwendet. |
+| 422 | `contact_has_no_phone` | Der Kontakt hat keine Telefonnummer, die angerufen werden kann. |
+| 422 | `contact_blocked` | Der Kontakt hat um keinen Kontakt gebeten, oder seine Daten sind eingeschränkt. |
+| 422 | `contact_deferred` | Der Kontakt ist erst später erreichbar; der Fehler ergänzt `until` mit dem Zeitpunkt, zu dem die Anfrage erfolgreich sein kann. |
+| 422 | `assistant_is_voicemail_only` | Der Assistant antwortet als Mailbox und kann keine Anrufe durchführen. |
+| 429 | `too_many_live_calls` | Der Workspace hat bereits 10 über die API platzierte Anrufe in Bearbeitung. |
+| 502 | `dial_failed` | Es wurde nichts gewählt; wiederholen Sie die Anfrage mit einem neuen `Idempotency-Key`. |
+| 500 | `internal_error` | Die Anfrage konnte nicht verarbeitet werden; wiederholen Sie sie später. |
+
+## Anrufe auflisten
+
+`GET /api/v1/calls` gibt die Anrufe des Workspace zurück, neueste zuerst. Der Endpunkt erfordert den Scope `calls:read`.
+
+### Query-Parameter
+
+<ParamField query="assistant_id" param-type="string">
+
+UUID eines Assistants; gibt nur Anrufe zurück, die dieser Assistant durchgeführt hat.
+
+</ParamField>
+
+<ParamField query="contact_id" param-type="string">
+
+UUID eines Kontakts; gibt nur Anrufe an diesen Kontakt zurück.
+
+</ParamField>
+
+<ParamField query="from" param-type="string">
+
+ISO-8601-Zeitstempel mit Offset. Filtert nach dem Zeitpunkt der Erstellung des Anrufs und schließt diesen Zeitpunkt ein.
+
+</ParamField>
+
+<ParamField query="to" param-type="string">
+
+ISO-8601-Zeitstempel mit Offset. Filtert nach dem Zeitpunkt der Erstellung des Anrufs und schließt diesen Zeitpunkt aus.
+
+</ParamField>
+
+<ParamField query="cursor" param-type="string">
+
+Der `next_cursor` der vorherigen Seite, also der Erstellungszeitpunkt des letzten Anrufs darauf.
+
+</ParamField>
+
+<ParamField query="limit" param-type="integer">
+
+Anzahl der Anrufe pro Seite, 1 bis 100. Standardwert ist 25.
+
+</ParamField>
+
+<ParamField query="include" param-type="string" enum="transcript">
+
+Fügt das Transkript jedes Anrufs zur Antwort hinzu.
+
+</ParamField>
+
+### Anfrage
+
+<Request tabs="cURL">
+
+```bash
+curl "https://app.talkturo.com/api/v1/calls?limit=25" \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4t8v"
+```
+
+</Request>
+
+### Antwort
+
+<Response tabs="200">
+
+```json
+{
+  "data": [
+    {
+      "id": "b41e7c92-3f5a-4d18-9c6a-2e7f0d5a8b13",
+      "status": "completed",
+      "assistant_id": "2b8f4c1a-9d3e-4a6b-8f2c-7d5e1a3b9c4d",
+      "contact_id": "5c7d9e1f-2a3b-4c5d-8e9f-0a1b2c3d4e5f",
+      "campaign_id": null,
+      "direction": "outbound",
+      "from_number": "+493012345678",
+      "to_number": "+491701234567",
+      "created_at": "2025-04-17T09:12:44Z",
+      "started_at": "2025-04-17T09:12:51Z",
+      "ended_at": "2025-04-17T09:15:13Z",
+      "duration_seconds": 142,
+      "answered_by": "human",
+      "outcome": "answered",
+      "summary": "Jordan bestätigte den Termin am 22. April um 10:00 und bat um eine Bestätigungs-E-Mail.",
+      "recording_url": "https://app.talkturo.com/api/v1/calls/b41e7c92-3f5a-4d18-9c6a-2e7f0d5a8b13/recording",
+      "metadata": { "crm_id": "ACME-4711" }
+    },
+    {
+      "id": "d07a6f58-1c92-4b3e-8d47-9a2b5c6e0f31",
+      "status": "failed",
+      "assistant_id": "2b8f4c1a-9d3e-4a6b-8f2c-7d5e1a3b9c4d",
+      "contact_id": null,
+      "campaign_id": null,
+      "direction": "outbound",
+      "from_number": "+493012345678",
+      "to_number": "+491701239876",
+      "created_at": "2025-04-17T08:41:10Z",
+      "started_at": null,
+      "ended_at": "2025-04-17T08:41:52Z",
+      "duration_seconds": null,
+      "answered_by": null,
+      "failure_reason": "no_answer",
+      "outcome": "unreachable",
+      "summary": null,
+      "recording_url": null,
+      "metadata": { "crm_id": "ACME-4712" }
+    }
+  ],
+  "next_cursor": "2025-04-17T08:41:10Z"
+}
+```
+
+</Response>
+
+Anrufe werden mit dem neuesten zuerst zurückgegeben, Transkripte bleiben ausgelassen, sofern Sie sie nicht anfordern, und die nächste Seite lesen Sie, indem Sie `next_cursor` als `cursor` zurückgeben.
+
+## Einen Anruf lesen
+
+`GET /api/v1/calls/{id}` gibt einen Anruf mit seinem Ergebnis, seiner Zusammenfassung und seinem Transkript zurück. Der Endpunkt erfordert den Scope `calls:read`.
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID des Anrufs.
+
+</ParamField>
+
+Die Antwort ist dasselbe Ergebnis, das der Webhook `call.analyzed` sendet; nutzen Sie sie, um einen verpassten Versand nachzuholen. Sie funktioniert auch für einen Anruf, der noch in der Warteschlange steht.
+
+<Response tabs="200,404">
+
+```json
+{
+  "id": "b41e7c92-3f5a-4d18-9c6a-2e7f0d5a8b13",
+  "status": "completed",
+  "assistant_id": "2b8f4c1a-9d3e-4a6b-8f2c-7d5e1a3b9c4d",
+  "contact_id": "5c7d9e1f-2a3b-4c5d-8e9f-0a1b2c3d4e5f",
+  "campaign_id": null,
+  "direction": "outbound",
+  "from_number": "+493012345678",
+  "to_number": "+491701234567",
+  "created_at": "2025-04-17T09:12:44Z",
+  "started_at": "2025-04-17T09:12:51Z",
+  "ended_at": "2025-04-17T09:15:13Z",
+  "duration_seconds": 142,
+  "answered_by": "human",
+  "ended_reason": "customer_hangup",
+  "failure_reason": null,
+  "outcome": "answered",
+  "summary": "Jordan bestätigte den Termin am 22. April um 10:00 und bat um eine Bestätigungs-E-Mail.",
+  "transcript": "Assistant: Guten Tag, hier ist der Assistent von Acme. Ich rufe wegen Ihres Termins am 22. April an.\nCustomer: Ja, das passt. Können Sie mir das per E-Mail bestätigen?\nAssistant: Selbstverständlich, ich schicke Ihnen eine Bestätigung an die hinterlegte Adresse.\nCustomer: Danke, auf Wiederhören.",
+  "recording_url": "https://app.talkturo.com/api/v1/calls/b41e7c92-3f5a-4d18-9c6a-2e7f0d5a8b13/recording",
+  "analysis": {
+    "sentiment": "positive",
+    "success": true,
+    "key_points": [
+      "Der Kunde hat den Termin am 22. April um 10:00 bestätigt.",
+      "Der Kunde hat um eine Bestätigungs-E-Mail gebeten."
+    ],
+    "objections": [],
+    "questions_asked": [
+      "Können Sie mir das per E-Mail bestätigen?"
+    ],
+    "action_items": [
+      "Bestätigungs-E-Mail an den Kunden senden."
+    ]
+  },
+  "callback": null,
+  "metadata": { "crm_id": "ACME-4711" }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "call_not_found",
+    "message": "No call with this id in this workspace."
+  }
+}
+```
+
+</Response>
+
+## Anrufobjekt
+
+Jeder Endpunkt, der einen Anruf zurückgibt, gibt dieses Objekt zurück.
+
+<ResponseField name="id" field-type="string">
+
+Die ID des Anrufs und die `call_id` in seinen Webhooks.
+
+</ResponseField>
+
+<ResponseField name="status" field-type="string">
+
+`queued`, `ringing`, `in_progress`, `completed` oder `failed`.
+
+</ResponseField>
+
+<ResponseField name="assistant_id" field-type="string or null">
+
+UUID des Assistants, der den Anruf bearbeitet hat.
+
+</ResponseField>
+
+<ResponseField name="contact_id" field-type="string or null">
+
+UUID des Kontakts, zu dem der Anruf gehört, sofern bekannt.
+
+</ResponseField>
+
+<ResponseField name="campaign_id" field-type="string or null">
+
+UUID der Kampagne, zu der der Anruf gehört, oder `null`, wenn der Anruf außerhalb einer Kampagne platziert wurde.
+
+</ResponseField>
+
+<ResponseField name="direction" field-type="string or null">
+
+`outbound` oder `inbound`.
+
+</ResponseField>
+
+<ResponseField name="from_number" field-type="string or null">
+
+Die Rufnummernanzeige, in E.164.
+
+</ResponseField>
+
+<ResponseField name="to_number" field-type="string or null">
+
+Die gewählte Nummer, in E.164.
+
+</ResponseField>
+
+<ResponseField name="created_at" field-type="string or null">
+
+Wann der Anruf erstellt wurde, in ISO 8601 UTC.
+
+</ResponseField>
+
+<ResponseField name="started_at" field-type="string or null">
+
+Wann der Anruf angenommen wurde, in ISO 8601 UTC.
+
+</ResponseField>
+
+<ResponseField name="ended_at" field-type="string or null">
+
+Wann der Anruf beendet wurde, in ISO 8601 UTC.
+
+</ResponseField>
+
+<ResponseField name="duration_seconds" field-type="integer or null">
+
+Sprechzeit, gezählt ab dem Zeitpunkt, zu dem der Anruf angenommen wurde.
+
+</ResponseField>
+
+<ResponseField name="answered_by" field-type="string or null">
+
+`human`, `voicemail` oder `unknown`.
+
+</ResponseField>
+
+<ResponseField name="ended_reason" field-type="string or null">
+
+Warum der Anruf beendet wurde, sobald er angenommen war.
+
+</ResponseField>
+
+<ResponseField name="failure_reason" field-type="string or null">
+
+`busy`, `no_answer` oder der Grund, warum der Anruf nicht gestartet werden konnte. Nur gesetzt bei einem Anruf, der nie angenommen wurde.
+
+</ResponseField>
+
+<ResponseField name="outcome" field-type="string or null">
+
+Wie der Anruf verlaufen ist: `answered`, `voicemail`, `unreachable`, `do_not_call` oder der auf dem Assistant konfigurierte Ergebnisschlüssel.
+
+</ResponseField>
+
+<ResponseField name="summary" field-type="string or null">
+
+Die Zusammenfassung nach dem Anruf.
+
+</ResponseField>
+
+<ResponseField name="transcript" field-type="string or null">
+
+Das Transkript. Bleibt in Listenantworten ausgelassen, sofern Sie nicht `include=transcript` angeben.
+
+</ResponseField>
+
+<ResponseField name="recording_url" field-type="string or null">
+
+Stabiler Link zum Aufnahme-Endpunkt dieser API für den Anruf, oder `null`, wenn keine Aufnahme vorhanden ist.
+
+</ResponseField>
+
+<ResponseField name="analysis" field-type="object or null">
+
+Analyse nach dem Anruf, mit `sentiment`, `success`, `key_points`, `objections`, `questions_asked` und `action_items`. `sentiment` und `success` sind `null`, wenn der Assistant das Anrufergebnis nicht bewertet.
+
+</ResponseField>
+
+<ResponseField name="callback" field-type="object or null">
+
+Ein Rückruf, den der Kontakt gewünscht hat, mit dem Boolean `requested` sowie `scheduled_call_id`, `run_at`, `timezone`, `when_words` und `reason`.
+
+</ResponseField>
+
+<ResponseField name="metadata" field-type="object or null">
+
+Die `metadata`, die Sie beim Platzieren des Anrufs gesendet haben.
+
+</ResponseField>
+
+### Statuswerte
+
+| Status | Bedeutung |
+| --- | --- |
+| `queued` | Von der API angenommen, noch nicht gewählt. |
+| `ringing` | Wird gewählt; der Anruf wurde noch nicht angenommen. |
+| `in_progress` | Angenommen und läuft. |
+| `completed` | Angenommen und beendet. |
+| `failed` | Nie angenommen oder eine eingereihte Anfrage, die nie gestartet wurde. Eine eingereihte Anfrage, die nach 10 Minuten nicht gestartet ist, wird als `failed` mit `failure_reason` `call_not_started` gemeldet. |
+
+## Aufnahme-Link
+
+`GET /api/v1/calls/{id}/recording` antwortet mit einer `302`-Weiterleitung auf einen Link zur Aufnahme, der eine Stunde lang gültig ist. Der Endpunkt erfordert den Scope `calls:read`.
+
+<ParamField path="id" param-type="string" required="true">
+
+UUID des Anrufs.
+
+</ParamField>
+
+Diese Adresse ändert sich nie und zeigt nie, wo Aufnahmen gespeichert sind. Speichern Sie diese URL und fragen Sie sie erneut ab, wann immer Sie einen frischen Link benötigen.
+
+<Response tabs="302,404,503">
+
+```http
+HTTP/1.1 302 Found
+Location: https://app.talkturo.com/api/v1/recordings/dl/exmpl_9f3a71c2d8e4?expires=3600
+```
+
+```json
+{
+  "error": {
+    "code": "recording_not_found",
+    "message": "This call has no recording."
+  }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "recording_unavailable",
+    "message": "The recording cannot be reached right now. Try again shortly."
+  }
+}
+```
+
+</Response>
+
+Die `302` verweist auf die Aufnahme; `404 recording_not_found` bedeutet, dass der Anruf keine Aufnahme hat; `503 recording_unavailable` bedeutet, dass die Aufnahme gerade nicht erreichbar ist.
+
+<Request tabs="cURL">
+
+```bash
+curl -L "https://app.talkturo.com/api/v1/calls/b41e7c92-3f5a-4d18-9c6a-2e7f0d5a8b13/recording" \
+  -H "Authorization: Bearer tk_live_9xmk7q2r4t8v" \
+  --output call-recording.mp3
+```
+
+</Request>
+
+## Verwandte Themen
+
+<Columns cols={2}>
+
+<Card title="API v1 Overview" href="/de/api-reference/v1-overview" icon="book-open">
+
+Authentifizierung, Basis-URL, Paginierung und Fehlerformate für alle v1-Endpunkte.
+
+</Card>
+
+<Card title="Messages (v1)" href="/de/api-reference/v1-messages" icon="zap">
+
+Die während eines Anrufs ausgetauschten Nachrichten lesen und senden.
+
+</Card>
+
+<Card title="Webhooks" href="/de/api-reference/webhooks" icon="webhook">
+
+Anrufereignisse empfangen, sobald sie eintreten, zugeordnet über `call_id`.
+
+</Card>
+
+<Card title="Call Logs and Transcripts" href="/de/call-logs" icon="file-text">
+
+Dieselben Anrufe und Transkripte im Dashboard finden.
+
+</Card>
+
+</Columns>

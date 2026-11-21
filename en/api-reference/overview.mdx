@@ -12,6 +12,8 @@ Build integrations and automations on top of Talkturo's voice AI platform with a
   Send all API requests to `https://app.talkturo.com/api`.
 </Callout>
 
+The routes on this page are the internal routes behind the Talkturo app, addressed with API keys, session cookies, or desktop tokens. The public REST API for outside integrations lives under `https://app.talkturo.com/api/v1`, uses a workspace API key only, and has its own reference: [API v1 Overview](/en/api-reference/v1-overview).
+
 ## Authenticate requests
 
 Talkturo supports three authentication methods. Most external integrations should use API keys, while browser and desktop clients use platform-specific authentication flows.
@@ -83,6 +85,10 @@ API keys are limited to 1000 requests per hour by default. If you build backgrou
 Start with the group that matches the resource or workflow you need to integrate. Each reference page documents endpoints, authentication requirements, and request or response details for that area of the API.
 
 <Columns cols="2">
+  <Card title="API v1" href="/en/api-reference/v1-overview" icon="plug" cta="Open reference" horizontal="false">
+    Place calls, send WhatsApp messages, list contact plans and read calls back with a workspace API key.
+  </Card>
+
   <Card title="Authentication" href="/en/api-reference/authentication" icon="lock" cta="Open reference" horizontal="false">
     Learn how to authenticate requests with API keys, session cookies, and JWT bearer tokens.
   </Card>
