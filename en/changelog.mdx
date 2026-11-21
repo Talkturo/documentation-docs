@@ -8,6 +8,38 @@ description: >-
 
 Stay informed about the latest enhancements to Talkturo's enterprise voice AI platform. Review release notes below, ordered newest first.
 
+<Update label="2026-11-20" description="v4.2.0" tags={["feature","improvement","bugfix"]}>
+  ## New Features
+
+  - **Voicemail-only assistants** — Switch an assistant into a mode that answers like a mailbox: your own greeting, an optional beep, a maximum message length, a retention period, and optional transcription. Mailbox calls skip summaries, contact memory, and CRM sync. WhatsApp and email are not answered in this mode. It is not available for outbound calls or campaigns. See [Assistant Configuration](/en/assistants/configuration).
+  - **Voicemail transcripts by email** — Have each transcribed message emailed to you once it has been written out. The recording is linked, not attached. See [Assistant Configuration](/en/assistants/configuration).
+  - **Call or message filter** — The call log now separates voicemail messages from conversations, and a message can be deleted together with its transcript. See [Call Logs](/en/call-logs).
+  - **Academy** — A new course area with video lessons (Wistia, YouTube, and Vimeo), progress per video, and downloadable material. The Academy can be bought from a public page — with or without an account, including payment in installments.
+  - **Fluid-1 realtime provider** — Fluid-1 is available as a realtime provider next to GPT-Live and Gemini Live, with its own voice picker and previews and a German or English language setting. See [Voice Library](/en/voice-library).
+  - **Transfer targets dial the contact's number** — A transfer target can now call a number stored on the contact, with an optional second field, a fallback number, "try the next number when nobody answers", and reachable hours. See [Assistant Configuration](/en/assistants/configuration).
+  - **Record only after the caller agrees** — A new Advanced option keeps recording off until the caller has said yes, while the transcript is still saved. See [Assistant Configuration](/en/assistants/configuration).
+
+  ## Improvements
+
+  - **Campaign voicemail card shows what really happens** — The card now shows whether the assistant leaves a message, hangs up, or has detection off, and whether each value comes from the campaign or from the assistant's default. See [Campaign Configuration](/en/campaigns/configuration).
+  - **German realtime settings** — The realtime section of the Model tab is now fully translated into German, including the voice preview dialog. See [Features](/en/features).
+  - **Telefonie tab translations** — The remaining English texts in the assistant's Telefonie tab are now translated in both English and German. See [Telephony](/en/telephony).
+  - **Clear editor in voicemail-only mode** — Sections an assistant does not use in this mode are greyed out with a note instead of being hidden, so you can still see where your settings live. See [Assistant Configuration](/en/assistants/configuration).
+  - **Fluid-1 cost estimates** — Cost estimates for Fluid-1 now use the provider's own rates instead of a rough placeholder, and voicemail transcription is billed at the speech-to-text rate. See [Billing](/en/billing).
+
+  ## Bug Fixes
+
+  - **Password reset links** — "Password forgotten" links now open the new-password form instead of sending you back to sign-in. See [Authentication](/en/authentication).
+  - **Saved realtime voice persists** — The selected Fluid-1 voice is remembered after a reload.
+  - **Switching realtime provider no longer breaks calls** — Changing provider or model now resets settings the new provider does not support, so calls start instead of failing.
+  - **Fluid-1 default model shown** — The Model tab shows the default backend model when none has been chosen, instead of an empty field.
+  - **Voicemail greeting no longer cuts the transcript** — Fixed the start of voicemail transcripts being cut off by the greeting audio.
+  - **Mailbox messages leave the live queue** — Voicemail messages no longer stay in the live queue after they have been left.
+  - **Greeting uploads must be real WAV files** — Files that are only renamed to `.wav` are rejected instead of producing a silent greeting.
+  - **Retention after switching modes** — Message retention works correctly after turning voicemail-only off and on again, and no notice email is sent when no message was left.
+  - **Academy onboarding** — Academy buyers still get onboarding while a pending agent purchase is waiting to be claimed.
+</Update>
+
 <Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
   ## New Features
 

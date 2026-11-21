@@ -8,6 +8,38 @@ description: >-
 
 Bleibe über die neuesten Verbesserungen der Enterprise-Voice-AI-Plattform von Talkturo informiert. Die Release Notes unten sind von neu nach alt sortiert.
 
+<Update label="2026-11-20" description="v4.2.0" tags={["feature","improvement","bugfix"]}>
+  ## Neue Features
+
+  - **Assistenten im Nur-Anrufbeantworter-Modus** — Stelle einen Assistenten auf einen Modus um, der wie ein Anrufbeantworter antwortet: eigene Begrüßung, optionaler Signalton, maximale Nachrichtenlänge, Aufbewahrungsdauer und optionale Transkription. Anrufe auf dem Anrufbeantworter überspringen Zusammenfassungen, Kontaktgedächtnis und CRM-Sync. WhatsApp und E-Mail werden in diesem Modus nicht beantwortet. Für ausgehende Anrufe und Kampagnen ist der Modus nicht verfügbar. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Transkripte per E-Mail** — Lass dir jede transkribierte Nachricht per E-Mail zusenden, sobald sie verschriftlicht wurde. Die Aufnahme wird verlinkt, nicht angehängt. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Filter Anruf oder Nachricht** — Das Anrufprotokoll trennt jetzt Anrufbeantworter-Nachrichten von Gesprächen, und eine Nachricht kann zusammen mit ihrem Transkript gelöscht werden. Siehe [Anrufprotokolle](/de/call-logs).
+  - **Academy** — Ein neuer Kursbereich mit Videolektionen (Wistia, YouTube und Vimeo), Fortschritt pro Video und herunterladbarem Material. Die Academy lässt sich über eine öffentliche Seite kaufen — mit oder ohne Konto, auch in Ratenzahlung.
+  - **Realtime-Anbieter Fluid-1** — Fluid-1 ist als Echtzeit-Anbieter neben GPT-Live und Gemini Live verfügbar, mit eigener Stimmauswahl samt Vorschauen und einer Sprachauswahl Deutsch oder Englisch. Siehe [Sprachbibliothek](/de/voice-library).
+  - **Transfer-Ziele wählen die Nummer des Kontakts** — Ein Transfer-Ziel kann jetzt eine beim Kontakt gespeicherte Nummer anrufen, mit optionalem zweitem Feld, Fallback-Nummer, nächste Nummer versuchen wenn niemand antwortet, und Erreichbarkeitszeiten. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Aufnahme erst nach Zustimmung des Anrufers** — Eine neue Option im Tab Erweitert lässt die Aufnahme aus, bis der Anrufer zugestimmt hat; das Transkript wird weiterhin gespeichert. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+
+  ## Verbesserungen
+
+  - **Anrufbeantworter-Karte in Kampagnen zeigt, was wirklich passiert** — Die Karte zeigt jetzt, ob der Assistent eine Nachricht hinterlässt, auflegt oder die Erkennung aus ist, und ob der Wert aus der Kampagne oder aus den Standardeinstellungen des Assistenten stammt. Siehe [Kampagnen-Konfiguration](/de/campaigns/configuration).
+  - **Deutsche Realtime-Einstellungen** — Der Echtzeit-Bereich im Modell-Tab ist jetzt vollständig auf Deutsch übersetzt, inklusive Stimmenvorschau-Dialog. Siehe [Features](/de/features).
+  - **Übersetzungen im Telefonie-Tab** — Die verbleibenden englischen Texte im Telefonie-Tab des Assistenten sind jetzt auf Deutsch und Englisch übersetzt. Siehe [Telefonie](/de/telephony).
+  - **Klarer Editor im Nur-Anrufbeantworter-Modus** — Bereiche, die ein Assistent in diesem Modus nicht nutzt, werden mit einem Hinweis ausgegraut statt ausgeblendet, sodass du weiterhin siehst, wo deine Einstellungen liegen. Siehe [Assistenten-Konfiguration](/de/assistants/configuration).
+  - **Fluid-1-Kostenschätzungen** — Kostenschätzungen für Fluid-1 nutzen jetzt die Tarife des Anbieters statt eines groben Platzhalters, und Anrufbeantworter-Transkriptionen werden zum Speech-to-Text-Tarif abgerechnet. Siehe [Abrechnung](/de/billing).
+
+  ## Bugfixes
+
+  - **Links zum Zurücksetzen des Passworts** — Links zu Passwort vergessen öffnen jetzt das Formular für ein neues Passwort, statt dich zur Anmeldung zurückzuschicken. Siehe [Authentifizierung](/de/authentication).
+  - **Gespeicherte Echtzeit-Stimme bleibt erhalten** — Die gewählte Fluid-1-Stimme bleibt nach einem Neuladen erhalten.
+  - **Anbieterwechsel bei Echtzeit bricht keine Anrufe mehr ab** — Beim Wechsel von Anbieter oder Modell werden Einstellungen zurückgesetzt, die der neue Anbieter nicht unterstützt, sodass Anrufe starten statt fehlzuschlagen.
+  - **Standard-Backend-Modell von Fluid-1 sichtbar** — Der Modell-Tab zeigt das Standard-Backend-Modell, wenn noch keines gewählt wurde, statt eines leeren Feldes.
+  - **Begrüßung schneidet das Transkript nicht mehr ab** — Behoben: Der Anfang von Anrufbeantworter-Transkripten wurde durch das Begrüßungs-Audio abgeschnitten.
+  - **Nachrichten verlassen die Live-Warteschlange** — Anrufbeantworter-Nachrichten bleiben nach dem Hinterlassen nicht mehr in der Live-Warteschlange.
+  - **Begrüßung muss eine echte WAV-Datei sein** — Dateien, die nur in .wav umbenannt wurden, werden abgelehnt, statt eine stille Begrüßung zu erzeugen.
+  - **Aufbewahrung nach Moduswechsel** — Die Aufbewahrung von Nachrichten funktioniert nach dem Aus- und erneuten Einschalten des Nur-Anrufbeantworter-Modus korrekt, und es wird keine Hinweis-E-Mail gesendet, wenn keine Nachricht hinterlassen wurde.
+  - **Onboarding für Academy-Käufer** — Academy-Käufer erhalten weiterhin das Onboarding, während ein Agent-Kauf auf die Übernahme wartet.
+</Update>
+
 <Update label="2026-10-10" description="v4.1.0" tags={["feature","improvement","bugfix"]}>
   ## Neue Features
 
